@@ -44,32 +44,36 @@
         "rpm": 2207.037
       },
       {
-        "file": "on_2911.ogg",
-        "rpm": 2911.376
+        "file": "on_2857.ogg",
+        "rpm": 2857.196
       },
       {
         "file": "on_3720.ogg",
         "rpm": 3719.897
       },
       {
-        "file": "on_4503.ogg",
-        "rpm": 4502.564
+        "file": "on_4405.ogg",
+        "rpm": 4404.73
       },
       {
-        "file": "on_5306.ogg",
-        "rpm": 5306.416
+        "file": "on_4932.ogg",
+        "rpm": 4931.684
       },
       {
-        "file": "on_6113.ogg",
-        "rpm": 6113.378
+        "file": "on_5267.ogg",
+        "rpm": 5267.14
       },
       {
-        "file": "on_6806.ogg",
-        "rpm": 6806.06
+        "file": "on_6304.ogg",
+        "rpm": 6304.068
       },
       {
-        "file": "on_7603.ogg",
-        "rpm": 7602.969
+        "file": "on_7021.ogg",
+        "rpm": 7020.612
+      },
+      {
+        "file": "on_7726.ogg",
+        "rpm": 7725.57
       },
       {
         "file": "on_8401.ogg",
@@ -80,8 +84,8 @@
         "rpm": 9223.491
       },
       {
-        "file": "on_10046.ogg",
-        "rpm": 10045.941
+        "file": "on_9870.ogg",
+        "rpm": 9869.702
       }
     ],
     "offLoad": [
@@ -94,32 +98,36 @@
         "rpm": 2207.037
       },
       {
-        "file": "off_2911.ogg",
-        "rpm": 2911.376
+        "file": "off_2857.ogg",
+        "rpm": 2857.196
       },
       {
         "file": "off_3720.ogg",
         "rpm": 3719.897
       },
       {
-        "file": "off_4503.ogg",
-        "rpm": 4502.564
+        "file": "off_4405.ogg",
+        "rpm": 4404.73
       },
       {
-        "file": "off_5306.ogg",
-        "rpm": 5306.416
+        "file": "off_4932.ogg",
+        "rpm": 4931.684
       },
       {
-        "file": "off_6113.ogg",
-        "rpm": 6113.378
+        "file": "off_5267.ogg",
+        "rpm": 5267.14
       },
       {
-        "file": "off_6806.ogg",
-        "rpm": 6806.06
+        "file": "off_6304.ogg",
+        "rpm": 6304.068
       },
       {
-        "file": "off_7603.ogg",
-        "rpm": 7602.969
+        "file": "off_7021.ogg",
+        "rpm": 7020.612
+      },
+      {
+        "file": "off_7726.ogg",
+        "rpm": 7725.57
       },
       {
         "file": "off_8401.ogg",
@@ -130,8 +138,8 @@
         "rpm": 9223.491
       },
       {
-        "file": "off_10046.ogg",
-        "rpm": 10045.941
+        "file": "off_9870.ogg",
+        "rpm": 9869.702
       }
     ],
     "idle": {

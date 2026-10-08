@@ -13,6 +13,8 @@ const CRANK_S = 0.8;
 const CRANK_RPM = 250;
 const FUEL_CUT_S = 0.04;
 const BACKFIRE_WINDOW_S = 0.6;
+/** A lift only counts as "coasting" (and may pop) if the throttle stays shut this long without a gear change. */
+const LIFT_CONFIRM_S = 0.25;
 const AIR_DENSITY = 1.2;
 const ROLLING_RESISTANCE = 0.015;
 const G = 9.81;
@@ -67,6 +69,9 @@ export class Simulation {
   private fuelCutTimer = 0;
   private backfireArmed = false;
   private pops: number[] = [];
+  /** Seconds left before a lift-off is confirmed as coasting; 0 = no lift pending. */
+  private liftPending = 0;
+  private liftRpm = 0;
   private accumulator = 0;
   /** Automatic throttle blip applied to the free engine during a downshift. */
   private blip = 0;
@@ -128,6 +133,8 @@ export class Simulation {
     const s = this.state;
     if (this.shift && this.shift.cut > 0) return; // mid-shift: wait for the gear to go in
     const loaded = s.throttle > 0.6 && s.ignition === "running";
+    this.liftPending = 0; // a shift means the lift was for the gear change, not a coast
+    this.pops.length = 0;
     this.freeRpm = s.rpm;
     if (gear === 0) {
       this.shift = null;
@@ -321,6 +328,15 @@ export class Simulation {
       this.backfireArmed = false;
       if (running && s.boost > 0.35) this.emit({ type: "blowoff" });
       if (running && s.rpm > 0.6 * this.cfg.engine.redlineRpm) {
+        this.liftPending = LIFT_CONFIRM_S;
+        this.liftRpm = s.rpm;
+      }
+    }
+    // Lifting to change gear is not coasting: only pop if the throttle stays shut with no shift.
+    if (this.liftPending > 0) {
+      if (s.throttle > 0.1 || !running) this.liftPending = 0;
+      else if ((this.liftPending -= dt) <= 0) {
+        this.liftPending = 0;
         const count = 1 + Math.floor(this.rng() * 4);
         for (let i = 0; i < count; i++) this.pops.push(this.rng() * BACKFIRE_WINDOW_S);
       }

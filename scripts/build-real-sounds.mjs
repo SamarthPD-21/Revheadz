@@ -148,7 +148,8 @@ function buildVehicle(id, spec, tmp) {
       // widen the window while the pitch stays within +-10% of the target
       let a = i;
       let b = i;
-      const near = (f) => f.f0 > f0 * 0.9 && f.f0 < f0 * 1.1;
+      const tol = seg.tol ?? 0.1;
+      const near = (f) => f.f0 > f0 * (1 - tol) && f.f0 < f0 * (1 + tol);
       while (a > 0 && near(frames[a - 1]) && frames[i].t - frames[a - 1].t < (seg.maxHalfS ?? 0.4)) a--;
       while (b < frames.length - 1 && near(frames[b + 1]) && frames[b + 1].t - frames[i].t < (seg.maxHalfS ?? 0.4)) b++;
       segments.push({ kind: seg.kind, source: seg.source, t: [frames[a].t, frames[b].t] });
