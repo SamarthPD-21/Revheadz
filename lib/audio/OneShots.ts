@@ -27,7 +27,7 @@ export class OneShots {
     const b = this.buffers;
     const list = kind === "start" ? [b.start] : kind === "stop" ? [b.stop] : b[kind];
     if (!list.length) return;
-    const buffer = pick(list);
+    const buffer = kind === "shift" ? list[0] : pick(list);
     const src = this.ctx.createBufferSource();
     src.buffer = buffer;
     const gain = this.ctx.createGain();
@@ -39,8 +39,8 @@ export class OneShots {
     } else if (kind === "blowoff") {
       gain.gain.value = 0.8 + Math.random() * 0.2;
     } else if (kind === "shift") {
-      src.playbackRate.value = 1 + (Math.random() * 2 - 1) * 0.04;
-      gain.gain.value = 0.7;
+      // a subtle, consistent gearbox clunk: the engine note change carries the shift
+      gain.gain.value = 0.4;
     }
     if (opts?.gain !== undefined) gain.gain.value *= opts.gain;
     if (opts?.rate !== undefined) src.playbackRate.value *= opts.rate;

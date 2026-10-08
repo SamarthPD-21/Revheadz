@@ -198,6 +198,30 @@ describe("backfire", () => {
   });
 });
 
+describe("no stray pops on gear changes", () => {
+  it("lifting to shift never backfires; coasting off the throttle can", () => {
+    for (const id of IDS) {
+      const cfg = loadConfig(id);
+      const sim = startedSim(id, 3);
+      let pops = 0;
+      sim.subscribe((e) => e.type === "backfire" && pops++);
+      sim.shiftUp();
+      sim.input.throttle = 1;
+      for (let i = 0; i < 120 * 20; i++) {
+        if (sim.state.rpm > cfg.engine.redlineRpm * 0.85 && !sim.state.shifting && sim.state.gear < cfg.gearbox.ratios.length && sim.input.throttle === 1) {
+          sim.input.throttle = 0;
+          run(sim, 0.08); // driver lifts...
+          sim.shiftUp(); // ...and changes gear
+          run(sim, 0.15);
+          sim.input.throttle = 1;
+        }
+        sim.step(1 / 120);
+      }
+      expect(pops, id).toBe(0);
+    }
+  });
+});
+
 describe("fixed timestep", () => {
   it("gives identical results at 60 Hz and 144 Hz frame rates", () => {
     const make = () => {

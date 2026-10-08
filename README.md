@@ -1,143 +1,199 @@
-# Revheadz: engine sound simulator
+# Revheadz 🏁
 
-A free, browser-based engine simulator: pick a vehicle, start it, rev it, shift gears and hear it respond in real time.
-Built with Next.js (App Router, static export), TypeScript, Tailwind and the Web Audio API. No server, no accounts, ₹0 to run.
+**Start it. Rev it. Shift it.** A free engine sound simulator that runs entirely in your browser.
 
-Based on the MVP plan in `Engine Sound Simulator MVP — Detailed Plan.pdf`.
+Pick one of 11 machines, press the start button, and drive it with your keyboard or thumbs. The sound follows
+every throttle input, gear change, limiter bounce and overrun pop in real time. Five of the engines are real
+professional recordings. No install, no account, no server.
 
-## Run it
+<p align="center">
+  <img src="docs/screenshots/drive.jpg" alt="Drive screen: tachometer at 7,000 rpm in 2nd gear, speedometer, shift lights and controls" width="100%">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/garage.jpg" alt="Garage with vehicle cards and filters" width="68%">
+  &nbsp;
+  <img src="docs/screenshots/mobile.jpg" alt="Drive screen on a phone in portrait" width="22%">
+</p>
+
+## Features
+
+- **11 vehicles**: muscle car, JDM turbo, supercars, a GT, a hot hatch, a rally car, a rotary and two bikes
+- **Real engine recordings** for five of them, turned into RPM-mapped loops by a custom audio pipeline
+- **Physics-based engine and gearbox**: inertia, torque curve, turbo lag, clutch slip at pull-away, drag and braking
+- **Realistic shifting**: torque cut, rev-matching blips on downshifts, and dual-clutch and quickshifter "cracks"
+- **Rev limiter, backfire pops and turbo blow-off**
+- **Smooth sound**: all loops stay phase-locked and crossfade at constant loudness, so revving doesn't click or warble
+- **Race-car dashboard**: canvas gauges, shift lights, throttle, brake and boost bars, all redrawn every frame
+- **Works on phones**: touch throttle that springs back, brake pad and shift paddles, in portrait or landscape
+- **Free to host**: a static site you can put on Vercel, Netlify or Cloudflare Pages
+
+## Quick start
+
+Requires Node.js 20+.
 
 ```bash
+git clone https://github.com/SamarthPD-21/Revheadz.git
+cd Revheadz
 npm install
-npm run dev        # http://localhost:3000
-npm test           # Vitest: simulation, audio maths, configs, input
-npm run build      # runs tests first, then exports a static site to out/
+npm run dev          # http://localhost:3000
 ```
 
-## Shifting
-
-Shifts happen in two phases: a torque cut with the clutch open (rpm falls under engine braking on upshifts;
-an automatic blip rev-matches downshifts, and you hear it), then clutch engagement where rpm blends onto the new
-gear and drive torque ramps back. Gearbox types (`gearbox.type`): `manual` (slow, long clutch slip), `dct`
-(near-seamless, ignition-cut crack on loaded upshifts) and `sequential` (bike quickshifter + auto-blipper).
+| Command | What it does |
+|---|---|
+| `npm run dev` | Development server with hot reload |
+| `npm test` | Unit tests (simulation, gearbox, shifting, audio maths, configs, input) |
+| `npm run build` | Runs the tests, then exports the static site to `out/` |
+| `npm run lint` | ESLint |
+| `npm run sounds` | Regenerates the procedurally generated sounds (needs `ffmpeg`) |
 
 ## Controls
 
-| Key | Action |
+| Keyboard | Touch | Action |
+|---|---|---|
+| `I` | **ENGINE START / STOP** button | Start or stop the engine |
+| `W` / `↑` (hold) | **GAS** slider, right side | Throttle |
+| `S` / `↓` (hold) | **BRAKE** pad, left side | Brake |
+| `E` / `Q` | **+** / **−** paddles | Shift up / down |
+| `N` | **N** button | Neutral |
+| `Space` | | Quick throttle blip |
+
+> Turn your volume down before the first start. Engines are loud.
+> On an iPhone, make sure the silent switch is off.
+
+## The garage
+
+| Vehicle | Engine | Gearbox | Redline | Sound |
+|---|---|---|---|---|
+| Muscle V8 | Big-cam V8 | 6-speed manual | 6,200 | 🎙️ Real recording |
+| Flat-6 Sports Coupe | Air-cooled flat-6 | 7-speed dual-clutch | 7,200 | 🎙️ Real recording |
+| V12 Grand Tourer | V12 | 7-speed dual-clutch | 6,750 | 🎙️ Real recording |
+| Hot Hatch Turbo-4 | Turbo inline-4 | 6-speed dual-clutch | 6,800 | 🎙️ Real recording |
+| Inline-4 Superbike | Inline-4, 1000 cc | 6-speed quickshifter | 13,500 | 🎙️ Real recording |
+| Inline-6 Turbo | Turbo straight-6 | 6-speed manual | 7,000 | 🔧 Engine model |
+| V10 Supercar | V10 | 7-speed dual-clutch | 8,500 | 🔧 Engine model |
+| Boxer-4 Rally Turbo | Turbo flat-4 | 6-speed manual | 7,000 | 🔧 Engine model |
+| Twin-Rotor Rotary | 2-rotor Wankel | 5-speed manual | 8,500 | 🔧 Engine model |
+| V-Twin Cruiser | 45° V-twin | 6-speed manual | 5,500 | 🔧 Engine model |
+| Synth V6 | V6 | 6-speed manual | 6,800 | 🎛️ Live synthesis |
+
+Vehicle names are generic on purpose, with no brands or model names. Each engine's idle and redline match the
+engine it was recorded from or modelled on.
+
+## How it works
+
+```mermaid
+flowchart LR
+    Input["Input<br/>keyboard · touch"] --> Sim["Simulation<br/>fixed 120 Hz step"]
+    Config["Vehicle config<br/>engine · gearbox · sounds"] --> Sim
+    Sim -- "rpm · load · events" --> Audio["Audio engine<br/>Web Audio"]
+    Sim -- "rpm · speed · gear" --> UI["Dashboard<br/>canvas, every frame"]
+    Loader["Asset loader<br/>fetch · decode · cache"] --> Audio
+```
+
+- **One owner of state.** Only the simulation changes engine state; audio and UI just read it. Because it steps at
+  a fixed 120 Hz, a 60 Hz phone and a 144 Hz monitor behave the same.
+- **React stays out of the hot path.** RPM and speed are drawn straight onto canvases every frame. React only
+  re-renders when the gear or ignition changes (`useSyncExternalStore`).
+- **Sample blending.** Each vehicle has looping recordings at several RPMs, for on-load (accelerating) and overrun.
+  Each frame the two loops nearest the current RPM are crossfaded, pitched to match, and blended by engine load. Every
+  loop starts at the same instant and is pitched by the same `rpm / sampleRpm` rule, so all loops stay in step.
+  That keeps crossfades free of flanging and spikes.
+- **Shifting in two phases.** First the drive cuts out. On an upshift the revs fall under engine braking; on a
+  downshift an automatic blip matches revs, and you hear it. Then the clutch engages: revs blend onto the new gear
+  and torque returns. Manual, dual-clutch and sequential gearboxes each have their own timing and character.
+- **Browser rules respected.** Audio starts only from the ignition tap, as autoplay policy requires. It pauses when
+  the tab is hidden and fully stops when you leave the page.
+
+### Where the sounds come from
+
+**Real recordings.** Five engines come from free, royalty-free [Sonniss #GameAudioGDC](https://sonniss.com/gameaudiogdc)
+bundles: Pole Position Production and Dramatic Cat. `scripts/build-real-sounds.mjs` turns raw recordings into
+game-ready loops, using the manifest in `scripts/real-sounds.json`:
+
+1. **Track the engine's speed** from its cycle frequency, the spacing of the harmonic "comb" every engine produces
+   (RPM = cycle Hz × 120). Noisy sweeps can use hand-checked anchor points read off a spectrogram.
+2. **Cut** steady-RPM sections, or slices of full-throttle runs, and **flatten their pitch** to one exact RPM.
+3. **Loop** each section seamlessly with a correlated crossfade. Idle is left unflattened to keep its natural lope.
+4. **Finish**: make darker overrun variants, normalise loudness along a smooth RPM curve, cut the real start-up and
+   shutdown sounds, encode `.ogg` and `.mp3`, and write the vehicle config and credits.
+
+**Engine model.** The other five come from `scripts/generate-sounds.mjs`, a physical engine model. It uses real firing
+orders and crank angles, per-bank exhaust pipes with reflections, muffler resonances, intake roar, valvetrain noise,
+turbo whistle and overrun crackle. The free recordings for these engines only covered idle and quick blips, which is
+not enough for a full RPM range.
+
+**Live synthesis.** Synth V6 is synthesised in the browser by an `AudioWorklet`, with no audio files at all.
+
+```bash
+node scripts/build-real-sounds.mjs            # rebuild all real-recording vehicles (needs ffmpeg; downloads sources once)
+node scripts/build-real-sounds.mjs muscle_v8  # just one
+npm run sounds                                # regenerate the engine-model sounds
+```
+
+Source recordings are cached in `.sound-cache/`, which is not committed.
+
+## Project structure
+
+```
+app/                     Pages: garage (/), drive (/drive/[vehicleId]), credits
+components/              React UI: Simulator, gauges, shift lights, controls, garage cards
+hooks/                   useEngineState: the slow-changing state React subscribes to
+lib/
+  sim/                   Engine, Gearbox, Simulation: pure TypeScript, no React
+  audio/                 AudioEngine, SampleLayer, SynthEngine (AudioWorklet), OneShots, blend maths
+  assets/                Sound fetching, decoding and caching
+  input/                 Keyboard and touch → throttle, brake and commands
+  vehicles/              Typed configs, validation, build-time file checks
+public/vehicles/<id>/    config.json + sounds/ (one folder per vehicle)
+scripts/                 Sound pipelines: build-real-sounds, generate-sounds, audio-analysis
+tests/                   Vitest suites
+```
+
+## Adding a vehicle
+
+1. Copy a folder in `public/vehicles/` and edit `config.json`: `engine`, `gearbox` (including `type`), `dynamics`,
+   optional `turbo`, and `ui`.
+2. Give it sounds, in one of three ways:
+   - **From recordings**: add an entry to `scripts/real-sounds.json` and run `node scripts/build-real-sounds.mjs <id>`.
+   - **From the engine model**: add a voice to `VOICES` in `scripts/generate-sounds.mjs` and run
+     `node scripts/generate-sounds.mjs <id>`.
+   - **By hand**: drop in `.ogg` and `.mp3` loops named by RPM, and fill in the `audio` section.
+3. Import the config in `lib/vehicles/index.ts` and add it to the list.
+4. Credit its sounds in `credits.json`.
+
+`npm test` and `npm run build` fail if a config is invalid or a referenced sound file is missing. They also fail if
+the loudest loop at any RPM would be pitched too far from its recording.
+
+## Deploying
+
+The site exports to static files, so any static host works.
+
+**Vercel:** import the repo at [vercel.com/new](https://vercel.com/new) and deploy; no settings needed. `vercel.json`
+caches files under `/vehicles/` for a year, so rename a sound file when you change it. Every push to `main`
+redeploys.
+
+Optional environment variables:
+
+| Variable | Purpose |
 |---|---|
-| `W` / `↑` | Throttle (hold) |
-| `S` / `↓` | Brake (hold) |
-| `E` / `Q` | Shift up / down |
-| `N` | Neutral |
-| `Space` | Throttle blip |
-| `I` | Ignition on/off |
+| `NEXT_PUBLIC_FEEDBACK_URL` | Shows a "Send feedback" link in the garage (e.g. a Google Form) |
+| `NEXT_PUBLIC_SITE_URL` | Your custom domain, so social share images use absolute URLs |
 
-On touch devices: vertical throttle slider (right, springs back), brake pad and shift buttons (left). Landscape is preferred.
+Vercel's free Hobby plan is for non-commercial use. If you ever monetise, the same static build runs unchanged on
+Netlify or Cloudflare Pages.
 
-## How it is put together
+## Tech stack
 
-```
-lib/sim/        pure TypeScript, no React: Engine, Gearbox, Simulation (fixed 120 Hz step)
-lib/audio/      Web Audio: AudioEngine, SampleLayer (RPM crossfade), SynthEngine (AudioWorklet), OneShots
-lib/assets/     fetch + decode + cache of a vehicle's sounds
-lib/input/      keyboard / touch -> throttle, brake, commands
-lib/vehicles/   typed configs, validation (build fails if a sound file is missing)
-components/     React UI; gauges draw on <canvas> every frame, outside React
-public/vehicles/<id>/config.json (+ sounds/)   one folder per vehicle
-```
+[Next.js](https://nextjs.org) (App Router, static export) · TypeScript · [Tailwind CSS](https://tailwindcss.com) ·
+Web Audio API with AudioWorklet · Canvas 2D · [Vitest](https://vitest.dev) · ffmpeg for the sound pipelines
 
-Only the simulation loop changes engine state. Audio and UI read it. RPM and speed never go through React state;
-only gear and ignition do (`hooks/useEngineState.ts`, via `useSyncExternalStore`).
+## Credits
 
-## Adding a vehicle
+- Real engine recordings: **Pole Position Production** and **Dramatic Cat**, from the Sonniss #GameAudioGDC bundles,
+  under the Sonniss GDC bundle license (royalty-free, commercial use allowed).
+- Generated sounds and code: Revheadz.
 
-1. Create `public/vehicles/<id>/config.json` (copy one; set `engine`, `gearbox`, `dynamics`, optional `turbo`, and `ui`).
-2. Add a voice for it in `VOICES` in `scripts/generate-sounds.mjs` and run `node scripts/generate-sounds.mjs <id>`
-   (or supply your own `.ogg` **and** `.mp3` files and write the `audio` section by hand).
-3. Import the config in `lib/vehicles/index.ts` and add it to the list.
-4. Add its sounds to `credits.json`.
+The in-app **Credits** page lists every recording used.
 
-`npm test` and `npm run build` fail if a referenced sound file (either format) is missing or a config is invalid.
-
-## Vehicles
-
-Eleven: Muscle V8, Inline-6 Turbo, Flat-6 Sports Coupe, V10 Supercar, V12 Grand Tourer, Hot Hatch Turbo-4,
-Boxer-4 Rally Turbo, Twin-Rotor Rotary, Inline-4 Superbike, V-Twin Cruiser, and the live-synthesized Synth V6.
-Names are generic on purpose (no brands or model names) to avoid trademark issues.
-
-## Sounds
-
-**Real recordings (5 vehicles).** Muscle V8, Flat-6 Sports Coupe, V12 Grand Tourer, Hot Hatch Turbo-4 and Inline-4
-Superbike use professional recordings from the free Sonniss #GameAudioGDC bundles (royalty-free, commercial use,
-no attribution required; credited anyway on the Credits page). They are built by `scripts/build-real-sounds.mjs`
-from the manifest `scripts/real-sounds.json`:
-
-1. download each source recording (cached in `.sound-cache/`, not committed)
-2. track the engine **cycle frequency** (rpm / 120, the spacing of the harmonic comb every engine shows) with a
-   40-harmonic tracker; for noisy sweeps the manifest can give hand-verified `[time, rpm]` anchors read off a spectrogram
-3. cut each steady section (or windows of a full-throttle ramp), flatten its pitch to one exact rpm, and crossfade it
-   into a seamless loop; idle stays unflattened to keep its natural lope
-4. make overrun variants (darker, softer), normalise loudness along a smooth rpm curve, cut real start/stop sounds,
-   encode `.ogg` + `.mp3`, and write the vehicle's `audio` config and `credits.json`
-
-```bash
-node scripts/build-real-sounds.mjs             # all real-sound vehicles (needs ffmpeg + internet the first time)
-node scripts/build-real-sounds.mjs muscle_v8
-```
-
-Each vehicle's idle and redline were matched to its source engine. Shift, backfire and blow-off one-shots are still
-generated.
-
-**Generated (5 vehicles + synth).** Inline-6 Turbo, V10 Supercar, Boxer-4 Rally Turbo, Twin-Rotor Rotary and V-Twin
-Cruiser use original sounds from a physical engine model (`scripts/generate-sounds.mjs`, CC0), because the free
-recordings available for them only cover idle and quick blips, not steady or ramping high RPM. Synth V6 is
-synthesised live in the browser.
-
-```bash
-npm run sounds                 # regenerate generated sounds (needs ffmpeg, ~1 min)
-```
-
-Smoothness: all loops of a vehicle start at the same instant and every loop's `playbackRate` is driven by
-`rpm / sampleRpm`, so they advance together; crossfades use a constant-loudness law for partly correlated loops.
-
-## Adding a vehicle
-
-1. Create `public/vehicles/<id>/config.json` (copy one; set `engine`, `gearbox`, `dynamics`, optional `turbo`, and `ui`).
-2. Add a voice for it in `VOICES` in `scripts/generate-sounds.mjs` and run `node scripts/generate-sounds.mjs <id>`
-   (or supply your own `.ogg` **and** `.mp3` files and write the `audio` section by hand).
-3. Import the config in `lib/vehicles/index.ts` and add it to the list.
-4. Add its sounds to `credits.json`.
-
-`npm test` and `npm run build` fail if a referenced sound file (either format) is missing or a config is invalid.
-
-## Vehicles
-
-Eleven: Muscle V8, Inline-6 Turbo, Flat-6 Sports Coupe, V10 Supercar, V12 Grand Tourer, Hot Hatch Turbo-4,
-Boxer-4 Rally Turbo, Twin-Rotor Rotary, Inline-4 Superbike, V-Twin Cruiser, and the live-synthesized Synth V6.
-Names are generic on purpose (no brands or model names) to avoid trademark issues.
-
-## Sounds
-
-Sample-based vehicles ship with **original sounds from a physical engine model** (`scripts/generate-sounds.mjs`, CC0):
-real firing orders and crank angles (cross-plane V8 burble, 45° V-twin lope, unequal-length boxer headers, rotary),
-per-bank exhaust pipes with reflections, muffler resonances, intake roar, valvetrain, turbo whistle/hiss, overrun crackle,
-plus start, stop, shift, backfire and blow-off one-shots. The generator also writes each config's `audio` section.
-
-Smoothness: every loop holds a whole number of engine cycles and starts at the same crank angle; the player starts
-all loops at the same instant and drives every loop's `playbackRate` with `rpm / sampleRpm`, so the loops stay
-phase-locked and crossfades don't flange or spike. Loudness follows a smooth curve over rpm and load.
-
-```bash
-npm run sounds                 # regenerate all vehicles (needs ffmpeg, ~1 min)
-node scripts/generate-sounds.mjs muscle_v8
-```
-
-To use real recordings instead, replace files keeping the names and RPMs (`on_3000.ogg` + `.mp3`), and log each one
-in `credits.json`. Only CC0 / CC-BY sounds or your own recordings; no NC files.
-
-## Deploy (Vercel Hobby)
-
-Push to GitHub and import in Vercel; it detects Next.js. `next.config.ts` sets `output: "export"`, and `vercel.json` adds
-long-lived cache headers for `/vehicles/*` (rename a file when it changes). Optional: set `NEXT_PUBLIC_FEEDBACK_URL`
-(Google Form / GitHub Issues) to show a feedback link in the garage footer.
-Vercel Hobby is non-commercial; static export moves to Netlify or Cloudflare Pages unchanged.
+Built from the MVP plan in `Engine Sound Simulator MVP — Detailed Plan.pdf`.
