@@ -1,69 +1,59 @@
-import Image from "next/image";
+import Link from "next/link";
+import { GarageGrid, type GarageVehicle } from "../components/GarageGrid";
+import { vehicles } from "../lib/vehicles";
+import { assertVehicleFilesExist } from "../lib/vehicles/validate.node";
 
-export default function Home() {
+const FEEDBACK_URL = process.env.NEXT_PUBLIC_FEEDBACK_URL;
+
+export default function Garage() {
+  assertVehicleFilesExist(); // fails the build if a config references a missing sound file
+
+  const list: GarageVehicle[] = vehicles.map((v) => ({
+    id: v.id,
+    name: v.name,
+    type: v.type,
+    description: v.description,
+    category: v.ui.category,
+    layout: v.ui.layout,
+    displacement: v.ui.displacement,
+    powerHp: v.ui.powerHp,
+    redlineRpm: v.engine.redlineRpm,
+    accent: v.ui.accent,
+    silhouette: v.ui.silhouette,
+    turbo: Boolean(v.turbo),
+    synth: v.audio.mode === "synth",
+    recorded: Boolean(v.ui.recorded),
+  }));
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <div className="relative min-h-dvh overflow-hidden">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[480px] bg-[radial-gradient(ellipse_at_top,rgba(249,115,22,0.18),transparent_65%)]" />
+      <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col px-4 py-10 sm:py-14">
+        <header className="mb-8 sm:mb-10">
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-orange-400">Engine sound simulator</p>
+          <h1 className="mt-2 bg-gradient-to-br from-white to-zinc-400 bg-clip-text text-5xl font-black tracking-tight text-transparent sm:text-6xl">
+            Revheadz
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-3 max-w-xl text-zinc-400">
+            Pick a machine, hit start, and rev it. Shift through the gears, bounce it off the limiter, pop it on the overrun.
+            Keyboard or thumbs. Headphones recommended.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        </header>
+
+        <GarageGrid vehicles={list} />
+
+        <footer className="mt-auto flex flex-wrap gap-x-6 gap-y-2 pt-14 text-sm text-zinc-500">
+          <Link href="/credits" className="underline underline-offset-4 hover:text-zinc-200">
+            Sound credits
+          </Link>
+          {FEEDBACK_URL && (
+            <a href={FEEDBACK_URL} className="underline underline-offset-4 hover:text-zinc-200" target="_blank" rel="noreferrer">
+              Send feedback
+            </a>
+          )}
+          <span>Vehicle names are generic. Engine sounds are real recordings or original synthesis; see credits.</span>
+        </footer>
+      </div>
     </div>
   );
 }
