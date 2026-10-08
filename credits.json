@@ -1,0 +1,114 @@
+[
+  {
+    "vehicle": "Muscle V8",
+    "files": "Engine loops (idle, on-load, overrun), start sound, stop sound",
+    "author": "Pole Position Production",
+    "source": "Plymouth Hemi Cuda 1971 - onboard startup, idle, blips, steady rpms (Sonniss GDC 2016 Game Audio Bundle)",
+    "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
+  },
+  {
+    "vehicle": "Muscle V8",
+    "files": "Generated one-shots: shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Flat-6 Sports Coupe",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Pole Position Production",
+    "source": "Porsche 911 SC 1981 - onboard driving at constant rpms, exhausts (Sonniss GDC 2016 Game Audio Bundle)",
+    "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
+  },
+  {
+    "vehicle": "Flat-6 Sports Coupe",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "V12 Grand Tourer",
+    "files": "Engine loops (idle, on-load, overrun), start sound, stop sound",
+    "author": "Pole Position Production",
+    "source": "Aston Martin DB9 2017 - onboard start, idle, blips, steadies in neutral (Sonniss GDC 2019 Game Audio Bundle)",
+    "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
+  },
+  {
+    "vehicle": "V12 Grand Tourer",
+    "files": "Generated one-shots: shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Hot Hatch Turbo-4",
+    "files": "Engine loops (idle, on-load, overrun)",
+    "author": "Pole Position Production",
+    "source": "Ford Focus RS 2016 - onboard drive, ramps, stop (Sonniss GDC 2020 Game Audio Bundle)",
+    "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
+  },
+  {
+    "vehicle": "Hot Hatch Turbo-4",
+    "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Inline-4 Superbike",
+    "files": "Engine loops (idle, on-load, overrun)",
+    "author": "Dramatic Cat",
+    "source": "BMW S1000RR 2015 - onboard driving, starts, accelerations, gearshifts (Sonniss GDC 2023 Game Audio Bundle)",
+    "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
+  },
+  {
+    "vehicle": "Inline-4 Superbike",
+    "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Inline-6 Turbo",
+    "files": "All loops and one-shots (sounds/*.ogg, *.mp3)",
+    "author": "Revheadz (original, generated with scripts/generate-sounds.mjs)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "V10 Supercar",
+    "files": "All loops and one-shots (sounds/*.ogg, *.mp3)",
+    "author": "Revheadz (original, generated with scripts/generate-sounds.mjs)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Boxer-4 Rally Turbo",
+    "files": "All loops and one-shots (sounds/*.ogg, *.mp3)",
+    "author": "Revheadz (original, generated with scripts/generate-sounds.mjs)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Twin-Rotor Rotary",
+    "files": "All loops and one-shots (sounds/*.ogg, *.mp3)",
+    "author": "Revheadz (original, generated with scripts/generate-sounds.mjs)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "V-Twin Cruiser",
+    "files": "All loops and one-shots (sounds/*.ogg, *.mp3)",
+    "author": "Revheadz (original, generated with scripts/generate-sounds.mjs)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Synth V6",
+    "files": "Generated live in your browser; no audio files",
+    "author": "Revheadz",
+    "source": "lib/audio/synthWorklet.ts",
+    "license": "CC0 1.0"
+  }
+]

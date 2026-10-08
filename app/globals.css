@@ -1,26 +1,114 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0b0b0f;
+  --foreground: #ededf2;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
+  /* no pull-to-refresh or rubber-banding while driving on a phone */
+  overscroll-behavior: none;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid #fdba74;
+  outline-offset: 2px;
+}
+
+/* ---- Drive screen layout ------------------------------------------------
+   Default (portrait phones, desktop): header / gauges / controls.
+   Short landscape (phones on their side): brake+shift on the left, gauges and
+   ignition in the middle, throttle on the right, so nothing needs scrolling. */
+.drive {
+  display: grid;
+  width: 100%;
+  max-width: 76rem;
+  margin: 0 auto;
+  height: 100dvh;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  grid-template-columns: minmax(0, 1fr) auto 6rem;
+  grid-template-rows: auto minmax(0, 1fr) minmax(8rem, 34dvh);
+  grid-template-areas:
+    "header header header"
+    "gauges gauges gauges"
+    "left center right";
+}
+.drive-header { grid-area: header; }
+.drive-gauges { grid-area: gauges; }
+.drive-left { grid-area: left; }
+.drive-center { grid-area: center; }
+.drive-right { grid-area: right; }
+
+@media (min-width: 640px) {
+  .drive { gap: 0.75rem; padding: 1rem; }
+}
+
+/* Wide screens: keep the pedals pedal-sized, with the start button and key hints between them. */
+@media (min-width: 1024px) and (min-height: 521px) {
+  .drive { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+  .drive-left { width: 100%; max-width: 24rem; }
+  .drive-right { justify-self: end; width: 6rem; }
+  .drive-center { flex-direction: row !important; gap: 2rem !important; }
+}
+
+/* Portrait phones: big tachometer on top, speedometer + gear below, ignition above the controls. */
+@media (max-width: 639px) and (orientation: portrait) {
+  .drive {
+    grid-template-columns: minmax(0, 1fr) 5.5rem;
+    grid-template-rows: auto minmax(0, 1fr) auto minmax(7rem, 26dvh);
+    grid-template-areas:
+      "header header"
+      "gauges gauges"
+      "center center"
+      "left right";
+  }
+  .cluster {
+    grid-template-columns: minmax(0, 1fr) 4rem !important;
+    grid-template-rows: minmax(0, 1.5fr) minmax(0, 1fr);
+  }
+  .gauge-tach { grid-column: 1 / -1; grid-row: 1; }
+  .gauge-speedo { grid-column: 1; grid-row: 2; }
+  .gauge-telemetry { grid-column: 2; grid-row: 2; }
+  .drive-center { max-width: none !important; flex-direction: row !important; flex-wrap: wrap; justify-content: center; }
+  .drive-keys { display: none !important; }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .drive {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2.2fr) 5.5rem;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "header header header"
+      "left gauges right"
+      "left center right";
+  }
+  .drive-keys, .drive-warning { display: none !important; }
+  .ignition { width: 4.5rem !important; }
+  .drive-center { flex-direction: row !important; }
+}
+
+/* Start button breathes softly until the engine is started (no layout-affecting scale). */
+@keyframes ignition-breathe {
+  0%, 100% { box-shadow: 0 0 18px -8px rgba(249, 115, 22, 0.5); }
+  50% { box-shadow: 0 0 34px -2px rgba(249, 115, 22, 0.9); }
+}
+.ignition-idle { animation: ignition-breathe 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .ignition-idle { animation: none; }
 }

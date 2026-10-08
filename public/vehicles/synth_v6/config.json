@@ -1,0 +1,56 @@
+{
+  "id": "synth_v6",
+  "name": "Synth V6",
+  "type": "car",
+  "engineType": "Synthesized V6",
+  "description": "A fully procedural six-cylinder. No sound files, so it starts instantly.",
+  "engine": {
+    "cylinders": 6,
+    "idleRpm": 850,
+    "redlineRpm": 6800,
+    "limiterRpm": 7000,
+    "inertia": 0.3,
+    "engineBraking": 0.55,
+    "peakTorqueNm": 380
+  },
+  "gearbox": {
+    "type": "manual",
+    "ratios": [
+      3.6,
+      2.19,
+      1.41,
+      1.0,
+      0.83,
+      0.65
+    ],
+    "finalDrive": 3.7,
+    "wheelRadiusM": 0.33,
+    "shiftTimeMs": 280
+  },
+  "dynamics": {
+    "massKg": 1400,
+    "cdA": 0.65,
+    "brakeDecel": 9
+  },
+  "audio": {
+    "mode": "synth",
+    "synth": {
+      "exhaustHz": 700,
+      "cutoffHz": 5200,
+      "roughness": 0.25,
+      "unevenness": 0.08
+    },
+    "masterGainDb": -3
+  },
+  "credits": [
+    "Procedurally generated in the browser by Revheadz (no samples)"
+  ],
+  "ui": {
+    "accent": "#38bdf8",
+    "silhouette": "coupe",
+    "category": "Procedural",
+    "layout": "V6",
+    "displacement": "3.5 L",
+    "powerHp": 300
+  }
+}

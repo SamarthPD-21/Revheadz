@@ -1,0 +1,477 @@
+{
+  "license": {
+    "name": "Sonniss GDC Game Audio Bundle license (royalty-free)",
+    "url": "https://sonniss.com/gdc-bundle-license/"
+  },
+  "vehicles": {
+    "muscle_v8": {
+      "pitchRange": [
+        4,
+        130
+      ],
+      "offLoadLowpassHz": 1200,
+      "sources": {
+        "cuda": {
+          "title": "Plymouth Hemi Cuda 1971 - onboard startup, idle, blips, steady rpms",
+          "author": "Pole Position Production",
+          "bundle": "Sonniss GDC 2016 Game Audio Bundle",
+          "cacheName": "Plymouth_Cuda_Hemi__71_t2.flac",
+          "url": "https://archive.org/download/sonniss-gdc-2016-game-audio-bundle-normalized/Pole%20Position%20Production%20-%20Plymouth%20Hemi%20Cuda%201971/Plymouth_Cuda_Hemi_-71_t2_onboard_startup_idle_blips_steady_rpms_no_gear_driving_constant_rpms_engine_1.flac"
+        }
+      },
+      "loops": [
+        {
+          "kind": "idle",
+          "source": "cuda",
+          "t": [
+            4,
+            16
+          ],
+          "flatten": false,
+          "rpm": 600
+        },
+        {
+          "kind": "on",
+          "source": "cuda",
+          "t": [
+            127.5,
+            131
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "cuda",
+          "t": [
+            166.5,
+            173.5
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "cuda",
+          "t": [
+            95.5,
+            104.5
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "cuda",
+          "t": [
+            110,
+            117.5
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "cuda",
+          "t": [
+            185.5,
+            198
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "cuda",
+          "t": [
+            208,
+            217.5
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "cuda",
+          "t": [
+            69,
+            74
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "cuda",
+          "t": [
+            246,
+            257.5
+          ]
+        }
+      ],
+      "oneShots": {
+        "start": {
+          "source": "cuda",
+          "t": [
+            0.85,
+            3.6
+          ],
+          "fadeOut": 0.8
+        },
+        "stop": {
+          "source": "cuda",
+          "t": [
+            261.6,
+            265.9
+          ],
+          "fadeIn": 0.1,
+          "fadeOut": 0.5
+        }
+      }
+    },
+    "flat6_sports": {
+      "pitchRange": [
+        4,
+        130
+      ],
+      "offLoadLowpassHz": 1600,
+      "sources": {
+        "p911": {
+          "title": "Porsche 911 SC 1981 - onboard driving at constant rpms, exhausts",
+          "author": "Pole Position Production",
+          "bundle": "Sonniss GDC 2016 Game Audio Bundle",
+          "cacheName": "Porsche_911_SC__81_t5.flac",
+          "url": "https://archive.org/download/sonniss-gdc-2016-game-audio-bundle-normalized/Pole%20Position%20Production%20-%20Porsche%20911%20SC%201981/Porsche_911_SC_-81_t5_onboard_driving_constant_rpms_exhausts.flac"
+        }
+      },
+      "loops": [
+        {
+          "kind": "idle",
+          "source": "p911",
+          "t": [
+            2,
+            5
+          ],
+          "flatten": false,
+          "rpm": 900
+        },
+        {
+          "kind": "on",
+          "source": "p911",
+          "t": [
+            100.5,
+            105.5
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "p911",
+          "t": [
+            68,
+            88
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "p911",
+          "t": [
+            13,
+            31.5
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "p911",
+          "t": [
+            233,
+            235.5
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "p911",
+          "t": [
+            182,
+            186.5
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "p911",
+          "t": [
+            357.5,
+            361.5
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "p911",
+          "t": [
+            397,
+            401.5
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "p911",
+          "t": [
+            390.5,
+            392
+          ]
+        }
+      ],
+      "oneShots": {
+        "start": {
+          "source": "p911",
+          "t": [
+            0.35,
+            3.0
+          ],
+          "fadeOut": 0.8
+        }
+      }
+    },
+    "v12_gt": {
+      "pitchRange": [
+        4,
+        130
+      ],
+      "offLoadLowpassHz": 1800,
+      "sources": {
+        "db9": {
+          "title": "Aston Martin DB9 2017 - onboard start, idle, blips, steadies in neutral",
+          "author": "Pole Position Production",
+          "bundle": "Sonniss GDC 2019 Game Audio Bundle",
+          "cacheName": "Aston_Martin_DB9_t7.flac",
+          "url": "https://archive.org/download/sonniss-gdc-2019-game-audio-bundle-normalized/Pole%20Position%20-%20Aston%20Martin%20DB9%202017/Aston_Martin_DB9_t7_Onbrd_Start_Idle_Blips_Steadies_in_Neutral_Off_Engine_Right_DPA4062.flac"
+        }
+      },
+      "loops": [
+        {
+          "kind": "idle",
+          "source": "db9",
+          "t": [
+            13,
+            27
+          ],
+          "flatten": false,
+          "rpm": 650
+        },
+        {
+          "kind": "on",
+          "source": "db9",
+          "t": [
+            63,
+            65
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "db9",
+          "t": [
+            88,
+            91.5
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "db9",
+          "t": [
+            94,
+            103
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "db9",
+          "t": [
+            110,
+            115
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "db9",
+          "t": [
+            133,
+            142.5
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "db9",
+          "t": [
+            147,
+            157
+          ]
+        }
+      ],
+      "oneShots": {
+        "start": {
+          "source": "db9",
+          "t": [
+            6.2,
+            9.5
+          ],
+          "fadeOut": 1.0
+        },
+        "stop": {
+          "source": "db9",
+          "t": [
+            156.8,
+            161.5
+          ],
+          "fadeIn": 0.1,
+          "fadeOut": 0.6
+        }
+      }
+    },
+    "hot_hatch": {
+      "pitchRange": [
+        4,
+        130
+      ],
+      "offLoadLowpassHz": 1500,
+      "sources": {
+        "focus": {
+          "title": "Ford Focus RS 2016 - onboard drive, ramps, stop",
+          "author": "Pole Position Production",
+          "bundle": "Sonniss GDC 2020 Game Audio Bundle",
+          "cacheName": "Ford_Focus_RS_t5.flac",
+          "url": "https://archive.org/download/sonniss-gdc-2020-game-audio-bundle-normalized/Pole%20Position%20-%20Ford%20Focus%20RS%202016/Ford_Focus_RS_t5_Onbrd_Drive_Ramps_Stop_Off_Engine_MKH8020.flac",
+          "anchors": [
+            [
+              12.7,
+              1530
+            ],
+            [
+              19.4,
+              4090
+            ],
+            [
+              26.3,
+              6730
+            ]
+          ]
+        }
+      },
+      "loops": [
+        {
+          "kind": "idle",
+          "source": "focus",
+          "t": [
+            1,
+            7
+          ],
+          "flatten": false,
+          "rpm": 850
+        },
+        {
+          "kind": "on",
+          "source": "focus",
+          "ramp": [
+            12.8,
+            26.2
+          ],
+          "targets": [
+            1650,
+            2100,
+            2600,
+            3200,
+            3800,
+            4400,
+            5000,
+            5600,
+            6200,
+            6650
+          ],
+          "maxHalfS": 0.35
+        }
+      ],
+      "oneShots": {}
+    },
+    "superbike_i4": {
+      "pitchRange": [
+        4,
+        130
+      ],
+      "offLoadLowpassHz": 2200,
+      "sources": {
+        "s1k": {
+          "title": "BMW S1000RR 2015 - onboard driving, starts, accelerations, gearshifts",
+          "author": "Dramatic Cat",
+          "bundle": "Sonniss GDC 2023 Game Audio Bundle",
+          "cacheName": "VEHMoto_BMW_S1000RR_ONBOARD_Driving_Sequence.flac",
+          "url": "https://archive.org/download/sonniss-gdc-2023-game-audio-bundle-normalized/Dramatic%20Cat%20-%20BMW%20S1000RR%20-%202015%204-Stroke%20999cc/VEHMoto_BMW%20S1000RR%20ONBOARD%20Driving%20Sequence%20Turn%20On%20Start%20Long%20And%20Short%20Acceleration%20Gearshifts%2002%20ENGINE_DRCA_BMWS_UsiPro.flac",
+          "anchors": [
+            [
+              74.0,
+              1190
+            ],
+            [
+              77.0,
+              2940
+            ],
+            [
+              78.5,
+              4520
+            ],
+            [
+              80.2,
+              6630
+            ],
+            [
+              80.45,
+              5040
+            ],
+            [
+              83.0,
+              6630
+            ],
+            [
+              85.0,
+              7950
+            ],
+            [
+              87.0,
+              10480
+            ]
+          ]
+        }
+      },
+      "loops": [
+        {
+          "kind": "idle",
+          "source": "s1k",
+          "t": [
+            14,
+            16.5
+          ],
+          "flatten": false,
+          "rpm": 1250
+        },
+        {
+          "kind": "on",
+          "source": "s1k",
+          "ramp": [
+            74.2,
+            80.1
+          ],
+          "targets": [
+            1600,
+            2200,
+            2900,
+            3700,
+            4500,
+            5300,
+            6100
+          ],
+          "maxHalfS": 0.25
+        },
+        {
+          "kind": "on",
+          "source": "s1k",
+          "ramp": [
+            80.6,
+            86.9
+          ],
+          "targets": [
+            6800,
+            7600,
+            8400,
+            9200,
+            10000
+          ],
+          "maxHalfS": 0.25
+        }
+      ],
+      "oneShots": {}
+    }
+  }
+}
