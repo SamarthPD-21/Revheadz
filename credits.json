@@ -64,6 +64,13 @@
   },
   {
     "vehicle": "Inline-4 Superbike",
+    "files": "Engine loops (idle, on-load, overrun)",
+    "author": "Pole Position Production",
+    "source": "BMW S1000RR HP4 2012 - onboard startup, idle, blips, constant rpms in neutral, shutdown (exhaust) (Sonniss GDC 2018 Game Audio Bundle)",
+    "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
+  },
+  {
+    "vehicle": "Inline-4 Superbike",
     "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
     "author": "Revheadz (generated)",
     "source": "scripts/generate-sounds.mjs",

@@ -12,10 +12,14 @@ export class Engine {
     return this.cfg.peakTorqueNm * shape * throttle;
   }
 
-  /** Torque dragging on the wheels when off the throttle (Nm). */
+  /**
+   * Torque dragging on the wheels when off the throttle (Nm): pumping losses against a
+   * closed throttle plus friction, rising with rpm. Gives a real "engine braking" feel in
+   * low gears and a gentle coast in tall ones.
+   */
   brakingTorque(rpm: number): number {
     const x = Math.max(0, rpm - this.cfg.idleRpm) / this.cfg.redlineRpm;
-    return this.cfg.engineBraking * this.cfg.peakTorqueNm * 0.35 * x;
+    return this.cfg.engineBraking * this.cfg.peakTorqueNm * (0.12 + 0.6 * x);
   }
 
   /** Free-revving rate of change (rpm/s) with no road load. */

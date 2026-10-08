@@ -280,3 +280,84 @@ export function wav(samples) {
   }
   return data;
 }
+
+// ------------------------------------------------------------- tone matching
+
+const BAND_EDGES = (() => {
+  const e = [];
+  for (let f = 40; f < 18000; f *= Math.pow(2, 1 / 3)) e.push(f);
+  return e;
+})();
+
+/** Average power per 1/3-octave band (40 Hz - 18 kHz) of a signal. */
+export function bandSpectrum(x) {
+  const N = 4096;
+  const win = Float64Array.from({ length: N }, (_, i) => 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / N));
+  const bands = new Float64Array(BAND_EDGES.length - 1);
+  let frames = 0;
+  for (let st = 0; st + N <= x.length; st += N / 2) {
+    const re = new Float64Array(N);
+    const im = new Float64Array(N);
+    for (let i = 0; i < N; i++) re[i] = x[st + i] * win[i];
+    fft(re, im);
+    for (let b = 0; b < bands.length; b++) {
+      const k0 = Math.floor((BAND_EDGES[b] / SR) * N);
+      const k1 = Math.max(k0 + 1, Math.floor((BAND_EDGES[b + 1] / SR) * N));
+      let p = 0;
+      for (let k = k0; k < k1; k++) p += re[k] * re[k] + im[k] * im[k];
+      bands[b] += p / (k1 - k0);
+    }
+    frames++;
+  }
+  return bands.map((p) => p / Math.max(1, frames));
+}
+
+/**
+ * Re-colours `loop` towards the tonal balance of `refBands` (from bandSpectrum), so loops
+ * cut from a different recording or mic blend in. Overall level is left to the caller;
+ * corrections are smoothed and limited to +-maxDb. Circular, so loops stay seamless.
+ */
+export function matchTone(loop, refBands, maxDb = 9) {
+  const own = bandSpectrum(loop);
+  let db = Array.from(own, (p, b) => 10 * Math.log10((refBands[b] + 1e-12) / (p + 1e-12)));
+  const mean = db.reduce((a, v) => a + v, 0) / db.length;
+  db = db.map((v) => Math.max(-maxDb, Math.min(maxDb, v - mean)));
+  db = db.map((_, i) => (db[Math.max(0, i - 1)] + 2 * db[i] + db[Math.min(db.length - 1, i + 1)]) / 4);
+  // linear-phase FIR by frequency sampling
+  const N = 2048;
+  const centres = BAND_EDGES.slice(0, -1).map((f, i) => Math.sqrt(f * BAND_EDGES[i + 1]));
+  const gainAt = (f) => {
+    if (f <= centres[0]) return db[0];
+    for (let i = 1; i < centres.length; i++) if (f <= centres[i]) {
+      const t = Math.log(f / centres[i - 1]) / Math.log(centres[i] / centres[i - 1]);
+      return db[i - 1] + (db[i] - db[i - 1]) * t;
+    }
+    return db[db.length - 1];
+  };
+  const re = new Float64Array(N);
+  const im = new Float64Array(N);
+  for (let k = 0; k <= N / 2; k++) {
+    const g = Math.pow(10, gainAt((k * SR) / N) / 20);
+    re[k] = g;
+    if (k > 0 && k < N / 2) re[N - k] = g;
+  }
+  // inverse FFT via conjugate trick
+  for (let i = 0; i < N; i++) im[i] = -im[i];
+  fft(re, im);
+  const taps = 1023;
+  const h = new Float64Array(taps);
+  for (let i = 0; i < taps; i++) {
+    const idx = (i - (taps - 1) / 2 + N) % N;
+    const w = 0.54 - 0.46 * Math.cos((2 * Math.PI * i) / (taps - 1));
+    h[i] = (re[idx] / N) * w;
+  }
+  const n = loop.length;
+  const out = new Float32Array(n);
+  const half = (taps - 1) / 2;
+  for (let i = 0; i < n; i++) {
+    let acc = 0;
+    for (let j = 0; j < taps; j++) acc += h[j] * loop[(i - j + half + n * 2) % n];
+    out[i] = acc;
+  }
+  return out;
+}

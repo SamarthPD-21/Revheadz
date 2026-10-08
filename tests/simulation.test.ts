@@ -270,7 +270,7 @@ describe("turbo", () => {
     expect(sim.state.boost).toBeGreaterThan(early);
     expect(sim.state.boost).toBeGreaterThan(0.5);
     sim.input.throttle = 0;
-    run(sim, 0.3);
+    run(sim, 0.6); // the lift has to be confirmed as a coast first
     expect(events).toContain("blowoff");
   });
 
@@ -371,5 +371,82 @@ describe("realistic shifting", () => {
       return t;
     };
     expect(time("v10_supercar")).toBeLessThan(time("muscle_v8") * 0.6);
+  });
+});
+
+describe("deceleration", () => {
+  it("a turbo car does not blow off when you lift to change gear", () => {
+    const sim = startedSim("jdm_i6_turbo");
+    const events: string[] = [];
+    sim.subscribe((e) => events.push(e.type));
+    sim.shiftUp();
+    sim.input.throttle = 1;
+    run(sim, 2.5);
+    sim.input.throttle = 0;
+    run(sim, 0.1);
+    sim.shiftUp();
+    run(sim, 0.2);
+    sim.input.throttle = 1;
+    run(sim, 1);
+    expect(events).not.toContain("blowoff");
+  });
+
+  it("engine braking slows the car clearly more in gear than coasting in neutral", () => {
+    const coast = (neutral: boolean) => {
+      const sim = startedSim("muscle_v8");
+      sim.shiftUp();
+      sim.input.throttle = 1;
+      run(sim, 1.2);
+      sim.shiftUp();
+      run(sim, 1.5);
+      sim.input.throttle = 0;
+      if (neutral) sim.neutral();
+      const v0 = sim.state.speedKmh;
+      run(sim, 2);
+      return v0 - sim.state.speedKmh;
+    };
+    const inGear = coast(false);
+    const inNeutral = coast(true);
+    expect(inGear).toBeGreaterThan(inNeutral * 1.5);
+    expect(inGear).toBeGreaterThan(5); // noticeable, km/h lost in 2 s
+  });
+
+  it("brakes build up progressively and ease off just before stopping (no jolts)", () => {
+    const sim = startedSim("muscle_v8");
+    sim.shiftUp();
+    sim.input.throttle = 1;
+    run(sim, 3);
+    sim.input.throttle = 0;
+    sim.neutral();
+    sim.input.brake = 1;
+    const dt = 1 / 120;
+    let prevV = sim.state.speedKmh / 3.6;
+    let prevA = 0;
+    let maxJerk = 0;
+    let t = 0;
+    while (sim.state.speedKmh > 0 && t < 20) {
+      sim.step(dt);
+      t += dt;
+      const v = sim.state.speedKmh / 3.6;
+      const a = (v - prevV) / dt;
+      if (t > dt * 2 && v > 0) maxJerk = Math.max(maxJerk, Math.abs(a - prevA) / dt);
+      prevV = v;
+      prevA = a;
+    }
+    expect(sim.state.speedKmh).toBe(0);
+    expect(maxJerk).toBeLessThan(150); // m/s^3: no instant 0 -> 9 m/s^2 steps
+  });
+
+  it("coasting at high revs crackles; holding the throttle or shifting does not", () => {
+    const sim = startedSim("hot_hatch", 5);
+    let crackles = 0;
+    sim.subscribe((e) => e.type === "crackle" && crackles++);
+    sim.shiftUp();
+    sim.input.throttle = 1;
+    run(sim, 3);
+    expect(crackles).toBe(0);
+    sim.input.throttle = 0;
+    run(sim, 3);
+    expect(crackles).toBeGreaterThan(0);
   });
 });

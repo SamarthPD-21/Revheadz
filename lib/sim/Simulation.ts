@@ -72,6 +72,11 @@ export class Simulation {
   /** Seconds left before a lift-off is confirmed as coasting; 0 = no lift pending. */
   private liftPending = 0;
   private liftRpm = 0;
+  private liftBoost = 0;
+  /** True while genuinely coasting (lift confirmed, no shift, throttle shut). */
+  private coasting = false;
+  /** Brake pedal after smoothing (a real pedal and brake system don't go 0 to 100% instantly). */
+  private brake = 0;
   private accumulator = 0;
   /** Automatic throttle blip applied to the free engine during a downshift. */
   private blip = 0;
@@ -134,6 +139,7 @@ export class Simulation {
     if (this.shift && this.shift.cut > 0) return; // mid-shift: wait for the gear to go in
     const loaded = s.throttle > 0.6 && s.ignition === "running";
     this.liftPending = 0; // a shift means the lift was for the gear change, not a coast
+    this.coasting = false;
     this.pops.length = 0;
     this.freeRpm = s.rpm;
     if (gear === 0) {
@@ -173,6 +179,10 @@ export class Simulation {
   step(dt: number): void {
     const s = this.state;
     const eng = this.cfg.engine;
+
+    // brake pressure builds over ~0.15 s and releases over ~0.08 s
+    const brakeTarget = clamp(this.input.brake, 0, 1);
+    this.brake += (brakeTarget - this.brake) * (1 - Math.exp(-dt / (brakeTarget > this.brake ? 0.15 : 0.08)));
 
     // 1. smooth raw input
     const target = s.ignition === "running" ? clamp(this.input.throttle, 0, 1) : 0;
@@ -292,7 +302,9 @@ export class Simulation {
     if (v > 0) {
       force -= 0.5 * AIR_DENSITY * this.cfg.dynamics.cdA * v * v;
       force -= ROLLING_RESISTANCE * this.cfg.dynamics.massKg * G;
-      force -= this.input.brake * this.cfg.dynamics.massKg * this.cfg.dynamics.brakeDecel;
+      // progressive braking that eases off in the last metre per second, so stops aren't abrupt
+      const ease = 0.35 + 0.65 * Math.min(1, v / 1.5);
+      force -= this.brake * ease * this.cfg.dynamics.massKg * this.cfg.dynamics.brakeDecel;
     }
     const prevSpeed = this.speedMs;
     this.speedMs = Math.max(0, this.speedMs + (force / this.cfg.dynamics.massKg) * dt);
@@ -323,23 +335,36 @@ export class Simulation {
 
   private updateBackfire(dt: number, running: boolean) {
     const s = this.state;
+    const eng = this.cfg.engine;
     if (s.throttle > 0.6) this.backfireArmed = true;
     if (this.backfireArmed && s.throttle < 0.1) {
       this.backfireArmed = false;
-      if (running && s.boost > 0.35) this.emit({ type: "blowoff" });
-      if (running && s.rpm > 0.6 * this.cfg.engine.redlineRpm) {
+      if (running) {
         this.liftPending = LIFT_CONFIRM_S;
         this.liftRpm = s.rpm;
+        this.liftBoost = s.boost;
       }
     }
-    // Lifting to change gear is not coasting: only pop if the throttle stays shut with no shift.
+    // Lifting to change gear is not coasting: lift sounds only happen if the throttle
+    // stays shut with no shift (a shift clears liftPending).
     if (this.liftPending > 0) {
       if (s.throttle > 0.1 || !running) this.liftPending = 0;
       else if ((this.liftPending -= dt) <= 0) {
         this.liftPending = 0;
-        const count = 1 + Math.floor(this.rng() * 4);
-        for (let i = 0; i < count; i++) this.pops.push(this.rng() * BACKFIRE_WINDOW_S);
+        this.coasting = true;
+        if (this.liftBoost > 0.35) this.emit({ type: "blowoff" });
+        if (this.liftRpm > 0.6 * eng.redlineRpm) {
+          const count = 1 + Math.floor(this.rng() * 3);
+          for (let i = 0; i < count; i++) this.pops.push(this.rng() * BACKFIRE_WINDOW_S);
+        }
       }
+    }
+    if (s.throttle > 0.1 || !running || s.shifting) this.coasting = false;
+    // overrun crackle: unburnt fuel popping in the exhaust while coasting at high revs
+    const crackle = eng.crackle ?? 0;
+    if (this.coasting && crackle > 0 && s.rpm > 0.45 * eng.redlineRpm) {
+      const rate = crackle * 8 * ((s.rpm / eng.redlineRpm - 0.45) / 0.55); // pops per second, up to ~8 at redline
+      if (this.rng() < rate * dt) this.emit({ type: "crackle" });
     }
     for (let i = this.pops.length - 1; i >= 0; i--) {
       this.pops[i] -= dt;
