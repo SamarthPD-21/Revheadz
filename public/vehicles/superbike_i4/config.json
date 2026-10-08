@@ -10,8 +10,9 @@
     "redlineRpm": 13500,
     "limiterRpm": 14000,
     "inertia": 0.18,
-    "engineBraking": 0.8,
-    "peakTorqueNm": 100
+    "engineBraking": 0.5,
+    "peakTorqueNm": 100,
+    "crackle": 0.6
   },
   "gearbox": {
     "type": "sequential",
@@ -36,20 +37,12 @@
     "mode": "samples",
     "onLoad": [
       {
-        "file": "on_1611.ogg",
-        "rpm": 1611.058
+        "file": "on_1740.ogg",
+        "rpm": 1740
       },
       {
-        "file": "on_2207.ogg",
-        "rpm": 2207.037
-      },
-      {
-        "file": "on_2857.ogg",
-        "rpm": 2857.196
-      },
-      {
-        "file": "on_3720.ogg",
-        "rpm": 3719.897
+        "file": "on_3480.ogg",
+        "rpm": 3480
       },
       {
         "file": "on_4405.ogg",
@@ -90,20 +83,12 @@
     ],
     "offLoad": [
       {
-        "file": "off_1611.ogg",
-        "rpm": 1611.058
+        "file": "off_1740.ogg",
+        "rpm": 1740
       },
       {
-        "file": "off_2207.ogg",
-        "rpm": 2207.037
-      },
-      {
-        "file": "off_2857.ogg",
-        "rpm": 2857.196
-      },
-      {
-        "file": "off_3720.ogg",
-        "rpm": 3719.897
+        "file": "off_3480.ogg",
+        "rpm": 3480
       },
       {
         "file": "off_4405.ogg",
@@ -143,8 +128,8 @@
       }
     ],
     "idle": {
-      "file": "idle_1250.ogg",
-      "rpm": 1250
+      "file": "idle_1290.ogg",
+      "rpm": 1290
     },
     "oneShots": {
       "start": "start.ogg",

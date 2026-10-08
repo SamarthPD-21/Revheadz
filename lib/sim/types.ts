@@ -22,7 +22,9 @@ export type SimEvent =
   | { type: "limiter" }
   | { type: "blowoff" }
   /** Ignition-cut crack on a fast loaded upshift (DCT / quickshifter). */
-  | { type: "shiftCrack" };
+  | { type: "shiftCrack" }
+  /** A small overrun pop while coasting at high revs. */
+  | { type: "crackle" };
 
 export interface SimInput {
   /** Raw throttle target, 0-1 */

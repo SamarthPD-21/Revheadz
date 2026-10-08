@@ -21,8 +21,11 @@ professional recordings. No install, no account, no server.
 - **11 vehicles**: muscle car, JDM turbo, supercars, a GT, a hot hatch, a rally car, a rotary and two bikes
 - **Real engine recordings** for five of them, turned into RPM-mapped loops by a custom audio pipeline
 - **Physics-based engine and gearbox**: inertia, torque curve, turbo lag, clutch slip at pull-away, drag and braking
-- **Realistic shifting**: torque cut, rev-matching blips on downshifts, and dual-clutch and quickshifter "cracks"
-- **Rev limiter, backfire pops and turbo blow-off**
+- **Realistic shifting**: torque cut, a rev-matching blip on downshifts, and clutch engagement, heard through the
+  engine note itself
+- **Realistic deceleration**: engine braking that pulls harder in low gears, progressive brakes that ease off as you
+  stop, and overrun crackle when you coast at high revs
+- **Rev limiter, backfire pops and turbo blow-off**, which only fire when you actually coast, never on a gear change
 - **Smooth sound**: all loops stay phase-locked and crossfade at constant loudness, so revving doesn't click or warble
 - **Race-car dashboard**: canvas gauges, shift lights, throttle, brake and boost bars, all redrawn every frame
 - **Works on phones**: touch throttle that springs back, brake pad and shift paddles, in portrait or landscape
@@ -69,7 +72,7 @@ npm run dev          # http://localhost:3000
 | Flat-6 Sports Coupe | Air-cooled flat-6 | 7-speed dual-clutch | 7,200 | 🎙️ Real recording |
 | V12 Grand Tourer | V12 | 7-speed dual-clutch | 6,750 | 🎙️ Real recording |
 | Hot Hatch Turbo-4 | Turbo inline-4 | 6-speed dual-clutch | 6,800 | 🎙️ Real recording |
-| Inline-4 Superbike | Inline-4, 1000 cc | 6-speed quickshifter | 13,500 | 🎙️ Real recording |
+| Inline-4 Superbike | Inline-4, 1000 cc | 6-speed quickshifter | 13,500 | 🎙️ Real recording (untouched up to ~3,500 rpm) |
 | Inline-6 Turbo | Turbo straight-6 | 6-speed manual | 7,000 | 🔧 Engine model |
 | V10 Supercar | V10 | 7-speed dual-clutch | 8,500 | 🔧 Engine model |
 | Boxer-4 Rally Turbo | Turbo flat-4 | 6-speed manual | 7,000 | 🔧 Engine model |
@@ -101,7 +104,9 @@ flowchart LR
   That keeps crossfades free of flanging and spikes.
 - **Shifting in two phases.** First the drive cuts out. On an upshift the revs fall under engine braking; on a
   downshift an automatic blip matches revs, and you hear it. Then the clutch engages: revs blend onto the new gear
-  and torque returns. Manual, dual-clutch and sequential gearboxes each have their own timing and character.
+  and torque returns. Manual, dual-clutch and sequential gearboxes each have their own timing.
+- **Lift-offs are judged.** Backfires, blow-off and overrun crackle only happen once the throttle has stayed shut for
+  a moment without a gear change, so lifting to shift never triggers them.
 - **Browser rules respected.** Audio starts only from the ignition tap, as autoplay policy requires. It pauses when
   the tab is hidden and fully stops when you leave the page.
 
@@ -114,7 +119,9 @@ game-ready loops, using the manifest in `scripts/real-sounds.json`:
 1. **Track the engine's speed** from its cycle frequency, the spacing of the harmonic "comb" every engine produces
    (RPM = cycle Hz × 120). Noisy sweeps can use hand-checked anchor points read off a spectrogram.
 2. **Cut** steady-RPM sections, or slices of full-throttle runs, and **flatten their pitch** to one exact RPM.
-3. **Loop** each section seamlessly with a correlated crossfade. Idle is left unflattened to keep its natural lope.
+3. **Loop** each section seamlessly with a correlated crossfade. Idle and steady holds can be left untouched to keep
+   their natural character. Loops cut from a second recording can be EQ-matched to the first, so the change in mic or
+   session isn't audible.
 4. **Finish**: make darker overrun variants, normalise loudness along a smooth RPM curve, cut the real start-up and
    shutdown sounds, encode `.ogg` and `.mp3`, and write the vehicle config and credits.
 

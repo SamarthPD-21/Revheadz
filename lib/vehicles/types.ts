@@ -13,6 +13,8 @@ export interface EngineConfig {
   /** 0-1, how strongly the engine slows the car off-throttle. */
   engineBraking: number;
   peakTorqueNm: number;
+  /** 0-1: how much the exhaust crackles and pops on the overrun. */
+  crackle?: number;
 }
 
 /**

@@ -11,7 +11,8 @@
     "limiterRpm": 7200,
     "inertia": 0.32,
     "engineBraking": 0.5,
-    "peakTorqueNm": 620
+    "peakTorqueNm": 620,
+    "crackle": 0.4
   },
   "gearbox": {
     "type": "manual",

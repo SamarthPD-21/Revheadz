@@ -217,9 +217,9 @@ export class AudioEngine {
   }
 
   handleEvent(e: SimEvent): void {
-    if (e.type === "limiter") return;
-    // a gearshift ignition cut is a sharp, quieter cousin of the backfire
-    if (e.type === "shiftCrack") this.oneShots?.play("backfire", { gain: 0.55, rate: 1.12 });
+    // Shifts are heard through the engine note itself (rpm drop, rev-match blip); no clunks or cracks.
+    if (e.type === "limiter" || e.type === "shift" || e.type === "shiftCrack") return;
+    if (e.type === "crackle") this.oneShots?.play("backfire", { gain: 0.28, rate: 1.15 + Math.random() * 0.25 });
     else this.oneShots?.play(e.type as OneShotKind);
   }
 

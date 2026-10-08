@@ -23,7 +23,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { SR, decode, filterLoop, filterOnce, flatten, makeLoop, rms, trackPitch, wav } from "./audio-analysis.mjs";
+import { SR, bandSpectrum, decode, filterLoop, filterOnce, flatten, makeLoop, matchTone, rms, trackPitch, wav } from "./audio-analysis.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const CACHE = path.join(ROOT, ".sound-cache");
@@ -152,7 +152,7 @@ function buildVehicle(id, spec, tmp) {
       const near = (f) => f.f0 > f0 * (1 - tol) && f.f0 < f0 * (1 + tol);
       while (a > 0 && near(frames[a - 1]) && frames[i].t - frames[a - 1].t < (seg.maxHalfS ?? 0.4)) a--;
       while (b < frames.length - 1 && near(frames[b + 1]) && frames[b + 1].t - frames[i].t < (seg.maxHalfS ?? 0.4)) b++;
-      segments.push({ kind: seg.kind, source: seg.source, t: [frames[a].t, frames[b].t] });
+      segments.push({ kind: seg.kind, source: seg.source, t: [frames[a].t, frames[b].t], matchTo: seg.matchTo });
     }
   }
 
@@ -178,6 +178,11 @@ function buildVehicle(id, spec, tmp) {
       samples = made.loop;
       rpm = seg.rpm ?? target * rpmPerHz;
       console.log(`  ${seg.kind.padEnd(4)} ${seg.t[0]}-${seg.t[1]}s  f0 ${target.toFixed(1)} Hz -> ${Math.round(rpm)} rpm  loop ${(samples.length / SR).toFixed(2)}s corr ${made.correlation.toFixed(2)}`);
+    }
+    if (seg.matchTo) {
+      // blend loops from another recording/mic into the reference's tone
+      const ref = load(src(seg.matchTo.source), spec.pitchRange);
+      samples = matchTone(samples, bandSpectrum(slice(ref.x, seg.matchTo.t)));
     }
     samples = filterLoop(samples, "hp", 28, 0.7);
     loops.push({ kind: seg.kind, rpm, samples });

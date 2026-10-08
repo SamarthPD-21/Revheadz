@@ -11,7 +11,8 @@
     "limiterRpm": 7000,
     "inertia": 0.25,
     "engineBraking": 0.5,
-    "peakTorqueNm": 720
+    "peakTorqueNm": 720,
+    "crackle": 0.3
   },
   "gearbox": {
     "type": "dct",
