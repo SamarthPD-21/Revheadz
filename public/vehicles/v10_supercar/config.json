@@ -11,7 +11,7 @@
     "limiterRpm": 8700,
     "inertia": 0.22,
     "engineBraking": 0.55,
-    "peakTorqueNm": 560,
+    "peakTorqueNm": 588,
     "crackle": 0.8
   },
   "gearbox": {
@@ -25,7 +25,7 @@
       0.92,
       0.75
     ],
-    "finalDrive": 3.94,
+    "finalDrive": 4.65,
     "wheelRadiusM": 0.34,
     "shiftTimeMs": 110
   },

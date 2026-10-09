@@ -35,6 +35,11 @@ body {
    Short landscape (phones on their side): brake+shift on the left, gauges and
    ignition in the middle, throttle on the right, so nothing needs scrolling. */
 .drive {
+  /* every finger is a control: no pinch-zoom, scrolling or text selection while driving */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   display: grid;
   width: 100%;
   max-width: 76rem;
@@ -111,4 +116,37 @@ body {
 .ignition-idle { animation: ignition-breathe 2.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
   .ignition-idle { animation: none; }
+}
+
+/* ---- live control feedback (keyboard or touch) ---------------------------------- */
+.ctl { transition: transform 90ms ease-out, filter 90ms ease-out, background-color 90ms; }
+.ctl:active, .ctl[data-flash="1"] { transform: scale(0.94); filter: brightness(1.7); }
+.brake-pad { transition: transform 90ms ease-out, background-color 90ms, box-shadow 90ms; }
+.brake-pad[data-on="1"] {
+  transform: scale(0.985);
+  background-color: rgba(220, 38, 38, 0.38);
+  /* a soft aura of light around the pad rather than a lit edge */
+  box-shadow: 0 0 48px 10px rgba(239, 68, 68, 0.32), 0 0 90px 24px rgba(239, 68, 68, 0.14);
+  color: #fff;
+}
+.pedal { transition: box-shadow 140ms ease-out; }
+.pedal[data-on="1"] {
+  box-shadow:
+    0 0 46px 10px color-mix(in srgb, var(--accent) 34%, transparent),
+    0 0 90px 26px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.keycap {
+  display: inline-block; min-width: 2.2rem; padding: 0.1rem 0.4rem; border-radius: 0.375rem;
+  border: 1px solid rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.05);
+  font-family: var(--font-mono); font-size: 11px; color: #d4d4d8; text-align: center;
+  box-shadow: 0 2px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 80ms, background-color 80ms, color 80ms, box-shadow 80ms;
+}
+.keycap[data-on="1"] {
+  transform: translateY(1px); background: var(--accent); color: #000;
+  box-shadow: 0 0 18px 4px color-mix(in srgb, var(--accent) 40%, transparent), 0 0 36px 10px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.ignition[data-flash="1"] { transform: scale(0.93); }
+@media (prefers-reduced-motion: reduce) {
+  .ctl, .brake-pad, .keycap, .pedal { transition: none; }
 }

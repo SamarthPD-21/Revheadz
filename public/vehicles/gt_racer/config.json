@@ -1,0 +1,264 @@
+{
+  "id": "gt_racer",
+  "name": "GT Race Car",
+  "type": "car",
+  "engineType": "Flat-plane V8, straight pipes",
+  "description": "A track-bred GT with a flat-plane V8 screaming through straight pipes to 9,000 rpm. Real recording.",
+  "engine": {
+    "cylinders": 8,
+    "idleRpm": 700,
+    "redlineRpm": 8800,
+    "limiterRpm": 9000,
+    "inertia": 0.16,
+    "engineBraking": 0.75,
+    "peakTorqueNm": 560,
+    "crackle": 0.9
+  },
+  "gearbox": {
+    "type": "sequential",
+    "ratios": [
+      3.08,
+      2.19,
+      1.63,
+      1.29,
+      1.03,
+      0.84
+    ],
+    "finalDrive": 4.9,
+    "wheelRadiusM": 0.34,
+    "shiftTimeMs": 70
+  },
+  "dynamics": {
+    "massKg": 1260,
+    "cdA": 0.85,
+    "brakeDecel": 14
+  },
+  "ui": {
+    "accent": "#f43f5e",
+    "silhouette": "gtcar",
+    "category": "GT",
+    "layout": "Flat-plane V8",
+    "displacement": "4.5 L",
+    "powerHp": 570,
+    "recorded": true
+  },
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_1185.ogg",
+        "rpm": 1185.021
+      },
+      {
+        "file": "on_1750.ogg",
+        "rpm": 1749.633
+      },
+      {
+        "file": "on_1905.ogg",
+        "rpm": 1904.998
+      },
+      {
+        "file": "on_2658.ogg",
+        "rpm": 2657.902
+      },
+      {
+        "file": "on_3229.ogg",
+        "rpm": 3229.135
+      },
+      {
+        "file": "on_3913.ogg",
+        "rpm": 3913.431
+      },
+      {
+        "file": "on_4558.ogg",
+        "rpm": 4558.369
+      },
+      {
+        "file": "on_5311.ogg",
+        "rpm": 5310.672
+      },
+      {
+        "file": "on_6241.ogg",
+        "rpm": 6241.325
+      },
+      {
+        "file": "on_6947.ogg",
+        "rpm": 6946.901
+      },
+      {
+        "file": "on_7822.ogg",
+        "rpm": 7821.984
+      },
+      {
+        "file": "on_8506.ogg",
+        "rpm": 8506.366
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_1185.ogg",
+        "rpm": 1185.021
+      },
+      {
+        "file": "off_2129.ogg",
+        "rpm": 2128.501
+      },
+      {
+        "file": "off_2172.ogg",
+        "rpm": 2171.753
+      },
+      {
+        "file": "off_2568.ogg",
+        "rpm": 2567.853
+      },
+      {
+        "file": "off_3173.ogg",
+        "rpm": 3172.9
+      },
+      {
+        "file": "off_3786.ogg",
+        "rpm": 3786.253
+      },
+      {
+        "file": "off_4482.ogg",
+        "rpm": 4482.109
+      },
+      {
+        "file": "off_5177.ogg",
+        "rpm": 5176.954
+      },
+      {
+        "file": "off_5967.ogg",
+        "rpm": 5966.523
+      }
+    ],
+    "idle": {
+      "file": "idle_760.ogg",
+      "rpm": 760
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_840.ogg",
+        "rpm": 840
+      },
+      {
+        "file": "gen/on_1064.ogg",
+        "rpm": 1063.749
+      },
+      {
+        "file": "gen/on_1347.ogg",
+        "rpm": 1347.098
+      },
+      {
+        "file": "gen/on_1706.ogg",
+        "rpm": 1705.915
+      },
+      {
+        "file": "gen/on_2160.ogg",
+        "rpm": 2160.328
+      },
+      {
+        "file": "gen/on_2736.ogg",
+        "rpm": 2735.758
+      },
+      {
+        "file": "gen/on_3464.ogg",
+        "rpm": 3464.468
+      },
+      {
+        "file": "gen/on_4387.ogg",
+        "rpm": 4387.316
+      },
+      {
+        "file": "gen/on_5556.ogg",
+        "rpm": 5555.932
+      },
+      {
+        "file": "gen/on_7036.ogg",
+        "rpm": 7035.841
+      },
+      {
+        "file": "gen/on_8910.ogg",
+        "rpm": 8910.018
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_945.ogg",
+        "rpm": 945
+      },
+      {
+        "file": "gen/off_1210.ogg",
+        "rpm": 1209.819
+      },
+      {
+        "file": "gen/off_1549.ogg",
+        "rpm": 1548.844
+      },
+      {
+        "file": "gen/off_1983.ogg",
+        "rpm": 1982.858
+      },
+      {
+        "file": "gen/off_2539.ogg",
+        "rpm": 2538.511
+      },
+      {
+        "file": "gen/off_3250.ogg",
+        "rpm": 3249.877
+      },
+      {
+        "file": "gen/off_4161.ogg",
+        "rpm": 4160.574
+      },
+      {
+        "file": "gen/off_5326.ogg",
+        "rpm": 5326.498
+      },
+      {
+        "file": "gen/off_6819.ogg",
+        "rpm": 6819.135
+      },
+      {
+        "file": "gen/off_8730.ogg",
+        "rpm": 8730.039
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_700.ogg",
+      "rpm": 700
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

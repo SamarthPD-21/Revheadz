@@ -11,7 +11,7 @@
     "limiterRpm": 6500,
     "inertia": 0.35,
     "engineBraking": 0.6,
-    "peakTorqueNm": 550,
+    "peakTorqueNm": 594,
     "crackle": 0.55
   },
   "gearbox": {
@@ -24,7 +24,7 @@
       0.84,
       0.56
     ],
-    "finalDrive": 3.42,
+    "finalDrive": 4.17,
     "wheelRadiusM": 0.34,
     "shiftTimeMs": 280
   },
@@ -111,13 +111,13 @@
       "start": "start.ogg",
       "stop": "stop.ogg",
       "shift": [
-        "shift_1.ogg",
-        "shift_2.ogg"
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
       ],
       "backfire": [
-        "pop_1.ogg",
-        "pop_2.ogg",
-        "pop_3.ogg"
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
       ]
     },
     "masterGainDb": 0
@@ -133,5 +133,106 @@
     "displacement": "7.0 L",
     "powerHp": 425,
     "recorded": true
+  },
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_720.ogg",
+        "rpm": 720
+      },
+      {
+        "file": "gen/on_918.ogg",
+        "rpm": 918.378
+      },
+      {
+        "file": "gen/on_1171.ogg",
+        "rpm": 1171.427
+      },
+      {
+        "file": "gen/on_1494.ogg",
+        "rpm": 1494.184
+      },
+      {
+        "file": "gen/on_1906.ogg",
+        "rpm": 1905.87
+      },
+      {
+        "file": "gen/on_2431.ogg",
+        "rpm": 2431.005
+      },
+      {
+        "file": "gen/on_3101.ogg",
+        "rpm": 3100.82
+      },
+      {
+        "file": "gen/on_3955.ogg",
+        "rpm": 3955.194
+      },
+      {
+        "file": "gen/on_5045.ogg",
+        "rpm": 5044.947
+      },
+      {
+        "file": "gen/on_6435.ogg",
+        "rpm": 6434.983
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_810.ogg",
+        "rpm": 810.003
+      },
+      {
+        "file": "gen/off_1047.ogg",
+        "rpm": 1046.855
+      },
+      {
+        "file": "gen/off_1353.ogg",
+        "rpm": 1352.966
+      },
+      {
+        "file": "gen/off_1749.ogg",
+        "rpm": 1748.579
+      },
+      {
+        "file": "gen/off_2260.ogg",
+        "rpm": 2259.886
+      },
+      {
+        "file": "gen/off_2921.ogg",
+        "rpm": 2920.697
+      },
+      {
+        "file": "gen/off_3775.ogg",
+        "rpm": 3774.715
+      },
+      {
+        "file": "gen/off_4878.ogg",
+        "rpm": 4878.475
+      },
+      {
+        "file": "gen/off_6305.ogg",
+        "rpm": 6305.004
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_600.ogg",
+      "rpm": 600
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
   }
 }

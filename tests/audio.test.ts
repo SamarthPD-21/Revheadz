@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { LOOP_CORRELATION, MAX_RATE, MIN_RATE, blendSamples, crossfade, equalPower, idleBlend, rateFor } from "../lib/audio/blend";
-import { referencedSoundFiles, vehicles } from "../lib/vehicles";
+import { allSoundFiles, vehicles } from "../lib/vehicles";
 import { validateVehicle } from "../lib/vehicles/validate";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -66,7 +66,7 @@ describe("vehicle configs", () => {
   it.each(vehicles.map((v) => [v.id, v] as const))("%s is valid and all sound files exist", (id, v) => {
     expect(validateVehicle(v)).toEqual([]);
     const dir = path.join(process.cwd(), "public", "vehicles", id, "sounds");
-    for (const f of referencedSoundFiles(v)) {
+    for (const f of allSoundFiles(v)) {
       expect(existsSync(path.join(dir, f)), f).toBe(true);
       expect(existsSync(path.join(dir, f.replace(/\.ogg$/, ".mp3"))), f + " (mp3)").toBe(true);
     }
@@ -96,6 +96,13 @@ describe("vehicle configs", () => {
           }
         }
       }
+    }
+  });
+
+  it("every real-recording vehicle also offers a generated (engine-model) sound set", () => {
+    for (const v of vehicles.filter((x) => x.ui.recorded)) {
+      expect(v.audioGenerated, v.id).toBeDefined();
+      expect(v.audioGenerated!.onLoad!.length, v.id).toBeGreaterThan(2);
     }
   });
 

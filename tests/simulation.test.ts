@@ -106,7 +106,7 @@ describe("gearing", () => {
     const sim = startedSim("muscle_v8");
     sim.shiftUp();
     sim.input.throttle = 1;
-    run(sim, 2.5);
+    run(sim, 1.6);
     sim.shiftUp();
     const before = sim.state.rpm;
     sim.input.throttle = 0;
@@ -283,6 +283,21 @@ describe("turbo", () => {
 });
 
 describe("realistic shifting", () => {
+  it("shifting with the engine off or cranking never gets stuck mid-shift", () => {
+    const sim = new Simulation(loadConfig("muscle_v8"), seeded());
+    sim.shiftUp();
+    expect(sim.state.gear).toBe(1);
+    expect(sim.state.shifting).toBe(false);
+    sim.toggleIgnition(); // cranking
+    sim.shiftUp();
+    expect(sim.state.gear).toBe(2);
+    run(sim, 1.5); // now running
+    sim.shiftDown();
+    run(sim, 1);
+    sim.shiftUp();
+    expect(sim.state.gear).toBe(2);
+  });
+
   it("cuts drive during the shift: the car does not accelerate mid-shift", () => {
     const sim = startedSim("muscle_v8");
     sim.shiftUp();
@@ -326,7 +341,9 @@ describe("realistic shifting", () => {
     sim.shiftUp();
     run(sim, 1);
     sim.input.throttle = 0;
-    run(sim, 0.6);
+    sim.input.brake = 1; // slow down enough that 2nd gear won't over-rev
+    while (sim.state.rpm > cfg.engine.redlineRpm * 0.45) sim.step(1 / 120);
+    sim.input.brake = 0;
     const before = sim.state.rpm;
     expect(sim.state.gear).toBe(3);
     sim.shiftDown();
@@ -375,7 +392,7 @@ describe("realistic shifting", () => {
 });
 
 describe("deceleration", () => {
-  it("a turbo car does not blow off when you lift to change gear", () => {
+  it("a turbo car vents (blow-off) the moment you lift, even to change gear", () => {
     const sim = startedSim("jdm_i6_turbo");
     const events: string[] = [];
     sim.subscribe((e) => events.push(e.type));
@@ -388,7 +405,7 @@ describe("deceleration", () => {
     run(sim, 0.2);
     sim.input.throttle = 1;
     run(sim, 1);
-    expect(events).not.toContain("blowoff");
+    expect(events.filter((e) => e === "blowoff").length).toBe(1);
   });
 
   it("engine braking slows the car clearly more in gear than coasting in neutral", () => {

@@ -1,0 +1,205 @@
+{
+  "id": "gp_racer",
+  "name": "Grand Prix Racer",
+  "type": "car",
+  "engineType": "2.4 L V8, 19,000 rpm",
+  "description": "An open-wheel Grand Prix car with a howling 2.4 L V8 that idles at 4,500 and revs to 19,000. Real recording.",
+  "engine": {
+    "cylinders": 8,
+    "idleRpm": 4400,
+    "redlineRpm": 18500,
+    "limiterRpm": 19000,
+    "inertia": 0.18,
+    "engineBraking": 0.55,
+    "peakTorqueNm": 300,
+    "crackle": 0.4
+  },
+  "gearbox": {
+    "type": "sequential",
+    "ratios": [
+      2.9,
+      2.4,
+      2,
+      1.72,
+      1.5,
+      1.33,
+      1.2
+    ],
+    "finalDrive": 6,
+    "wheelRadiusM": 0.33,
+    "shiftTimeMs": 40
+  },
+  "dynamics": {
+    "massKg": 620,
+    "cdA": 1.25,
+    "brakeDecel": 32
+  },
+  "ui": {
+    "accent": "#06b6d4",
+    "silhouette": "formula",
+    "category": "Grand Prix",
+    "layout": "V8 2.4 L",
+    "displacement": "2.4 L",
+    "powerHp": 750,
+    "recorded": true
+  },
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_6712.ogg",
+        "rpm": 6711.823
+      },
+      {
+        "file": "on_9197.ogg",
+        "rpm": 9196.812
+      },
+      {
+        "file": "on_10009.ogg",
+        "rpm": 10008.691
+      },
+      {
+        "file": "on_10758.ogg",
+        "rpm": 10758.434
+      },
+      {
+        "file": "on_11353.ogg",
+        "rpm": 11353.25
+      },
+      {
+        "file": "on_12457.ogg",
+        "rpm": 12457.329
+      },
+      {
+        "file": "on_15028.ogg",
+        "rpm": 15027.692
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_6712.ogg",
+        "rpm": 6711.823
+      },
+      {
+        "file": "off_9197.ogg",
+        "rpm": 9196.812
+      },
+      {
+        "file": "off_10009.ogg",
+        "rpm": 10008.691
+      },
+      {
+        "file": "off_10758.ogg",
+        "rpm": 10758.434
+      },
+      {
+        "file": "off_11353.ogg",
+        "rpm": 11353.25
+      },
+      {
+        "file": "off_12457.ogg",
+        "rpm": 12457.329
+      },
+      {
+        "file": "off_15028.ogg",
+        "rpm": 15027.692
+      }
+    ],
+    "idle": {
+      "file": "idle_4450.ogg",
+      "rpm": 4450
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_5280.ogg",
+        "rpm": 5279.995
+      },
+      {
+        "file": "gen/on_6525.ogg",
+        "rpm": 6525.216
+      },
+      {
+        "file": "gen/on_8064.ogg",
+        "rpm": 8064.019
+      },
+      {
+        "file": "gen/on_9966.ogg",
+        "rpm": 9965.819
+      },
+      {
+        "file": "gen/on_12316.ogg",
+        "rpm": 12316.058
+      },
+      {
+        "file": "gen/on_15221.ogg",
+        "rpm": 15220.564
+      },
+      {
+        "file": "gen/on_18810.ogg",
+        "rpm": 18809.952
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_5940.ogg",
+        "rpm": 5940.01
+      },
+      {
+        "file": "gen/off_7450.ogg",
+        "rpm": 7449.648
+      },
+      {
+        "file": "gen/off_9343.ogg",
+        "rpm": 9342.938
+      },
+      {
+        "file": "gen/off_11717.ogg",
+        "rpm": 11717.381
+      },
+      {
+        "file": "gen/off_14695.ogg",
+        "rpm": 14695.279
+      },
+      {
+        "file": "gen/off_18430.ogg",
+        "rpm": 18429.975
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_4400.ogg",
+      "rpm": 4400
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

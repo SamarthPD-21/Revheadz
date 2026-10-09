@@ -2,31 +2,41 @@
 
 import { useRef } from "react";
 import type { InputManager } from "../lib/input/InputManager";
+import { useFrame } from "./useFrame";
 
-/** Vertical touch/mouse throttle pedal that springs back to zero. Position maps straight to throttle 0-1. */
+/**
+ * Vertical throttle pedal that springs back to zero. Touch position maps straight to
+ * throttle 0-1, and the pedal also shows keyboard throttle (W / Up / Space), so it always
+ * reflects what the engine is getting.
+ */
 export function ThrottleControl({ input, accent }: { input: InputManager; accent: string }) {
   const track = useRef<HTMLDivElement>(null);
   const fill = useRef<HTMLDivElement>(null);
   const readout = useRef<HTMLSpanElement>(null);
   const pointerId = useRef<number | null>(null);
+  const shown = useRef(-1);
 
-  const set = (v: number) => {
-    const c = Math.min(1, Math.max(0, v));
-    input.setTouchThrottle(c);
-    if (fill.current) fill.current.style.transform = `scaleY(${c})`;
-    if (readout.current) readout.current.textContent = `${Math.round(c * 100)}%`;
-    track.current?.setAttribute("aria-valuenow", String(Math.round(c * 100)));
-  };
+  useFrame(() => {
+    const v = input.levels().throttle;
+    if (Math.abs(v - shown.current) < 0.005) return;
+    shown.current = v;
+    if (fill.current) fill.current.style.transform = `scaleY(${v})`;
+    if (readout.current) readout.current.textContent = `${Math.round(v * 100)}%`;
+    if (track.current) {
+      track.current.setAttribute("aria-valuenow", String(Math.round(v * 100)));
+      track.current.dataset.on = v > 0.01 ? "1" : "0";
+    }
+  });
 
   const fromEvent = (e: React.PointerEvent) => {
     const rect = track.current!.getBoundingClientRect();
-    set(1 - (e.clientY - rect.top) / rect.height);
+    input.setTouchThrottle(1 - (e.clientY - rect.top) / rect.height);
   };
 
   const release = (e: React.PointerEvent) => {
     if (pointerId.current !== e.pointerId) return;
     pointerId.current = null;
-    set(0);
+    input.setTouchThrottle(0);
   };
 
   return (
@@ -39,7 +49,9 @@ export function ThrottleControl({ input, accent }: { input: InputManager; accent
       aria-valuemax={100}
       aria-valuenow={0}
       tabIndex={0}
-      className="relative h-full min-h-16 w-full touch-none select-none overflow-hidden rounded-2xl border border-white/15 bg-[repeating-linear-gradient(0deg,rgba(255,255,255,0.04)_0_2px,transparent_2px_10px)] bg-zinc-900"
+      data-on="0"
+      className="pedal relative h-full min-h-16 w-full touch-none select-none overflow-hidden rounded-2xl border border-white/15 bg-[repeating-linear-gradient(0deg,rgba(255,255,255,0.04)_0_2px,transparent_2px_10px)] bg-zinc-900"
+      style={{ "--accent": accent } as React.CSSProperties}
       onPointerDown={(e) => {
         if (pointerId.current !== null) return;
         pointerId.current = e.pointerId;
@@ -53,13 +65,13 @@ export function ThrottleControl({ input, accent }: { input: InputManager; accent
       onPointerCancel={release}
       onLostPointerCapture={() => {
         pointerId.current = null;
-        set(0);
+        input.setTouchThrottle(0);
       }}
     >
       <div
         ref={fill}
-        className="absolute inset-0 origin-bottom scale-y-0"
-        style={{ background: `linear-gradient(to top, ${accent}, ${accent}99)`, boxShadow: `0 0 24px ${accent}` }}
+        className="absolute inset-0 origin-bottom transition-transform duration-75 ease-out"
+        style={{ transform: "scaleY(0)", background: `linear-gradient(to top, ${accent}, ${accent}bb 85%, ${accent}66)` }}
       />
       <span className="pointer-events-none absolute inset-x-0 top-2 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-white/80">
         Gas

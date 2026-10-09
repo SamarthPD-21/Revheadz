@@ -6,6 +6,7 @@ import { trackEvent } from "../lib/analytics";
 import { AudioEngine } from "../lib/audio/AudioEngine";
 import { InputManager } from "../lib/input/InputManager";
 import { Simulation } from "../lib/sim/Simulation";
+import type { SimListener } from "../lib/sim/types";
 import type { VehicleConfig } from "../lib/vehicles/types";
 import { BrakePad } from "./BrakePad";
 import { GearIndicator } from "./GearIndicator";
@@ -16,12 +17,27 @@ import { ShiftButtons } from "./ShiftButtons";
 import { Speedometer } from "./Speedometer";
 import { Tachometer } from "./Tachometer";
 import { ThrottleControl } from "./ThrottleControl";
+import { pressHandlers } from "./press";
+import { KeyLegend } from "./KeyLegend";
+
+export type SoundSet = "recorded" | "generated";
 
 interface Rig {
   sim: Simulation;
-  audio: AudioEngine;
   input: InputManager;
+  /** The live audio engine; replaced when the sound set is switched. */
+  audio: { current: AudioEngine };
   press: () => void;
+  shiftUp: () => void;
+  shiftDown: () => void;
+  neutral: () => void;
+  subscribe: (fn: SimListener) => () => void;
+  gear: () => number;
+  /** Switches between real-recording and engine-model sound. Call from a tap (it may unlock audio). */
+  setSound: (set: SoundSet) => void;
+  setVolume: (v: number) => void;
+  /** Reports the current (and every future) engine's load status; returns an unsubscribe. */
+  bindStatus: (fn: (s: LoadState) => void) => () => void;
 }
 
 type LoadState = "idle" | "loading" | "ready" | "error";
@@ -29,11 +45,15 @@ type LoadState = "idle" | "loading" | "ready" | "error";
 /** Builds the (side-effect free) objects for one vehicle; wiring happens in the effect. */
 function createRig(vehicle: VehicleConfig, onFirstPress: () => void, onPending: (p: boolean) => void): Rig {
   const sim = new Simulation(vehicle);
-  const audio = new AudioEngine(vehicle);
+  const audio = { current: new AudioEngine(vehicle) };
+  let volume = 0.8;
+  let onStatus: (s: LoadState) => void = () => undefined;
+  let offStatus = () => {};
   let starting = false;
 
   const press = () => {
-    audio.unlock(); // must happen synchronously inside the tap/key handler
+    const engine = audio.current;
+    engine.unlock(); // must happen synchronously inside the tap/key handler
     if (sim.state.ignition !== "off") {
       sim.toggleIgnition();
       return;
@@ -44,11 +64,24 @@ function createRig(vehicle: VehicleConfig, onFirstPress: () => void, onPending: 
     starting = true;
     onPending(true);
     // Give the recordings a moment to decode so the first start-up isn't silent.
-    void audio.whenReady(2500).then(() => {
+    void engine.whenReady(2500).then(() => {
       starting = false;
       onPending(false);
       if (sim.state.ignition === "off") sim.toggleIgnition();
     });
+  };
+
+  const setSound = (set: SoundSet) => {
+    const prevEngine = audio.current;
+    const next = new AudioEngine(vehicle, set === "generated" && vehicle.audioGenerated ? vehicle.audioGenerated : vehicle.audio);
+    next.attach();
+    next.setVolume(volume);
+    offStatus();
+    offStatus = next.onStatus(onStatus);
+    if (prevEngine.unlocked) next.unlock(); // still inside the tap: keep sound going
+    prevEngine.dispose();
+    audio.current = next;
+    trackEvent("sound_set", { vehicle: vehicle.id, set });
   };
 
   const input = new InputManager({
@@ -57,7 +90,32 @@ function createRig(vehicle: VehicleConfig, onFirstPress: () => void, onPending: 
     shiftDown: () => sim.shiftDown(),
     neutral: () => sim.neutral(),
   });
-  return { sim, audio, input, press };
+  const setVolume = (v: number) => {
+    volume = v;
+    audio.current.setVolume(v);
+  };
+  const bindStatus = (fn: (s: LoadState) => void) => {
+    onStatus = fn;
+    offStatus = audio.current.onStatus(fn);
+    return () => {
+      offStatus();
+      onStatus = () => undefined;
+    };
+  };
+  return {
+    sim,
+    audio,
+    input,
+    press,
+    setSound,
+    setVolume,
+    bindStatus,
+    shiftUp: () => sim.shiftUp(),
+    shiftDown: () => sim.shiftDown(),
+    neutral: () => sim.neutral(),
+    subscribe: (fn: SimListener) => sim.subscribe(fn),
+    gear: () => sim.state.gear,
+  };
 }
 
 export interface Neighbour {
@@ -78,20 +136,21 @@ export default function Simulator({ vehicle, prev, next, maxKmh }: Props) {
   const [loadState, setLoadState] = useState<LoadState>("idle");
   const [everStarted, setEverStarted] = useState(false);
   const [pending, setPending] = useState(false);
+  const [soundSet, setSoundSet] = useState<SoundSet>("recorded");
   const volumeRef = useRef(0.8);
   const [rig] = useState(() => createRig(vehicle, () => setEverStarted(true), setPending));
 
   useEffect(() => {
     const { sim, audio, input } = rig;
-    audio.attach();
-    audio.setVolume(volumeRef.current);
+    audio.current.attach();
+    rig.setVolume(volumeRef.current);
     input.attach();
 
     const offSim = sim.subscribe((e) => {
-      audio.handleEvent(e);
+      audio.current.handleEvent(e);
       if (e.type === "shift") navigator.vibrate?.(12);
     });
-    const offStatus = audio.onStatus(setLoadState);
+    const unbindStatus = rig.bindStatus(setLoadState);
 
     let raf = 0;
     let last = performance.now();
@@ -99,7 +158,7 @@ export default function Simulator({ vehicle, prev, next, maxKmh }: Props) {
       input.apply(sim.input, now);
       sim.advance((now - last) / 1000);
       last = now;
-      audio.update(sim.state);
+      audio.current.update(sim.state);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -110,13 +169,14 @@ export default function Simulator({ vehicle, prev, next, maxKmh }: Props) {
       cancelAnimationFrame(raf);
       input.detach();
       offSim();
-      offStatus();
-      audio.dispose();
+      unbindStatus();
+      audio.current.dispose();
       trackEvent("drive_seconds", { vehicle: vehicle.id, seconds: Math.round((performance.now() - startedAt) / 1000) });
     };
   }, [rig, vehicle.id]);
 
-  const { sim, audio, input, press } = rig;
+  const { sim, input, press, setSound } = rig;
+  const canSwitch = Boolean(vehicle.ui.recorded && vehicle.audioGenerated);
 
   const accent = vehicle.ui.accent;
   const navLink =
@@ -143,6 +203,28 @@ export default function Simulator({ vehicle, prev, next, maxKmh }: Props) {
             ›
           </Link>
         </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+        {canSwitch && (
+          <div className="flex rounded-full border border-white/15 bg-white/5 p-0.5 text-[11px] font-semibold" role="group" aria-label="Sound source">
+            {(["recorded", "generated"] as const).map((set) => (
+              <button
+                key={set}
+                type="button"
+                aria-pressed={soundSet === set}
+                title={set === "recorded" ? "Real engine recording" : "Engine-model (generated) sound"}
+                {...pressHandlers(() => {
+                  if (soundSet === set) return;
+                  setSound(set);
+                  setSoundSet(set);
+                })}
+                className={`rounded-full px-2.5 py-1 transition ${soundSet === set ? "text-black" : "text-zinc-300 hover:text-white"}`}
+                style={soundSet === set ? { background: accent } : undefined}
+              >
+                {set === "recorded" ? "🎙 Real" : "⚙ Model"}
+              </button>
+            ))}
+          </div>
+        )}
         <label className="flex items-center gap-2 text-xs text-zinc-300">
           <span aria-hidden>🔊</span>
           <input
@@ -158,10 +240,11 @@ export default function Simulator({ vehicle, prev, next, maxKmh }: Props) {
               const v = Number(e.target.value);
               setVolume(v);
               volumeRef.current = v;
-              audio.setVolume(v);
+              rig.setVolume(v);
             }}
           />
         </label>
+        </div>
       </header>
 
       <section className="drive-gauges grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-2" aria-label="Gauges">
@@ -170,7 +253,7 @@ export default function Simulator({ vehicle, prev, next, maxKmh }: Props) {
         </div>
         <div className="cluster grid min-h-0 grid-cols-[minmax(0,1fr)_3.5rem_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_5rem_minmax(0,1fr)] sm:gap-6">
           <div className="gauge-tach relative h-full min-h-0 min-w-0">
-            <Tachometer state={sim.state} redlineRpm={vehicle.engine.redlineRpm} limiterRpm={vehicle.engine.limiterRpm} accent={accent} />
+            <Tachometer state={sim.state} redlineRpm={vehicle.engine.redlineRpm} limiterRpm={vehicle.engine.limiterRpm} accent={accent} subscribe={rig.subscribe} />
           </div>
           <div className="gauge-telemetry relative h-full max-h-56 min-h-24">
             <Telemetry state={sim.state} brake={() => input.brakeLevel()} turbo={Boolean(vehicle.turbo)} accent={accent} />
@@ -186,7 +269,7 @@ export default function Simulator({ vehicle, prev, next, maxKmh }: Props) {
         <div className="min-h-0 flex-1">
           <BrakePad input={input} />
         </div>
-        <ShiftButtons onUp={() => sim.shiftUp()} onDown={() => sim.shiftDown()} onNeutral={() => sim.neutral()} />
+        <ShiftButtons onUp={rig.shiftUp} onDown={rig.shiftDown} onNeutral={rig.neutral} subscribe={rig.subscribe} gear={rig.gear} />
       </div>
 
       <div className="drive-center flex min-w-0 flex-col items-center justify-center gap-2 text-center">
@@ -195,18 +278,11 @@ export default function Simulator({ vehicle, prev, next, maxKmh }: Props) {
             Turn your volume down first. Engines are loud.
           </p>
         )}
-        <IgnitionButton store={sim.store} onPress={press} pending={pending} />
+        <IgnitionButton store={sim.store} onPress={press} pending={pending} subscribe={rig.subscribe} />
         <p className="h-4 text-[11px] text-zinc-400" aria-live="polite">
           {loadState === "loading" ? "Loading sounds…" : loadState === "error" ? "Using synthesized sound" : ""}
         </p>
-        <dl className="drive-keys hidden grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-left text-[11px] text-zinc-500 pointer-fine:grid">
-          <dt className="font-mono text-zinc-300">W ↑</dt><dd>gas</dd>
-          <dt className="font-mono text-zinc-300">S ↓</dt><dd>brake</dd>
-          <dt className="font-mono text-zinc-300">E Q</dt><dd>shift up / down</dd>
-          <dt className="font-mono text-zinc-300">N</dt><dd>neutral</dd>
-          <dt className="font-mono text-zinc-300">Space</dt><dd>blip</dd>
-          <dt className="font-mono text-zinc-300">I</dt><dd>engine start / stop</dd>
-        </dl>
+        <KeyLegend input={input} />
       </div>
 
       <div className="drive-right min-h-0">

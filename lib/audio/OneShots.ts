@@ -22,12 +22,12 @@ export class OneShots {
     private readonly destination: AudioNode,
   ) {}
 
-  play(kind: OneShotKind, opts?: { gain?: number; rate?: number }): void {
+  play(kind: OneShotKind, opts?: { gain?: number; rate?: number; index?: number }): void {
     if (this.active.size >= MAX_SIMULTANEOUS) return;
     const b = this.buffers;
     const list = kind === "start" ? [b.start] : kind === "stop" ? [b.stop] : b[kind];
     if (!list.length) return;
-    const buffer = kind === "shift" ? list[0] : pick(list);
+    const buffer = opts?.index !== undefined ? list[Math.min(opts.index, list.length - 1)] : kind === "shift" ? list[0] : pick(list);
     const src = this.ctx.createBufferSource();
     src.buffer = buffer;
     const gain = this.ctx.createGain();

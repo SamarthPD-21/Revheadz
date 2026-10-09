@@ -63,15 +63,31 @@ export class InputManager {
     this.blipUntil = now + BLIP_MS;
   }
 
-  /** Writes the current levels into the simulation input. */
-  apply(out: SimInput, now = performance.now()): void {
+  /** Current throttle and brake, whichever device they come from (keyboard, touch, blip). */
+  levels(now = performance.now()): SimInput {
     let throttle = this.touchThrottle;
     for (const k of THROTTLE_KEYS) if (this.keys.has(k)) throttle = 1;
     if (now < this.blipUntil) throttle = Math.max(throttle, BLIP_THROTTLE);
     let brake = this.touchBrake;
     for (const k of BRAKE_KEYS) if (this.keys.has(k)) brake = true;
-    out.throttle = throttle;
-    out.brake = brake ? 1 : 0;
+    return { throttle, brake: brake ? 1 : 0 };
+  }
+
+  /** True while a keyboard key (KeyboardEvent.code) is held. */
+  isKeyDown(code: string): boolean {
+    return this.keys.has(code);
+  }
+
+  /** True while the throttle is being driven from the on-screen slider. */
+  get touchingThrottle(): boolean {
+    return this.touchThrottle > 0;
+  }
+
+  /** Writes the current levels into the simulation input. */
+  apply(out: SimInput, now = performance.now()): void {
+    const l = this.levels(now);
+    out.throttle = l.throttle;
+    out.brake = l.brake;
   }
 
   private clear = () => {

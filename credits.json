@@ -77,6 +77,34 @@
     "license": "CC0 1.0"
   },
   {
+    "vehicle": "GT Race Car",
+    "files": "Engine loops (idle, on-load, overrun)",
+    "author": "Pole Position Production",
+    "source": "Ferrari 458 2013, straight pipes - onboard ramps, drive, stop (Sonniss GDC 2024 Game Audio Bundle)",
+    "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
+  },
+  {
+    "vehicle": "GT Race Car",
+    "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Grand Prix Racer",
+    "files": "Engine loops (idle, on-load, overrun)",
+    "author": "Pole Position Production",
+    "source": "Williams FW29 (2007 F1) - onboard driving at steady rpms, accelerations, shutdown (cockpit) (Sonniss GDC 2016 Game Audio Bundle)",
+    "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
+  },
+  {
+    "vehicle": "Grand Prix Racer",
+    "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
     "vehicle": "Inline-6 Turbo",
     "files": "All loops and one-shots (sounds/*.ogg, *.mp3)",
     "author": "Revheadz (original, generated with scripts/generate-sounds.mjs)",

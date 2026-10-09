@@ -1,6 +1,10 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useEngineState } from "../hooks/useEngineState";
+import type { SimListener } from "../lib/sim/types";
+import { flash } from "./useFrame";
+import { pressHandlers } from "./press";
 import type { LowFreqStore } from "../lib/sim/LowFreqStore";
 
 interface Props {
@@ -8,18 +12,23 @@ interface Props {
   /** Must run synchronously in the tap handler: it creates/resumes the AudioContext. */
   onPress: () => void;
   pending: boolean;
+  /** Simulation events, so the button reacts to the I key as well as taps. */
+  subscribe: (fn: SimListener) => () => void;
 }
 
 /** Push-button start, like a modern car. */
-export function IgnitionButton({ store, onPress, pending }: Props) {
+export function IgnitionButton({ store, onPress, pending, subscribe }: Props) {
   const { ignition } = useEngineState(store);
+  const ref = useRef<HTMLButtonElement>(null);
+  useEffect(() => subscribe((e) => (e.type === "start" || e.type === "stop") && flash(ref.current, 200)), [subscribe]);
   const running = ignition === "running";
   const busy = pending || ignition === "cranking";
   const label = running ? "Stop engine" : busy ? "Starting engine" : "Start engine";
   return (
     <button
+      ref={ref}
       type="button"
-      onClick={onPress}
+      {...pressHandlers(onPress)}
       aria-label={`${label} (I)`}
       aria-pressed={running}
       className={`ignition ${!running && !busy ? "ignition-idle" : ""} group relative grid aspect-square w-24 shrink-0 touch-none select-none place-items-center rounded-full border-4 outline-offset-4 transition sm:w-28 ${
