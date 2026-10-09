@@ -37,9 +37,11 @@ export interface TurboConfig {
   spoolRpm: number;
   /** Seconds for boost to build/decay (lag). */
   lagS: number;
+  /** Release sound when lifting off boost: blow-off valve "pssh" or compressor-surge "flutter". */
+  release?: "pssh" | "flutter";
 }
 
-export type Silhouette = "muscle" | "coupe" | "supercar" | "gt" | "hatch" | "rally" | "sport" | "superbike" | "cruiser";
+export type Silhouette = "muscle" | "coupe" | "supercar" | "gt" | "hatch" | "rally" | "sport" | "superbike" | "cruiser" | "gtcar" | "formula";
 
 export interface UiConfig {
   accent: string;
@@ -101,5 +103,7 @@ export interface VehicleConfig {
   turbo?: TurboConfig;
   ui: UiConfig;
   audio: AudioConfig;
+  /** For vehicles with real recordings: the engine-model sound set, offered as an alternative in the drive screen. */
+  audioGenerated?: AudioConfig;
   credits: string[];
 }

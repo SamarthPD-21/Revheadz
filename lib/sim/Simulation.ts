@@ -11,7 +11,15 @@ const THROTTLE_TAU = 0.06;
 const LOAD_TAU = 0.08;
 const CRANK_S = 0.8;
 const CRANK_RPM = 250;
-const FUEL_CUT_S = 0.04;
+/**
+ * Soft-cut rev limiter, like a modern ECU: at the limiter most of the fuel is cut until the
+ * revs fall back a little (or a maximum time passes), then it's restored and the engine climbs
+ * back into the limiter again. That cycle is the familiar irregular "bounce".
+ */
+const CUT_MIN_S = 0.02;
+const CUT_MAX_S = 0.075; // plus up to 30 ms of random variation per cut
+const CUT_POWER = 0.15; // share of throttle that still fires during a cut
+const cutDrop = (limiterRpm: number) => Math.max(120, limiterRpm * 0.018);
 const BACKFIRE_WINDOW_S = 0.6;
 /** A lift only counts as "coasting" (and may pop) if the throttle stays shut this long without a gear change. */
 const LIFT_CONFIRM_S = 0.25;
@@ -67,17 +75,19 @@ export class Simulation {
   private shift: ShiftPlan | null = null;
   private crankTimer = 0;
   private fuelCutTimer = 0;
+  private fuelCutElapsed = 0;
   private backfireArmed = false;
   private pops: number[] = [];
   /** Seconds left before a lift-off is confirmed as coasting; 0 = no lift pending. */
   private liftPending = 0;
   private liftRpm = 0;
-  private liftBoost = 0;
   /** True while genuinely coasting (lift confirmed, no shift, throttle shut). */
   private coasting = false;
   /** Brake pedal after smoothing (a real pedal and brake system don't go 0 to 100% instantly). */
   private brake = 0;
   private accumulator = 0;
+  private idleNoise = 0;
+  private noiseSeed = 12345;
   /** Automatic throttle blip applied to the free engine during a downshift. */
   private blip = 0;
   /** 0-1 clutch engagement after a shift; scales drive torque. */
@@ -142,7 +152,8 @@ export class Simulation {
     this.coasting = false;
     this.pops.length = 0;
     this.freeRpm = s.rpm;
-    if (gear === 0) {
+    if (gear === 0 || s.ignition !== "running") {
+      // neutral, or the engine isn't running: the lever just moves, there's nothing to cut or blend
       this.shift = null;
       s.shifting = false;
     } else {
@@ -200,12 +211,17 @@ export class Simulation {
     }
     const running = s.ignition === "running";
 
-    // fuel cut / limiter
-    if (this.fuelCutTimer > 0) this.fuelCutTimer -= dt;
+    // fuel cut / limiter: hold the cut until the revs have dropped back (or time runs out)
+    if (this.fuelCutTimer > 0) {
+      this.fuelCutTimer -= dt;
+      this.fuelCutElapsed += dt;
+      const droppedBack = this.engine.rpm <= eng.limiterRpm - cutDrop(eng.limiterRpm);
+      if (this.fuelCutElapsed >= CUT_MIN_S && droppedBack) this.fuelCutTimer = 0;
+    }
     const fuelCut = this.fuelCutTimer > 0;
     s.limiterActive = fuelCut;
     const inCut = Boolean(this.shift && this.shift.cut > 0);
-    const effThrottle = running && !fuelCut && !inCut ? s.throttle : 0;
+    const effThrottle = running && !inCut ? s.throttle * (fuelCut ? CUT_POWER : 1) : 0;
 
     const gear = s.gear;
     const locked = gear > 0 ? this.gearbox.rpmFromSpeed(this.speedKmh(), gear) : 0;
@@ -271,9 +287,14 @@ export class Simulation {
 
     if (running) {
       rpm = clamp(rpm, eng.idleRpm, eng.limiterRpm);
+      // a real idle never sits dead still: slow, small governor hunting near idle
+      this.idleNoise += ((this.noiseSeed = (this.noiseSeed * 16807) % 2147483647) / 2147483647 * 2 - 1 - this.idleNoise) * Math.min(1, dt * 5);
+      const nearIdle = Math.max(0, 1 - (rpm - eng.idleRpm) / (eng.idleRpm * 0.5));
+      rpm += eng.idleRpm * 0.006 * (0.5 + 0.5 * this.idleNoise) * nearIdle;
       this.freeRpm = Math.min(this.freeRpm, eng.limiterRpm);
       if (effThrottle > 0.05 && rpm >= eng.limiterRpm - 1 && this.fuelCutTimer <= 0) {
-        this.fuelCutTimer = FUEL_CUT_S;
+        this.fuelCutTimer = CUT_MAX_S + this.rng() * 0.03;
+        this.fuelCutElapsed = 0;
         s.limiterActive = true;
         this.emit({ type: "limiter" });
       }
@@ -317,7 +338,7 @@ export class Simulation {
     // 3. load
     const rising = clamp((rpm - this.engine.rpm) / dt / 3000, 0, 1);
     // the downshift blip is audible: it drives the on-load layer like a real throttle stab
-    const loadTarget = inCut ? this.blip * 0.9 : effThrottle > 0.02 ? s.throttle * (0.4 + 0.6 * rising) : 0;
+    const loadTarget = inCut ? this.blip * 0.9 : fuelCut ? 0.08 : effThrottle > 0.02 ? s.throttle * (0.4 + 0.6 * rising) : 0;
     s.load += (loadTarget - s.load) * (1 - Math.exp(-dt / LOAD_TAU));
 
     this.engine.rpm = rpm;
@@ -342,7 +363,8 @@ export class Simulation {
       if (running) {
         this.liftPending = LIFT_CONFIRM_S;
         this.liftRpm = s.rpm;
-        this.liftBoost = s.boost;
+        // a turbo vents the moment you lift, shift or not
+        if (s.boost > 0.4) this.emit({ type: "blowoff" });
       }
     }
     // Lifting to change gear is not coasting: lift sounds only happen if the throttle
@@ -352,7 +374,6 @@ export class Simulation {
       else if ((this.liftPending -= dt) <= 0) {
         this.liftPending = 0;
         this.coasting = true;
-        if (this.liftBoost > 0.35) this.emit({ type: "blowoff" });
         if (this.liftRpm > 0.6 * eng.redlineRpm) {
           const count = 1 + Math.floor(this.rng() * 3);
           for (let i = 0; i < count; i++) this.pops.push(this.rng() * BACKFIRE_WINDOW_S);

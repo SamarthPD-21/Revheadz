@@ -174,7 +174,13 @@ function buildVehicle(id, spec, tmp) {
       const scaledTrack = seg.octave ? track.map((f) => ({ ...f, f0: f.f0 * seg.octave })) : track;
       // idle is often left unflattened: its natural lope is the point, and trackers wander at idle
       const body = seg.flatten === false ? slice(x, seg.t) : flatten(x, scaledTrack, seg.t[0], seg.t[1], target);
-      const made = makeLoop(body, target, { crossfadeS: Math.min(0.06, (body.length / SR) * 0.2) });
+      let made;
+      try {
+        made = makeLoop(body, target, { crossfadeS: Math.min(0.06, (body.length / SR) * 0.2) });
+      } catch {
+        console.log(`  (${seg.t[0].toFixed(2)}-${seg.t[1].toFixed(2)}s too short to loop at ${Math.round(target * rpmPerHz)} rpm, skipped)`);
+        continue;
+      }
       samples = made.loop;
       rpm = seg.rpm ?? target * rpmPerHz;
       console.log(`  ${seg.kind.padEnd(4)} ${seg.t[0]}-${seg.t[1]}s  f0 ${target.toFixed(1)} Hz -> ${Math.round(rpm)} rpm  loop ${(samples.length / SR).toFixed(2)}s corr ${made.correlation.toFixed(2)}`);
@@ -192,8 +198,12 @@ function buildVehicle(id, spec, tmp) {
   const on = loops.filter((l) => l.kind === "on").sort((a, b) => a.rpm - b.rpm);
   if (!idle || on.length < 2) throw new Error(`${id}: need an idle loop and at least two on-load loops`);
 
-  // overrun: the same loops, darker and softer (they stay phase-aligned with the on-load ones)
-  const off = on.map((l) => ({ kind: "off", rpm: l.rpm, samples: filterLoop(filterLoop(l.samples, "lp", spec.offLoadLowpassHz ?? 1400, 0.6), "lp", (spec.offLoadLowpassHz ?? 1400) * 1.6, 0.6) }));
+  // overrun: real decel loops if the manifest has them, otherwise the on-load loops made darker and softer
+  const realOff = loops.filter((l) => l.kind === "off").sort((a, b) => a.rpm - b.rpm);
+  const off =
+    realOff.length >= 2
+      ? realOff
+      : on.map((l) => ({ kind: "off", rpm: l.rpm, samples: filterLoop(filterLoop(l.samples, "lp", spec.offLoadLowpassHz ?? 1400, 0.6), "lp", (spec.offLoadLowpassHz ?? 1400) * 1.6, 0.6) }));
 
   // loudness along a smooth curve
   const span = e.limiterRpm - e.idleRpm;
@@ -222,25 +232,30 @@ function buildVehicle(id, spec, tmp) {
   // write files: drop old loops, keep generated one-shots the manifest doesn't replace
   const dir = path.join(ROOT, "public", "vehicles", id, "sounds");
   mkdirSync(dir, { recursive: true });
-  for (const f of readdirSync(dir)) if (/^(idle|on|off)_/.test(f) || Object.keys(shots).some((k) => f.startsWith(`${k}.`))) unlinkSync(path.join(dir, f));
+  // drop old loops and any old top-level one-shots (generated ones now live in sounds/gen/)
+  for (const f of readdirSync(dir)) {
+    if (!/\.(ogg|mp3)$/.test(f)) continue;
+    if (/^(idle|on|off)_/.test(f) || /^(start|stop|shift_|pop_|bov_)/.test(f)) unlinkSync(path.join(dir, f));
+  }
   const name = (l) => `${l.kind}_${Math.round(l.rpm)}`;
   for (const l of [idle, ...on, ...off]) encode(l.samples, path.join(dir, name(l)), tmp);
   for (const [n, s] of Object.entries(shots)) encode(s, path.join(dir, n), tmp);
 
   const ref = (l) => ({ file: `${name(l)}.ogg`, rpm: Math.round(l.rpm * 1000) / 1000 });
   const present = (f) => existsSync(path.join(dir, f));
-  const prev = cfg.audio?.oneShots ?? {};
+  // one-shots without a real recording come from the generated set (sounds/gen/)
+  const gen = cfg.audioGenerated?.oneShots ?? {};
   cfg.audio = {
     mode: "samples",
     onLoad: on.map(ref),
     offLoad: off.map(ref),
     idle: ref(idle),
     oneShots: {
-      start: present("start.ogg") ? "start.ogg" : prev.start,
-      stop: present("stop.ogg") ? "stop.ogg" : prev.stop,
-      shift: (prev.shift ?? []).filter(present),
-      backfire: (prev.backfire ?? []).filter(present),
-      ...(prev.blowoff ? { blowoff: prev.blowoff.filter(present) } : {}),
+      start: present("start.ogg") ? "start.ogg" : gen.start,
+      stop: present("stop.ogg") ? "stop.ogg" : gen.stop,
+      shift: gen.shift ?? [],
+      backfire: gen.backfire ?? [],
+      ...(gen.blowoff ? { blowoff: gen.blowoff } : {}),
     },
     masterGainDb: cfg.audio?.masterGainDb ?? 0,
   };

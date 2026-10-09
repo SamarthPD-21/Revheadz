@@ -2,9 +2,9 @@
 
 **Start it. Rev it. Shift it.** A free engine sound simulator that runs entirely in your browser.
 
-Pick one of 11 machines, press the start button, and drive it with your keyboard or thumbs. The sound follows
-every throttle input, gear change, limiter bounce and overrun pop in real time. Five of the engines are real
-professional recordings. No install, no account, no server.
+Pick one of 13 machines, press the start button, and drive it with your keyboard or thumbs. The sound follows
+every throttle input, gear change, limiter bounce and overrun pop in real time. Seven of the engines are real
+professional recordings, and you can switch any of them to the engine-model sound to compare. No install, no account, no server.
 
 <p align="center">
   <img src="docs/screenshots/drive.jpg" alt="Drive screen: tachometer at 7,000 rpm in 2nd gear, speedometer, shift lights and controls" width="100%">
@@ -18,8 +18,12 @@ professional recordings. No install, no account, no server.
 
 ## Features
 
-- **11 vehicles**: muscle car, JDM turbo, supercars, a GT, a hot hatch, a rally car, a rotary and two bikes
-- **Real engine recordings** for five of them, turned into RPM-mapped loops by a custom audio pipeline
+- **13 vehicles**: a Grand Prix car, a GT race car, muscle, JDM turbo, supercars, a grand tourer, a hot hatch, a
+  rally car, a rotary and two bikes
+- **Real engine recordings** for seven of them, turned into RPM-mapped loops by a custom audio pipeline, with a
+  **Real / Model** switch in the drive screen to hear the engine-model version instead
+- **Live turbo sound**: a whistle and intake hiss that follow boost, plus blow-off "pssh" or compressor-surge
+  "flutter" when you lift
 - **Physics-based engine and gearbox**: inertia, torque curve, turbo lag, clutch slip at pull-away, drag and braking
 - **Realistic shifting**: torque cut, a rev-matching blip on downshifts, and clutch engagement, heard through the
   engine note itself
@@ -27,8 +31,10 @@ professional recordings. No install, no account, no server.
   stop, and overrun crackle when you coast at high revs
 - **Rev limiter, backfire pops and turbo blow-off**, which only fire when you actually coast, never on a gear change
 - **Smooth sound**: all loops stay phase-locked and crossfade at constant loudness, so revving doesn't click or warble
-- **Race-car dashboard**: canvas gauges, shift lights, throttle, brake and boost bars, all redrawn every frame
-- **Works on phones**: touch throttle that springs back, brake pad and shift paddles, in portrait or landscape
+- **Race-car dashboard**: canvas gauges, shift lights, throttle, brake and boost bars, a tachometer that bounces off
+  the rev limiter, and an RPM readout down to the single rev
+- **Works on phones, with multitouch**: hold the throttle with one thumb while you shift or brake with the other, in
+  portrait or landscape
 - **Free to host**: a static site you can put on Vercel, Netlify or Cloudflare Pages
 
 ## Quick start
@@ -68,11 +74,13 @@ npm run dev          # http://localhost:3000
 
 | Vehicle | Engine | Gearbox | Redline | Sound |
 |---|---|---|---|---|
+| Grand Prix Racer | 2.4 L V8 | 7-speed sequential | 18,500 | 🎙️ Real recording |
+| GT Race Car | Flat-plane V8 | 6-speed sequential | 8,800 | 🎙️ Real recording |
 | Muscle V8 | Big-cam V8 | 6-speed manual | 6,200 | 🎙️ Real recording |
 | Flat-6 Sports Coupe | Air-cooled flat-6 | 7-speed dual-clutch | 7,200 | 🎙️ Real recording |
 | V12 Grand Tourer | V12 | 7-speed dual-clutch | 6,750 | 🎙️ Real recording |
 | Hot Hatch Turbo-4 | Turbo inline-4 | 6-speed dual-clutch | 6,800 | 🎙️ Real recording |
-| Inline-4 Superbike | Inline-4, 1000 cc | 6-speed quickshifter | 13,500 | 🎙️ Real recording (untouched up to ~3,500 rpm) |
+| Inline-4 Superbike | Inline-4, 1000 cc | 6-speed quickshifter | 13,500 | 🎙️ Real recording |
 | Inline-6 Turbo | Turbo straight-6 | 6-speed manual | 7,000 | 🔧 Engine model |
 | V10 Supercar | V10 | 7-speed dual-clutch | 8,500 | 🔧 Engine model |
 | Boxer-4 Rally Turbo | Turbo flat-4 | 6-speed manual | 7,000 | 🔧 Engine model |
@@ -112,7 +120,7 @@ flowchart LR
 
 ### Where the sounds come from
 
-**Real recordings.** Five engines come from free, royalty-free [Sonniss #GameAudioGDC](https://sonniss.com/gameaudiogdc)
+**Real recordings.** Seven engines come from free, royalty-free [Sonniss #GameAudioGDC](https://sonniss.com/gameaudiogdc)
 bundles: Pole Position Production and Dramatic Cat. `scripts/build-real-sounds.mjs` turns raw recordings into
 game-ready loops, using the manifest in `scripts/real-sounds.json`:
 
@@ -122,13 +130,16 @@ game-ready loops, using the manifest in `scripts/real-sounds.json`:
 3. **Loop** each section seamlessly with a correlated crossfade. Idle and steady holds can be left untouched to keep
    their natural character. Loops cut from a second recording can be EQ-matched to the first, so the change in mic or
    session isn't audible.
-4. **Finish**: make darker overrun variants, normalise loudness along a smooth RPM curve, cut the real start-up and
+4. **Check**: adjacent loops' spectra are aligned by frequency scaling, and the scale is compared with their RPM
+   labels, to catch a mislabelled loop (which would make the pitch jump).
+5. **Finish**: use real deceleration loops for overrun where the recording has them (otherwise darker variants), normalise loudness along a smooth RPM curve, cut the real start-up and
    shutdown sounds, encode `.ogg` and `.mp3`, and write the vehicle config and credits.
 
-**Engine model.** The other five come from `scripts/generate-sounds.mjs`, a physical engine model. It uses real firing
+**Engine model.** The other six come from `scripts/generate-sounds.mjs`, a physical engine model. It uses real firing
 orders and crank angles, per-bank exhaust pipes with reflections, muffler resonances, intake roar, valvetrain noise,
 turbo whistle and overrun crackle. The free recordings for these engines only covered idle and quick blips, which is
-not enough for a full RPM range.
+not enough for a full RPM range. Real-recording vehicles also get an engine-model set (in `sounds/gen/`) for the
+**Real / Model** switch.
 
 **Live synthesis.** Synth V6 is synthesised in the browser by an `AudioWorklet`, with no audio files at all.
 

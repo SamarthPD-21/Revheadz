@@ -11,7 +11,7 @@
     "limiterRpm": 7200,
     "inertia": 0.32,
     "engineBraking": 0.5,
-    "peakTorqueNm": 620,
+    "peakTorqueNm": 651,
     "crackle": 0.4
   },
   "gearbox": {
@@ -24,7 +24,7 @@
       1,
       0.79
     ],
-    "finalDrive": 3.13,
+    "finalDrive": 3.76,
     "wheelRadiusM": 0.33,
     "shiftTimeMs": 280
   },
@@ -35,7 +35,8 @@
   },
   "turbo": {
     "spoolRpm": 2800,
-    "lagS": 0.45
+    "lagS": 0.45,
+    "release": "pssh"
   },
   "ui": {
     "accent": "#ef4444",

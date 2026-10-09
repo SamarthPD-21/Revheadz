@@ -37,6 +37,16 @@ const BODIES: Record<Kind, { body: string; extra?: string; wheels: [number, numb
     extra: "M40 56 L70 34 M150 56 L136 40",
     wheels: [[40, 56], [150, 56]], r: 15,
   },
+  gtcar: {
+    body: "M6 56 L7 50 Q12 46 36 44 L80 41 Q100 29 124 28 Q148 29 168 40 L190 44 L194 52 L194 56 Z",
+    extra: "M158 27 L194 24 L194 29 L160 32 Z M172 31 L174 41 M188 28 L188 43 M6 54 L26 54",
+    wheels: [[46, 56], [164, 56]], r: 12,
+  },
+  formula: {
+    body: "M14 54 L58 51 L92 46 L104 36 L128 35 L138 45 L170 47 L176 54 Z",
+    extra: "M2 58 L30 58 M2 54 L2 59 M166 28 L198 28 L198 35 L168 35 Z M182 35 L182 47 M104 36 Q116 26 130 35",
+    wheels: [[38, 55], [160, 54]], r: 13,
+  },
   cruiser: {
     body: "M62 48 Q72 35 92 34 L112 36 L132 44 L164 47 L154 52 L102 52 L82 51 Z",
     extra: "M36 56 L56 30 L68 26 M160 56 L140 46",

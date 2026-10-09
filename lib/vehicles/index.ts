@@ -1,5 +1,7 @@
 import boxer4Rally from "../../public/vehicles/boxer4_rally/config.json";
 import flat6Sports from "../../public/vehicles/flat6_sports/config.json";
+import gpRacer from "../../public/vehicles/gp_racer/config.json";
+import gtRacer from "../../public/vehicles/gt_racer/config.json";
 import hotHatch from "../../public/vehicles/hot_hatch/config.json";
 import jdmI6Turbo from "../../public/vehicles/jdm_i6_turbo/config.json";
 import muscleV8 from "../../public/vehicles/muscle_v8/config.json";
@@ -9,11 +11,13 @@ import synthV6 from "../../public/vehicles/synth_v6/config.json";
 import v10Supercar from "../../public/vehicles/v10_supercar/config.json";
 import v12Gt from "../../public/vehicles/v12_gt/config.json";
 import vtwinCruiser from "../../public/vehicles/vtwin_cruiser/config.json";
-import type { VehicleConfig } from "./types";
+import type { AudioConfig, VehicleConfig } from "./types";
 import { validateVehicle } from "./validate";
 
 /** Garage order. Adding a vehicle = a new folder + one line here. */
 const RAW = [
+  gpRacer,
+  gtRacer,
   muscleV8,
   jdmI6Turbo,
   flat6Sports,
@@ -43,8 +47,7 @@ export function vehicleBaseUrl(id: string): string {
 }
 
 /** Every sound file a config references (relative to its sounds/ folder). */
-export function referencedSoundFiles(v: VehicleConfig): string[] {
-  const a = v.audio;
+export function referencedSoundFiles(v: VehicleConfig, a: AudioConfig = v.audio): string[] {
   if (a.mode !== "samples") return [];
   const one = a.oneShots ?? {};
   return [
@@ -70,4 +73,9 @@ export function gaugeMaxKmh(v: VehicleConfig): number {
   const top = Math.min(dragTop * 0.95, gearTop);
   const step = top > 200 ? 40 : 20;
   return Math.ceil(top / step) * step;
+}
+
+/** Every sound file a vehicle ships, across its real and generated sets. */
+export function allSoundFiles(v: VehicleConfig): string[] {
+  return [...new Set([...referencedSoundFiles(v), ...(v.audioGenerated ? referencedSoundFiles(v, v.audioGenerated) : [])])];
 }

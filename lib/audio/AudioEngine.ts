@@ -1,7 +1,7 @@
 import { decodeAll, prefetch } from "../assets/Loader";
 import type { SimEvent, SimState } from "../sim/types";
 import { referencedSoundFiles, vehicleBaseUrl } from "../vehicles";
-import type { SampleRef, VehicleConfig } from "../vehicles/types";
+import type { AudioConfig, SampleRef, VehicleConfig } from "../vehicles/types";
 import { equalPower, idleBlend, rateFor } from "./blend";
 import { OneShots, type OneShotBuffers, type OneShotKind } from "./OneShots";
 import {
@@ -47,6 +47,7 @@ export class AudioEngine {
   private synth: SynthEngine | null = null;
   private synthRetiring = false;
   private oneShots: OneShots | null = null;
+  private turbo: { whistle: OscillatorNode; whistle2: OscillatorNode; whistleGain: GainNode; hiss: AudioBufferSourceNode; hissFilter: BiquadFilterNode; hissGain: GainNode } | null = null;
   private volume = 0.8;
   private disposed = false;
   private wasRunning = false;
@@ -63,7 +64,12 @@ export class AudioEngine {
     }
   };
 
-  constructor(private readonly cfg: VehicleConfig) {}
+  /** The sound set this engine plays: the vehicle's main one, or its generated alternative. */
+  private readonly audio: AudioConfig;
+
+  constructor(private readonly cfg: VehicleConfig, audio?: AudioConfig) {
+    this.audio = audio ?? cfg.audio;
+  }
 
   /** Starts downloading the sounds and watching tab visibility. Pair with dispose(); may be repeated. */
   attach(): void {
@@ -71,6 +77,11 @@ export class AudioEngine {
     // Download right away; decoding waits for the AudioContext, which needs a tap.
     void prefetch(this.soundUrls()).catch(() => undefined);
     document.addEventListener("visibilitychange", this.onVisibility);
+  }
+
+  /** True once a user gesture has created the AudioContext. */
+  get unlocked(): boolean {
+    return this.ctx !== null;
   }
 
   get loadStatus(): Status {
@@ -103,7 +114,7 @@ export class AudioEngine {
 
   private soundUrls(): string[] {
     const base = `${vehicleBaseUrl(this.cfg.id)}/sounds/`;
-    return referencedSoundFiles(this.cfg).map((f) => base + f);
+    return referencedSoundFiles(this.cfg, this.audio).map((f) => base + f);
   }
 
   /** Call from a user gesture. Safe to call repeatedly. */
@@ -120,7 +131,7 @@ export class AudioEngine {
 
   private buildGraph(ctx: AudioContext) {
     this.master = ctx.createGain();
-    this.master.gain.value = this.volume * dbToGain(this.cfg.audio.masterGainDb);
+    this.master.gain.value = this.volume * dbToGain(this.audio.masterGainDb);
     this.compressor = ctx.createDynamicsCompressor();
     this.compressor.threshold.value = -14;
     this.compressor.ratio.value = 4;
@@ -143,13 +154,73 @@ export class AudioEngine {
     this.offBus.connect(this.loopsBus);
     this.loopsBus.connect(this.lowpass);
     this.idleBus.connect(this.lowpass);
+    if (this.cfg.turbo) this.buildTurbo(ctx);
+  }
+
+  /**
+   * Live turbo layer: the compressor's whistle (pitch rises with boost and shaft speed) and
+   * the hiss of intake air, both driven by the simulated boost each frame. It bypasses the
+   * engine's low-pass so it stays crisp, like hearing the turbo from the driver's seat.
+   */
+  private buildTurbo(ctx: AudioContext) {
+    const whistle = ctx.createOscillator();
+    whistle.type = "sine";
+    whistle.frequency.value = 1500;
+    const whistle2 = ctx.createOscillator();
+    whistle2.type = "triangle";
+    whistle2.frequency.value = 3000;
+    const w2 = ctx.createGain();
+    w2.gain.value = 0.25;
+    const whistleGain = ctx.createGain();
+    whistleGain.gain.value = 0;
+    whistle.connect(whistleGain);
+    whistle2.connect(w2).connect(whistleGain);
+
+    const noise = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+    const d = noise.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const hiss = ctx.createBufferSource();
+    hiss.buffer = noise;
+    hiss.loop = true;
+    const hissFilter = ctx.createBiquadFilter();
+    hissFilter.type = "bandpass";
+    hissFilter.frequency.value = 3000;
+    hissFilter.Q.value = 1.4;
+    const hissGain = ctx.createGain();
+    hissGain.gain.value = 0;
+    hiss.connect(hissFilter).connect(hissGain);
+
+    const bus = ctx.createGain();
+    bus.gain.value = 1;
+    whistleGain.connect(bus);
+    hissGain.connect(bus);
+    bus.connect(this.compressor!);
+    const at = ctx.currentTime + 0.02;
+    whistle.start(at);
+    whistle2.start(at);
+    hiss.start(at);
+    this.turbo = { whistle, whistle2, whistleGain, hiss, hissFilter, hissGain };
+  }
+
+  private updateTurbo(ctx: AudioContext, s: SimState) {
+    const t = this.turbo;
+    if (!t) return;
+    const audible = s.ignition === "running" ? 1 : 0;
+    const boost = s.boost;
+    const shaft = Math.min(1, s.rpm / this.cfg.engine.redlineRpm);
+    const f = 1400 + 5200 * boost + 1400 * shaft;
+    ramp(t.whistle.frequency, f, ctx, 0.05);
+    ramp(t.whistle2.frequency, f * 2.02, ctx, 0.05);
+    ramp(t.whistleGain.gain, audible * 0.045 * Math.pow(boost, 1.4) * (0.5 + 0.5 * s.throttle), ctx, 0.04);
+    ramp(t.hissFilter.frequency, 2200 + 4200 * boost, ctx, 0.05);
+    ramp(t.hissGain.gain, audible * 0.09 * boost * (0.35 + 0.65 * s.throttle), ctx, 0.04);
   }
 
   private async load(ctx: AudioContext) {
     this.setStatus("loading");
     const cfg = this.cfg;
     const compressor = this.compressor!;
-    const tone = cfg.audio.synth ?? FALLBACK_TONE;
+    const tone = this.audio.synth ?? FALLBACK_TONE;
 
     // The synth is the instant sound while recordings load (and the whole engine for synth vehicles).
     const synthPromise = SynthEngine.create(ctx, cfg.engine.cylinders, tone, this.lowpass!).then((s) => {
@@ -158,11 +229,11 @@ export class AudioEngine {
     });
 
     try {
-      const a = cfg.audio;
+      const a = this.audio;
       const proc = this.proceduralOneShots(ctx);
       if (a.mode === "samples") {
         const base = `${vehicleBaseUrl(cfg.id)}/sounds/`;
-        const buffers = await decodeAll(ctx, referencedSoundFiles(cfg).map((f) => base + f));
+        const buffers = await decodeAll(ctx, referencedSoundFiles(cfg, a).map((f) => base + f));
         if (this.disposed) return;
         const keyOf = (r: SampleRef) => base + r.file;
         // One shared start time keeps every loop on the same crank angle (phase-locked).
@@ -213,13 +284,14 @@ export class AudioEngine {
 
   setVolume(v: number): void {
     this.volume = Math.min(1, Math.max(0, v));
-    if (this.ctx && this.master) ramp(this.master.gain, this.volume * dbToGain(this.cfg.audio.masterGainDb), this.ctx, 0.03);
+    if (this.ctx && this.master) ramp(this.master.gain, this.volume * dbToGain(this.audio.masterGainDb), this.ctx, 0.03);
   }
 
   handleEvent(e: SimEvent): void {
     // Shifts are heard through the engine note itself (rpm drop, rev-match blip); no clunks or cracks.
     if (e.type === "limiter" || e.type === "shift" || e.type === "shiftCrack") return;
     if (e.type === "crackle") this.oneShots?.play("backfire", { gain: 0.28, rate: 1.15 + Math.random() * 0.25 });
+    else if (e.type === "blowoff") this.oneShots?.play("blowoff", { index: this.cfg.turbo?.release === "flutter" ? 1 : 0 });
     else this.oneShots?.play(e.type as OneShotKind);
   }
 
@@ -233,6 +305,7 @@ export class AudioEngine {
     ramp(this.engineBus.gain, audible ? (s.limiterActive ? 0.55 : 1) : 0, ctx, 0.02);
     ramp(this.lowpass.frequency, Math.min(21000, 3500 * (1 + 5 * s.throttle)), ctx, 0.03);
 
+    this.updateTurbo(ctx, s);
     const sampleLayersReady = this.onLayer && this.offLayer && this.idleSource;
     if (sampleLayersReady) {
       const [offW, onW] = equalPower(load);
@@ -276,6 +349,16 @@ export class AudioEngine {
     this.idleSource?.disconnect();
     this.synth?.dispose();
     this.oneShots?.dispose();
+    if (this.turbo) {
+      for (const n of [this.turbo.whistle, this.turbo.whistle2, this.turbo.hiss]) {
+        try {
+          n.stop();
+        } catch {
+          /* not started */
+        }
+      }
+      this.turbo = null;
+    }
     this.onLayer = this.offLayer = null;
     this.idleSource = this.idleSourceGain = this.idleRef = null;
     this.synth = null;

@@ -21,7 +21,7 @@
       2.21,
       1.57,
       1.23,
-      1.0,
+      1,
       0.87
     ],
     "finalDrive": 3.4,
@@ -37,7 +37,7 @@
     "accent": "#d97706",
     "silhouette": "cruiser",
     "category": "Cruiser",
-    "layout": "45\u00b0 V-twin",
+    "layout": "45° V-twin",
     "displacement": "1.9 L",
     "powerHp": 95
   },

@@ -461,7 +461,7 @@
             96
           ],
           "flatten": false,
-          "rpm": 3480
+          "rpm": 2150
         },
         {
           "kind": "on",
@@ -528,6 +528,216 @@
               96
             ]
           }
+        }
+      ],
+      "oneShots": {}
+    },
+    "gt_racer": {
+      "pitchRange": [
+        4,
+        130
+      ],
+      "sources": {
+        "f458": {
+          "title": "Ferrari 458 2013, straight pipes - onboard ramps, drive, stop",
+          "author": "Pole Position Production",
+          "bundle": "Sonniss GDC 2024 Game Audio Bundle",
+          "cacheName": "Ferrari_458_Straight_Pipes___t5.flac",
+          "url": "https://archive.org/download/sonniss-gdc-2024-game-audio-bundle-normalized/Pole%20Position%20-%20Ferrari%20458%202013/Ferrari%20458%20Straight%20Pipes%20-%20t5%20-%20ONBRD%20-%20RAMPS%20-%20Drive%20Stop%20Off%20-%20EXHAUST%20-%20Left%20-%20DPA4062.flac"
+        }
+      },
+      "loops": [
+        {
+          "kind": "idle",
+          "source": "f458",
+          "t": [
+            24,
+            30
+          ],
+          "flatten": false,
+          "rpm": 760
+        },
+        {
+          "kind": "on",
+          "source": "f458",
+          "t": [
+            168.4,
+            169.8
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "f458",
+          "t": [
+            172.0,
+            173.1
+          ]
+        },
+        {
+          "kind": "off",
+          "source": "f458",
+          "t": [
+            168.4,
+            169.8
+          ]
+        },
+        {
+          "kind": "off",
+          "source": "f458",
+          "ramp": [
+            196.4,
+            198.8
+          ],
+          "dir": "fall",
+          "targets": [
+            1700,
+            2000
+          ],
+          "maxHalfS": 0.6,
+          "tol": 0.12
+        },
+        {
+          "kind": "on",
+          "source": "f458",
+          "ramp": [
+            121.5,
+            124.6
+          ],
+          "targets": [
+            2050
+          ],
+          "maxHalfS": 0.8,
+          "tol": 0.12
+        },
+        {
+          "kind": "on",
+          "source": "f458",
+          "ramp": [
+            178,
+            189.5
+          ],
+          "targets": [
+            2600,
+            3200,
+            3800,
+            4500,
+            5300,
+            6100,
+            6900,
+            7700,
+            8500
+          ],
+          "maxHalfS": 0.6,
+          "tol": 0.12
+        },
+        {
+          "kind": "off",
+          "source": "f458",
+          "ramp": [
+            79,
+            97.5
+          ],
+          "dir": "fall",
+          "targets": [
+            8400,
+            7600,
+            6800,
+            6000,
+            5200,
+            4500,
+            3800,
+            3200,
+            2600,
+            2100
+          ],
+          "maxHalfS": 0.8,
+          "tol": 0.1
+        }
+      ],
+      "oneShots": {}
+    },
+    "gp_racer": {
+      "pitchRange": [
+        4,
+        200
+      ],
+      "offLoadLowpassHz": 3000,
+      "calibration": {
+        "rpmPerHz": 240
+      },
+      "sources": {
+        "fw29": {
+          "title": "Williams FW29 (2007 F1) - onboard driving at steady rpms, accelerations, shutdown (cockpit)",
+          "author": "Pole Position Production",
+          "bundle": "Sonniss GDC 2016 Game Audio Bundle",
+          "cacheName": "F1_Williams_2007_t3_onboard_driving_at_steady_rpms_accelerat.flac",
+          "url": "https://archive.org/download/sonniss-gdc-2016-game-audio-bundle-normalized/Pole%20Position%20Production%20-%20F1%20Williams%20FW29%202007/F1_Williams_2007_t3_onboard_driving_at_steady_rpms_accelerations_shutdown_cockpit_DPA4061_L.flac"
+        }
+      },
+      "loops": [
+        {
+          "kind": "idle",
+          "source": "fw29",
+          "t": [
+            58,
+            66.5
+          ],
+          "flatten": false,
+          "rpm": 4450
+        },
+        {
+          "kind": "on",
+          "source": "fw29",
+          "t": [
+            269.5,
+            271
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "fw29",
+          "t": [
+            246,
+            248.6
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "fw29",
+          "ramp": [
+            120,
+            125.6
+          ],
+          "targets": [
+            10000,
+            10800
+          ],
+          "maxHalfS": 0.6,
+          "tol": 0.08
+        },
+        {
+          "kind": "on",
+          "source": "fw29",
+          "t": [
+            93,
+            98.5
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "fw29",
+          "t": [
+            115,
+            116.5
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "fw29",
+          "t": [
+            177,
+            179.5
+          ]
         }
       ],
       "oneShots": {}

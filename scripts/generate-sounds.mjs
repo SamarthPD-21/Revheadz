@@ -169,7 +169,7 @@ const VOICES = {
     pulse: { openDeg: 240, attackDeg: 8, noise: 0.22 },
     muffler: { lp: 3400, res: [[140, 1.4, 0.6], [520, 2, 0.45], [1500, 3, 0.2]] },
     drive: 1.8, intake: 0.12, mech: 0.03, cylVar: 0.04, rough: 0.05, idleRough: 0.12, crackle: 0.1,
-    turbo: { whistle: 0.07, hiss: 0.06, hzPerRpm: 1.05 },
+    turbo: { whistle: 0, hiss: 0.015, hzPerRpm: 1.05 },
   },
   flat6_sports: {
     firing: evenFire(6, (i) => i % 2),
@@ -206,7 +206,7 @@ const VOICES = {
     pulse: { openDeg: 230, attackDeg: 6, noise: 0.32 },
     muffler: { lp: 3100, res: [[110, 1.4, 0.75], [400, 2, 0.4]] },
     drive: 2.2, intake: 0.12, mech: 0.03, cylVar: 0.1, rough: 0.09, idleRough: 0.25, crackle: 0.25,
-    turbo: { whistle: 0.06, hiss: 0.07, hzPerRpm: 0.95 },
+    turbo: { whistle: 0, hiss: 0.015, hzPerRpm: 0.95 },
   },
   hot_hatch: {
     firing: evenFire(4),
@@ -214,7 +214,21 @@ const VOICES = {
     pulse: { openDeg: 220, attackDeg: 5, noise: 0.33 },
     muffler: { lp: 4300, res: [[180, 1.4, 0.55], [650, 2, 0.45]] },
     drive: 2.0, intake: 0.15, mech: 0.04, cylVar: 0.05, rough: 0.06, idleRough: 0.15, crackle: 0.7,
-    turbo: { whistle: 0.06, hiss: 0.06, hzPerRpm: 1.15 },
+    turbo: { whistle: 0, hiss: 0.015, hzPerRpm: 1.15 },
+  },
+  gt_racer: {
+    firing: evenFire(8, (i) => i % 2), // flat-plane crank: banks alternate, even per bank
+    banks: [{ m: 0.95, r: -0.5 }, { m: 0.95, r: -0.5 }],
+    pulse: { openDeg: 200, attackDeg: 3, noise: 0.4 },
+    muffler: { lp: 9500, res: [[320, 1.4, 0.4], [950, 2, 0.45], [2500, 3, 0.3]] },
+    drive: 2.3, intake: 0.35, mech: 0.05, cylVar: 0.04, rough: 0.05, idleRough: 0.2, crackle: 0.8,
+  },
+  gp_racer: {
+    firing: evenFire(8, (i) => i % 2),
+    banks: [{ m: 0.6, r: -0.45 }, { m: 0.6, r: -0.45 }],
+    pulse: { openDeg: 180, attackDeg: 2, noise: 0.35 },
+    muffler: { lp: 12000, res: [[700, 1.5, 0.4], [1800, 2.5, 0.4], [4200, 3, 0.25]] },
+    drive: 2.0, intake: 0.45, mech: 0.08, cylVar: 0.02, rough: 0.03, idleRough: 0.1, crackle: 0.4,
   },
   vtwin_cruiser: {
     firing: vTwin45(),
@@ -481,21 +495,48 @@ function backfire(voice, variant) {
   return out;
 }
 
-/** Turbo blow-off valve: a burst of air; variant 1 flutters (compressor surge). */
+/**
+ * Turbo release sounds.
+ *  variant 0, blow-off valve "pssh": a burst of compressed air whose resonance sweeps down
+ *  as the pressure drops, with the soft thump of the valve opening.
+ *  variant 1, compressor surge "flutter": no BOV, so air chatters back through the
+ *  compressor in quick pulses that slow down as boost bleeds away (stu-tu-tu-tu).
+ */
 function blowoff(variant) {
-  const seconds = variant ? 0.7 : 0.5;
+  const seconds = variant ? 0.8 : 0.55;
   const n = Math.round(seconds * SR);
   const rand = mulberry32(500 + variant);
-  const noise = Float32Array.from({ length: n }, () => rand() * 2 - 1);
-  const air = filtered(filtered(noise, "bp", variant ? 2200 : 3200, 0.9, false), "hp", 800, 0.7, false);
   const out = new Float32Array(n);
-  for (let i = 0; i < n; i++) {
-    const t = i / SR;
-    let env = Math.min(1, t / 0.008) * Math.exp(-t / (variant ? 0.22 : 0.14));
-    if (variant) env *= 0.55 + 0.45 * Math.sin(2 * Math.PI * (28 - t * 20) * t) ** 2;
-    out[i] = air[i] * env * 2.2;
+  // time-varying band-pass, coefficients refreshed every 32 samples
+  let f = biquad("bp", 4000, 1.2);
+  let x1 = 0;
+  let lp = 0;
+  if (!variant) {
+    for (let i = 0; i < n; i++) {
+      const t = i / SR;
+      if (i % 32 === 0) f = biquad("bp", 5200 * Math.exp(-t / 0.35) + 2000, 1.3);
+      const env = Math.min(1, t / 0.006) * Math.exp(-t / 0.2) * (1 - Math.min(1, t / seconds) ** 3);
+      const air = f(rand() * 2 - 1);
+      const thump = Math.sin(2 * Math.PI * 95 * t) * Math.exp(-t / 0.025) * 0.6;
+      lp += (air - lp) * 0.6;
+      out[i] = (lp * 3.2 + thump) * env;
+    }
+  } else {
+    let phase = 0;
+    for (let i = 0; i < n; i++) {
+      const t = i / SR;
+      if (i % 32 === 0) f = biquad("bp", 1700 - 500 * (t / seconds), 2.2);
+      const rate = 24 - 12 * (t / seconds); // pulses per second, slowing down
+      phase += rate / SR;
+      const pulse = Math.pow(Math.max(0, Math.sin(Math.PI * (phase % 1))), 6);
+      const env = Math.min(1, t / 0.01) * Math.exp(-t / 0.35);
+      const air = f(rand() * 2 - 1);
+      const chatter = Math.sin(2 * Math.PI * (110 - 30 * t) * t) * pulse * 0.5;
+      x1 += (air * pulse - x1) * 0.7;
+      out[i] = (x1 * 4 + chatter) * env;
+    }
   }
-  fade(out, 0.5, 40);
+  fade(out, 0.3, 50);
   return out;
 }
 
@@ -578,9 +619,13 @@ try {
     const cfgPath = path.join(ROOT, "public", "vehicles", id, "config.json");
     const cfg = JSON.parse(readFileSync(cfgPath, "utf8"));
     const { loops, oneShots, turbo } = buildVehicle(cfg);
-    const dir = path.join(ROOT, "public", "vehicles", id, "sounds");
+    // Vehicles built from real recordings keep those in sounds/; their engine-model set
+    // goes to sounds/gen/ as the alternative ("audioGenerated") the drive screen can switch to.
+    const recorded = Boolean(cfg.ui?.recorded);
+    const sub = recorded ? "gen/" : "";
+    const dir = path.join(ROOT, "public", "vehicles", id, "sounds", sub);
     mkdirSync(dir, { recursive: true });
-    for (const f of readdirSync(dir)) unlinkSync(path.join(dir, f)); // drop stale files
+    for (const f of readdirSync(dir)) if (/\.(ogg|mp3)$/.test(f)) unlinkSync(path.join(dir, f)); // drop stale files
 
     const files = [...loops.map((l) => [l.name, l.samples]), ...Object.entries(oneShots)];
     for (const [name, samples] of files) {
@@ -589,21 +634,23 @@ try {
       encode(w, path.join(dir, name));
     }
 
-    const ref = (l) => ({ file: `${l.name}.ogg`, rpm: Math.round(l.rpm * 1000) / 1000 });
-    cfg.audio = {
+    const ref = (l) => ({ file: `${sub}${l.name}.ogg`, rpm: Math.round(l.rpm * 1000) / 1000 });
+    const generated = {
       mode: "samples",
       onLoad: loops.filter((l) => l.kind === "on").map(ref),
       offLoad: loops.filter((l) => l.kind === "off").map(ref),
       idle: ref(loops.find((l) => l.kind === "idle")),
       oneShots: {
-        start: "start.ogg",
-        stop: "stop.ogg",
-        shift: ["shift_1.ogg", "shift_2.ogg"],
-        backfire: ["pop_1.ogg", "pop_2.ogg", "pop_3.ogg"],
-        ...(turbo ? { blowoff: ["bov_1.ogg", "bov_2.ogg"] } : {}),
+        start: `${sub}start.ogg`,
+        stop: `${sub}stop.ogg`,
+        shift: [`${sub}shift_1.ogg`, `${sub}shift_2.ogg`],
+        backfire: [`${sub}pop_1.ogg`, `${sub}pop_2.ogg`, `${sub}pop_3.ogg`],
+        ...(turbo ? { blowoff: [`${sub}bov_1.ogg`, `${sub}bov_2.ogg`] } : {}),
       },
-      masterGainDb: cfg.audio?.masterGainDb ?? 0,
+      masterGainDb: (recorded ? cfg.audioGenerated?.masterGainDb : cfg.audio?.masterGainDb) ?? 0,
     };
+    if (recorded) cfg.audioGenerated = generated;
+    else cfg.audio = generated;
     writeFileSync(cfgPath, JSON.stringify(cfg, null, 2) + "\n");
 
     const total = readdirSync(dir).filter((f) => f.endsWith(".ogg")).reduce((s, f) => s + statSync(path.join(dir, f)).size, 0);
