@@ -195,7 +195,7 @@ export function flatten(x, track, t0, t1, targetF0) {
  * Makes a seamless loop from y: finds the end point (near the end, whole periods of f0)
  * whose surroundings best match the start, then crossfades the tail into the head.
  */
-export function makeLoop(y, f0, { crossfadeS = 0.06 } = {}) {
+export function makeLoop(y, f0, { crossfadeS = 0.06, lengthBias = 0 } = {}) {
   const period = SR / f0;
   const xf = Math.round(crossfadeS * SR);
   const maxLen = y.length - xf - 1;
@@ -218,8 +218,10 @@ export function makeLoop(y, f0, { crossfadeS = 0.06 } = {}) {
         ea += a * a;
         eb += b * b;
       }
-      const score = num / Math.sqrt(ea * eb + 1e-12);
-      if (score > best.score) best = { score, len };
+      const corr = num / Math.sqrt(ea * eb + 1e-12);
+      // lengthBias > 0 favours longer loops (fewer audible repeats) over a slightly better seam
+      const score = corr - lengthBias * (periods - p);
+      if (score > best.score) best = { score, corr, len };
     }
   }
   const { len } = best;
@@ -230,7 +232,7 @@ export function makeLoop(y, f0, { crossfadeS = 0.06 } = {}) {
     const w = i / xf;
     out[i] = y[len + i] * Math.cos((w * Math.PI) / 2) + y[i] * Math.sin((w * Math.PI) / 2);
   }
-  return { loop: out, correlation: best.score, cycles: len / period };
+  return { loop: out, correlation: best.corr ?? best.score, cycles: len / period };
 }
 
 export function biquad(type, freq, q = 0.707) {

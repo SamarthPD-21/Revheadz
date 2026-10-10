@@ -1,9 +1,13 @@
+<p align="center">
+  <img src="app/icon.svg" alt="Revheadz logo" width="96">
+</p>
+
 # Revheadz 🏁
 
 **Start it. Rev it. Shift it.** A free engine sound simulator that runs entirely in your browser.
 
-Pick one of 13 machines, press the start button, and drive it with your keyboard or thumbs. The sound follows
-every throttle input, gear change, limiter bounce and overrun pop in real time. Seven of the engines are real
+Pick one of 15 machines, press the start button, and drive it with your keyboard or thumbs. The sound follows
+every throttle input, gear change, limiter bounce and overrun pop in real time. Ten of the engines are real
 professional recordings, and you can switch any of them to the engine-model sound to compare. No install, no account, no server.
 
 <p align="center">
@@ -18,9 +22,9 @@ professional recordings, and you can switch any of them to the engine-model soun
 
 ## Features
 
-- **13 vehicles**: a Grand Prix car, a GT race car, muscle, JDM turbo, supercars, a grand tourer, a hot hatch, a
-  rally car, a rotary and two bikes
-- **Real engine recordings** for seven of them, turned into RPM-mapped loops by a custom audio pipeline, with a
+- **15 vehicles**: a Grand Prix car, a GT race car, muscle, three twin-turbo sixes and V6s, supercars, a grand
+  tourer, a hot hatch, a rally car, a rotary and two bikes
+- **Real engine recordings** for ten of them, turned into RPM-mapped loops by a custom audio pipeline, with a
   **Real / Model** switch in the drive screen to hear the engine-model version instead
 - **Live turbo sound**: a whistle and intake hiss that follow boost, plus blow-off "pssh" or compressor-surge
   "flutter" when you lift
@@ -35,6 +39,8 @@ professional recordings, and you can switch any of them to the engine-model soun
   the rev limiter, and an RPM readout down to the single rev
 - **Works on phones, with multitouch**: hold the throttle with one thumb while you shift or brake with the other, in
   portrait or landscape
+- **Installable**: add it to your home screen and it opens full-screen like an app, with its own icon
+- **Garage with filters and a "Surprise me" button** that drops you into a random machine
 - **Free to host**: a static site you can put on Vercel, Netlify or Cloudflare Pages
 
 ## Quick start
@@ -66,6 +72,9 @@ npm run dev          # http://localhost:3000
 | `E` / `Q` | **+** / **−** paddles | Shift up / down |
 | `N` | **N** button | Neutral |
 | `Space` | | Quick throttle blip |
+| `M` | 🔈 button | Mute / unmute |
+| `F` | ⛶ button | Fullscreen |
+| `[` / `]` | ‹ / › in the header | Previous / next vehicle |
 
 > Turn your volume down before the first start. Engines are loud.
 > On an iPhone, make sure the silent switch is off.
@@ -81,11 +90,13 @@ npm run dev          # http://localhost:3000
 | V12 Grand Tourer | V12 | 7-speed dual-clutch | 6,750 | 🎙️ Real recording |
 | Hot Hatch Turbo-4 | Turbo inline-4 | 6-speed dual-clutch | 6,800 | 🎙️ Real recording |
 | Inline-4 Superbike | Inline-4, 1000 cc | 6-speed quickshifter | 13,500 | 🎙️ Real recording |
-| Inline-6 Turbo | Turbo straight-6 | 6-speed manual | 7,000 | 🔧 Engine model |
+| Inline-6 Turbo | Twin-turbo straight-6 | 6-speed manual | 7,000 | 🔧 Engine model |
+| Twin-Turbo V6 AWD | Twin-turbo V6 | 6-speed dual-clutch | 7,000 | 🎙️ Real recording |
+| Euro Twin-Turbo Six | Twin-turbo straight-6 | 7-speed dual-clutch | 7,300 | 🎙️ Real recording |
 | V10 Supercar | V10 | 7-speed dual-clutch | 8,500 | 🔧 Engine model |
 | Boxer-4 Rally Turbo | Turbo flat-4 | 6-speed manual | 7,000 | 🔧 Engine model |
 | Twin-Rotor Rotary | 2-rotor Wankel | 5-speed manual | 8,500 | 🔧 Engine model |
-| V-Twin Cruiser | 45° V-twin | 6-speed manual | 5,500 | 🔧 Engine model |
+| V-Twin Cruiser | 45° V-twin | 6-speed manual | 5,500 | 🎙️ Real recording |
 | Synth V6 | V6 | 6-speed manual | 6,800 | 🎛️ Live synthesis |
 
 Vehicle names are generic on purpose, with no brands or model names. Each engine's idle and redline match the
@@ -120,8 +131,8 @@ flowchart LR
 
 ### Where the sounds come from
 
-**Real recordings.** Seven engines come from free, royalty-free [Sonniss #GameAudioGDC](https://sonniss.com/gameaudiogdc)
-bundles: Pole Position Production and Dramatic Cat. `scripts/build-real-sounds.mjs` turns raw recordings into
+**Real recordings.** Ten engines come from free, royalty-free [Sonniss #GameAudioGDC](https://sonniss.com/gameaudiogdc)
+bundles: Pole Position Production, Dramatic Cat and Game Audio Factory. `scripts/build-real-sounds.mjs` turns raw recordings into
 game-ready loops, using the manifest in `scripts/real-sounds.json`:
 
 1. **Track the engine's speed** from its cycle frequency, the spacing of the harmonic "comb" every engine produces
@@ -135,7 +146,7 @@ game-ready loops, using the manifest in `scripts/real-sounds.json`:
 5. **Finish**: use real deceleration loops for overrun where the recording has them (otherwise darker variants), normalise loudness along a smooth RPM curve, cut the real start-up and
    shutdown sounds, encode `.ogg` and `.mp3`, and write the vehicle config and credits.
 
-**Engine model.** The other six come from `scripts/generate-sounds.mjs`, a physical engine model. It uses real firing
+**Engine model.** The other five come from `scripts/generate-sounds.mjs`, a physical engine model. It uses real firing
 orders and crank angles, per-bank exhaust pipes with reflections, muffler resonances, intake roar, valvetrain noise,
 turbo whistle and overrun crackle. The free recordings for these engines only covered idle and quick blips, which is
 not enough for a full RPM range. Real-recording vehicles also get an engine-model set (in `sounds/gen/`) for the

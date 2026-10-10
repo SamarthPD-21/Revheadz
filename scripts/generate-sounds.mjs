@@ -230,6 +230,22 @@ const VOICES = {
     muffler: { lp: 12000, res: [[700, 1.5, 0.4], [1800, 2.5, 0.4], [4200, 3, 0.25]] },
     drive: 2.0, intake: 0.45, mech: 0.08, cylVar: 0.02, rough: 0.03, idleRough: 0.1, crackle: 0.4,
   },
+  twin_turbo_v6: {
+    firing: evenFire(6, (i) => i % 2), // 60-degree V6: even firing, alternating banks
+    banks: [{ m: 1.9, r: -0.55 }, { m: 1.95, r: -0.55 }],
+    pulse: { openDeg: 225, attackDeg: 6, noise: 0.3 },
+    muffler: { lp: 3600, res: [[150, 1.4, 0.55], [560, 2, 0.45], [1700, 3, 0.2]] },
+    drive: 1.9, intake: 0.18, mech: 0.05, cylVar: 0.05, rough: 0.05, idleRough: 0.14, crackle: 0.2,
+    turbo: { whistle: 0, hiss: 0.02, hzPerRpm: 1.1 },
+  },
+  twin_turbo_i6: {
+    firing: evenFire(6, (i) => i % 2), // 1-5-3-6-2-4 alternates between the two 3-into-1 manifolds
+    banks: [{ m: 1.7, r: -0.55 }, { m: 1.75, r: -0.55 }],
+    pulse: { openDeg: 215, attackDeg: 5, noise: 0.3 },
+    muffler: { lp: 4800, res: [[170, 1.4, 0.5], [620, 2, 0.5], [1900, 3, 0.25]] },
+    drive: 2.1, intake: 0.2, mech: 0.04, cylVar: 0.04, rough: 0.05, idleRough: 0.12, crackle: 0.45,
+    turbo: { whistle: 0, hiss: 0.018, hzPerRpm: 1.0 },
+  },
   vtwin_cruiser: {
     firing: vTwin45(),
     banks: [{ m: 1.2, r: -0.6 }],

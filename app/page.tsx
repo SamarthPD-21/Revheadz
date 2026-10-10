@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { GarageGrid, type GarageVehicle } from "../components/GarageGrid";
+import { Logo } from "../components/Logo";
 import { vehicles } from "../lib/vehicles";
 import { assertVehicleFilesExist } from "../lib/vehicles/validate.node";
 
@@ -24,34 +25,48 @@ export default function Garage() {
     synth: v.audio.mode === "synth",
     recorded: Boolean(v.ui.recorded),
   }));
+  const recorded = list.filter((v) => v.recorded).length;
 
   return (
     <div className="relative min-h-dvh overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[480px] bg-[radial-gradient(ellipse_at_top,rgba(249,115,22,0.18),transparent_65%)]" />
-      <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col px-4 py-10 sm:py-14">
-        <header className="mb-8 sm:mb-10">
-          <p className="text-xs font-bold uppercase tracking-[0.3em] text-orange-400">Engine sound simulator</p>
-          <h1 className="mt-2 bg-gradient-to-br from-white to-zinc-400 bg-clip-text text-5xl font-black tracking-tight text-transparent sm:text-6xl">
-            Revheadz
+      <div className="garage-backdrop pointer-events-none absolute inset-x-0 top-0 h-[560px]" />
+      <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col px-4 py-8 sm:py-12">
+        <header className="mb-8 sm:mb-12">
+          <Logo size="lg" />
+          <h1 className="mt-6 max-w-2xl text-3xl font-bold tracking-tight text-zinc-50 sm:text-4xl">
+            Rev it. Shift it. <span className="text-zinc-400">Hear it.</span>
           </h1>
           <p className="mt-3 max-w-xl text-zinc-400">
-            Pick a machine, hit start, and rev it. Shift through the gears, bounce it off the limiter, pop it on the overrun.
-            Keyboard or thumbs. Headphones recommended.
+            Pick a machine, hit start and bounce it off the limiter. Real engine recordings, a live engine model, turbo flutter and
+            overrun crackle, all in your browser. Keyboard or thumbs. Headphones recommended.
           </p>
+          <ul className="mt-5 flex flex-wrap gap-2 text-xs text-zinc-300" aria-label="At a glance">
+            <li className="stat-pill">
+              <b>{list.length}</b> machines
+            </li>
+            <li className="stat-pill">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
+              <b>{recorded}</b> real recordings
+            </li>
+            <li className="stat-pill">Free · no install</li>
+          </ul>
         </header>
 
         <GarageGrid vehicles={list} />
 
-        <footer className="mt-auto flex flex-wrap gap-x-6 gap-y-2 pt-14 text-sm text-zinc-500">
-          <Link href="/credits" className="underline underline-offset-4 hover:text-zinc-200">
+        <footer className="mt-auto flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-white/5 pt-8 text-sm text-zinc-500 sm:mt-16">
+          <Logo size="sm" className="opacity-70" />
+          <Link href="/credits" className="underline-offset-4 hover:text-zinc-200 hover:underline">
             Sound credits
           </Link>
           {FEEDBACK_URL && (
-            <a href={FEEDBACK_URL} className="underline underline-offset-4 hover:text-zinc-200" target="_blank" rel="noreferrer">
+            <a href={FEEDBACK_URL} className="underline-offset-4 hover:text-zinc-200 hover:underline" target="_blank" rel="noreferrer">
               Send feedback
             </a>
           )}
-          <span>Vehicle names are generic. Engine sounds are real recordings or original synthesis; see credits.</span>
+          <span className="basis-full text-xs text-zinc-600 sm:basis-auto">
+            Vehicle names are generic. Engine sounds are real recordings or original synthesis; see credits.
+          </span>
         </footer>
       </div>
     </div>

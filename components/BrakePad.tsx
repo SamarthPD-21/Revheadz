@@ -18,7 +18,7 @@ export function BrakePad({ input }: { input: InputManager }) {
       type="button"
       data-on="0"
       aria-label="Brake (hold S or Down arrow)"
-      className="brake-pad h-full min-h-10 w-full touch-none select-none rounded-2xl border border-red-400/25 bg-[repeating-linear-gradient(90deg,rgba(255,255,255,0.05)_0_3px,transparent_3px_12px)] bg-red-950/40 text-xs font-bold uppercase tracking-[0.25em] text-red-200/90"
+      className="brake-pad flex h-full min-h-10 w-full touch-none select-none flex-col items-center justify-center gap-1.5 rounded-2xl text-xs font-bold uppercase tracking-[0.25em] text-red-200/90"
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId);
         input.setTouchBrake(true);
@@ -33,6 +33,10 @@ export function BrakePad({ input }: { input: InputManager }) {
         if (e.code === "Enter") release();
       }}
     >
+      <svg viewBox="0 0 24 24" className="h-6 w-6 opacity-70" aria-hidden>
+        <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" strokeWidth="2" />
+        <path d="M5 5.5a9.5 9.5 0 000 13M19 5.5a9.5 9.5 0 010 13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
       Brake
     </button>
   );

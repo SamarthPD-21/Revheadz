@@ -741,6 +741,444 @@
         }
       ],
       "oneShots": {}
+    },
+    "vtwin_cruiser": {
+      "pitchRange": [
+        4,
+        130
+      ],
+      "offLoadLowpassHz": 1100,
+      "sources": {
+        "hd": {
+          "title": "Harley Davidson - start, accelerate, slow pull away, pass by, arrive, idle, stop (exhaust pipe mic)",
+          "author": "Game Audio Factory",
+          "bundle": "Sonniss GDC 2016 Game Audio Bundle",
+          "cacheName": "G4F_Harley_drive.flac",
+          "url": "https://archive.org/download/sonniss-gdc-2016-game-audio-bundle-normalized/Game%20Audio%20Factory%20-%20G4FSFX08%20-%20Harley%20Davidson/G4F%20SFX08%20-%20HARLEY_Start%2C%20Accelerate%2C%20Slow%20Speed%20pull%20away%2C%20Pass%20By%20Medium%20Speed%2C%20Arrive%2C%20Idle%2C%20Stop-Exhaust%20Pipe%20Mic.flac",
+          "pitchRange": [
+            6.5,
+            60
+          ]
+        },
+        "hdHi": {
+          "title": "Harley Davidson - start, accelerate, slow pull away, pass by, arrive, idle, stop (exhaust pipe mic)",
+          "author": "Game Audio Factory",
+          "bundle": "Sonniss GDC 2016 Game Audio Bundle",
+          "cacheName": "G4F_Harley_drive.flac",
+          "url": "https://archive.org/download/sonniss-gdc-2016-game-audio-bundle-normalized/Game%20Audio%20Factory%20-%20G4FSFX08%20-%20Harley%20Davidson/G4F%20SFX08%20-%20HARLEY_Start%2C%20Accelerate%2C%20Slow%20Speed%20pull%20away%2C%20Pass%20By%20Medium%20Speed%2C%20Arrive%2C%20Idle%2C%20Stop-Exhaust%20Pipe%20Mic.flac"
+        },
+        "hdIdle": {
+          "title": "Harley Davidson - start and long idle, back-firing",
+          "author": "Game Audio Factory",
+          "bundle": "Sonniss GDC 2016 Game Audio Bundle",
+          "cacheName": "G4F_Harley_idle.flac",
+          "url": "https://archive.org/download/sonniss-gdc-2016-game-audio-bundle-normalized/Game%20Audio%20Factory%20-%20G4FSFX08%20-%20Harley%20Davidson/G4F%20SFX08%20-%20HARLEY_Start%20and%20long%20Idle%2C%20Back-firing.flac",
+          "pitchRange": [
+            6.5,
+            60
+          ]
+        },
+        "chopper": {
+          "title": "Chopper Custom V-Twin - exterior startup, fast driving away, shutdown",
+          "author": "Pole Position Production",
+          "bundle": "Sonniss GDC 2018 Game Audio Bundle",
+          "cacheName": "Chopper_t7_L.flac",
+          "url": "https://archive.org/download/sonniss-gdc-2018-game-audio-bundle-normalized/Pole%20Position%20-%20Chopper%20Custom%20V-Twin/Chopper_t7_ext_distant_startup_fast_driving_away_shutdown_DPA4021_XY.L.flac"
+        }
+      },
+      "loops": [
+        {
+          "kind": "idle",
+          "source": "hdIdle",
+          "t": [
+            4,
+            14
+          ],
+          "flatten": false,
+          "rpm": 895
+        },
+        {
+          "kind": "on",
+          "source": "hd",
+          "t": [
+            22.1,
+            22.9
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "hd",
+          "t": [
+            7.6,
+            8.25
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "hd",
+          "t": [
+            53.0,
+            54.2
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "hd",
+          "t": [
+            18.95,
+            19.75
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "hd",
+          "t": [
+            48.6,
+            49.45
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "hdHi",
+          "ramp": [
+            45.4,
+            47.3
+          ],
+          "targets": [
+            2500,
+            2750
+          ],
+          "maxHalfS": 0.5
+        },
+        {
+          "kind": "on",
+          "source": "hdHi",
+          "ramp": [
+            41.0,
+            42.9
+          ],
+          "targets": [
+            2980
+          ],
+          "maxHalfS": 0.5
+        },
+        {
+          "kind": "on",
+          "source": "chopper",
+          "t": [
+            68.6,
+            71.0
+          ],
+          "matchTo": {
+            "source": "hdHi",
+            "t": [
+              45.5,
+              47.2
+            ]
+          }
+        },
+        {
+          "kind": "on",
+          "source": "chopper",
+          "ramp": [
+            110.3,
+            111.15
+          ],
+          "targets": [
+            3900
+          ],
+          "maxHalfS": 0.5,
+          "tol": 0.12,
+          "matchTo": {
+            "source": "hdHi",
+            "t": [
+              45.5,
+              47.2
+            ]
+          }
+        },
+        {
+          "kind": "on",
+          "source": "chopper",
+          "ramp": [
+            90.6,
+            91.7
+          ],
+          "targets": [
+            4500,
+            4800
+          ],
+          "maxHalfS": 0.5,
+          "tol": 0.12,
+          "matchTo": {
+            "source": "hdHi",
+            "t": [
+              45.5,
+              47.2
+            ]
+          }
+        }
+      ],
+      "oneShots": {
+        "start": {
+          "source": "hdIdle",
+          "t": [
+            0.45,
+            3.4
+          ],
+          "fadeOut": 0.5
+        },
+        "stop": {
+          "source": "hdIdle",
+          "t": [
+            57.7,
+            59.3
+          ],
+          "fadeOut": 0.2
+        }
+      },
+      "loopLengthBias": 0.04
+    },
+    "twin_turbo_v6": {
+      "pitchRange": [
+        4,
+        130
+      ],
+      "offLoadLowpassHz": 1500,
+      "loopLengthBias": 0.06,
+      "sources": {
+        "gtr": {
+          "title": "Nissan GT-R R35 2012 - onboard driving, ramps (engine, left valve)",
+          "author": "Pole Position Production",
+          "bundle": "Sonniss GDC 2020 Game Audio Bundle",
+          "cacheName": "Nissan_GTR_t6.flac",
+          "url": "https://archive.org/download/sonniss-gdc-2020-game-audio-bundle-normalized/Pole%20Position%20-%20Nissan%20GT-R%20R35%202012/Nissan_GTR_t6_Onbrd_Drive_Ramps_Engine_Left_Valve_DPA4062.flac"
+        }
+      },
+      "loops": [
+        {
+          "kind": "idle",
+          "source": "gtr",
+          "t": [
+            0.5,
+            7.5
+          ],
+          "flatten": false,
+          "rpm": 1020
+        },
+        {
+          "kind": "on",
+          "source": "gtr",
+          "ramp": [
+            169.4,
+            175.2
+          ],
+          "targets": [
+            1250,
+            1450
+          ],
+          "maxHalfS": 0.5
+        },
+        {
+          "kind": "on",
+          "source": "gtr",
+          "ramp": [
+            83.0,
+            88.3
+          ],
+          "targets": [
+            1700,
+            1950
+          ],
+          "maxHalfS": 0.45
+        },
+        {
+          "kind": "on",
+          "source": "gtr",
+          "ramp": [
+            268.5,
+            275.8
+          ],
+          "targets": [
+            2650,
+            2950,
+            3350
+          ],
+          "maxHalfS": 0.45
+        },
+        {
+          "kind": "on",
+          "source": "gtr",
+          "ramp": [
+            204.0,
+            213.6
+          ],
+          "targets": [
+            3800,
+            4300,
+            4800,
+            5300
+          ],
+          "maxHalfS": 0.45
+        },
+        {
+          "kind": "on",
+          "source": "gtr",
+          "ramp": [
+            27.3,
+            33.2
+          ],
+          "targets": [
+            5750,
+            6080
+          ],
+          "maxHalfS": 0.35
+        }
+      ],
+      "oneShots": {}
+    },
+    "twin_turbo_i6": {
+      "pitchRange": [
+        4,
+        130
+      ],
+      "offLoadLowpassHz": 1600,
+      "loopLengthBias": 0.04,
+      "sources": {
+        "t7": {
+          "title": "BMW M4 2014 - exterior start, idle, blips, steady rpms in neutral, shutdown",
+          "author": "Pole Position Production",
+          "bundle": "Sonniss GDC 2020 Game Audio Bundle",
+          "cacheName": "BMW_M4_t7.flac",
+          "url": "https://archive.org/download/sonniss-gdc-2020-game-audio-bundle-normalized/Pole%20Position%20-%20BMW%20M4%202014/BMW_M4_t7_Ext_Start_Idle_Blips_Steady_in_Netural_Off_XY_RSM191.flac"
+        },
+        "t4": {
+          "title": "BMW M4 2014 - onboard driving with gearshifts (engine)",
+          "author": "Pole Position Production",
+          "bundle": "Sonniss GDC 2020 Game Audio Bundle",
+          "cacheName": "BMW_M4_t4.flac",
+          "url": "https://archive.org/download/sonniss-gdc-2020-game-audio-bundle-normalized/Pole%20Position%20-%20BMW%20M4%202014/BMW_M4_t4_Onbrd_Drive_Gearshifts_Engine_Center_DPA4061.flac"
+        }
+      },
+      "loops": [
+        {
+          "kind": "idle",
+          "source": "t7",
+          "t": [
+            11,
+            23.6
+          ],
+          "flatten": false,
+          "rpm": 702
+        },
+        {
+          "kind": "on",
+          "source": "t7",
+          "t": [
+            64.8,
+            68.6
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "t7",
+          "ramp": [
+            86.6,
+            90.0
+          ],
+          "targets": [
+            2550,
+            2800
+          ],
+          "maxHalfS": 0.6
+        },
+        {
+          "kind": "on",
+          "source": "t7",
+          "ramp": [
+            77.9,
+            82.3
+          ],
+          "dir": "fall",
+          "targets": [
+            3050
+          ],
+          "maxHalfS": 0.8
+        },
+        {
+          "kind": "on",
+          "source": "t7",
+          "ramp": [
+            99.4,
+            105.8
+          ],
+          "targets": [
+            3800,
+            4020
+          ],
+          "maxHalfS": 0.6
+        },
+        {
+          "kind": "on",
+          "source": "t7",
+          "t": [
+            109.7,
+            112.4
+          ]
+        },
+        {
+          "kind": "on",
+          "source": "t4",
+          "ramp": [
+            17.6,
+            20.4
+          ],
+          "targets": [
+            5500,
+            5900,
+            6300
+          ],
+          "maxHalfS": 0.35,
+          "tol": 0.08,
+          "matchTo": {
+            "source": "t7",
+            "t": [
+              109.7,
+              112.4
+            ]
+          }
+        },
+        {
+          "kind": "on",
+          "source": "t4",
+          "ramp": [
+            111.1,
+            114.9
+          ],
+          "targets": [
+            6500
+          ],
+          "maxHalfS": 0.35,
+          "tol": 0.08,
+          "matchTo": {
+            "source": "t7",
+            "t": [
+              109.7,
+              112.4
+            ]
+          }
+        }
+      ],
+      "oneShots": {
+        "stop": {
+          "source": "t7",
+          "t": [
+            120.9,
+            128.3
+          ],
+          "fadeOut": 0.3
+        }
+      }
     }
   }
 }

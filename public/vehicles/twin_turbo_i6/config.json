@@ -1,0 +1,274 @@
+{
+  "id": "twin_turbo_i6",
+  "name": "Euro Twin-Turbo Six",
+  "type": "car",
+  "engineType": "Twin-turbo straight-six",
+  "description": "Twin-turbo straight-six with a 7,600 rpm limiter and a snappy dual-clutch. Inspired by Munich's M-division coupes, from real recordings.",
+  "engine": {
+    "cylinders": 6,
+    "idleRpm": 720,
+    "redlineRpm": 7300,
+    "limiterRpm": 7600,
+    "inertia": 0.24,
+    "engineBraking": 0.5,
+    "peakTorqueNm": 550,
+    "crackle": 0.55
+  },
+  "gearbox": {
+    "type": "dct",
+    "ratios": [
+      4.81,
+      2.59,
+      1.7,
+      1.28,
+      1,
+      0.84,
+      0.67
+    ],
+    "finalDrive": 3.88,
+    "wheelRadiusM": 0.34,
+    "shiftTimeMs": 110
+  },
+  "dynamics": {
+    "massKg": 1570,
+    "cdA": 0.6,
+    "brakeDecel": 10.5
+  },
+  "turbo": {
+    "spoolRpm": 2200,
+    "lagS": 0.3,
+    "release": "pssh"
+  },
+  "ui": {
+    "accent": "#0ea5e9",
+    "silhouette": "sport",
+    "category": "Sport",
+    "layout": "Inline-6 twin-turbo",
+    "displacement": "3.0 L",
+    "powerHp": 431,
+    "recorded": true
+  },
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_1537.ogg",
+        "rpm": 1536.891
+      },
+      {
+        "file": "on_2565.ogg",
+        "rpm": 2564.908
+      },
+      {
+        "file": "on_2804.ogg",
+        "rpm": 2804.051
+      },
+      {
+        "file": "on_3050.ogg",
+        "rpm": 3049.906
+      },
+      {
+        "file": "on_3803.ogg",
+        "rpm": 3802.622
+      },
+      {
+        "file": "on_4027.ogg",
+        "rpm": 4026.84
+      },
+      {
+        "file": "on_5087.ogg",
+        "rpm": 5086.522
+      },
+      {
+        "file": "on_5565.ogg",
+        "rpm": 5565.174
+      },
+      {
+        "file": "on_5914.ogg",
+        "rpm": 5913.994
+      },
+      {
+        "file": "on_6307.ogg",
+        "rpm": 6307.336
+      },
+      {
+        "file": "on_6500.ogg",
+        "rpm": 6500.152
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_1537.ogg",
+        "rpm": 1536.891
+      },
+      {
+        "file": "off_2565.ogg",
+        "rpm": 2564.908
+      },
+      {
+        "file": "off_2804.ogg",
+        "rpm": 2804.051
+      },
+      {
+        "file": "off_3050.ogg",
+        "rpm": 3049.906
+      },
+      {
+        "file": "off_3803.ogg",
+        "rpm": 3802.622
+      },
+      {
+        "file": "off_4027.ogg",
+        "rpm": 4026.84
+      },
+      {
+        "file": "off_5087.ogg",
+        "rpm": 5086.522
+      },
+      {
+        "file": "off_5565.ogg",
+        "rpm": 5565.174
+      },
+      {
+        "file": "off_5914.ogg",
+        "rpm": 5913.994
+      },
+      {
+        "file": "off_6307.ogg",
+        "rpm": 6307.336
+      },
+      {
+        "file": "off_6500.ogg",
+        "rpm": 6500.152
+      }
+    ],
+    "idle": {
+      "file": "idle_702.ogg",
+      "rpm": 702
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ],
+      "blowoff": [
+        "gen/bov_1.ogg",
+        "gen/bov_2.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_864.ogg",
+        "rpm": 864
+      },
+      {
+        "file": "gen/on_1099.ogg",
+        "rpm": 1098.879
+      },
+      {
+        "file": "gen/on_1398.ogg",
+        "rpm": 1397.623
+      },
+      {
+        "file": "gen/on_1778.ogg",
+        "rpm": 1777.562
+      },
+      {
+        "file": "gen/on_2261.ogg",
+        "rpm": 2260.808
+      },
+      {
+        "file": "gen/on_2875.ogg",
+        "rpm": 2875.413
+      },
+      {
+        "file": "gen/on_3657.ogg",
+        "rpm": 3657.118
+      },
+      {
+        "file": "gen/on_4651.ogg",
+        "rpm": 4651.318
+      },
+      {
+        "file": "gen/on_5916.ogg",
+        "rpm": 5915.762
+      },
+      {
+        "file": "gen/on_7524.ogg",
+        "rpm": 7524.028
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_972.ogg",
+        "rpm": 972.004
+      },
+      {
+        "file": "gen/off_1252.ogg",
+        "rpm": 1252.153
+      },
+      {
+        "file": "gen/off_1613.ogg",
+        "rpm": 1613.046
+      },
+      {
+        "file": "gen/off_2078.ogg",
+        "rpm": 2077.952
+      },
+      {
+        "file": "gen/off_2677.ogg",
+        "rpm": 2676.858
+      },
+      {
+        "file": "gen/off_3448.ogg",
+        "rpm": 3448.371
+      },
+      {
+        "file": "gen/off_4442.ogg",
+        "rpm": 4442.277
+      },
+      {
+        "file": "gen/off_5723.ogg",
+        "rpm": 5722.601
+      },
+      {
+        "file": "gen/off_7372.ogg",
+        "rpm": 7372.01
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_720.ogg",
+      "rpm": 720
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ],
+      "blowoff": [
+        "gen/bov_1.ogg",
+        "gen/bov_2.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

@@ -1,0 +1,281 @@
+{
+  "id": "twin_turbo_v6",
+  "name": "Twin-Turbo V6 AWD",
+  "type": "car",
+  "engineType": "Twin-turbo V6",
+  "description": "Hand-built twin-turbo V6, all-wheel drive and a dual-clutch that fires off every upshift. Inspired by Japan's AWD supercar-slayer, from a real onboard recording.",
+  "engine": {
+    "cylinders": 6,
+    "idleRpm": 950,
+    "redlineRpm": 7000,
+    "limiterRpm": 7100,
+    "inertia": 0.26,
+    "engineBraking": 0.5,
+    "peakTorqueNm": 632,
+    "crackle": 0.35
+  },
+  "gearbox": {
+    "type": "dct",
+    "ratios": [
+      4.06,
+      2.3,
+      1.59,
+      1.25,
+      1,
+      0.8
+    ],
+    "finalDrive": 4.25,
+    "wheelRadiusM": 0.35,
+    "shiftTimeMs": 110
+  },
+  "dynamics": {
+    "massKg": 1740,
+    "cdA": 0.6,
+    "brakeDecel": 11
+  },
+  "turbo": {
+    "spoolRpm": 2800,
+    "lagS": 0.35,
+    "release": "pssh"
+  },
+  "ui": {
+    "accent": "#a78bfa",
+    "silhouette": "coupe",
+    "category": "JDM",
+    "layout": "V6 twin-turbo",
+    "displacement": "3.8 L",
+    "powerHp": 545,
+    "recorded": true
+  },
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_1254.ogg",
+        "rpm": 1254.415
+      },
+      {
+        "file": "on_1444.ogg",
+        "rpm": 1443.866
+      },
+      {
+        "file": "on_1688.ogg",
+        "rpm": 1687.506
+      },
+      {
+        "file": "on_1991.ogg",
+        "rpm": 1991.207
+      },
+      {
+        "file": "on_2688.ogg",
+        "rpm": 2687.717
+      },
+      {
+        "file": "on_2955.ogg",
+        "rpm": 2954.64
+      },
+      {
+        "file": "on_3351.ogg",
+        "rpm": 3351.168
+      },
+      {
+        "file": "on_3801.ogg",
+        "rpm": 3801.231
+      },
+      {
+        "file": "on_4310.ogg",
+        "rpm": 4309.885
+      },
+      {
+        "file": "on_4808.ogg",
+        "rpm": 4807.753
+      },
+      {
+        "file": "on_5338.ogg",
+        "rpm": 5337.723
+      },
+      {
+        "file": "on_5829.ogg",
+        "rpm": 5828.75
+      },
+      {
+        "file": "on_6089.ogg",
+        "rpm": 6088.935
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_1254.ogg",
+        "rpm": 1254.415
+      },
+      {
+        "file": "off_1444.ogg",
+        "rpm": 1443.866
+      },
+      {
+        "file": "off_1688.ogg",
+        "rpm": 1687.506
+      },
+      {
+        "file": "off_1991.ogg",
+        "rpm": 1991.207
+      },
+      {
+        "file": "off_2688.ogg",
+        "rpm": 2687.717
+      },
+      {
+        "file": "off_2955.ogg",
+        "rpm": 2954.64
+      },
+      {
+        "file": "off_3351.ogg",
+        "rpm": 3351.168
+      },
+      {
+        "file": "off_3801.ogg",
+        "rpm": 3801.231
+      },
+      {
+        "file": "off_4310.ogg",
+        "rpm": 4309.885
+      },
+      {
+        "file": "off_4808.ogg",
+        "rpm": 4807.753
+      },
+      {
+        "file": "off_5338.ogg",
+        "rpm": 5337.723
+      },
+      {
+        "file": "off_5829.ogg",
+        "rpm": 5828.75
+      },
+      {
+        "file": "off_6089.ogg",
+        "rpm": 6088.935
+      }
+    ],
+    "idle": {
+      "file": "idle_1020.ogg",
+      "rpm": 1020
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ],
+      "blowoff": [
+        "gen/bov_1.ogg",
+        "gen/bov_2.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_1140.ogg",
+        "rpm": 1140.004
+      },
+      {
+        "file": "gen/on_1431.ogg",
+        "rpm": 1431.044
+      },
+      {
+        "file": "gen/on_1796.ogg",
+        "rpm": 1796.402
+      },
+      {
+        "file": "gen/on_2255.ogg",
+        "rpm": 2255.028
+      },
+      {
+        "file": "gen/on_2831.ogg",
+        "rpm": 2830.743
+      },
+      {
+        "file": "gen/on_3553.ogg",
+        "rpm": 3553.425
+      },
+      {
+        "file": "gen/on_4461.ogg",
+        "rpm": 4460.621
+      },
+      {
+        "file": "gen/on_5599.ogg",
+        "rpm": 5599.471
+      },
+      {
+        "file": "gen/on_7029.ogg",
+        "rpm": 7029.014
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_1283.ogg",
+        "rpm": 1282.503
+      },
+      {
+        "file": "gen/off_1631.ogg",
+        "rpm": 1630.573
+      },
+      {
+        "file": "gen/off_2073.ogg",
+        "rpm": 2073.113
+      },
+      {
+        "file": "gen/off_2636.ogg",
+        "rpm": 2635.731
+      },
+      {
+        "file": "gen/off_3351.ogg",
+        "rpm": 3351.076
+      },
+      {
+        "file": "gen/off_4261.ogg",
+        "rpm": 4260.547
+      },
+      {
+        "file": "gen/off_5417.ogg",
+        "rpm": 5416.889
+      },
+      {
+        "file": "gen/off_6887.ogg",
+        "rpm": 6886.986
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_950.ogg",
+      "rpm": 949.997
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ],
+      "blowoff": [
+        "gen/bov_1.ogg",
+        "gen/bov_2.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}
