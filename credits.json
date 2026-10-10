@@ -105,6 +105,69 @@
     "license": "CC0 1.0"
   },
   {
+    "vehicle": "V-Twin Cruiser",
+    "files": "Engine loops (idle, on-load, overrun), start sound, stop sound",
+    "author": "Game Audio Factory",
+    "source": "Harley Davidson - start, accelerate, slow pull away, pass by, arrive, idle, stop (exhaust pipe mic) (Sonniss GDC 2016 Game Audio Bundle)",
+    "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
+  },
+  {
+    "vehicle": "V-Twin Cruiser",
+    "files": "Engine loops (idle, on-load, overrun), start sound, stop sound",
+    "author": "Game Audio Factory",
+    "source": "Harley Davidson - start and long idle, back-firing (Sonniss GDC 2016 Game Audio Bundle)",
+    "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
+  },
+  {
+    "vehicle": "V-Twin Cruiser",
+    "files": "Engine loops (idle, on-load, overrun), start sound, stop sound",
+    "author": "Pole Position Production",
+    "source": "Chopper Custom V-Twin - exterior startup, fast driving away, shutdown (Sonniss GDC 2018 Game Audio Bundle)",
+    "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
+  },
+  {
+    "vehicle": "V-Twin Cruiser",
+    "files": "Generated one-shots: shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Twin-Turbo V6 AWD",
+    "files": "Engine loops (idle, on-load, overrun)",
+    "author": "Pole Position Production",
+    "source": "Nissan GT-R R35 2012 - onboard driving, ramps (engine, left valve) (Sonniss GDC 2020 Game Audio Bundle)",
+    "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
+  },
+  {
+    "vehicle": "Twin-Turbo V6 AWD",
+    "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Euro Twin-Turbo Six",
+    "files": "Engine loops (idle, on-load, overrun), stop sound",
+    "author": "Pole Position Production",
+    "source": "BMW M4 2014 - exterior start, idle, blips, steady rpms in neutral, shutdown (Sonniss GDC 2020 Game Audio Bundle)",
+    "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
+  },
+  {
+    "vehicle": "Euro Twin-Turbo Six",
+    "files": "Engine loops (idle, on-load, overrun), stop sound",
+    "author": "Pole Position Production",
+    "source": "BMW M4 2014 - onboard driving with gearshifts (engine) (Sonniss GDC 2020 Game Audio Bundle)",
+    "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
+  },
+  {
+    "vehicle": "Euro Twin-Turbo Six",
+    "files": "Generated one-shots: start, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
     "vehicle": "Inline-6 Turbo",
     "files": "All loops and one-shots (sounds/*.ogg, *.mp3)",
     "author": "Revheadz (original, generated with scripts/generate-sounds.mjs)",
@@ -127,13 +190,6 @@
   },
   {
     "vehicle": "Twin-Rotor Rotary",
-    "files": "All loops and one-shots (sounds/*.ogg, *.mp3)",
-    "author": "Revheadz (original, generated with scripts/generate-sounds.mjs)",
-    "source": "scripts/generate-sounds.mjs",
-    "license": "CC0 1.0"
-  },
-  {
-    "vehicle": "V-Twin Cruiser",
     "files": "All loops and one-shots (sounds/*.ogg, *.mp3)",
     "author": "Revheadz (original, generated with scripts/generate-sounds.mjs)",
     "source": "scripts/generate-sounds.mjs",

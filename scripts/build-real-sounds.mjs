@@ -49,7 +49,9 @@ function fetchSource(src) {
 const CYCLE_TRACKER = { harmonics: 40, nFft: 32768, hop: 2048, maxHz: 3000 };
 
 const decoded = new Map();
-function load(src, range) {
+function load(src, defaultRange) {
+  // a source may track with its own pitch range (e.g. a high floor so a V-twin's lope isn't read as a sub-octave)
+  const range = src.pitchRange ?? defaultRange;
   const key = `${src.cacheName}:${range.join("-")}`;
   if (!decoded.has(key)) {
     const x = decode(fetchSource(src));
@@ -176,7 +178,7 @@ function buildVehicle(id, spec, tmp) {
       const body = seg.flatten === false ? slice(x, seg.t) : flatten(x, scaledTrack, seg.t[0], seg.t[1], target);
       let made;
       try {
-        made = makeLoop(body, target, { crossfadeS: Math.min(0.06, (body.length / SR) * 0.2) });
+        made = makeLoop(body, target, { crossfadeS: Math.min(0.06, (body.length / SR) * 0.2), lengthBias: spec.loopLengthBias ?? 0 });
       } catch {
         console.log(`  (${seg.t[0].toFixed(2)}-${seg.t[1].toFixed(2)}s too short to loop at ${Math.round(target * rpmPerHz)} rpm, skipped)`);
         continue;
@@ -271,7 +273,11 @@ function writeCredits() {
     const cfg = JSON.parse(readFileSync(path.join(ROOT, "public", "vehicles", id, "config.json"), "utf8"));
     const realShots = Object.keys(spec.oneShots ?? {});
     const generated = ["start", "stop"].filter((k) => !realShots.includes(k));
+    const seen = new Set();
     for (const s of Object.values(spec.sources)) {
+      // one recording may be listed twice (tracked with different pitch ranges): credit it once
+      if (seen.has(s.title)) continue;
+      seen.add(s.title);
       const files = ["Engine loops (idle, on-load, overrun)", ...realShots.map((k) => `${k} sound`)].join(", ");
       credits.push({ vehicle: cfg.name, files, author: s.author, source: s.title + (s.bundle ? ` (${s.bundle})` : ""), license: manifest.license.name });
     }

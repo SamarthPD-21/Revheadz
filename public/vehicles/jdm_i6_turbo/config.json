@@ -3,7 +3,7 @@
   "name": "Inline-6 Turbo",
   "type": "car",
   "engineType": "Twin-turbo straight-six",
-  "description": "Silky straight-six with turbo whistle and blow-off. Inspired by 90s Japanese legends.",
+  "description": "Twin-turbo 3.0 straight-six with turbo whistle and a big blow-off on every lift. Inspired by the legendary 90s Japanese sports coupe.",
   "engine": {
     "cylinders": 6,
     "idleRpm": 800,

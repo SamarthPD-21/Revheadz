@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { trackEvent } from "../lib/analytics";
 import type { Silhouette as Kind } from "../lib/vehicles/types";
@@ -24,93 +25,124 @@ export interface GarageVehicle {
 }
 
 const FILTERS = [
-  { id: "all", label: "All" },
-  { id: "car", label: "Cars" },
-  { id: "bike", label: "Bikes" },
-  { id: "turbo", label: "Turbo" },
-  { id: "recorded", label: "Real recordings" },
+  { id: "all", label: "All", test: () => true },
+  { id: "car", label: "Cars", test: (v: GarageVehicle) => v.type === "car" },
+  { id: "bike", label: "Bikes", test: (v: GarageVehicle) => v.type === "bike" },
+  { id: "turbo", label: "Turbo", test: (v: GarageVehicle) => v.turbo },
+  { id: "recorded", label: "Real recordings", test: (v: GarageVehicle) => v.recorded },
 ] as const;
 
 type Filter = (typeof FILTERS)[number]["id"];
 
+/** The rev meter on each card spans 0 to this many rpm. */
+const METER_MAX_RPM = 18000;
+
 export function GarageGrid({ vehicles }: { vehicles: GarageVehicle[] }) {
   const [filter, setFilter] = useState<Filter>("all");
-  const shown = vehicles.filter((v) =>
-    filter === "all" ? true : filter === "turbo" ? v.turbo : filter === "recorded" ? v.recorded : v.type === filter,
-  );
+  const router = useRouter();
+  const active = FILTERS.find((f) => f.id === filter)!;
+  const shown = vehicles.filter(active.test);
+
+  const random = () => {
+    const pool = shown.length ? shown : vehicles;
+    const v = pool[Math.floor(Math.random() * pool.length)];
+    trackEvent("vehicle_picked", { vehicle: v.id, via: "random" });
+    router.push(`/drive/${v.id}`);
+  };
 
   return (
     <>
-      <div className="mb-6 flex flex-wrap gap-2" role="group" aria-label="Filter vehicles">
-        {FILTERS.map((f) => (
-          <button
-            key={f.id}
-            type="button"
-            aria-pressed={filter === f.id}
-            onClick={() => setFilter(f.id)}
-            className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
-              filter === f.id
-                ? "border-orange-400 bg-orange-500 text-black"
-                : "border-white/15 bg-white/5 text-zinc-300 hover:border-white/30 hover:text-white"
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
+      <div className="mb-6 flex items-center gap-2">
+        <div className="no-scrollbar -ml-4 flex min-w-0 gap-2 overflow-x-auto pl-4 sm:ml-0 sm:flex-wrap sm:pl-0" role="group" aria-label="Filter vehicles">
+          {FILTERS.map((f) => {
+            const n = vehicles.filter(f.test).length;
+            const on = filter === f.id;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                aria-pressed={on}
+                onClick={() => setFilter(f.id)}
+                className={`chip shrink-0 ${on ? "chip-on" : ""}`}
+              >
+                {f.label}
+                <span className={`chip-count ${on ? "text-black/60" : "text-zinc-500"}`}>{n}</span>
+              </button>
+            );
+          })}
+        </div>
+        <button type="button" onClick={random} className="chip ml-auto shrink-0 gap-2" title="Jump into a random machine" aria-label="Surprise me: random vehicle">
+          <DiceIcon />
+          <span className="hidden sm:inline">Surprise me</span>
+        </button>
       </div>
 
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Vehicles">
-        {shown.map((v) => (
-          <li key={v.id}>
+        {shown.map((v, i) => (
+          <li key={v.id} className="card-enter" style={{ animationDelay: `${Math.min(i, 12) * 35}ms` }}>
             <Link
               href={`/drive/${v.id}`}
               onClick={() => trackEvent("vehicle_picked", { vehicle: v.id })}
-              style={{ "--accent": v.accent } as React.CSSProperties}
-              className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[var(--accent)]/70 hover:shadow-[0_10px_40px_-12px_var(--accent)]"
+              style={{ "--accent": v.accent, "--rev": Math.min(1, v.redlineRpm / METER_MAX_RPM) } as React.CSSProperties}
+              className="vehicle-card group"
             >
-              <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[var(--accent)] opacity-10 blur-3xl transition group-hover:opacity-25" />
-              <div className="flex items-center justify-between gap-2">
+              <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-[var(--accent)] opacity-[0.08] blur-3xl transition duration-500 group-hover:opacity-25" />
+              <div className="relative flex items-center gap-2">
                 <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--accent)]">{v.category}</span>
-                {v.turbo && (
-                  <span className="rounded-full border border-white/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-300">
-                    Turbo
-                  </span>
-                )}
-                {v.recorded && (
-                  <span className="rounded-full border border-emerald-400/40 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">
-                    Real recording
-                  </span>
-                )}
-                {v.synth && (
-                  <span className="rounded-full border border-white/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-300">
-                    Live synth
-                  </span>
-                )}
+                <span className="ml-auto flex items-center gap-1.5">
+                  {v.turbo && <span className="tag">Turbo</span>}
+                  {v.recorded && (
+                    <span className="tag border-emerald-400/30 text-emerald-300" title="Real engine recording">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
+                      Real
+                    </span>
+                  )}
+                  {v.synth && <span className="tag">Live synth</span>}
+                </span>
               </div>
-              <Silhouette kind={v.silhouette} accent={v.accent} className="my-2 h-24 w-full transition duration-300 group-hover:scale-[1.04]" />
-              <h2 className="text-xl font-semibold text-white">{v.name}</h2>
-              <p className="mt-1 text-sm text-zinc-400">{v.description}</p>
-              <dl className="mt-4 grid grid-cols-3 gap-2 border-t border-white/10 pt-3 text-center">
-                <div>
-                  <dt className="text-[10px] uppercase tracking-wider text-zinc-500">Engine</dt>
-                  <dd className="text-sm font-semibold text-zinc-100">{v.layout}</dd>
+              <div className="relative my-1">
+                <div className="pointer-events-none absolute inset-x-8 bottom-1 h-6 rounded-full bg-[var(--accent)] opacity-0 blur-xl transition duration-500 group-hover:opacity-30" />
+                <Silhouette kind={v.silhouette} accent={v.accent} className="vehicle-silhouette relative h-24 w-full" />
+              </div>
+              <h2 className="flex items-center gap-1.5 text-lg font-semibold text-white">
+                {v.name}
+                <svg viewBox="0 0 16 16" className="card-go h-4 w-4 text-[var(--accent)]" aria-hidden>
+                  <path d="M5 3l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </h2>
+              <p className="mt-1 line-clamp-2 text-sm text-zinc-400">{v.description}</p>
+
+              <div className="mt-auto pt-4">
+                <div className="flex items-baseline justify-between text-xs text-zinc-400">
+                  <span className="font-medium text-zinc-200">{v.layout}</span>
+                  <span>
+                    <b className="font-semibold text-zinc-100">~{v.powerHp}</b> hp
+                  </span>
                 </div>
-                <div>
-                  <dt className="text-[10px] uppercase tracking-wider text-zinc-500">Power</dt>
-                  <dd className="text-sm font-semibold text-zinc-100">~{v.powerHp} hp</dd>
+                <div className="mt-2.5 flex items-center gap-3">
+                  <div className="rev-meter" aria-hidden>
+                    <span />
+                  </div>
+                  <span className="shrink-0 font-mono text-[11px] text-zinc-400">
+                    {(v.redlineRpm / 1000).toFixed(1)}k <span className="text-zinc-600">rpm</span>
+                  </span>
                 </div>
-                <div>
-                  <dt className="text-[10px] uppercase tracking-wider text-zinc-500">Redline</dt>
-                  <dd className="text-sm font-semibold text-zinc-100">{(v.redlineRpm / 1000).toFixed(1)}k</dd>
-                </div>
-              </dl>
-              <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--accent)]">
-                Start engine <span className="transition group-hover:translate-x-1">→</span>
-              </span>
+              </div>
             </Link>
           </li>
         ))}
       </ul>
     </>
+  );
+}
+
+function DiceIcon() {
+  return (
+    <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden>
+      <rect x="2.5" y="2.5" width="15" height="15" rx="3.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="7" cy="7" r="1.4" fill="currentColor" />
+      <circle cx="13" cy="13" r="1.4" fill="currentColor" />
+      <circle cx="10" cy="10" r="1.4" fill="currentColor" />
+    </svg>
   );
 }

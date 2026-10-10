@@ -50,7 +50,7 @@ export function ThrottleControl({ input, accent }: { input: InputManager; accent
       aria-valuenow={0}
       tabIndex={0}
       data-on="0"
-      className="pedal relative h-full min-h-16 w-full touch-none select-none overflow-hidden rounded-2xl border border-white/15 bg-[repeating-linear-gradient(0deg,rgba(255,255,255,0.04)_0_2px,transparent_2px_10px)] bg-zinc-900"
+      className="pedal relative h-full min-h-16 w-full touch-none select-none overflow-hidden rounded-2xl"
       style={{ "--accent": accent } as React.CSSProperties}
       onPointerDown={(e) => {
         if (pointerId.current !== null) return;

@@ -6,6 +6,8 @@ import hotHatch from "../../public/vehicles/hot_hatch/config.json";
 import jdmI6Turbo from "../../public/vehicles/jdm_i6_turbo/config.json";
 import muscleV8 from "../../public/vehicles/muscle_v8/config.json";
 import rotaryTwin from "../../public/vehicles/rotary_twin/config.json";
+import twinTurboI6 from "../../public/vehicles/twin_turbo_i6/config.json";
+import twinTurboV6 from "../../public/vehicles/twin_turbo_v6/config.json";
 import superbikeI4 from "../../public/vehicles/superbike_i4/config.json";
 import synthV6 from "../../public/vehicles/synth_v6/config.json";
 import v10Supercar from "../../public/vehicles/v10_supercar/config.json";
@@ -20,6 +22,8 @@ const RAW = [
   gtRacer,
   muscleV8,
   jdmI6Turbo,
+  twinTurboV6,
+  twinTurboI6,
   flat6Sports,
   v10Supercar,
   v12Gt,
