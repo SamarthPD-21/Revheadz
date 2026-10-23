@@ -48,7 +48,12 @@ you can switch any of them to the engine-model sound to compare. No install, no 
 - **Playground** with search (`/`), filters, sorting, favourites, "Jump back in" for recently driven machines, a
   **Hear it** rev preview on every card and a "Surprise me" button
 - **Quick vehicle switcher** in the drive screen (`V`): search the whole garage without leaving the cockpit
-- **Drag Racing** mode: coming soon
+- **Drag Racing (PvP)**: race a friend online with a 4-letter room code, or practise against the CPU (three
+  skill levels). Bracket rules (the slower car's tree goes green first, by the difference in perfect runs) make every
+  matchup even, so reaction time decides it: launch on the green, hit every shift light, and don't red-light.
+  A side-on night strip with a following camera, parallax grandstands, tyre smoke, exhaust flames, a shift-light
+  strip, reaction and shift ratings, tree beeps and a printed time slip at the end. Pro controls (`S`+`W` to stage
+  on the two-step, let go of `S` on the green, `E`/`Q` to shift) or one-button Simple controls
 - **Free to host**: a static site you can put on Vercel, Netlify or Cloudflare Pages
 
 ## Quick start
@@ -159,6 +164,12 @@ flowchart LR
   and torque returns. Manual, dual-clutch and sequential gearboxes each have their own timing.
 - **Lift-offs are judged.** Backfires, blow-off and overrun crackle only happen once the throttle has stayed shut for
   a moment without a gear change, so lifting to shift never triggers them.
+- **Drag racing is deterministic.** A run is the regular physics stepped in 1 ms steps from a fixed staged state,
+  driven only by when the driver launched and shifted. Both browsers replay both drive logs, so they agree on the
+  result to the millisecond, and network lag can't change who wins (each reaction is timed against the player's own
+  tree on their own clock). Each car's shift light sits at its fastest shift point, found by searching its physics,
+  and the drag rev limiter sits there too, so every millisecond late on a shift costs time. Players connect peer to
+  peer over WebRTC (PeerJS; its public broker only introduces them).
 - **Browser rules respected.** Audio starts only from the ignition tap, as autoplay policy requires. It pauses when
   the tab is hidden and fully stops when you leave the page.
 
@@ -201,11 +212,12 @@ Source recordings are cached in `.sound-cache/`, which is not committed.
 ## Project structure
 
 ```
-app/                     Pages: home (/), playground (/playground), drive (/drive/[vehicleId]), credits
+app/                     Pages: home (/), playground (/playground), drive (/drive/[vehicleId]), drag racing (/drag), credits
 components/              React UI: Simulator, gauges, shift lights, controls, garage cards
 hooks/                   useEngineState: the slow-changing state React subscribes to
 lib/
   sim/                   Engine, Gearbox, Simulation: pure TypeScript, no React
+  drag/                  Drag racing: deterministic runs, bracket rules, CPU driver, peer-to-peer rooms
   audio/                 AudioEngine, SampleLayer, loop shuffling, card previews, SynthEngine (AudioWorklet), OneShots, blend maths
   assets/                Sound fetching, decoding and caching
   input/                 Keyboard and touch → throttle, brake and commands

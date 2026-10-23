@@ -68,21 +68,21 @@ export default function Home() {
             </ul>
           </Link>
 
-          <div className="mode-card mode-card-soon" style={{ "--accent": "#a3e635" } as React.CSSProperties} aria-disabled="true">
+          <Link href="/drag" className="mode-card group" style={{ "--accent": "#a3e635" } as React.CSSProperties}>
             <div className="relative flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.24em] text-lime-300">Head to head</p>
                 <h2 className="mt-2 text-3xl font-black italic tracking-tight text-white sm:text-4xl">Drag Racing</h2>
-                <p className="mt-2 max-w-sm text-sm text-zinc-400">Launch on the green, nail your shifts, beat the other car to the quarter mile.</p>
+                <p className="mt-2 max-w-sm text-sm text-zinc-400">Race a friend online with a room code. Bracket rules make every matchup even: your reactions decide it.</p>
               </div>
-              <span className="tag shrink-0 border-lime-300/30 text-lime-200">Coming soon</span>
+              <span className="tag shrink-0 border-lime-300/30 text-lime-200">New · PvP</span>
             </div>
             <div className="tree relative mt-8 flex justify-center gap-3" aria-hidden>
               {["#facc15", "#facc15", "#facc15", "#22c55e"].map((c, i) => (
                 <span key={i} className="tree-light" style={{ "--c": c, animationDelay: `${i * 0.45}s` } as React.CSSProperties} />
               ))}
             </div>
-          </div>
+          </Link>
         </section>
 
         <footer className="mt-auto flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-white/5 pt-8 text-sm text-zinc-500 sm:mt-16">

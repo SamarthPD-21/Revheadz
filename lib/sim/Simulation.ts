@@ -65,6 +65,11 @@ export class Simulation {
     boost: 0,
   };
   readonly input: SimInput = { throttle: 0, brake: 0 };
+  /**
+   * Drag launch: while set, pulling away slips the clutch at this rpm (instead of a gentle
+   * part-throttle slip) until the wheels catch up. Off (null) for normal driving.
+   */
+  launchSlipRpm: number | null = null;
   readonly store = new LowFreqStore();
 
   private readonly engine: Engine;
@@ -259,7 +264,7 @@ export class Simulation {
       sh.engage -= dt;
       this.blip = 0;
       const p = smoothstep(clamp(1 - sh.engage / sh.engageTotal, 0, 1));
-      const target = Math.max(eng.idleRpm, locked);
+      const target = Math.max(this.launchSlipRpm ?? eng.idleRpm, locked);
       rpm = sh.engageFrom + (target - sh.engageFrom) * p;
       this.freeRpm = rpm;
       this.engageProgress = p;
@@ -273,8 +278,9 @@ export class Simulation {
       rpm = this.freeRpm;
     } else {
       // In gear. Slip the clutch at crawling speed so the engine never stalls.
-      const desired = eng.idleRpm + effThrottle * 0.35 * (eng.redlineRpm - eng.idleRpm);
-      const lockRpm = Math.max(eng.idleRpm * 1.15, Math.min(desired, eng.idleRpm * 2.2));
+      const launch = this.launchSlipRpm;
+      const desired = launch !== null && effThrottle > 0.5 ? launch : eng.idleRpm + effThrottle * 0.35 * (eng.redlineRpm - eng.idleRpm);
+      const lockRpm = launch !== null ? Math.max(eng.idleRpm * 1.15, desired) : Math.max(eng.idleRpm * 1.15, Math.min(desired, eng.idleRpm * 2.2));
       if (locked >= lockRpm) {
         clutchLocked = true;
         this.freeRpm = locked;

@@ -1,7 +1,7 @@
 import type { Silhouette as Kind } from "../lib/vehicles/types";
 
 /** Generic side profiles (no real models), drawn in a 200 x 72 box. */
-const BODIES: Record<Kind, { body: string; extra?: string; wheels: [number, number][]; r: number }> = {
+export const BODIES: Record<Kind, { body: string; extra?: string; wheels: [number, number][]; r: number }> = {
   muscle: {
     body: "M8 56 L9 45 Q11 41 28 40 L80 38 L100 26 Q106 23 116 23 L134 23 Q144 24 152 30 L164 39 L186 42 Q192 43 192 50 L192 56 Z",
     wheels: [[46, 56], [160, 56]], r: 12,
