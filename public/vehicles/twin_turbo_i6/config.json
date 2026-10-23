@@ -1,9 +1,9 @@
 {
   "id": "twin_turbo_i6",
-  "name": "Euro Twin-Turbo Six",
+  "name": "BMW M4 (F82)",
   "type": "car",
-  "engineType": "Twin-turbo straight-six",
-  "description": "Twin-turbo straight-six with a 7,600 rpm limiter and a snappy dual-clutch. Inspired by Munich's M-division coupes, from real recordings.",
+  "engineType": "S55 3.0 L twin-turbo I6",
+  "description": "BMW's S55 twin-turbo straight-six with a 7,600 rpm limiter and a snappy M-DCT. Real exterior and onboard recordings.",
   "engine": {
     "cylinders": 6,
     "idleRpm": 720,
@@ -42,11 +42,13 @@
   "ui": {
     "accent": "#0ea5e9",
     "silhouette": "sport",
-    "category": "Sport",
-    "layout": "Inline-6 twin-turbo",
+    "category": "Euro",
+    "layout": "S55 inline-6",
     "displacement": "3.0 L",
     "powerHp": 431,
-    "recorded": true
+    "recorded": true,
+    "make": "BMW",
+    "year": "2014"
   },
   "audio": {
     "mode": "samples",

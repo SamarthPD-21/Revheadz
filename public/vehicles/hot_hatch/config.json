@@ -1,9 +1,9 @@
 {
   "id": "hot_hatch",
-  "name": "Hot Hatch Turbo-4",
+  "name": "Ford Focus RS",
   "type": "car",
-  "engineType": "Turbocharged inline-four",
-  "description": "Punchy turbo four with pops and bangs on lift-off. Inspired by European and Japanese hot hatches.",
+  "engineType": "2.3 L EcoBoost turbo I4",
+  "description": "The Mk3 Focus RS: 2.3 EcoBoost turbo four, all-wheel drive, pops and bangs on lift-off. Real onboard recording.",
   "engine": {
     "cylinders": 4,
     "idleRpm": 850,
@@ -43,9 +43,11 @@
     "silhouette": "hatch",
     "category": "Hot Hatch",
     "layout": "Inline-4 turbo",
-    "displacement": "2.0 L",
-    "powerHp": 320,
-    "recorded": true
+    "displacement": "2.3 L",
+    "powerHp": 350,
+    "recorded": true,
+    "make": "Ford",
+    "year": "2016"
   },
   "audio": {
     "mode": "samples",

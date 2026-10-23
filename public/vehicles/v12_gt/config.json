@@ -1,9 +1,9 @@
 {
   "id": "v12_gt",
-  "name": "V12 Grand Tourer",
+  "name": "Aston Martin DB9",
   "type": "car",
-  "engineType": "Naturally aspirated V12",
-  "description": "Smooth, layered V12 that builds into an operatic wail. Inspired by Italian front-engined GTs.",
+  "engineType": "5.9 L NA V12",
+  "description": "Aston's hand-built 5.9 litre V12: smooth and layered at idle, an operatic wail at the top. Real onboard recording.",
   "engine": {
     "cylinders": 12,
     "idleRpm": 650,
@@ -11,7 +11,7 @@
     "limiterRpm": 7000,
     "inertia": 0.25,
     "engineBraking": 0.5,
-    "peakTorqueNm": 756,
+    "peakTorqueNm": 620,
     "crackle": 0.3
   },
   "gearbox": {
@@ -39,9 +39,11 @@
     "silhouette": "gt",
     "category": "Grand Tourer",
     "layout": "V12",
-    "displacement": "6.5 L",
-    "powerHp": 780,
-    "recorded": true
+    "displacement": "5.9 L",
+    "powerHp": 540,
+    "recorded": true,
+    "make": "Aston Martin",
+    "year": "2017"
   },
   "audio": {
     "mode": "samples",

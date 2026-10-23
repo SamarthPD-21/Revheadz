@@ -1,9 +1,9 @@
 {
   "id": "twin_turbo_v6",
-  "name": "Twin-Turbo V6 AWD",
+  "name": "Nissan GT-R R35",
   "type": "car",
-  "engineType": "Twin-turbo V6",
-  "description": "Hand-built twin-turbo V6, all-wheel drive and a dual-clutch that fires off every upshift. Inspired by Japan's AWD supercar-slayer, from a real onboard recording.",
+  "engineType": "VR38DETT 3.8 L twin-turbo V6",
+  "description": "Godzilla: the hand-built VR38DETT twin-turbo V6, all-wheel drive and a dual-clutch that cracks off every upshift. Real onboard recording.",
   "engine": {
     "cylinders": 6,
     "idleRpm": 950,
@@ -42,10 +42,12 @@
     "accent": "#a78bfa",
     "silhouette": "coupe",
     "category": "JDM",
-    "layout": "V6 twin-turbo",
+    "layout": "VR38DETT V6",
     "displacement": "3.8 L",
     "powerHp": 545,
-    "recorded": true
+    "recorded": true,
+    "make": "Nissan",
+    "year": "2012"
   },
   "audio": {
     "mode": "samples",

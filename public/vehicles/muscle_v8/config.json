@@ -1,9 +1,9 @@
 {
   "id": "muscle_v8",
-  "name": "Muscle V8",
+  "name": "Plymouth Hemi 'Cuda",
   "type": "car",
-  "engineType": "Big-block V8",
-  "description": "Lumpy big-cam V8 burble that turns into a big-block roar, from a real classic muscle car recording.",
+  "engineType": "426 Hemi big-block V8",
+  "description": "The 1971 Hemi 'Cuda: a lumpy, big-cam 426 Hemi that turns into a big-block roar. Real onboard recording.",
   "engine": {
     "cylinders": 8,
     "idleRpm": 600,
@@ -129,10 +129,12 @@
     "accent": "#f97316",
     "silhouette": "muscle",
     "category": "Muscle",
-    "layout": "Cross-plane V8",
+    "layout": "426 Hemi V8",
     "displacement": "7.0 L",
     "powerHp": 425,
-    "recorded": true
+    "recorded": true,
+    "make": "Plymouth",
+    "year": "1971"
   },
   "audioGenerated": {
     "mode": "samples",

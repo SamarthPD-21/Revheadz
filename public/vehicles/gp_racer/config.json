@@ -1,9 +1,9 @@
 {
   "id": "gp_racer",
-  "name": "Grand Prix Racer",
+  "name": "Williams FW29",
   "type": "car",
-  "engineType": "2.4 L V8, 19,000 rpm",
-  "description": "An open-wheel Grand Prix car with a howling 2.4 L V8 that idles at 4,500 and revs to 19,000. Real recording.",
+  "engineType": "Toyota RVX-07 2.4 L V8, 19,000 rpm",
+  "description": "Williams' 2007 Formula 1 car with Toyota's 2.4 L RVX-07 V8: idles at 4,400 rpm and shrieks to 19,000. Real onboard recording.",
   "engine": {
     "cylinders": 8,
     "idleRpm": 4400,
@@ -37,11 +37,13 @@
   "ui": {
     "accent": "#06b6d4",
     "silhouette": "formula",
-    "category": "Grand Prix",
+    "category": "Formula 1",
     "layout": "V8 2.4 L",
     "displacement": "2.4 L",
     "powerHp": 750,
-    "recorded": true
+    "recorded": true,
+    "make": "Williams",
+    "year": "2007"
   },
   "audio": {
     "mode": "samples",

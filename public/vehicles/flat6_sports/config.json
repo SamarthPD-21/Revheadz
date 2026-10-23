@@ -1,9 +1,9 @@
 {
   "id": "flat6_sports",
-  "name": "Flat-6 Sports Coupe",
+  "name": "Porsche 911 SC",
   "type": "car",
-  "engineType": "Naturally aspirated flat-six",
-  "description": "Air-cooled flat-six rasp from a real recording, howling up to 7,200 rpm. Inspired by rear-engined German icons.",
+  "engineType": "3.0 L air-cooled flat-six",
+  "description": "The 1981 911 SC: air-cooled 3.0 flat-six rasp and that unmistakable rear-engined howl. Real onboard recording.",
   "engine": {
     "cylinders": 6,
     "idleRpm": 900,
@@ -37,11 +37,13 @@
   "ui": {
     "accent": "#facc15",
     "silhouette": "sport",
-    "category": "Sports",
-    "layout": "Flat-6",
+    "category": "Classic",
+    "layout": "Air-cooled flat-6",
     "displacement": "3.0 L",
     "powerHp": 204,
-    "recorded": true
+    "recorded": true,
+    "make": "Porsche",
+    "year": "1981"
   },
   "audio": {
     "mode": "samples",

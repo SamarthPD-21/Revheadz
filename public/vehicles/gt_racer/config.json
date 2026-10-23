@@ -1,9 +1,9 @@
 {
   "id": "gt_racer",
-  "name": "GT Race Car",
+  "name": "Ferrari 458 Italia Straight Pipes",
   "type": "car",
-  "engineType": "Flat-plane V8, straight pipes",
-  "description": "A track-bred GT with a flat-plane V8 screaming through straight pipes to 9,000 rpm. Real recording.",
+  "engineType": "4.5 L F136 flat-plane V8, straight pipes",
+  "description": "Ferrari's 9,000 rpm F136 flat-plane V8 with the mufflers gone. Pure straight-pipe scream from a real onboard recording.",
   "engine": {
     "cylinders": 8,
     "idleRpm": 700,
@@ -36,11 +36,13 @@
   "ui": {
     "accent": "#f43f5e",
     "silhouette": "gtcar",
-    "category": "GT",
+    "category": "Supercar",
     "layout": "Flat-plane V8",
     "displacement": "4.5 L",
     "powerHp": 570,
-    "recorded": true
+    "recorded": true,
+    "make": "Ferrari",
+    "year": "2013"
   },
   "audio": {
     "mode": "samples",

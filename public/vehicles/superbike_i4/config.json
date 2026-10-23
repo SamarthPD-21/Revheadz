@@ -1,9 +1,9 @@
 {
   "id": "superbike_i4",
-  "name": "Inline-4 Superbike",
+  "name": "BMW S1000RR",
   "type": "bike",
-  "engineType": "Inline-four, 1000 cc class",
-  "description": "Screaming litre-class four with an airbox howl and a quickshifter.",
+  "engineType": "999 cc inline-four",
+  "description": "BMW's S1000RR superbike: a screaming 999 cc four with an airbox howl and a quickshifter. Real onboard recordings (S1000RR and HP4).",
   "engine": {
     "cylinders": 4,
     "idleRpm": 1250,
@@ -155,8 +155,10 @@
     "category": "Superbike",
     "layout": "Inline-4",
     "displacement": "1.0 L",
-    "powerHp": 200,
-    "recorded": true
+    "powerHp": 199,
+    "recorded": true,
+    "make": "BMW",
+    "year": "2015"
   },
   "audioGenerated": {
     "mode": "samples",
