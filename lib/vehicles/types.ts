@@ -52,6 +52,10 @@ export interface UiConfig {
   powerHp: number;
   /** Engine sounds come from real recordings (scripts/build-real-sounds.mjs). */
   recorded?: boolean;
+  /** Real-world make, for named ("famous") vehicles. */
+  make?: string;
+  /** Model year or era shown on the card, e.g. "1998" or "2015-2020". */
+  year?: string;
 }
 
 export interface DynamicsConfig {
@@ -106,4 +110,6 @@ export interface VehicleConfig {
   /** For vehicles with real recordings: the engine-model sound set, offered as an alternative in the drive screen. */
   audioGenerated?: AudioConfig;
   credits: string[];
+  /** Engine-model voice to borrow from another vehicle (scripts/generate-sounds.mjs). */
+  voice?: string;
 }

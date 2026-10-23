@@ -25,7 +25,7 @@
  * Requires ffmpeg (libvorbis + libmp3lame).
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -179,7 +179,10 @@ const VOICES = {
     drive: 2.0, intake: 0.38, mech: 0.06, cylVar: 0.05, rough: 0.06, idleRough: 0.2, crackle: 0.25,
   },
   rotary_twin: {
+    // rotary: each rotor fires once per eccentric-shaft rev, i.e. like two cylinders of a four-stroke;
+    // config cylinders = 2 x rotors, and the firing is rebuilt from it (see buildVehicle)
     firing: evenFire(4),
+    firingFromCylinders: true,
     banks: [{ m: 1.8, r: -0.6 }],
     pulse: { openDeg: 300, attackDeg: 2, noise: 0.7 },
     muffler: { lp: 5200, res: [[180, 1.5, 0.5], [720, 2, 0.45]] },
@@ -559,7 +562,10 @@ function blowoff(variant) {
 // ---------------------------------------------------------------- per vehicle
 
 function buildVehicle(cfg) {
-  const voice = VOICES[cfg.id];
+  // a vehicle can borrow another's engine voice (config "voice": "<id>") instead of defining its own
+  const baseVoice = VOICES[cfg.id] ?? VOICES[cfg.voice];
+  if (!baseVoice) throw new Error(`${cfg.id}: no engine voice (add one to VOICES or set "voice" in its config)`);
+  const voice = baseVoice.firingFromCylinders ? { ...baseVoice, firing: evenFire(cfg.engine.cylinders) } : baseVoice;
   const e = cfg.engine;
   const bike = cfg.type === "bike";
   const turbo = Boolean(voice.turbo && cfg.turbo);
@@ -627,8 +633,13 @@ function encode(wavPath, base) {
 }
 
 const only = process.argv[2];
-const ids = Object.keys(VOICES).filter((id) => !only || id === only);
-if (!ids.length) throw new Error(`Unknown vehicle "${only}". Known: ${Object.keys(VOICES).join(", ")}`);
+const vehicleDir = path.join(ROOT, "public", "vehicles");
+const borrowing = readdirSync(vehicleDir).filter((id) => {
+  const f = path.join(vehicleDir, id, "config.json");
+  return !VOICES[id] && existsSync(f) && JSON.parse(readFileSync(f, "utf8")).voice;
+});
+const ids = [...Object.keys(VOICES), ...borrowing].filter((id) => !only || id === only);
+if (!ids.length) throw new Error(`Unknown vehicle "${only}". Known: ${[...Object.keys(VOICES), ...borrowing].join(", ")}`);
 const tmp = mkdtempSync(path.join(tmpdir(), "revheadz-sounds-"));
 try {
   for (const id of ids) {

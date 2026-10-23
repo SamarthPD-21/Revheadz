@@ -13,8 +13,12 @@
  *  - normalises loudness along a smooth rpm curve, encodes .ogg + .mp3, and writes the
  *    vehicle's audio config and credits.json entries
  *
- *   node scripts/build-real-sounds.mjs             # all vehicles in the manifest
+ *   node scripts/build-real-sounds.mjs --all       # all vehicles in the manifest
  *   node scripts/build-real-sounds.mjs muscle_v8   # one vehicle
+ *   node scripts/build-real-sounds.mjs muscle_v8 --no-credits   # don't rewrite credits.json
+ *   node scripts/build-real-sounds.mjs --credits-only           # only rewrite credits.json
+ *
+ * A source is either a direct "url" or a "youtube" video id (downloaded with yt-dlp).
  *
  * Requires ffmpeg. Run scripts/generate-sounds.mjs first if you want generated fallbacks
  * for one-shots (they are kept unless the manifest replaces them).
@@ -28,6 +32,13 @@ import { SR, bandSpectrum, decode, filterLoop, filterOnce, flatten, makeLoop, ma
 const ROOT = path.resolve(import.meta.dirname, "..");
 const CACHE = path.join(ROOT, ".sound-cache");
 const manifest = JSON.parse(readFileSync(path.join(ROOT, "scripts", "real-sounds.json"), "utf8"));
+// more vehicles live one per file in scripts/real-sounds.d/<id>.json ({ "<id>": spec }), so they can be edited independently
+const SHARDS = path.join(ROOT, "scripts", "real-sounds.d");
+if (existsSync(SHARDS)) {
+  for (const f of readdirSync(SHARDS).filter((f) => f.endsWith(".json")).sort()) {
+    Object.assign(manifest.vehicles, JSON.parse(readFileSync(path.join(SHARDS, f), "utf8")));
+  }
+}
 
 const median = (a) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)];
 
@@ -36,7 +47,13 @@ function fetchSource(src) {
   const file = path.join(CACHE, src.cacheName);
   if (!existsSync(file) || statSync(file).size === 0) {
     console.log(`  downloading ${src.title}`);
-    execFileSync("curl", ["-sSL", "--retry", "5", "--retry-delay", "3", "-o", file, src.url], { stdio: "inherit" });
+    if (src.youtube) {
+      // YouTube source: best audio, decoded to a mono 44.1 kHz flac (cacheName should end in .flac)
+      const base = file.replace(/\.[^.]+$/, "");
+      execFileSync("yt-dlp", ["-q", "--no-playlist", "-f", "bestaudio", "-x", "--audio-format", "flac", "--postprocessor-args", "ffmpeg:-ac 1 -ar 44100", "-o", `${base}.%(ext)s`, `https://www.youtube.com/watch?v=${src.youtube}`], { stdio: "inherit" });
+    } else {
+      execFileSync("curl", ["-sSL", "--retry", "5", "--retry-delay", "3", "-o", file, src.url], { stdio: "inherit" });
+    }
   }
   return file;
 }
@@ -52,7 +69,8 @@ const decoded = new Map();
 function load(src, defaultRange) {
   // a source may track with its own pitch range (e.g. a high floor so a V-twin's lope isn't read as a sub-octave)
   const range = src.pitchRange ?? defaultRange;
-  const key = `${src.cacheName}:${range.join("-")}`;
+  // anchors change the track too, so two sources on one file with different anchors stay separate
+  const key = `${src.cacheName}:${range.join("-")}:${JSON.stringify(src.anchors ?? [])}`;
   if (!decoded.has(key)) {
     const x = decode(fetchSource(src));
     const trackFile = path.join(CACHE, `${src.cacheName}.cycle.${range[0]}-${range[1]}.json`);
@@ -160,6 +178,7 @@ function buildVehicle(id, spec, tmp) {
 
   const loops = [];
   for (const seg of segments) {
+    if (seg.shiftFrom) continue; // derived loops are made below, once the real ones exist
     let samples;
     let rpm;
     if (seg.designed) {
@@ -194,6 +213,24 @@ function buildVehicle(id, spec, tmp) {
     }
     samples = filterLoop(samples, "hp", 28, 0.7);
     loops.push({ kind: seg.kind, rpm, samples });
+  }
+
+  // derived loops ({ "kind", "shiftFrom": <rpm>, "rpm": <target> }): the real loop nearest shiftFrom (any kind),
+  // resampled to the target rpm, to fill rpm ranges no recording covers (keeps the step between loops small)
+  const real = [...loops];
+  for (const seg of segments.filter((s) => s.shiftFrom)) {
+    const base = real.reduce((b, l) => (Math.abs(l.rpm - seg.shiftFrom) < Math.abs(b.rpm - seg.shiftFrom) ? l : b));
+    const ratio = seg.rpm / base.rpm;
+    const n = Math.round(base.samples.length / ratio);
+    const s = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const p = (i * base.samples.length) / n;
+      const k = Math.floor(p);
+      const w = p - k;
+      s[i] = base.samples[k % base.samples.length] * (1 - w) + base.samples[(k + 1) % base.samples.length] * w;
+    }
+    console.log(`  ${seg.kind.padEnd(4)} derived from ${Math.round(base.rpm)} rpm x${ratio.toFixed(2)} -> ${seg.rpm} rpm`);
+    loops.push({ kind: seg.kind, rpm: seg.rpm, samples: s });
   }
 
   const idle = loops.find((l) => l.kind === "idle");
@@ -279,7 +316,9 @@ function writeCredits() {
       if (seen.has(s.title)) continue;
       seen.add(s.title);
       const files = ["Engine loops (idle, on-load, overrun)", ...realShots.map((k) => `${k} sound`)].join(", ");
-      credits.push({ vehicle: cfg.name, files, author: s.author, source: s.title + (s.bundle ? ` (${s.bundle})` : ""), license: manifest.license.name });
+      const source = s.youtube ? `${s.title} (https://www.youtube.com/watch?v=${s.youtube})` : s.title + (s.bundle ? ` (${s.bundle})` : "");
+      const license = s.youtube ? "YouTube video audio, personal use" : (spec.license ?? manifest.license.name);
+      credits.push({ vehicle: cfg.name, files, author: s.author, source, license });
     }
     const gen = [...generated.map((k) => `${k}`), "shift", "backfire", "blow-off"].join(", ");
     credits.push({ vehicle: cfg.name, files: `Generated one-shots: ${gen}`, author: "Revheadz (generated)", source: "scripts/generate-sounds.mjs", license: "CC0 1.0" });
@@ -290,7 +329,16 @@ function writeCredits() {
   writeFileSync(path.join(ROOT, "credits.json"), JSON.stringify([...credits, ...keep], null, 2) + "\n");
 }
 
-const only = process.argv[2];
+const only = process.argv.slice(2).find((a) => !a.startsWith("--"));
+// rebuilding everything re-cuts every vehicle's loops (deleting the old ones first): make it explicit
+if (process.argv.includes("--credits-only")) {
+  writeCredits();
+  process.exit(0);
+}
+if (!only && !process.argv.includes("--all")) {
+  console.error("Name a vehicle id to build, or pass --all to rebuild every vehicle in the manifest.");
+  process.exit(1);
+}
 const tmp = mkdtempSync(path.join(tmpdir(), "revheadz-real-"));
 try {
   for (const [id, spec] of Object.entries(manifest.vehicles)) {
@@ -298,7 +346,7 @@ try {
     console.log(`\n${id}`);
     buildVehicle(id, spec, tmp);
   }
-  writeCredits();
+  if (!process.argv.includes("--no-credits")) writeCredits();
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
