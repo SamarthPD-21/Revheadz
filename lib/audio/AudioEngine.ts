@@ -11,6 +11,7 @@ import {
   proceduralStop,
 } from "./proceduralOneShots";
 import { SampleLayer } from "./SampleLayer";
+import { shuffleLoop } from "./loopShuffle";
 import { SynthEngine } from "./SynthEngine";
 import { dbToGain, ramp } from "./util";
 
@@ -236,6 +237,14 @@ export class AudioEngine {
         const buffers = await decodeAll(ctx, referencedSoundFiles(cfg, a).map((f) => base + f));
         if (this.disposed) return;
         const keyOf = (r: SampleRef) => base + r.file;
+        // Real recordings: re-splice short loops into a few non-repeating seconds (the engine-model
+        // set is built phase-locked across loops, so it is played as is).
+        if (a === cfg.audio && cfg.ui.recorded) {
+          for (const ref of [...a.onLoad!, ...a.offLoad!, a.idle!]) {
+            const buf = buffers.get(keyOf(ref));
+            if (buf) buffers.set(keyOf(ref), shuffleLoop(ctx, buf, { rpm: ref.rpm, seed: Math.round(ref.rpm) }));
+          }
+        }
         // One shared start time keeps every loop on the same crank angle (phase-locked).
         const startAt = ctx.currentTime + 0.05;
         this.onLayer = new SampleLayer(ctx, a.onLoad!, buffers, keyOf, this.onBus!, startAt);

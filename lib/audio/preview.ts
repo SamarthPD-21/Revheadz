@@ -1,4 +1,5 @@
 import { decodeAll } from "../assets/Loader";
+import { shuffleLoop } from "./loopShuffle";
 
 /** What the garage needs to play a quick rev of a vehicle: its idle loop and one high on-load loop. */
 export interface PreviewSounds {
@@ -43,13 +44,13 @@ export async function playPreview(base: string, s: PreviewSounds, onEnd?: () => 
   out.connect(ac.destination);
 
   const idle = ac.createBufferSource();
-  idle.buffer = buffers.get(`${base}/${s.idle}`)!;
+  idle.buffer = shuffleLoop(ac, buffers.get(`${base}/${s.idle}`)!, { rpm: s.idleRpm, seconds: 3 });
   idle.loop = true;
   const idleGain = ac.createGain();
   idle.connect(idleGain).connect(out);
 
   const rev = ac.createBufferSource();
-  rev.buffer = buffers.get(`${base}/${s.rev}`)!;
+  rev.buffer = shuffleLoop(ac, buffers.get(`${base}/${s.rev}`)!, { rpm: s.revRpm, seconds: 3 });
   rev.loop = true;
   const revGain = ac.createGain();
   rev.connect(revGain).connect(out);
