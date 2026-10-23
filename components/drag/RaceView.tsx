@@ -258,9 +258,19 @@ export function RaceView({ me, opp, startAt, opponent, audio, oppAudio, sfx, onI
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d", { alpha: false })!;
     const s2 = new DragScene25D(ctx);
-    // fill rate is the limit on low-end phones: cap the backing store
-    const maxDpr = window.matchMedia("(pointer: coarse)").matches ? 1.25 : 1.5;
+    // fill rate is the limit on low-end phones: cap the backing store, and step it down
+    // further if frames run slow (measured over ~1 s at a time)
+    let maxDpr = window.matchMedia("(pointer: coarse)").matches ? 1.25 : 1.5;
+    let frames = 0;
+    let slowSince = performance.now();
     const draw = (f: SceneFrame, w: number, h: number) => {
+      frames++;
+      const elapsed = performance.now() - slowSince;
+      if (elapsed > 1000) {
+        if (frames / (elapsed / 1000) < 45 && maxDpr > 0.75) maxDpr = Math.max(0.75, maxDpr - 0.25);
+        frames = 0;
+        slowSince = performance.now();
+      }
       const dpr = Math.min(maxDpr, window.devicePixelRatio || 1);
       if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
         canvas.width = Math.round(w * dpr);

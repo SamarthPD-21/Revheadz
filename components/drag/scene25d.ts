@@ -317,7 +317,7 @@ export class DragScene25D {
     const near = camZ + 0.8;
     const slices: [number, number][] = [];
     for (let z = near; z < camZ + DRAW_M; ) {
-      const len = 2 + (z - camZ) * 0.045; // longer slices further away
+      const len = 2.5 + (z - camZ) * 0.07; // longer slices further away (fewer fills)
       slices.push([z, Math.min(z + len, camZ + DRAW_M)]);
       z += len;
     }
@@ -326,7 +326,7 @@ export class DragScene25D {
       const [za, zb] = slices[i]; // za near, zb far
       const ya = py(0, za);
       const yb = py(0, zb);
-      if (ya < horizon - 1) continue;
+      if (ya < horizon - 1 || ya - yb < 0.35) continue; // above the horizon, or too thin to see
       const band = Math.floor(za / 8) % 2 === 0;
       // grandstand face (left) with the crowd
       const sTopA = py(8, za);
@@ -334,8 +334,8 @@ export class DragScene25D {
       const sxA = px(-16, za);
       const sxB = px(-16, zb);
       quad(sxB, sTopB, sxA, sTopA, sxA, ya, sxB, yb, "#100f17");
-      const wSlice = Math.max(1, sxB - sxA);
-      if (Math.abs(wSlice) > 0.5) ctx.drawImage(crowd, (za * 9) % 400, 0, 100, 128, Math.min(sxA, sxB), sTopB, Math.abs(sxB - sxA) + 1, (ya - sTopA) * 0.75);
+      // the crowd texture only where it's big enough to read; far slices are a few pixels wide
+      if (Math.abs(sxB - sxA) > 3) ctx.drawImage(crowd, (za * 9) % 400, 0, 100, 128, Math.min(sxA, sxB), sTopB, Math.abs(sxB - sxA) + 1, (ya - sTopA) * 0.75);
       // asphalt (with faint bands: the strongest cue of speed)
       quad(px(-WALL_X, zb), yb, px(WALL_X, zb), yb, px(WALL_X, za), ya, px(-WALL_X, za), ya, band ? "#1b1a21" : "#18171d");
       // rubbered-in launch lanes
@@ -344,14 +344,20 @@ export class DragScene25D {
         for (const lx of [LANE_X.me, LANE_X.opp]) quad(px(lx - 0.9, zb), yb, px(lx + 0.9, zb), yb, px(lx + 0.9, za), ya, px(lx - 0.9, za), ya, `rgba(0,0,0,${a})`);
       }
       // lines: centre, lane edges, and dashes
-      const line = (x: number, half: number, color: string) => quad(px(x - half, zb), yb, px(x + half, zb), yb, px(x + half, za), ya, px(x - half, za), ya, color);
-      line(0, 0.06, "#c99a1c");
-      line(LINE_X, 0.05, "#bdbdc6");
-      line(-LINE_X, 0.05, "#bdbdc6");
-      if (band) {
-        line(3.4, 0.04, "#5c5b66");
-        line(-3.4, 0.04, "#5c5b66");
-      }
+      const lines = (spec: [number, number][], color: string) => {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        for (const [x, half] of spec) {
+          ctx.moveTo(px(x - half, zb), yb);
+          ctx.lineTo(px(x + half, zb), yb);
+          ctx.lineTo(px(x + half, za), ya);
+          ctx.lineTo(px(x - half, za), ya);
+          ctx.closePath();
+        }
+        ctx.fill();
+      };
+      lines([[0, 0.06]], "#c99a1c");
+      lines(band ? [[LINE_X, 0.05], [-LINE_X, 0.05], [3.4, 0.04], [-3.4, 0.04]] : [[LINE_X, 0.05], [-LINE_X, 0.05]], "#bdbdc6");
       // start and finish lines
       for (const [mark, color] of [[0, "#f4f4f5"], [QUARTER_MILE_M, "checker"]] as [number, string][]) {
         if (mark >= za && mark < zb) {
