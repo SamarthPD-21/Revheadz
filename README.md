@@ -6,9 +6,10 @@
 
 **Start it. Rev it. Shift it.** A free engine sound simulator that runs entirely in your browser.
 
-Pick one of 15 machines, press the start button, and drive it with your keyboard or thumbs. The sound follows
-every throttle input, gear change, limiter bounce and overrun pop in real time. Ten of the engines are real
-professional recordings, and you can switch any of them to the engine-model sound to compare. No install, no account, no server.
+Pick one of 35 real machines, from the Toyota Supra and Ferrari F40 to a Formula 1 V10 and a Ducati Panigale, press
+the start button, and drive it with your keyboard or thumbs. The sound follows every throttle input, gear change,
+limiter bounce and overrun pop in real time. 34 of the engines are built from recordings of that exact machine, and
+you can switch any of them to the engine-model sound to compare. No install, no account, no server.
 
 <p align="center">
   <img src="docs/screenshots/drive.jpg" alt="Drive screen: tachometer at 7,000 rpm in 2nd gear, speedometer, shift lights and controls" width="100%">
@@ -22,10 +23,14 @@ professional recordings, and you can switch any of them to the engine-model soun
 
 ## Features
 
-- **15 vehicles**: a Grand Prix car, a GT race car, muscle, three twin-turbo sixes and V6s, supercars, a grand
-  tourer, a hot hatch, a rally car, a rotary and two bikes
-- **Real engine recordings** for ten of them, turned into RPM-mapped loops by a custom audio pipeline, with a
-  **Real / Model** switch in the drive screen to hear the engine-model version instead
+- **35 real machines from 23 makes**: JDM icons (Supra, Skyline GT-R, RX-7, S2000, WRX STI), supercars and
+  hypercars (F40, LFA, Carrera GT, Aventador SVJ, Zonda, Chiron), American muscle, European sports cars, two
+  Formula 1 cars, Le Mans' Mazda 787B, a WRC rally car and four bikes
+- **Real engine recordings** for 34 of them (professional Sonniss recordings and YouTube dyno pulls, cold starts and
+  onboards), turned into RPM-mapped loops by a custom audio pipeline, with a **Real / Model** switch in the drive
+  screen to hear the engine-model version instead
+- **No audible looping**: short recorded loops are re-spliced in the browser into seconds of non-repeating sound
+  (cycle-aligned random splicing), and every YouTube clip was screened for voices with a speech recogniser
 - **Live turbo sound**: a whistle and intake hiss that follow boost, plus blow-off "pssh" or compressor-surge
   "flutter" when you lift
 - **Physics-based engine and gearbox**: inertia, torque curve, turbo lag, clutch slip at pull-away, drag and braking
@@ -34,13 +39,16 @@ professional recordings, and you can switch any of them to the engine-model soun
 - **Realistic deceleration**: engine braking that pulls harder in low gears, progressive brakes that ease off as you
   stop, and overrun crackle when you coast at high revs
 - **Rev limiter, backfire pops and turbo blow-off**, which only fire when you actually coast, never on a gear change
-- **Smooth sound**: all loops stay phase-locked and crossfade at constant loudness, so revving doesn't click or warble
+- **Smooth sound**: loops are pitched together and crossfade at constant loudness, so revving doesn't click or warble
 - **Race-car dashboard**: canvas gauges, shift lights, throttle, brake and boost bars, a tachometer that bounces off
   the rev limiter, and an RPM readout down to the single rev
 - **Works on phones, with multitouch**: hold the throttle with one thumb while you shift or brake with the other, in
   portrait or landscape
 - **Installable**: add it to your home screen and it opens full-screen like an app, with its own icon
-- **Garage with filters and a "Surprise me" button** that drops you into a random machine
+- **Playground** with search (`/`), filters, sorting, favourites, "Jump back in" for recently driven machines, a
+  **Hear it** rev preview on every card and a "Surprise me" button
+- **Quick vehicle switcher** in the drive screen (`V`): search the whole garage without leaving the cockpit
+- **Drag Racing** mode: coming soon
 - **Free to host**: a static site you can put on Vercel, Netlify or Cloudflare Pages
 
 ## Quick start
@@ -75,32 +83,54 @@ npm run dev          # http://localhost:3000
 | `M` | 🔈 button | Mute / unmute |
 | `F` | ⛶ button | Fullscreen |
 | `[` / `]` | ‹ / › in the header | Previous / next vehicle |
+| `V` | Vehicle name in the header | Switch vehicle (searchable list) |
+| `/` | | Search the Playground |
 
 > Turn your volume down before the first start. Engines are loud.
 > On an iPhone, make sure the silent switch is off.
 
 ## The garage
 
-| Vehicle | Engine | Gearbox | Redline | Sound |
-|---|---|---|---|---|
-| Grand Prix Racer | 2.4 L V8 | 7-speed sequential | 18,500 | 🎙️ Real recording |
-| GT Race Car | Flat-plane V8 | 6-speed sequential | 8,800 | 🎙️ Real recording |
-| Muscle V8 | Big-cam V8 | 6-speed manual | 6,200 | 🎙️ Real recording |
-| Flat-6 Sports Coupe | Air-cooled flat-6 | 7-speed dual-clutch | 7,200 | 🎙️ Real recording |
-| V12 Grand Tourer | V12 | 7-speed dual-clutch | 6,750 | 🎙️ Real recording |
-| Hot Hatch Turbo-4 | Turbo inline-4 | 6-speed dual-clutch | 6,800 | 🎙️ Real recording |
-| Inline-4 Superbike | Inline-4, 1000 cc | 6-speed quickshifter | 13,500 | 🎙️ Real recording |
-| Inline-6 Turbo | Twin-turbo straight-6 | 6-speed manual | 7,000 | 🔧 Engine model |
-| Twin-Turbo V6 AWD | Twin-turbo V6 | 6-speed dual-clutch | 7,000 | 🎙️ Real recording |
-| Euro Twin-Turbo Six | Twin-turbo straight-6 | 7-speed dual-clutch | 7,300 | 🎙️ Real recording |
-| V10 Supercar | V10 | 7-speed dual-clutch | 8,500 | 🔧 Engine model |
-| Boxer-4 Rally Turbo | Turbo flat-4 | 6-speed manual | 7,000 | 🔧 Engine model |
-| Twin-Rotor Rotary | 2-rotor Wankel | 5-speed manual | 8,500 | 🔧 Engine model |
-| V-Twin Cruiser | 45° V-twin | 6-speed manual | 5,500 | 🎙️ Real recording |
-| Synth V6 | V6 | 6-speed manual | 6,800 | 🎛️ Live synthesis |
+| Vehicle | Year | Engine | Gearbox | Redline | Sound |
+|---|---|---|---|---|---|
+| Toyota Supra MK4 | 1998 | Twin-turbo straight-six | 6-speed manual | 6,800 | 🎙️ Real (YouTube) |
+| Nissan Skyline GT-R R34 | 1999 | Twin-turbo straight-six | 6-speed manual | 8,000 | 🎙️ Real (YouTube) |
+| Nissan GT-R R35 | 2012 | VR38DETT 3.8 L twin-turbo V6 | 6-speed dual-clutch / auto | 7,000 | 🎙️ Real (Sonniss) |
+| Mazda RX-7 FD3S | 1993 | Twin-turbo two-rotor Wankel | 5-speed manual | 8,000 | 🎙️ Real (YouTube) |
+| Honda S2000 AP1 | 2000 | Naturally aspirated inline-four | 6-speed manual | 8,800 | 🎙️ Real (YouTube) |
+| Subaru Impreza WRX STI | 2006 | Turbocharged flat-four | 6-speed manual | 7,000 | 🎙️ Real (YouTube) |
+| Toyota Chaser JZX100 Tourer V | 1998 | Turbocharged straight-six | 5-speed manual | 7,000 | 🎙️ Real (YouTube) |
+| Nissan 370Z | 2009 | Naturally aspirated V6 | 6-speed manual | 7,500 | 🎙️ Real (YouTube) |
+| Ferrari F40 | 1987 | Twin-turbo flat-plane V8 | 5-speed manual | 7,750 | 🎙️ Real (YouTube) |
+| Lexus LFA | 2011 | Naturally aspirated V10 | 6-speed dual-clutch / auto | 9,000 | 🎙️ Real (YouTube) |
+| Porsche 911 GT3 RS | 2019 | 4.0 L naturally aspirated flat-six, 9,000 rpm | 7-speed dual-clutch / auto | 8,800 | 🎙️ Real (YouTube) |
+| Porsche Carrera GT | 2004 | Naturally aspirated V10 | 6-speed manual | 8,400 | 🎙️ Real (YouTube) |
+| Lamborghini Aventador SVJ | 2019 | Naturally aspirated V12 | 7-speed dual-clutch / auto | 8,500 | 🎙️ Real (YouTube) |
+| Pagani Zonda F | 2005 | Naturally aspirated V12 | 6-speed manual | 7,500 | 🎙️ Real (YouTube) |
+| Bugatti Chiron | 2016 | 8.0 L quad-turbo W16, 1,500 hp | 7-speed dual-clutch / auto | 6,700 | 🔧 Engine model |
+| Ferrari 458 Italia Straight Pipes | 2013 | 4.5 L F136 flat-plane V8, straight pipes | 6-speed sequential | 8,800 | 🎙️ Real (Sonniss) |
+| Audi R8 V10 Plus | 2016 | Naturally aspirated V10 | 7-speed dual-clutch / auto | 8,500 | 🎙️ Real (YouTube) |
+| Chevrolet Corvette Z06 | 2023 | 5.5 LT6 flat-plane V8 | 8-speed dual-clutch / auto | 8,500 | 🎙️ Real (YouTube) |
+| Ford Mustang GT | 2018 | 5.0 Coyote V8 | 6-speed manual | 7,400 | 🎙️ Real (YouTube) |
+| Dodge Challenger SRT Hellcat | 2015 | Supercharged 6.2 HEMI V8 | 8-speed dual-clutch / auto | 6,200 | 🎙️ Real (YouTube) |
+| Plymouth Hemi 'Cuda | 1971 | 426 Hemi big-block V8 | 6-speed manual | 6,200 | 🎙️ Real (Sonniss) |
+| BMW M4 (F82) | 2014 | S55 3.0 L twin-turbo I6 | 7-speed dual-clutch / auto | 7,300 | 🎙️ Real (Sonniss) |
+| BMW M3 E46 | 2001 | 3.2 S54 inline-6 | 6-speed manual | 7,900 | 🎙️ Real (YouTube) |
+| Mercedes-AMG C63 | 2008-2014 | 6.2 M156 V8 | 7-speed dual-clutch / auto | 7,000 | 🎙️ Real (YouTube) |
+| Porsche 911 SC | 1981 | 3.0 L air-cooled flat-six | 7-speed dual-clutch / auto | 7,200 | 🎙️ Real (Sonniss) |
+| Aston Martin DB9 | 2017 | 5.9 L NA V12 | 7-speed dual-clutch / auto | 6,750 | 🎙️ Real (Sonniss) |
+| Ford Focus RS | 2016 | 2.3 L EcoBoost turbo I4 | 6-speed dual-clutch / auto | 6,800 | 🎙️ Real (Sonniss) |
+| Ferrari F2004 | 2004 | 3.0 L V10, 19,000 rpm | 7-speed sequential | 18,800 | 🎙️ Real (YouTube) |
+| Williams FW29 | 2007 | Toyota RVX-07 2.4 L V8, 19,000 rpm | 7-speed sequential | 18,500 | 🎙️ Real (Sonniss) |
+| Mazda 787B | 1991 | Four-rotor Wankel | 5-speed manual | 9,000 | 🎙️ Real (YouTube) |
+| Subaru Impreza WRC | 2006 | Turbocharged flat-four, anti-lag | 6-speed sequential | 7,500 | 🎙️ Real (YouTube) |
+| Ducati Panigale V4 R | 2019 | 1,000 cc V4, twin-pulse, 16,000 rpm | 6-speed quickshifter | 15,500 | 🎙️ Real (YouTube) |
+| Kawasaki Ninja H2 | 2015 | 998 cc supercharged inline-four | 6-speed quickshifter | 14,000 | 🎙️ Real (YouTube) |
+| BMW S1000RR | 2015 | 999 cc inline-four | 6-speed quickshifter | 13,500 | 🎙️ Real (Sonniss) |
+| Harley-Davidson Big Twin | 2016 | 45-degree air-cooled V-twin | 6-speed manual | 5,500 | 🎙️ Real (Sonniss) |
 
-Vehicle names are generic on purpose, with no brands or model names. Each engine's idle and redline match the
-engine it was recorded from or modelled on.
+Each engine's idle and redline match the machine it was recorded from. Vehicle names are used descriptively; the
+project isn't affiliated with any manufacturer.
 
 ## How it works
 
@@ -120,7 +150,10 @@ flowchart LR
 - **Sample blending.** Each vehicle has looping recordings at several RPMs, for on-load (accelerating) and overrun.
   Each frame the two loops nearest the current RPM are crossfaded, pitched to match, and blended by engine load. Every
   loop starts at the same instant and is pitched by the same `rpm / sampleRpm` rule, so all loops stay in step.
-  That keeps crossfades free of flanging and spikes.
+- **Loop shuffling.** Loops cut from a fast dyno pull can be under a second long, and looped as-is they buzz with
+  repetition. When a real-recording set loads, `lib/audio/loopShuffle.ts` re-splices each short loop into ~5 s of
+  material: grains of about one and a half engine cycles in random order, each splice placed where the waveform best
+  matches (a WSOLA-style search) and crossfaded, ending on a splice back to its own start.
 - **Shifting in two phases.** First the drive cuts out. On an upshift the revs fall under engine braking; on a
   downshift an automatic blip matches revs, and you hear it. Then the clutch engages: revs blend onto the new gear
   and torque returns. Manual, dual-clutch and sequential gearboxes each have their own timing.
@@ -132,32 +165,35 @@ flowchart LR
 ### Where the sounds come from
 
 **Real recordings.** Ten engines come from free, royalty-free [Sonniss #GameAudioGDC](https://sonniss.com/gameaudiogdc)
-bundles: Pole Position Production, Dramatic Cat and Game Audio Factory. `scripts/build-real-sounds.mjs` turns raw recordings into
-game-ready loops, using the manifest in `scripts/real-sounds.json`:
+bundles (Pole Position Production, Dramatic Cat and Game Audio Factory). The other 24 recorded engines come from
+YouTube videos (dyno pulls, cold starts, pure-sound and onboard clips), credited to each channel on the Credits page.
+`scripts/build-real-sounds.mjs` turns raw recordings into game-ready loops, using `scripts/real-sounds.json` (Sonniss
+vehicles) and one manifest per vehicle in `scripts/real-sounds.d/<id>.json`. A source is either a direct `url` or a
+`youtube` video id, downloaded once with `yt-dlp`.
 
 1. **Track the engine's speed** from its cycle frequency, the spacing of the harmonic "comb" every engine produces
    (RPM = cycle Hz × 120). Noisy sweeps can use hand-checked anchor points read off a spectrogram.
-2. **Cut** steady-RPM sections, or slices of full-throttle runs, and **flatten their pitch** to one exact RPM.
+2. **Cut** steady-RPM sections, or slices of full-throttle runs, and **flatten their pitch** to one exact RPM. Gaps no
+   recording covers can be filled by resampling the nearest real loop (`shiftFrom`).
 3. **Loop** each section seamlessly with a correlated crossfade. Idle and steady holds can be left untouched to keep
    their natural character. Loops cut from a second recording can be EQ-matched to the first, so the change in mic or
    session isn't audible.
-4. **Check**: adjacent loops' spectra are aligned by frequency scaling, and the scale is compared with their RPM
-   labels, to catch a mislabelled loop (which would make the pitch jump).
-5. **Finish**: use real deceleration loops for overrun where the recording has them (otherwise darker variants), normalise loudness along a smooth RPM curve, cut the real start-up and
-   shutdown sounds, encode `.ogg` and `.mp3`, and write the vehicle config and credits.
+4. **Screen for voices.** Every YouTube source window and built file was checked with a speech recogniser
+   (faster-whisper) plus a voice-activity detector, and anything with talking was re-cut or replaced.
+5. **Finish**: use real deceleration loops for overrun where the recording has them (otherwise darker variants),
+   normalise loudness along a smooth RPM curve, cut the real start-up and shutdown sounds, encode `.ogg` and `.mp3`,
+   and write the vehicle config and credits.
 
-**Engine model.** The other five come from `scripts/generate-sounds.mjs`, a physical engine model. It uses real firing
-orders and crank angles, per-bank exhaust pipes with reflections, muffler resonances, intake roar, valvetrain noise,
-turbo whistle and overrun crackle. The free recordings for these engines only covered idle and quick blips, which is
-not enough for a full RPM range. Real-recording vehicles also get an engine-model set (in `sounds/gen/`) for the
-**Real / Model** switch.
-
-**Live synthesis.** Synth V6 is synthesised in the browser by an `AudioWorklet`, with no audio files at all.
+**Engine model.** `scripts/generate-sounds.mjs` is a physical engine model. It uses real firing orders and crank angles,
+per-bank exhaust pipes with reflections, muffler resonances, intake roar, valvetrain noise, turbo whistle and overrun
+crackle. The Bugatti Chiron uses it (no usable recording exists), and every recorded vehicle also gets an engine-model
+set (in `sounds/gen/`) for the **Real / Model** switch. A vehicle can borrow another's voice with `"voice": "<id>"`.
 
 ```bash
-node scripts/build-real-sounds.mjs            # rebuild all real-recording vehicles (needs ffmpeg; downloads sources once)
-node scripts/build-real-sounds.mjs muscle_v8  # just one
-npm run sounds                                # regenerate the engine-model sounds
+node scripts/build-real-sounds.mjs muscle_v8      # rebuild one vehicle (needs ffmpeg and yt-dlp; downloads sources once)
+node scripts/build-real-sounds.mjs --all          # rebuild every real-recording vehicle
+node scripts/build-real-sounds.mjs --credits-only # rewrite credits.json from the manifests
+npm run sounds                                    # regenerate the engine-model sounds
 ```
 
 Source recordings are cached in `.sound-cache/`, which is not committed.
@@ -165,12 +201,12 @@ Source recordings are cached in `.sound-cache/`, which is not committed.
 ## Project structure
 
 ```
-app/                     Pages: garage (/), drive (/drive/[vehicleId]), credits
+app/                     Pages: home (/), playground (/playground), drive (/drive/[vehicleId]), credits
 components/              React UI: Simulator, gauges, shift lights, controls, garage cards
 hooks/                   useEngineState: the slow-changing state React subscribes to
 lib/
   sim/                   Engine, Gearbox, Simulation: pure TypeScript, no React
-  audio/                 AudioEngine, SampleLayer, SynthEngine (AudioWorklet), OneShots, blend maths
+  audio/                 AudioEngine, SampleLayer, loop shuffling, card previews, SynthEngine (AudioWorklet), OneShots, blend maths
   assets/                Sound fetching, decoding and caching
   input/                 Keyboard and touch → throttle, brake and commands
   vehicles/              Typed configs, validation, build-time file checks
@@ -184,12 +220,13 @@ tests/                   Vitest suites
 1. Copy a folder in `public/vehicles/` and edit `config.json`: `engine`, `gearbox` (including `type`), `dynamics`,
    optional `turbo`, and `ui`.
 2. Give it sounds, in one of three ways:
-   - **From recordings**: add an entry to `scripts/real-sounds.json` and run `node scripts/build-real-sounds.mjs <id>`.
+   - **From recordings**: add `scripts/real-sounds.d/<id>.json` (sources can be YouTube ids) and run
+     `node scripts/build-real-sounds.mjs <id>`.
    - **From the engine model**: add a voice to `VOICES` in `scripts/generate-sounds.mjs` and run
      `node scripts/generate-sounds.mjs <id>`.
    - **By hand**: drop in `.ogg` and `.mp3` loops named by RPM, and fill in the `audio` section.
 3. Import the config in `lib/vehicles/index.ts` and add it to the list.
-4. Credit its sounds in `credits.json`.
+4. Credit its sounds: `node scripts/build-real-sounds.mjs --credits-only` (or edit `credits.json` by hand).
 
 `npm test` and `npm run build` fail if a config is invalid or a referenced sound file is missing. They also fail if
 the loudest loop at any RPM would be pitched too far from its recording.
@@ -206,7 +243,7 @@ Optional environment variables:
 
 | Variable | Purpose |
 |---|---|
-| `NEXT_PUBLIC_FEEDBACK_URL` | Shows a "Send feedback" link in the garage (e.g. a Google Form) |
+| `NEXT_PUBLIC_FEEDBACK_URL` | Shows a "Send feedback" link on the home page (e.g. a Google Form) |
 | `NEXT_PUBLIC_SITE_URL` | Your custom domain, so social share images use absolute URLs |
 
 Vercel's free Hobby plan is for non-commercial use. If you ever monetise, the same static build runs unchanged on
@@ -219,8 +256,10 @@ Web Audio API with AudioWorklet · Canvas 2D · [Vitest](https://vitest.dev) · 
 
 ## Credits
 
-- Real engine recordings: **Pole Position Production** and **Dramatic Cat**, from the Sonniss #GameAudioGDC bundles,
-  under the Sonniss GDC bundle license (royalty-free, commercial use allowed).
+- Real engine recordings: **Pole Position Production**, **Dramatic Cat** and **Game Audio Factory**, from the Sonniss
+  #GameAudioGDC bundles, under the Sonniss GDC bundle license (royalty-free, commercial use allowed).
+- YouTube recordings: the channels listed on the Credits page. Their audio is used for this personal project only;
+  it is not covered by an open license.
 - Generated sounds and code: Revheadz.
 
 The in-app **Credits** page lists every recording used.

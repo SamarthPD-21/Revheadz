@@ -8,11 +8,11 @@ export const metadata: Metadata = { title: "Sound credits", description: "Who ma
 export default function Credits() {
   return (
     <div className="mx-auto min-h-dvh max-w-3xl px-4 py-10">
-      <Link href="/" aria-label="Back to garage" className="inline-block transition hover:brightness-110">
+      <Link href="/" aria-label="Back to home" className="inline-block transition hover:brightness-110">
         <Logo size="md" />
       </Link>
       <h1 className="mt-8 text-3xl font-bold">Sound credits</h1>
-      <p className="mt-2 text-zinc-400">Only original, CC0 or CC-BY sounds are used. Vehicle names are generic on purpose.</p>
+      <p className="mt-2 text-zinc-400">Engine sounds come from Sonniss GDC bundle recordings, YouTube videos (personal use, credited to each channel) and the original engine model. Not affiliated with any manufacturer.</p>
       <ul className="mt-6 space-y-4">
         {credits.map((c) => (
           <li key={c.vehicle + c.files} className="rounded-xl border border-white/10 bg-white/5 p-4">

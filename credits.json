@@ -1,205 +1,905 @@
 [
   {
-    "vehicle": "Muscle V8",
+    "vehicle": "Plymouth Hemi 'Cuda",
     "files": "Engine loops (idle, on-load, overrun), start sound, stop sound",
     "author": "Pole Position Production",
     "source": "Plymouth Hemi Cuda 1971 - onboard startup, idle, blips, steady rpms (Sonniss GDC 2016 Game Audio Bundle)",
     "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
   },
   {
-    "vehicle": "Muscle V8",
+    "vehicle": "Plymouth Hemi 'Cuda",
     "files": "Generated one-shots: shift, backfire, blow-off",
     "author": "Revheadz (generated)",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
   {
-    "vehicle": "Flat-6 Sports Coupe",
+    "vehicle": "Porsche 911 SC",
     "files": "Engine loops (idle, on-load, overrun), start sound",
     "author": "Pole Position Production",
     "source": "Porsche 911 SC 1981 - onboard driving at constant rpms, exhausts (Sonniss GDC 2016 Game Audio Bundle)",
     "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
   },
   {
-    "vehicle": "Flat-6 Sports Coupe",
+    "vehicle": "Porsche 911 SC",
     "files": "Generated one-shots: stop, shift, backfire, blow-off",
     "author": "Revheadz (generated)",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
   {
-    "vehicle": "V12 Grand Tourer",
+    "vehicle": "Aston Martin DB9",
     "files": "Engine loops (idle, on-load, overrun), start sound, stop sound",
     "author": "Pole Position Production",
     "source": "Aston Martin DB9 2017 - onboard start, idle, blips, steadies in neutral (Sonniss GDC 2019 Game Audio Bundle)",
     "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
   },
   {
-    "vehicle": "V12 Grand Tourer",
+    "vehicle": "Aston Martin DB9",
     "files": "Generated one-shots: shift, backfire, blow-off",
     "author": "Revheadz (generated)",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
   {
-    "vehicle": "Hot Hatch Turbo-4",
+    "vehicle": "Ford Focus RS",
     "files": "Engine loops (idle, on-load, overrun)",
     "author": "Pole Position Production",
     "source": "Ford Focus RS 2016 - onboard drive, ramps, stop (Sonniss GDC 2020 Game Audio Bundle)",
     "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
   },
   {
-    "vehicle": "Hot Hatch Turbo-4",
+    "vehicle": "Ford Focus RS",
     "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
     "author": "Revheadz (generated)",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
   {
-    "vehicle": "Inline-4 Superbike",
+    "vehicle": "BMW S1000RR",
     "files": "Engine loops (idle, on-load, overrun)",
     "author": "Dramatic Cat",
     "source": "BMW S1000RR 2015 - onboard driving, starts, accelerations, gearshifts (Sonniss GDC 2023 Game Audio Bundle)",
     "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
   },
   {
-    "vehicle": "Inline-4 Superbike",
+    "vehicle": "BMW S1000RR",
     "files": "Engine loops (idle, on-load, overrun)",
     "author": "Pole Position Production",
     "source": "BMW S1000RR HP4 2012 - onboard startup, idle, blips, constant rpms in neutral, shutdown (exhaust) (Sonniss GDC 2018 Game Audio Bundle)",
     "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
   },
   {
-    "vehicle": "Inline-4 Superbike",
+    "vehicle": "BMW S1000RR",
     "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
     "author": "Revheadz (generated)",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
   {
-    "vehicle": "GT Race Car",
+    "vehicle": "Ferrari 458 Italia Straight Pipes",
     "files": "Engine loops (idle, on-load, overrun)",
     "author": "Pole Position Production",
     "source": "Ferrari 458 2013, straight pipes - onboard ramps, drive, stop (Sonniss GDC 2024 Game Audio Bundle)",
     "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
   },
   {
-    "vehicle": "GT Race Car",
+    "vehicle": "Ferrari 458 Italia Straight Pipes",
     "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
     "author": "Revheadz (generated)",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
   {
-    "vehicle": "Grand Prix Racer",
+    "vehicle": "Williams FW29",
     "files": "Engine loops (idle, on-load, overrun)",
     "author": "Pole Position Production",
     "source": "Williams FW29 (2007 F1) - onboard driving at steady rpms, accelerations, shutdown (cockpit) (Sonniss GDC 2016 Game Audio Bundle)",
     "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
   },
   {
-    "vehicle": "Grand Prix Racer",
+    "vehicle": "Williams FW29",
     "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
     "author": "Revheadz (generated)",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
   {
-    "vehicle": "V-Twin Cruiser",
+    "vehicle": "Harley-Davidson Big Twin",
     "files": "Engine loops (idle, on-load, overrun), start sound, stop sound",
     "author": "Game Audio Factory",
     "source": "Harley Davidson - start, accelerate, slow pull away, pass by, arrive, idle, stop (exhaust pipe mic) (Sonniss GDC 2016 Game Audio Bundle)",
     "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
   },
   {
-    "vehicle": "V-Twin Cruiser",
+    "vehicle": "Harley-Davidson Big Twin",
     "files": "Engine loops (idle, on-load, overrun), start sound, stop sound",
     "author": "Game Audio Factory",
     "source": "Harley Davidson - start and long idle, back-firing (Sonniss GDC 2016 Game Audio Bundle)",
     "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
   },
   {
-    "vehicle": "V-Twin Cruiser",
+    "vehicle": "Harley-Davidson Big Twin",
     "files": "Engine loops (idle, on-load, overrun), start sound, stop sound",
     "author": "Pole Position Production",
     "source": "Chopper Custom V-Twin - exterior startup, fast driving away, shutdown (Sonniss GDC 2018 Game Audio Bundle)",
     "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
   },
   {
-    "vehicle": "V-Twin Cruiser",
+    "vehicle": "Harley-Davidson Big Twin",
     "files": "Generated one-shots: shift, backfire, blow-off",
     "author": "Revheadz (generated)",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
   {
-    "vehicle": "Twin-Turbo V6 AWD",
+    "vehicle": "Nissan GT-R R35",
     "files": "Engine loops (idle, on-load, overrun)",
     "author": "Pole Position Production",
     "source": "Nissan GT-R R35 2012 - onboard driving, ramps (engine, left valve) (Sonniss GDC 2020 Game Audio Bundle)",
     "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
   },
   {
-    "vehicle": "Twin-Turbo V6 AWD",
+    "vehicle": "Nissan GT-R R35",
     "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
     "author": "Revheadz (generated)",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
   {
-    "vehicle": "Euro Twin-Turbo Six",
+    "vehicle": "BMW M4 (F82)",
     "files": "Engine loops (idle, on-load, overrun), stop sound",
     "author": "Pole Position Production",
     "source": "BMW M4 2014 - exterior start, idle, blips, steady rpms in neutral, shutdown (Sonniss GDC 2020 Game Audio Bundle)",
     "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
   },
   {
-    "vehicle": "Euro Twin-Turbo Six",
+    "vehicle": "BMW M4 (F82)",
     "files": "Engine loops (idle, on-load, overrun), stop sound",
     "author": "Pole Position Production",
     "source": "BMW M4 2014 - onboard driving with gearshifts (engine) (Sonniss GDC 2020 Game Audio Bundle)",
     "license": "Sonniss GDC Game Audio Bundle license (royalty-free)"
   },
   {
-    "vehicle": "Euro Twin-Turbo Six",
+    "vehicle": "BMW M4 (F82)",
     "files": "Generated one-shots: start, shift, backfire, blow-off",
     "author": "Revheadz (generated)",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
   {
-    "vehicle": "Inline-6 Turbo",
-    "files": "All loops and one-shots (sounds/*.ogg, *.mp3)",
-    "author": "Revheadz (original, generated with scripts/generate-sounds.mjs)",
+    "vehicle": "Mercedes-AMG C63",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Gareth Bargate",
+    "source": "Mercedes Benz C63 AMG - Sedan Vs Coupe Dyno Runs (https://www.youtube.com/watch?v=GGmZkdKgQ0U)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Mercedes-AMG C63",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Blue Ridge Motor Club",
+    "source": "Mercedes-Benz C63 AMG (W204) Stock Exhaust Sound (M156 6.2L V8) (https://www.youtube.com/watch?v=IrWPPeO9ZuM)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Mercedes-AMG C63",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "BerlinTomek",
+    "source": "Mercedes C63 AMG Sound Exhaust Start Up - Revving Revs Cold Start 2013 (https://www.youtube.com/watch?v=IwciBgLO-rQ)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Mercedes-AMG C63",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
   {
-    "vehicle": "V10 Supercar",
-    "files": "All loops and one-shots (sounds/*.ogg, *.mp3)",
-    "author": "Revheadz (original, generated with scripts/generate-sounds.mjs)",
+    "vehicle": "Audi R8 V10 Plus",
+    "files": "Engine loops (idle, on-load, overrun), start sound, stop sound",
+    "author": "Carspotter Jeroen",
+    "source": "Audi R8 V10 PLUS V10 on the Dyno (https://www.youtube.com/watch?v=EpXorfGl4Jc)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Audi R8 V10 Plus",
+    "files": "Engine loops (idle, on-load, overrun), start sound, stop sound",
+    "author": "Carros na Alemanha",
+    "source": "Audi R8 V10 Plus Cold Start (https://www.youtube.com/watch?v=5j-mBcieMaQ)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Audi R8 V10 Plus",
+    "files": "Generated one-shots: shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
   {
-    "vehicle": "Boxer-4 Rally Turbo",
-    "files": "All loops and one-shots (sounds/*.ogg, *.mp3)",
-    "author": "Revheadz (original, generated with scripts/generate-sounds.mjs)",
+    "vehicle": "Lamborghini Aventador SVJ",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "NM2255 | Raw Car Sounds",
+    "source": "Lamborghini Aventador SVJ feat. catless Capristo hits the DYNO | 800+hp BRUTAL V12 engine sounds! (https://www.youtube.com/watch?v=pP53iMQouQA)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Lamborghini Aventador SVJ",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Videos Es",
+    "source": "Cold start of the new Lamborghini Aventador SVJ 2019 (https://www.youtube.com/watch?v=-rQZ9MOwHOQ)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Lamborghini Aventador SVJ",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Crazy Supercars",
+    "source": "Lamborghini Aventador SVJ Cold Start (https://www.youtube.com/watch?v=406PgCVkiqk)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Lamborghini Aventador SVJ",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "annivflstf",
+    "source": "Lamborghini Aventador SVJ - Idling Walk Around (https://www.youtube.com/watch?v=sm1zrCDLJjs)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Lamborghini Aventador SVJ",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
   {
-    "vehicle": "Twin-Rotor Rotary",
-    "files": "All loops and one-shots (sounds/*.ogg, *.mp3)",
-    "author": "Revheadz (original, generated with scripts/generate-sounds.mjs)",
+    "vehicle": "BMW M3 E46",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "BBRTuning",
+    "source": "E46 M3 S54 - CSL airbox + 288/280 cams - Dyno Pull 1600-8300 RPM (https://www.youtube.com/watch?v=V7JV_BftgBI)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "BMW M3 E46",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Filip Nikola",
+    "source": "BMW M3 E46 PURE SOUND REVS - DRIFT - ACCELERATION HILL CLIMB ON BOARD (https://www.youtube.com/watch?v=7dpiDK9LZmI)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "BMW M3 E46",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "The Racing Joker",
+    "source": "Stock M3 E46 Exhaust Sound (Downshift, Cold Start, Revs) (https://www.youtube.com/watch?v=djKSeSSoDNU)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "BMW M3 E46",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Jeff",
+    "source": "BMW E46 M3 Dyno *** STOCK *** (https://www.youtube.com/watch?v=YUXB9L2DMsE)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "BMW M3 E46",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "CarRex",
+    "source": "2002 E46 BMW M3 Coupe with 6 Speed Manual Cold Startup and Rev with Stock Exhaust (4K) (https://www.youtube.com/watch?v=ysmcxO917jU)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "BMW M3 E46",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
   {
-    "vehicle": "Synth V6",
-    "files": "Generated live in your browser; no audio files",
-    "author": "Revheadz",
-    "source": "lib/audio/synthWorklet.ts",
+    "vehicle": "Subaru Impreza WRC",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "zokaladzin",
+    "source": "Subaru Impreza S12B WRC Sound only HQ (https://www.youtube.com/watch?v=eo13ssGhA60)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Subaru Impreza WRC",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "DZone Motorsport TV",
+    "source": "Roger Skeete's Subaru Impreza WRC S12: Start up, idle and leaving (https://www.youtube.com/watch?v=IA2sg8hH_5U)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Subaru Impreza WRC",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "jedrek 555 Rally TV",
+    "source": "Subaru Impreza S12 WRC '06 on start  Pure engine sound (https://www.youtube.com/watch?v=sGy4Ye1M2Lg)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Subaru Impreza WRC",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "redolf89",
+    "source": "Subaru impreza WRC S12 engine sound! (https://www.youtube.com/watch?v=qGVV7RDgOsk)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Subaru Impreza WRC",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Roberto Cristino",
+    "source": "Subaru Impreza WRC revving engine  (Portugal 2007) (https://www.youtube.com/watch?v=-ZQyOHRlm8k)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Subaru Impreza WRC",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "MalySTI",
+    "source": "Subaru Impreza S12 WRC on start Rally Vsetin 2010 (https://www.youtube.com/watch?v=KatLj_4fWaw)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Subaru Impreza WRC",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Leo Rally",
+    "source": "Subaru Impreza S12 WRC Pure Sound! (https://www.youtube.com/watch?v=6kr1gCb7sI8)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Subaru Impreza WRC",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "MattyB727 - Car Videos",
+    "source": "Subaru Impreza S12 WRC driven FLAT-OUT at Rally Legend 2021 - Launch Control, Jumps & Pure Sound! (https://www.youtube.com/watch?v=gLJzxBHkVO0)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Subaru Impreza WRC",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Chevrolet Corvette Z06",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "8600RPMs",
+    "source": "2026 Corvette Z06 | Stock exhaust 5.5L Flat Plane Crank V8 Pure Sounds (https://www.youtube.com/watch?v=dAjX5J9YT5M)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Chevrolet Corvette Z06",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Tk Turbo",
+    "source": "C8 Corvette Z06 Cold Start Up And Revs (https://www.youtube.com/watch?v=yxC4uyhY1pU)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Chevrolet Corvette Z06",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Ferrari F2004",
+    "files": "Engine loops (idle, on-load, overrun)",
+    "author": "Sie Entertainment",
+    "source": "Ferrari F2004 - Pure Onboard Sound V10 Engine [2004 F1 season] (https://www.youtube.com/watch?v=m8mgAXhNNPo)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Ferrari F2004",
+    "files": "Engine loops (idle, on-load, overrun)",
+    "author": "Gumbal",
+    "source": "Ferrari F1 F2004 ex SCHUMACHER - Lovely V10 Engine Sounds! (https://www.youtube.com/watch?v=8RlSb_heCi8)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Ferrari F2004",
+    "files": "Engine loops (idle, on-load, overrun)",
+    "author": "Matt's Motorsport Memories",
+    "source": "Ferrari F2004 Formula 1 Car Revving and Idling its Engine 2 (https://www.youtube.com/watch?v=pCb8lWfUrA8)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Ferrari F2004",
+    "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Ferrari F40",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "schein609",
+    "source": "Ferrari F40 dyno (https://www.youtube.com/watch?v=FybrIDAyavA)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Ferrari F40",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "The Marconi",
+    "source": "1991 FERRARI F40 - Dyno Testing (508 HP!!) (https://www.youtube.com/watch?v=pRefCoqxvFI)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Ferrari F40",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Peter ",
+    "source": "Ferrari F40 Cold Start, revs, & acceleration! My God What a Sound! (https://www.youtube.com/watch?v=JIusJnu47zo)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Ferrari F40",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Dodge Challenger SRT Hellcat",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "B5 BEAST",
+    "source": "COLD START & REVS Stock Exhaust 2016 Dodge Challenger SRT Hellcat (https://www.youtube.com/watch?v=_tZFJrKwjsU)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Dodge Challenger SRT Hellcat",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "KNfilters",
+    "source": "Hellcat First Released Dyno Run With Numbers at K&N (https://www.youtube.com/watch?v=iKgXNAHVWRE)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Dodge Challenger SRT Hellcat",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Honda S2000 AP1",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "ketkuvelmu",
+    "source": "honda s2000 dyno (https://www.youtube.com/watch?v=CdqsZUrwJgA)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Honda S2000 AP1",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Patrick Hidden",
+    "source": "2002 s2000 AP1 F20c1 Dyno 228whp / 236whp WCF (https://www.youtube.com/watch?v=zfgSFM-qD5U)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Honda S2000 AP1",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Neighborhood Car Reviews",
+    "source": "Cold Starting a 2000 Honda S2000 AP1 | 2.0L DOHC VTEC (https://www.youtube.com/watch?v=ZdTPdNOkQh0)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Honda S2000 AP1",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Aspireonthego",
+    "source": "S2000 Stock Exhaust - Cold Start (No Revs) (https://www.youtube.com/watch?v=XOe_R7f7t4s)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Honda S2000 AP1",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Toyota Chaser JZX100 Tourer V",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "dori_alex_",
+    "source": "JZX100 Dyno Run 410hp / 410tq (https://www.youtube.com/watch?v=yif556YPFv0)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Toyota Chaser JZX100 Tourer V",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "SilS13SR20det",
+    "source": "JZX100 CHASER Start up (https://www.youtube.com/watch?v=gurl99Lxi2U)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Toyota Chaser JZX100 Tourer V",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "VKautosalon",
+    "source": "Covid Cold Starts - JZX100 Toyota Chaser Tourer V 1JZ-GTE (https://www.youtube.com/watch?v=N2BEF0kV3-Q)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Toyota Chaser JZX100 Tourer V",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Lexus LFA",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "pshu007",
+    "source": "2012 Lexus LFA Whitest White Dyno Run 1 @ SP Engineering (https://www.youtube.com/watch?v=IuDn3vE93cA)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Lexus LFA",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "ARFNSX",
+    "source": "Lexus LFA Dyno - Forged Performance (https://www.youtube.com/watch?v=uMQ0UmMCSbg)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Lexus LFA",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "MotorTrend Channel",
+    "source": "200 MPH in a Lexus LFA (https://www.youtube.com/watch?v=syayxE5xwDA)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Lexus LFA",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "MTHRFKNWIN",
+    "source": "Lexus LFA: start-up + monster revs! (https://www.youtube.com/watch?v=KJRkEPeIyjc)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Lexus LFA",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "CARGRAPHICcojp",
+    "source": "Lexus LFA full-acceleration sound up to 270km/h. (https://www.youtube.com/watch?v=bpv7N8smafY)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Lexus LFA",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Ford Mustang GT",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Late Model Restoration (LMR)",
+    "source": "Gen 3 Coyote Dyno: This Might As Well Be A Stock 2021 Mustang GT (https://www.youtube.com/watch?v=EEIsuaG_hl8)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Ford Mustang GT",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "JVette01",
+    "source": "2018+ Mustang GT Stock Exhaust Sound (without Active Exhaust) (https://www.youtube.com/watch?v=UlXuUnQW8Xs)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Ford Mustang GT",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Kawasaki Ninja H2",
+    "files": "Engine loops (idle, on-load, overrun)",
+    "author": "Moto Rider World",
+    "source": "Supercharged Kawasaki H2 on the dyno (https://www.youtube.com/watch?v=tooN3oQpFp0)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Kawasaki Ninja H2",
+    "files": "Engine loops (idle, on-load, overrun)",
+    "author": "soll 96",
+    "source": "kawasaki ninja h2 startup exhaust rev sound @ bic (https://www.youtube.com/watch?v=qvwWXoDPpO4)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Kawasaki Ninja H2",
+    "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Pagani Zonda F",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "nxttruck2002",
+    "source": "Pagani Zonda on the dyno (https://www.youtube.com/watch?v=u9VHpv-6Ce4)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Pagani Zonda F",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "kdsek",
+    "source": "Start up Exhaust Pagani Zonda HP Barchetta Startup (https://www.youtube.com/watch?v=8_-9bqaucdo)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Pagani Zonda F",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Ducati Panigale V4 R",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Cycle World",
+    "source": "2019 Ducati Panigale V4 R Dyno (https://www.youtube.com/watch?v=4cHMoGYpRqk)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Ducati Panigale V4 R",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Aiman [ IIT KGP ]",
+    "source": "Panigale V4 S Startup sound and Exhaust Sound || Epic Ducati v4 sound (https://www.youtube.com/watch?v=5qWNV0nQVXM)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Ducati Panigale V4 R",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Porsche 911 GT3 RS",
+    "files": "Engine loops (idle, on-load, overrun), start sound, stop sound",
+    "author": "Ian67",
+    "source": "incredible sounding porsche 911 GT3RS revving to 9000rpm on dyno (https://www.youtube.com/watch?v=xVKrgveYmxE)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Porsche 911 GT3 RS",
+    "files": "Engine loops (idle, on-load, overrun), start sound, stop sound",
+    "author": "Exhaust HQ",
+    "source": "(HQ) Porsche GT3RS Cold Start, Idle, and Rev (https://www.youtube.com/watch?v=MaEDitsBjmc)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Porsche 911 GT3 RS",
+    "files": "Engine loops (idle, on-load, overrun), start sound, stop sound",
+    "author": "TrakCar",
+    "source": "Porsche GT3 RS 4.0 Dyno pull oem stock (https://www.youtube.com/watch?v=yIDVyRr3Ac0)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Porsche 911 GT3 RS",
+    "files": "Generated one-shots: shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Mazda 787B",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Mazda Australia",
+    "source": "Mazda 787B onboard lap with Johnny Herbert at Le Mans 2011 (https://www.youtube.com/watch?v=1Ggan9eJhgQ)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Mazda 787B",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "NM2255 | Raw Car Sounds",
+    "source": "Mazda 787B SCREAMING Engine Sound | 9.000rpm R26B 4-Rotor | Launches, Revs, Accelerations | FoS 2023 (https://www.youtube.com/watch?v=V1T_bUuUjxQ)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Mazda 787B",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "4rotor",
+    "source": "787B 4rotor Start and Rev video (https://www.youtube.com/watch?v=9675TKafw3g)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Mazda 787B",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "めんま たんたん",
+    "source": "MAZDA 787B Engine start-up SUZUKA Sound of ENGINE 2015 (https://www.youtube.com/watch?v=KgYbKUXP_v0)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Mazda 787B",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Mathias Mattesen",
+    "source": "Mazda 787b first start - 100y Le Mans - WITH REVS! (https://www.youtube.com/watch?v=hrUftXSIzhY)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Mazda 787B",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Mazda RX-7 FD3S",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Dspec",
+    "source": "Fd3s Rx7 cold start (https://www.youtube.com/watch?v=kAd-T76NLLg)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Mazda RX-7 FD3S",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Philip James",
+    "source": "Mazda RX7 FD Twin Turbo 13B REW - Dyno (https://www.youtube.com/watch?v=oEkS8JIece8)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Mazda RX-7 FD3S",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Driven7",
+    "source": "1992 Mazda RX7 FD FD3S Dyno tune stock Twin turbos (https://www.youtube.com/watch?v=kAC3jz7uHhA)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Mazda RX-7 FD3S",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Aurélien Bedu",
+    "source": "Dyno FD3S stock twins stock port 14.5psi (https://www.youtube.com/watch?v=s2ydwm7d5Zs)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Mazda RX-7 FD3S",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "SushiRotor",
+    "source": "13B RX7 FD3S Dyno Jet (https://www.youtube.com/watch?v=Yua-BzPpsm8)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Mazda RX-7 FD3S",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Nissan Skyline GT-R R34",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "shaun54",
+    "source": "RB26DETT 8500rpm Dyno Run (https://www.youtube.com/watch?v=iCZbGlewDLs)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Nissan Skyline GT-R R34",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "CARBUCKLE",
+    "source": "1999 R34 GT-R dyno Run (https://www.youtube.com/watch?v=EtjbtlFyhJA)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Nissan Skyline GT-R R34",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Mixed Clips. Wog N’ Oz",
+    "source": "Nissan Skyline R34 Stock Exhaust Cold Start Up. (https://www.youtube.com/watch?v=mZzNHuek2Vk)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Nissan Skyline GT-R R34",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Subaru Impreza WRX STI",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Kevlar",
+    "source": "Stock Turbo STI Dyno Tuned by Scott Siegel 2 (https://www.youtube.com/watch?v=_AX51oOXzcQ)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Subaru Impreza WRX STI",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "darthhandsom33",
+    "source": "dyno run subaru sti (https://www.youtube.com/watch?v=iUiPC32Uajs)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Subaru Impreza WRX STI",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "killgoth2445",
+    "source": "Subaru Impreza WRX STi 2006 Stock Exhaust Sound (https://www.youtube.com/watch?v=ieXxZRnIdVo)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Subaru Impreza WRX STI",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "NyiNZaw",
+    "source": "Cold start up stock exhaust sound / 2014 Subaru Impreza WRX STi Sedan WRB (https://www.youtube.com/watch?v=ZdfxVj5tmhQ)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Subaru Impreza WRX STI",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Toyota Supra MK4",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "NgoFcukinWay",
+    "source": "Stock 2JZ-GTE VVTi base line dyno (https://www.youtube.com/watch?v=B_9vHJBKJa4)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Toyota Supra MK4",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "ToyRocket27",
+    "source": "Toyota Supra MKIV Twin Turbo Stock Exhaust vs TRD 2nd Gen Exhaust Sound (https://www.youtube.com/watch?v=PRHSUscHrJ8)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Toyota Supra MK4",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Nissan 370Z",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "YouTube (6crgJmHX0TQ)",
+    "source": "Baseline Dynojet dyno Nissan 370Z (https://www.youtube.com/watch?v=6crgJmHX0TQ)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Nissan 370Z",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "YouTube (OWN2_Bzpp3Y)",
+    "source": "370Z - Stock Exhaust Sound (https://www.youtube.com/watch?v=OWN2_Bzpp3Y)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Nissan 370Z",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "YouTube (1mPUphu-0i0)",
+    "source": "2013 Nissan 370Z Exhaust Revving (Stock) (https://www.youtube.com/watch?v=1mPUphu-0i0)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Nissan 370Z",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "YouTube (g3mA1wJkWUg)",
+    "source": "Nissan 370Z stock exhaust cold start (https://www.youtube.com/watch?v=g3mA1wJkWUg)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Nissan 370Z",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Porsche Carrera GT",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "AWE Tuning",
+    "source": "A.W.E. Tuning Carrera GT Dyno Test (https://www.youtube.com/watch?v=zQ4KMOYvD3k)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Porsche Carrera GT",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Top10Cars",
+    "source": "Porsche Carrera GT engine sound start-up, idle and rev (https://www.youtube.com/watch?v=WDeGl53AzME)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Porsche Carrera GT",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
+    "vehicle": "Bugatti Chiron",
+    "files": "All loops and one-shots (sounds/*.ogg, *.mp3)",
+    "author": "Revheadz (original, generated with scripts/generate-sounds.mjs)",
+    "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   }
 ]
