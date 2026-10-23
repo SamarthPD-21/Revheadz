@@ -1,0 +1,242 @@
+{
+  "synth_v6": {
+    "pitchRange": [
+      4,
+      130
+    ],
+    "offLoadLowpassHz": 1500,
+    "loopLengthBias": 0.05,
+    "sources": {
+      "dyno": {
+        "title": "Baseline Dynojet dyno Nissan 370Z",
+        "author": "YouTube (6crgJmHX0TQ)",
+        "youtube": "6crgJmHX0TQ",
+        "cacheName": "yt_synth_v6_6crgJmHX0TQ.flac"
+      },
+      "dynoHi": {
+        "title": "Baseline Dynojet dyno Nissan 370Z",
+        "author": "YouTube (6crgJmHX0TQ)",
+        "youtube": "6crgJmHX0TQ",
+        "cacheName": "yt_synth_v6_6crgJmHX0TQ.flac",
+        "pitchRange": [
+          4.5,
+          130
+        ],
+        "anchors": [
+          [
+            57.12,
+            3389
+          ],
+          [
+            58.05,
+            3947
+          ],
+          [
+            59.44,
+            4748
+          ],
+          [
+            60.6,
+            5460
+          ],
+          [
+            61.77,
+            6107
+          ],
+          [
+            62.93,
+            6715
+          ],
+          [
+            64.09,
+            7343
+          ],
+          [
+            64.32,
+            7395
+          ]
+        ]
+      },
+      "dynoLo": {
+        "title": "Baseline Dynojet dyno Nissan 370Z",
+        "author": "YouTube (6crgJmHX0TQ)",
+        "youtube": "6crgJmHX0TQ",
+        "cacheName": "yt_synth_v6_6crgJmHX0TQ.flac",
+        "pitchRange": [
+          5,
+          130
+        ],
+        "anchors": [
+          [
+            209.91,
+            2542
+          ],
+          [
+            210.6,
+            2810
+          ],
+          [
+            211.53,
+            3152
+          ],
+          [
+            212.46,
+            3524
+          ],
+          [
+            213.62,
+            3972
+          ],
+          [
+            214.55,
+            4307
+          ],
+          [
+            215.48,
+            4666
+          ]
+        ]
+      },
+      "stock": {
+        "title": "370Z - Stock Exhaust Sound",
+        "author": "YouTube (OWN2_Bzpp3Y)",
+        "youtube": "OWN2_Bzpp3Y",
+        "cacheName": "yt_synth_v6_OWN2_Bzpp3Y.flac",
+        "pitchRange": [
+          8,
+          130
+        ]
+      },
+      "revs": {
+        "title": "2013 Nissan 370Z Exhaust Revving (Stock)",
+        "author": "YouTube (1mPUphu-0i0)",
+        "youtube": "1mPUphu-0i0",
+        "cacheName": "yt_synth_v6_1mPUphu-0i0.flac",
+        "pitchRange": [
+          8,
+          130
+        ]
+      },
+      "cold": {
+        "title": "Nissan 370Z stock exhaust cold start",
+        "author": "YouTube (g3mA1wJkWUg)",
+        "youtube": "g3mA1wJkWUg",
+        "cacheName": "yt_synth_v6_g3mA1wJkWUg.flac"
+      }
+    },
+    "loops": [
+      {
+        "kind": "idle",
+        "source": "dyno",
+        "t": [
+          8.5,
+          14.5
+        ],
+        "flatten": false,
+        "rpm": 700
+      },
+      {
+        "kind": "on",
+        "source": "cold",
+        "t": [
+          37,
+          47
+        ],
+        "matchTo": {
+          "source": "dynoHi",
+          "t": [
+            58.0,
+            60.0
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "stock",
+        "t": [
+          13.7,
+          20.0
+        ],
+        "matchTo": {
+          "source": "dynoHi",
+          "t": [
+            58.0,
+            60.0
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "revs",
+        "t": [
+          18.4,
+          20.3
+        ],
+        "matchTo": {
+          "source": "dynoHi",
+          "t": [
+            58.0,
+            60.0
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dynoLo",
+        "ramp": [
+          209.9,
+          215.48
+        ],
+        "targets": [
+          2700,
+          3050
+        ],
+        "maxHalfS": 0.3,
+        "tol": 0.06
+      },
+      {
+        "kind": "on",
+        "source": "dynoHi",
+        "ramp": [
+          57.12,
+          64.32
+        ],
+        "targets": [
+          3450,
+          3850,
+          4250,
+          4650,
+          5000,
+          5400,
+          5800,
+          6150,
+          6550,
+          6950,
+          7300
+        ],
+        "maxHalfS": 0.3,
+        "tol": 0.05
+      },
+      {
+        "kind": "on",
+        "shiftFrom": 700,
+        "rpm": 920
+      },
+      {
+        "kind": "on",
+        "shiftFrom": 2125,
+        "rpm": 1800
+      }
+    ],
+    "oneShots": {
+      "start": {
+        "source": "cold",
+        "t": [
+          2.6,
+          6.0
+        ],
+        "fadeOut": 0.8
+      }
+    }
+  }
+}

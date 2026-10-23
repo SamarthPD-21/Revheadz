@@ -1,37 +1,36 @@
 {
   "id": "v10_supercar",
-  "name": "V10 Supercar",
+  "name": "Porsche Carrera GT",
   "type": "car",
   "engineType": "Naturally aspirated V10",
-  "description": "Shrieking V10 with an 8,700 rpm redline and crackles on the overrun. Inspired by Italian and Japanese V10 exotics.",
+  "description": "A 5.7 L V10 born from a stillborn Le Mans programme, revving to 8,400 rpm through a six-speed manual and a ceramic clutch. One of the greatest engine sounds ever made.",
   "engine": {
     "cylinders": 10,
     "idleRpm": 1000,
-    "redlineRpm": 8500,
-    "limiterRpm": 8700,
-    "inertia": 0.22,
+    "redlineRpm": 8400,
+    "limiterRpm": 8500,
+    "inertia": 0.17,
     "engineBraking": 0.55,
-    "peakTorqueNm": 588,
-    "crackle": 0.8
+    "peakTorqueNm": 590,
+    "crackle": 0.5
   },
   "gearbox": {
-    "type": "dct",
+    "type": "manual",
     "ratios": [
-      3.13,
-      2.26,
-      1.72,
-      1.37,
+      3.15,
+      2.18,
+      1.67,
+      1.33,
       1.11,
-      0.92,
-      0.75
+      0.93
     ],
-    "finalDrive": 4.65,
+    "finalDrive": 4.44,
     "wheelRadiusM": 0.34,
-    "shiftTimeMs": 110
+    "shiftTimeMs": 250
   },
   "dynamics": {
-    "massKg": 1550,
-    "cdA": 0.62,
+    "massKg": 1380,
+    "cdA": 0.6,
     "brakeDecel": 11
   },
   "ui": {
@@ -39,103 +38,277 @@
     "silhouette": "supercar",
     "category": "Supercar",
     "layout": "V10",
-    "displacement": "5.2 L",
-    "powerHp": 620
+    "displacement": "5.7 L",
+    "powerHp": 603,
+    "make": "Porsche",
+    "year": "2004",
+    "recorded": true
   },
   "audio": {
     "mode": "samples",
     "onLoad": [
       {
-        "file": "on_1200.ogg",
-        "rpm": 1200
+        "file": "on_1147.ogg",
+        "rpm": 1147
       },
       {
-        "file": "on_1535.ogg",
-        "rpm": 1535.248
+        "file": "on_1402.ogg",
+        "rpm": 1401.594
       },
       {
-        "file": "on_1964.ogg",
-        "rpm": 1964.141
+        "file": "on_1628.ogg",
+        "rpm": 1628.418
       },
       {
-        "file": "on_2513.ogg",
-        "rpm": 2512.868
+        "file": "on_1789.ogg",
+        "rpm": 1788.795
       },
       {
-        "file": "on_3215.ogg",
-        "rpm": 3214.914
+        "file": "on_2303.ogg",
+        "rpm": 2303.181
       },
       {
-        "file": "on_4113.ogg",
-        "rpm": 4113.057
+        "file": "on_2784.ogg",
+        "rpm": 2784.176
       },
       {
-        "file": "on_5262.ogg",
-        "rpm": 5262.131
+        "file": "on_3293.ogg",
+        "rpm": 3293.232
       },
       {
-        "file": "on_6732.ogg",
-        "rpm": 6732.19
+        "file": "on_3593.ogg",
+        "rpm": 3593.28
       },
       {
-        "file": "on_8613.ogg",
-        "rpm": 8613.02
+        "file": "on_4015.ogg",
+        "rpm": 4015.071
+      },
+      {
+        "file": "on_4402.ogg",
+        "rpm": 4401.992
+      },
+      {
+        "file": "on_5028.ogg",
+        "rpm": 5027.904
+      },
+      {
+        "file": "on_5440.ogg",
+        "rpm": 5439.559
+      },
+      {
+        "file": "on_6047.ogg",
+        "rpm": 6046.931
+      },
+      {
+        "file": "on_6545.ogg",
+        "rpm": 6544.75
+      },
+      {
+        "file": "on_7048.ogg",
+        "rpm": 7048.495
+      },
+      {
+        "file": "on_7434.ogg",
+        "rpm": 7434.091
+      },
+      {
+        "file": "on_7755.ogg",
+        "rpm": 7755.044
+      },
+      {
+        "file": "on_8267.ogg",
+        "rpm": 8267.119
       }
     ],
     "offLoad": [
       {
-        "file": "off_1350.ogg",
-        "rpm": 1350
+        "file": "off_1147.ogg",
+        "rpm": 1147
       },
       {
-        "file": "off_1754.ogg",
-        "rpm": 1754.044
+        "file": "off_1402.ogg",
+        "rpm": 1401.594
       },
       {
-        "file": "off_2279.ogg",
-        "rpm": 2279.027
+        "file": "off_1628.ogg",
+        "rpm": 1628.418
       },
       {
-        "file": "off_2961.ogg",
-        "rpm": 2961.135
+        "file": "off_1789.ogg",
+        "rpm": 1788.795
       },
       {
-        "file": "off_3847.ogg",
-        "rpm": 3847.383
+        "file": "off_2303.ogg",
+        "rpm": 2303.181
       },
       {
-        "file": "off_4999.ogg",
-        "rpm": 4998.914
+        "file": "off_2784.ogg",
+        "rpm": 2784.176
       },
       {
-        "file": "off_6495.ogg",
-        "rpm": 6495.029
+        "file": "off_3293.ogg",
+        "rpm": 3293.232
       },
       {
-        "file": "off_8439.ogg",
-        "rpm": 8438.997
+        "file": "off_3593.ogg",
+        "rpm": 3593.28
+      },
+      {
+        "file": "off_4015.ogg",
+        "rpm": 4015.071
+      },
+      {
+        "file": "off_4402.ogg",
+        "rpm": 4401.992
+      },
+      {
+        "file": "off_5028.ogg",
+        "rpm": 5027.904
+      },
+      {
+        "file": "off_5440.ogg",
+        "rpm": 5439.559
+      },
+      {
+        "file": "off_6047.ogg",
+        "rpm": 6046.931
+      },
+      {
+        "file": "off_6545.ogg",
+        "rpm": 6544.75
+      },
+      {
+        "file": "off_7048.ogg",
+        "rpm": 7048.495
+      },
+      {
+        "file": "off_7434.ogg",
+        "rpm": 7434.091
+      },
+      {
+        "file": "off_7755.ogg",
+        "rpm": 7755.044
+      },
+      {
+        "file": "off_8267.ogg",
+        "rpm": 8267.119
       }
     ],
     "idle": {
-      "file": "idle_1000.ogg",
-      "rpm": 1000
+      "file": "idle_1010.ogg",
+      "rpm": 1010
     },
     "oneShots": {
       "start": "start.ogg",
-      "stop": "stop.ogg",
+      "stop": "gen/stop.ogg",
       "shift": [
-        "shift_1.ogg",
-        "shift_2.ogg"
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
       ],
       "backfire": [
-        "pop_1.ogg",
-        "pop_2.ogg",
-        "pop_3.ogg"
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
       ]
     },
     "masterGainDb": 0
   },
-  "credits": [
-    "All sounds: original, generated by scripts/generate-sounds.mjs for Revheadz, CC0"
-  ]
+  "credits": [],
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_1140.ogg",
+        "rpm": 1140.004
+      },
+      {
+        "file": "gen/on_1424.ogg",
+        "rpm": 1423.524
+      },
+      {
+        "file": "gen/on_1778.ogg",
+        "rpm": 1777.579
+      },
+      {
+        "file": "gen/on_2220.ogg",
+        "rpm": 2219.672
+      },
+      {
+        "file": "gen/on_2772.ogg",
+        "rpm": 2771.71
+      },
+      {
+        "file": "gen/on_3461.ogg",
+        "rpm": 3461.053
+      },
+      {
+        "file": "gen/on_4322.ogg",
+        "rpm": 4321.846
+      },
+      {
+        "file": "gen/on_5397.ogg",
+        "rpm": 5396.737
+      },
+      {
+        "file": "gen/on_6739.ogg",
+        "rpm": 6738.985
+      },
+      {
+        "file": "gen/on_8415.ogg",
+        "rpm": 8415.027
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_1283.ogg",
+        "rpm": 1282.503
+      },
+      {
+        "file": "gen/off_1673.ogg",
+        "rpm": 1673.031
+      },
+      {
+        "file": "gen/off_2182.ogg",
+        "rpm": 2182.493
+      },
+      {
+        "file": "gen/off_2847.ogg",
+        "rpm": 2847.095
+      },
+      {
+        "file": "gen/off_3714.ogg",
+        "rpm": 3714.036
+      },
+      {
+        "file": "gen/off_4845.ogg",
+        "rpm": 4845.01
+      },
+      {
+        "file": "gen/off_6320.ogg",
+        "rpm": 6320.363
+      },
+      {
+        "file": "gen/off_8245.ogg",
+        "rpm": 8245.014
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_950.ogg",
+      "rpm": 949.997
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
 }

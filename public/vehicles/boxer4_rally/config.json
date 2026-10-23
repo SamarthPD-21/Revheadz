@@ -1,149 +1,287 @@
 {
   "id": "boxer4_rally",
-  "name": "Boxer-4 Rally Turbo",
+  "name": "Subaru Impreza WRC",
   "type": "car",
-  "engineType": "Turbocharged flat-four",
-  "description": "The off-beat boxer rumble from unequal-length headers, plus turbo flutter. Inspired by rally-bred AWD saloons.",
+  "engineType": "Turbocharged flat-four, anti-lag",
+  "description": "Works World Rally Car with a 2.0 L EJ20 turbo boxer: off-beat flat-four burble at idle and anti-lag bangs and crackles every time the driver lifts.",
   "engine": {
     "cylinders": 4,
-    "idleRpm": 850,
-    "redlineRpm": 7000,
-    "limiterRpm": 7300,
-    "inertia": 0.3,
-    "engineBraking": 0.55,
-    "peakTorqueNm": 464,
-    "crackle": 0.6
+    "idleRpm": 2300,
+    "redlineRpm": 7500,
+    "limiterRpm": 7800,
+    "inertia": 0.2,
+    "engineBraking": 0.6,
+    "peakTorqueNm": 600,
+    "crackle": 1
   },
   "gearbox": {
-    "type": "manual",
+    "type": "sequential",
     "ratios": [
-      3.64,
-      2.38,
-      1.76,
-      1.35,
-      0.97,
-      0.76
+      2.92,
+      2.12,
+      1.67,
+      1.38,
+      1.17,
+      1
     ],
-    "finalDrive": 4.76,
-    "wheelRadiusM": 0.33,
-    "shiftTimeMs": 280
+    "finalDrive": 4.6,
+    "wheelRadiusM": 0.32,
+    "shiftTimeMs": 60
   },
   "dynamics": {
-    "massKg": 1500,
-    "cdA": 0.7,
-    "brakeDecel": 9.5
+    "massKg": 1230,
+    "cdA": 0.75,
+    "brakeDecel": 10.5
   },
   "turbo": {
-    "spoolRpm": 2800,
-    "lagS": 0.4,
+    "spoolRpm": 2000,
+    "lagS": 0.12,
     "release": "flutter"
   },
   "ui": {
-    "accent": "#3b82f6",
+    "accent": "#4f46e5",
     "silhouette": "rally",
     "category": "Rally",
     "layout": "Flat-4 turbo",
-    "displacement": "2.5 L",
-    "powerHp": 310
+    "displacement": "2.0 L",
+    "powerHp": 300,
+    "make": "Subaru",
+    "year": "2006",
+    "recorded": true
   },
   "audio": {
     "mode": "samples",
     "onLoad": [
       {
-        "file": "on_1020.ogg",
-        "rpm": 1019.997
+        "file": "on_2566.ogg",
+        "rpm": 2566.407
       },
       {
-        "file": "on_1303.ogg",
-        "rpm": 1302.856
+        "file": "on_2663.ogg",
+        "rpm": 2663.238
       },
       {
-        "file": "on_1664.ogg",
-        "rpm": 1664.135
+        "file": "on_2855.ogg",
+        "rpm": 2854.916
       },
       {
-        "file": "on_2126.ogg",
-        "rpm": 2125.619
+        "file": "on_2961.ogg",
+        "rpm": 2960.715
       },
       {
-        "file": "on_2715.ogg",
-        "rpm": 2715.058
+        "file": "on_3486.ogg",
+        "rpm": 3485.708
       },
       {
-        "file": "on_3468.ogg",
-        "rpm": 3467.956
+        "file": "on_3969.ogg",
+        "rpm": 3968.827
       },
       {
-        "file": "on_4430.ogg",
-        "rpm": 4429.66
+        "file": "on_4194.ogg",
+        "rpm": 4193.501
       },
       {
-        "file": "on_5658.ogg",
-        "rpm": 5658.019
+        "file": "on_4467.ogg",
+        "rpm": 4466.888
       },
       {
-        "file": "on_7227.ogg",
-        "rpm": 7226.989
+        "file": "on_4717.ogg",
+        "rpm": 4717.376
+      },
+      {
+        "file": "on_5409.ogg",
+        "rpm": 5409.195
+      },
+      {
+        "file": "on_5747.ogg",
+        "rpm": 5746.673
+      },
+      {
+        "file": "on_6840.ogg",
+        "rpm": 6839.841
+      },
+      {
+        "file": "on_6937.ogg",
+        "rpm": 6936.759
+      },
+      {
+        "file": "on_7272.ogg",
+        "rpm": 7271.788
       }
     ],
     "offLoad": [
       {
-        "file": "off_1147.ogg",
-        "rpm": 1147.496
+        "file": "off_2566.ogg",
+        "rpm": 2566.407
       },
       {
-        "file": "off_1488.ogg",
-        "rpm": 1488.189
+        "file": "off_2663.ogg",
+        "rpm": 2663.238
       },
       {
-        "file": "off_1930.ogg",
-        "rpm": 1930.032
+        "file": "off_2855.ogg",
+        "rpm": 2854.916
       },
       {
-        "file": "off_2503.ogg",
-        "rpm": 2503.051
+        "file": "off_2961.ogg",
+        "rpm": 2960.715
       },
       {
-        "file": "off_3246.ogg",
-        "rpm": 3246.197
+        "file": "off_3486.ogg",
+        "rpm": 3485.708
       },
       {
-        "file": "off_4210.ogg",
-        "rpm": 4210.024
+        "file": "off_3969.ogg",
+        "rpm": 3968.827
       },
       {
-        "file": "off_5460.ogg",
-        "rpm": 5459.956
+        "file": "off_4194.ogg",
+        "rpm": 4193.501
       },
       {
-        "file": "off_7081.ogg",
-        "rpm": 7081
+        "file": "off_4467.ogg",
+        "rpm": 4466.888
+      },
+      {
+        "file": "off_4717.ogg",
+        "rpm": 4717.376
+      },
+      {
+        "file": "off_5409.ogg",
+        "rpm": 5409.195
+      },
+      {
+        "file": "off_5747.ogg",
+        "rpm": 5746.673
+      },
+      {
+        "file": "off_6840.ogg",
+        "rpm": 6839.841
+      },
+      {
+        "file": "off_6937.ogg",
+        "rpm": 6936.759
+      },
+      {
+        "file": "off_7272.ogg",
+        "rpm": 7271.788
       }
     ],
     "idle": {
-      "file": "idle_850.ogg",
-      "rpm": 849.997
+      "file": "idle_2315.ogg",
+      "rpm": 2314.885
     },
     "oneShots": {
       "start": "start.ogg",
-      "stop": "stop.ogg",
+      "stop": "gen/stop.ogg",
       "shift": [
-        "shift_1.ogg",
-        "shift_2.ogg"
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
       ],
       "backfire": [
-        "pop_1.ogg",
-        "pop_2.ogg",
-        "pop_3.ogg"
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
       ],
       "blowoff": [
-        "bov_1.ogg",
-        "bov_2.ogg"
+        "gen/bov_1.ogg",
+        "gen/bov_2.ogg"
       ]
     },
     "masterGainDb": 0
   },
-  "credits": [
-    "All sounds: original, generated by scripts/generate-sounds.mjs for Revheadz, CC0"
-  ]
+  "credits": [],
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_1320.ogg",
+        "rpm": 1320.005
+      },
+      {
+        "file": "gen/on_1646.ogg",
+        "rpm": 1646.143
+      },
+      {
+        "file": "gen/on_2053.ogg",
+        "rpm": 2052.871
+      },
+      {
+        "file": "gen/on_2560.ogg",
+        "rpm": 2560.111
+      },
+      {
+        "file": "gen/on_3193.ogg",
+        "rpm": 3192.64
+      },
+      {
+        "file": "gen/on_3981.ogg",
+        "rpm": 3981.492
+      },
+      {
+        "file": "gen/on_4965.ogg",
+        "rpm": 4965.247
+      },
+      {
+        "file": "gen/on_6192.ogg",
+        "rpm": 6192.043
+      },
+      {
+        "file": "gen/on_7722.ogg",
+        "rpm": 7722.034
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_1485.ogg",
+        "rpm": 1485.001
+      },
+      {
+        "file": "gen/off_1948.ogg",
+        "rpm": 1947.975
+      },
+      {
+        "file": "gen/off_2555.ogg",
+        "rpm": 2555.287
+      },
+      {
+        "file": "gen/off_3352.ogg",
+        "rpm": 3351.932
+      },
+      {
+        "file": "gen/off_4397.ogg",
+        "rpm": 4396.967
+      },
+      {
+        "file": "gen/off_5768.ogg",
+        "rpm": 5767.82
+      },
+      {
+        "file": "gen/off_7566.ogg",
+        "rpm": 7566.013
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_1100.ogg",
+      "rpm": 1100.004
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ],
+      "blowoff": [
+        "gen/bov_1.ogg",
+        "gen/bov_2.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
 }

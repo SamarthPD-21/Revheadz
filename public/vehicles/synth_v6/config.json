@@ -1,57 +1,319 @@
 {
   "id": "synth_v6",
-  "name": "Synth V6",
+  "name": "Nissan 370Z",
   "type": "car",
-  "engineType": "Synthesized V6",
-  "description": "A fully procedural six-cylinder. No sound files, so it starts instantly.",
+  "engineType": "Naturally aspirated V6",
+  "description": "Nissan's VQ37VHR 3.7 L V6 with variable valve lift: a hard-edged, rasping howl all the way to 7,500 rpm.",
+  "voice": "twin_turbo_v6",
   "engine": {
     "cylinders": 6,
-    "idleRpm": 850,
-    "redlineRpm": 6800,
-    "limiterRpm": 7000,
-    "inertia": 0.3,
-    "engineBraking": 0.55,
-    "peakTorqueNm": 380,
-    "crackle": 0.3
+    "idleRpm": 700,
+    "redlineRpm": 7500,
+    "limiterRpm": 7600,
+    "inertia": 0.28,
+    "engineBraking": 0.5,
+    "peakTorqueNm": 363,
+    "crackle": 0.25
   },
   "gearbox": {
     "type": "manual",
     "ratios": [
-      3.6,
-      2.19,
-      1.41,
-      1.0,
-      0.83,
-      0.65
+      3.794,
+      2.324,
+      1.624,
+      1.271,
+      1,
+      0.794
     ],
-    "finalDrive": 3.7,
+    "finalDrive": 3.692,
     "wheelRadiusM": 0.33,
-    "shiftTimeMs": 280
+    "shiftTimeMs": 260
   },
   "dynamics": {
-    "massKg": 1400,
-    "cdA": 0.65,
-    "brakeDecel": 9
+    "massKg": 1500,
+    "cdA": 0.6,
+    "brakeDecel": 10
   },
-  "audio": {
-    "mode": "synth",
-    "synth": {
-      "exhaustHz": 700,
-      "cutoffHz": 5200,
-      "roughness": 0.25,
-      "unevenness": 0.08
-    },
-    "masterGainDb": -3
-  },
-  "credits": [
-    "Procedurally generated in the browser by Revheadz (no samples)"
-  ],
   "ui": {
     "accent": "#38bdf8",
     "silhouette": "coupe",
-    "category": "Procedural",
+    "category": "JDM",
     "layout": "V6",
-    "displacement": "3.5 L",
-    "powerHp": 300
+    "displacement": "3.7 L",
+    "powerHp": 332,
+    "make": "Nissan",
+    "year": "2009",
+    "recorded": true
+  },
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_920.ogg",
+        "rpm": 920
+      },
+      {
+        "file": "on_1176.ogg",
+        "rpm": 1175.525
+      },
+      {
+        "file": "on_1491.ogg",
+        "rpm": 1491.082
+      },
+      {
+        "file": "on_1800.ogg",
+        "rpm": 1800
+      },
+      {
+        "file": "on_2125.ogg",
+        "rpm": 2125.291
+      },
+      {
+        "file": "on_2704.ogg",
+        "rpm": 2703.712
+      },
+      {
+        "file": "on_3051.ogg",
+        "rpm": 3050.925
+      },
+      {
+        "file": "on_3501.ogg",
+        "rpm": 3501.109
+      },
+      {
+        "file": "on_3863.ogg",
+        "rpm": 3863.34
+      },
+      {
+        "file": "on_4268.ogg",
+        "rpm": 4268.072
+      },
+      {
+        "file": "on_4669.ogg",
+        "rpm": 4669.493
+      },
+      {
+        "file": "on_5006.ogg",
+        "rpm": 5006.433
+      },
+      {
+        "file": "on_5405.ogg",
+        "rpm": 5405.496
+      },
+      {
+        "file": "on_5822.ogg",
+        "rpm": 5821.789
+      },
+      {
+        "file": "on_6153.ogg",
+        "rpm": 6153.103
+      },
+      {
+        "file": "on_6567.ogg",
+        "rpm": 6566.898
+      },
+      {
+        "file": "on_6964.ogg",
+        "rpm": 6964.292
+      },
+      {
+        "file": "on_7316.ogg",
+        "rpm": 7316.275
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_920.ogg",
+        "rpm": 920
+      },
+      {
+        "file": "off_1176.ogg",
+        "rpm": 1175.525
+      },
+      {
+        "file": "off_1491.ogg",
+        "rpm": 1491.082
+      },
+      {
+        "file": "off_1800.ogg",
+        "rpm": 1800
+      },
+      {
+        "file": "off_2125.ogg",
+        "rpm": 2125.291
+      },
+      {
+        "file": "off_2704.ogg",
+        "rpm": 2703.712
+      },
+      {
+        "file": "off_3051.ogg",
+        "rpm": 3050.925
+      },
+      {
+        "file": "off_3501.ogg",
+        "rpm": 3501.109
+      },
+      {
+        "file": "off_3863.ogg",
+        "rpm": 3863.34
+      },
+      {
+        "file": "off_4268.ogg",
+        "rpm": 4268.072
+      },
+      {
+        "file": "off_4669.ogg",
+        "rpm": 4669.493
+      },
+      {
+        "file": "off_5006.ogg",
+        "rpm": 5006.433
+      },
+      {
+        "file": "off_5405.ogg",
+        "rpm": 5405.496
+      },
+      {
+        "file": "off_5822.ogg",
+        "rpm": 5821.789
+      },
+      {
+        "file": "off_6153.ogg",
+        "rpm": 6153.103
+      },
+      {
+        "file": "off_6567.ogg",
+        "rpm": 6566.898
+      },
+      {
+        "file": "off_6964.ogg",
+        "rpm": 6964.292
+      },
+      {
+        "file": "off_7316.ogg",
+        "rpm": 7316.275
+      }
+    ],
+    "idle": {
+      "file": "idle_700.ogg",
+      "rpm": 700
+    },
+    "oneShots": {
+      "start": "start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_840.ogg",
+        "rpm": 840
+      },
+      {
+        "file": "gen/on_1072.ogg",
+        "rpm": 1071.71
+      },
+      {
+        "file": "gen/on_1367.ogg",
+        "rpm": 1367.324
+      },
+      {
+        "file": "gen/on_1744.ogg",
+        "rpm": 1744.495
+      },
+      {
+        "file": "gen/on_2226.ogg",
+        "rpm": 2225.691
+      },
+      {
+        "file": "gen/on_2840.ogg",
+        "rpm": 2839.644
+      },
+      {
+        "file": "gen/on_3623.ogg",
+        "rpm": 3622.934
+      },
+      {
+        "file": "gen/on_4622.ogg",
+        "rpm": 4622.273
+      },
+      {
+        "file": "gen/on_5897.ogg",
+        "rpm": 5897.27
+      },
+      {
+        "file": "gen/on_7524.ogg",
+        "rpm": 7524.028
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_945.ogg",
+        "rpm": 945
+      },
+      {
+        "file": "gen/off_1222.ogg",
+        "rpm": 1221.665
+      },
+      {
+        "file": "gen/off_1579.ogg",
+        "rpm": 1579.318
+      },
+      {
+        "file": "gen/off_2042.ogg",
+        "rpm": 2041.686
+      },
+      {
+        "file": "gen/off_2639.ogg",
+        "rpm": 2639.426
+      },
+      {
+        "file": "gen/off_3412.ogg",
+        "rpm": 3412.154
+      },
+      {
+        "file": "gen/off_4411.ogg",
+        "rpm": 4411.086
+      },
+      {
+        "file": "gen/off_5703.ogg",
+        "rpm": 5702.532
+      },
+      {
+        "file": "gen/off_7372.ogg",
+        "rpm": 7372.01
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_700.ogg",
+      "rpm": 700
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
   }
 }

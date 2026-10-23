@@ -1,0 +1,260 @@
+{
+  "boxer4_rally": {
+    "pitchRange": [
+      4,
+      130
+    ],
+    "offLoadLowpassHz": 1500,
+    "loopLengthBias": 0,
+    "sources": {
+      "eo13": {
+        "title": "Subaru Impreza S12B WRC Sound only HQ",
+        "author": "zokaladzin",
+        "youtube": "eo13ssGhA60",
+        "cacheName": "yt_boxer4_rally_eo13ssGhA60.flac",
+        "pitchRange": [
+          15,
+          25
+        ]
+      },
+      "ia2": {
+        "title": "Roger Skeete's Subaru Impreza WRC S12: Start up, idle and leaving",
+        "author": "DZone Motorsport TV",
+        "youtube": "IA2sg8hH_5U",
+        "cacheName": "yt_boxer4_rally_IA2sg8hH_5U.flac",
+        "pitchRange": [
+          4,
+          130
+        ]
+      },
+      "sgy": {
+        "title": "Subaru Impreza S12 WRC '06 on start  Pure engine sound",
+        "author": "jedrek 555 Rally TV",
+        "youtube": "sGy4Ye1M2Lg",
+        "cacheName": "yt_boxer4_rally_sGy4Ye1M2Lg.flac",
+        "pitchRange": [
+          18,
+          26
+        ]
+      },
+      "qg": {
+        "title": "Subaru impreza WRC S12 engine sound!",
+        "author": "redolf89",
+        "youtube": "qGVV7RDgOsk",
+        "cacheName": "yt_boxer4_rally_qGVV7RDgOsk.flac",
+        "pitchRange": [
+          18,
+          26
+        ]
+      },
+      "qgHi": {
+        "title": "Subaru impreza WRC S12 engine sound!",
+        "author": "redolf89",
+        "youtube": "qGVV7RDgOsk",
+        "cacheName": "yt_boxer4_rally_qGVV7RDgOsk.flac",
+        "pitchRange": [
+          22,
+          28
+        ]
+      },
+      "zq": {
+        "title": "Subaru Impreza WRC revving engine  (Portugal 2007)",
+        "author": "Roberto Cristino",
+        "youtube": "-ZQyOHRlm8k",
+        "cacheName": "yt_boxer4_rally_-ZQyOHRlm8k.flac",
+        "pitchRange": [
+          28,
+          40
+        ]
+      },
+      "kat": {
+        "title": "Subaru Impreza S12 WRC on start Rally Vsetin 2010",
+        "author": "MalySTI",
+        "youtube": "KatLj_4fWaw",
+        "cacheName": "yt_boxer4_rally_KatLj_4fWaw.flac",
+        "pitchRange": [
+          30,
+          40
+        ]
+      },
+      "s6k": {
+        "title": "Subaru Impreza S12 WRC Pure Sound!",
+        "author": "Leo Rally",
+        "youtube": "6kr1gCb7sI8",
+        "cacheName": "yt_boxer4_rally_6kr1gCb7sI8.flac",
+        "pitchRange": [
+          32,
+          42
+        ]
+      },
+      "gl": {
+        "title": "Subaru Impreza S12 WRC driven FLAT-OUT at Rally Legend 2021 - Launch Control, Jumps & Pure Sound!",
+        "author": "MattyB727 - Car Videos",
+        "youtube": "gLJzxBHkVO0",
+        "cacheName": "yt_boxer4_rally_gLJzxBHkVO0.flac",
+        "pitchRange": [
+          36,
+          52
+        ]
+      },
+      "glTop": {
+        "title": "Subaru Impreza S12 WRC driven FLAT-OUT at Rally Legend 2021 - Launch Control, Jumps & Pure Sound!",
+        "author": "MattyB727 - Car Videos",
+        "youtube": "gLJzxBHkVO0",
+        "cacheName": "yt_boxer4_rally_gLJzxBHkVO0.flac",
+        "pitchRange": [
+          52,
+          64
+        ]
+      }
+    },
+    "loops": [
+      {
+        "kind": "idle",
+        "source": "eo13",
+        "t": [
+          0.5,
+          16.5
+        ],
+        "flatten": false
+      },
+      {
+        "kind": "on",
+        "source": "sgy",
+        "t": [
+          10.35,
+          12.3
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "qg",
+        "t": [
+          33.7,
+          36.8
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "qgHi",
+        "t": [
+          40.8,
+          42.9
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "qgHi",
+        "t": [
+          39.45,
+          40.6
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "zq",
+        "t": [
+          14.5,
+          22.0
+        ],
+        "matchTo": {
+          "source": "s6k",
+          "t": [
+            1.0,
+            10.2
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "kat",
+        "t": [
+          22.2,
+          25.2
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "s6k",
+        "t": [
+          1.0,
+          10.2
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "gl",
+        "t": [
+          176.6,
+          181.0
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "gl",
+        "t": [
+          172.1,
+          172.9
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "gl",
+        "t": [
+          175.4,
+          175.95
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "zq",
+        "t": [
+          38.45,
+          39.52
+        ],
+        "matchTo": {
+          "source": "s6k",
+          "t": [
+            1.0,
+            10.2
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "glTop",
+        "t": [
+          54.24,
+          54.75
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "glTop",
+        "t": [
+          69.06,
+          69.52
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "glTop",
+        "t": [
+          165.51,
+          166.21
+        ]
+      }
+    ],
+    "oneShots": {
+      "start": {
+        "source": "ia2",
+        "t": [
+          0.2,
+          3.4
+        ],
+        "fadeIn": 0.02,
+        "fadeOut": 0.8
+      }
+    }
+  }
+}

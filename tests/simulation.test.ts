@@ -361,7 +361,7 @@ describe("realistic shifting", () => {
   });
 
   it("DCT and quickshifter crack on loaded upshifts; a manual does not", () => {
-    for (const [id, expected] of [["v10_supercar", true], ["superbike_i4", true], ["muscle_v8", false]] as const) {
+    for (const [id, expected] of [["twin_turbo_v6", true], ["superbike_i4", true], ["muscle_v8", false]] as const) {
       const sim = startedSim(id);
       const events: string[] = [];
       sim.subscribe((e) => events.push(e.type));
@@ -387,7 +387,7 @@ describe("realistic shifting", () => {
       }
       return t;
     };
-    expect(time("v10_supercar")).toBeLessThan(time("muscle_v8") * 0.6);
+    expect(time("twin_turbo_v6")).toBeLessThan(time("muscle_v8") * 0.6);
   });
 });
 

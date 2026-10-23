@@ -1,153 +1,282 @@
 {
   "id": "jdm_i6_turbo",
-  "name": "Inline-6 Turbo",
+  "name": "Toyota Chaser JZX100 Tourer V",
   "type": "car",
-  "engineType": "Twin-turbo straight-six",
-  "description": "Twin-turbo 3.0 straight-six with turbo whistle and a big blow-off on every lift. Inspired by the legendary 90s Japanese sports coupe.",
+  "engineType": "Turbocharged straight-six",
+  "description": "The four-door drift legend: a 1JZ-GTE 2.5 L single-turbo straight-six with VVT-i, a silky six-pot howl and a blow-off hiss on every lift.",
   "engine": {
     "cylinders": 6,
-    "idleRpm": 800,
+    "idleRpm": 850,
     "redlineRpm": 7000,
-    "limiterRpm": 7200,
-    "inertia": 0.32,
+    "limiterRpm": 7400,
+    "inertia": 0.3,
     "engineBraking": 0.5,
-    "peakTorqueNm": 651,
-    "crackle": 0.4
+    "peakTorqueNm": 379,
+    "crackle": 0.3
   },
   "gearbox": {
     "type": "manual",
     "ratios": [
-      3.83,
-      2.36,
-      1.69,
+      3.251,
+      1.955,
       1.31,
       1,
-      0.79
+      0.753
     ],
-    "finalDrive": 3.76,
-    "wheelRadiusM": 0.33,
+    "finalDrive": 4.1,
+    "wheelRadiusM": 0.32,
     "shiftTimeMs": 280
   },
   "dynamics": {
-    "massKg": 1550,
-    "cdA": 0.62,
+    "massKg": 1470,
+    "cdA": 0.68,
     "brakeDecel": 9.5
   },
   "turbo": {
-    "spoolRpm": 2800,
+    "spoolRpm": 2200,
     "lagS": 0.45,
     "release": "pssh"
   },
   "ui": {
-    "accent": "#ef4444",
-    "silhouette": "coupe",
+    "accent": "#cbd5e1",
+    "silhouette": "sport",
     "category": "JDM",
     "layout": "Inline-6 turbo",
-    "displacement": "3.0 L",
-    "powerHp": 500
+    "displacement": "2.5 L",
+    "powerHp": 276,
+    "make": "Toyota",
+    "year": "1998",
+    "recorded": true
   },
   "audio": {
     "mode": "samples",
     "onLoad": [
       {
-        "file": "on_960.ogg",
-        "rpm": 959.995
+        "file": "on_1257.ogg",
+        "rpm": 1256.542
       },
       {
-        "file": "on_1200.ogg",
-        "rpm": 1199.547
+        "file": "on_1544.ogg",
+        "rpm": 1543.831
       },
       {
-        "file": "on_1499.ogg",
-        "rpm": 1498.853
+        "file": "on_1814.ogg",
+        "rpm": 1814.412
       },
       {
-        "file": "on_1873.ogg",
-        "rpm": 1872.844
+        "file": "on_2166.ogg",
+        "rpm": 2165.72
       },
       {
-        "file": "on_2340.ogg",
-        "rpm": 2340.161
+        "file": "on_2560.ogg",
+        "rpm": 2560.228
       },
       {
-        "file": "on_2924.ogg",
-        "rpm": 2924.091
+        "file": "on_2998.ogg",
+        "rpm": 2998.469
       },
       {
-        "file": "on_3654.ogg",
-        "rpm": 3653.728
+        "file": "on_3530.ogg",
+        "rpm": 3530.02
       },
       {
-        "file": "on_4565.ogg",
-        "rpm": 4565.399
+        "file": "on_4024.ogg",
+        "rpm": 4024.439
       },
       {
-        "file": "on_5705.ogg",
-        "rpm": 5704.581
+        "file": "on_4608.ogg",
+        "rpm": 4608.061
       },
       {
-        "file": "on_7128.ogg",
-        "rpm": 7127.978
+        "file": "on_5400.ogg",
+        "rpm": 5400.157
+      },
+      {
+        "file": "on_5806.ogg",
+        "rpm": 5806.469
+      },
+      {
+        "file": "on_6354.ogg",
+        "rpm": 6353.697
+      },
+      {
+        "file": "on_6803.ogg",
+        "rpm": 6802.985
       }
     ],
     "offLoad": [
       {
-        "file": "off_1080.ogg",
-        "rpm": 1080
+        "file": "off_1257.ogg",
+        "rpm": 1256.542
       },
       {
-        "file": "off_1410.ogg",
-        "rpm": 1410.059
+        "file": "off_1544.ogg",
+        "rpm": 1543.831
       },
       {
-        "file": "off_1841.ogg",
-        "rpm": 1840.973
+        "file": "off_1814.ogg",
+        "rpm": 1814.412
       },
       {
-        "file": "off_2404.ogg",
-        "rpm": 2403.588
+        "file": "off_2166.ogg",
+        "rpm": 2165.72
       },
       {
-        "file": "off_3138.ogg",
-        "rpm": 3138.111
+        "file": "off_2560.ogg",
+        "rpm": 2560.228
       },
       {
-        "file": "off_4097.ogg",
-        "rpm": 4097.135
+        "file": "off_2998.ogg",
+        "rpm": 2998.469
       },
       {
-        "file": "off_5349.ogg",
-        "rpm": 5349.242
+        "file": "off_3530.ogg",
+        "rpm": 3530.02
       },
       {
-        "file": "off_6984.ogg",
-        "rpm": 6984.031
+        "file": "off_4024.ogg",
+        "rpm": 4024.439
+      },
+      {
+        "file": "off_4608.ogg",
+        "rpm": 4608.061
+      },
+      {
+        "file": "off_5400.ogg",
+        "rpm": 5400.157
+      },
+      {
+        "file": "off_5806.ogg",
+        "rpm": 5806.469
+      },
+      {
+        "file": "off_6354.ogg",
+        "rpm": 6353.697
+      },
+      {
+        "file": "off_6803.ogg",
+        "rpm": 6802.985
       }
     ],
     "idle": {
-      "file": "idle_800.ogg",
-      "rpm": 800
+      "file": "idle_968.ogg",
+      "rpm": 968
     },
     "oneShots": {
       "start": "start.ogg",
-      "stop": "stop.ogg",
+      "stop": "gen/stop.ogg",
       "shift": [
-        "shift_1.ogg",
-        "shift_2.ogg"
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
       ],
       "backfire": [
-        "pop_1.ogg",
-        "pop_2.ogg",
-        "pop_3.ogg"
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
       ],
       "blowoff": [
-        "bov_1.ogg",
-        "bov_2.ogg"
+        "gen/bov_1.ogg",
+        "gen/bov_2.ogg"
       ]
     },
     "masterGainDb": 0
   },
-  "credits": [
-    "All sounds: original, generated by scripts/generate-sounds.mjs for Revheadz, CC0"
-  ]
+  "credits": [],
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_1020.ogg",
+        "rpm": 1019.997
+      },
+      {
+        "file": "gen/on_1305.ogg",
+        "rpm": 1305.068
+      },
+      {
+        "file": "gen/on_1670.ogg",
+        "rpm": 1669.816
+      },
+      {
+        "file": "gen/on_2136.ogg",
+        "rpm": 2136.496
+      },
+      {
+        "file": "gen/on_2734.ogg",
+        "rpm": 2733.599
+      },
+      {
+        "file": "gen/on_3498.ogg",
+        "rpm": 3497.588
+      },
+      {
+        "file": "gen/on_4475.ogg",
+        "rpm": 4475.054
+      },
+      {
+        "file": "gen/on_5726.ogg",
+        "rpm": 5725.764
+      },
+      {
+        "file": "gen/on_7326.ogg",
+        "rpm": 7325.982
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_1147.ogg",
+        "rpm": 1147.496
+      },
+      {
+        "file": "gen/off_1491.ogg",
+        "rpm": 1491.082
+      },
+      {
+        "file": "gen/off_1938.ogg",
+        "rpm": 1937.552
+      },
+      {
+        "file": "gen/off_2518.ogg",
+        "rpm": 2517.698
+      },
+      {
+        "file": "gen/off_3272.ogg",
+        "rpm": 3271.544
+      },
+      {
+        "file": "gen/off_4251.ogg",
+        "rpm": 4251.125
+      },
+      {
+        "file": "gen/off_5524.ogg",
+        "rpm": 5524.008
+      },
+      {
+        "file": "gen/off_7178.ogg",
+        "rpm": 7178.026
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_850.ogg",
+      "rpm": 849.997
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ],
+      "blowoff": [
+        "gen/bov_1.ogg",
+        "gen/bov_2.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
 }
