@@ -51,8 +51,8 @@ you can switch any of them to the engine-model sound to compare. No install, no 
 - **Drag Racing (PvP)**: heads-up drag racing against a friend online (4-letter room code) or the CPU (three
   skill levels). Cars race in seven classes (Street, Muscle, Grand Touring, Supercar, Track, Hyper, Formula), and within
   a class each car's engine is trimmed so every car runs the same perfect quarter mile (performance parity), so
-  reaction time and shifting decide it, not the car. A side-on night strip with a following camera, tyre smoke,
-  exhaust flames and a cool-down where the car brakes and downshifts after the line; shift-light strip,
+  reaction time and shifting decide it, not the car. A 3D night strip (three.js, bloom) with a chase camera, tyre
+  smoke, exhaust flames and a cool-down where the car brakes and downshifts after the line; shift-light strip,
   reaction and shift ratings, tree beeps, the other car's engine beside you, and a printed time slip with a "why you
   won/lost" breakdown. Pro controls (`S`+`W` to stage on the two-step, let go of `S` on the green, `E`/`Q` to shift)
   or one-button Simple controls
