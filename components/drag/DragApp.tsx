@@ -371,7 +371,7 @@ export function DragApp() {
             <h1 className="mt-2 text-4xl font-black italic tracking-tight text-zinc-50 sm:text-5xl">Drag Racing</h1>
             <p className="mt-3 max-w-xl text-zinc-400">
               Heads-up drag racing: both trees go green together and first to the line wins. Cars race in classes, and every car in a class runs
-              the same perfect quarter mile, so there's no mismatch. Launch on the green, hit every shift light, stay on the gas. Jump the light and
+              the same perfect quarter mile, so there&apos;s no mismatch. Launch on the green, hit every shift light, stay on the gas. Jump the light and
               you red-light.
             </p>
             <ul className="mt-4 flex flex-wrap gap-2 text-xs text-zinc-300">
