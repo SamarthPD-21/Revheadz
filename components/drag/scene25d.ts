@@ -3,23 +3,38 @@ import type { VehicleConfig } from "../../lib/vehicles/types";
 import type { SceneCar, SceneFrame } from "./scene";
 
 /**
- * The drag strip in 2.5D: the main branch's layout (the strip runs left to right, the other
- * lane above yours, the camera following your car), seen from above at an angle. The camera
- * hangs high over the near side and tilts towards the grandstand, so both lanes are seen
- * from the top while walls, stands and light towers keep their height.
+ * The drag strip in 2.5D, isometric-style (like Project Zomboid or a top-down action RPG):
+ * an orthographic camera turned diagonally and tilted down, so the strip runs from the lower
+ * left to the upper right and you look down on everything at an angle. Cars and scenery are
+ * small solid models (boxes, tapered cabins, wheel cylinders) drawn face by face with flat
+ * shading, back to front.
  *
- * It is a real perspective projection, drawn with nothing but canvas 2D fills and
- * drawImage: no WebGL, no shadowBlur (glows are pre-rendered sprites), text only on cached
- * canvases. Cars are top-down sprites mapped onto the road with an affine transform.
+ * Plain canvas 2D only, no WebGL: a few hundred filled polygons a frame, glows as
+ * pre-rendered sprites (no shadowBlur), text only on cached canvases.
  */
 
-const LANE_Z = { me: 2, opp: -2 }; // + is towards the camera (near side)
+type V = [number, number, number];
+type Canvas = HTMLCanvasElement;
+
+const LANE_Z = { me: 2, opp: -2 }; // + is the near side
 const WALL_Z = 6.3;
 const LINE_Z = 4.1;
-const CAR = { car: { w: 1.9, len: 4.6, h: 1.25 }, bike: { w: 0.8, len: 2.2, h: 1.4 } };
 
-type Canvas = HTMLCanvasElement;
-type P = { x: number; y: number; s: number; ok: boolean };
+// camera: turned about the vertical axis, then tilted down (degrees)
+const YAW = (28 * Math.PI) / 180;
+const PITCH = (36 * Math.PI) / 180;
+const R: V = [Math.cos(YAW), 0, Math.sin(YAW)]; // screen right
+const FWD: V = [Math.sin(YAW), 0, -Math.cos(YAW)]; // horizontal "into the screen"
+const VIEW: V = [Math.sin(YAW) * Math.cos(PITCH), -Math.sin(PITCH), -Math.cos(YAW) * Math.cos(PITCH)]; // camera looks along this
+const LIGHT: V = norm([-0.35, 0.85, 0.45]);
+
+function norm(v: V): V {
+  const l = Math.hypot(v[0], v[1], v[2]) || 1;
+  return [v[0] / l, v[1] / l, v[2] / l];
+}
+const dot = (a: V, b: V) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const sub = (a: V, b: V): V => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const cross = (a: V, b: V): V => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 
 const makeCanvas = (w: number, h: number): [Canvas, CanvasRenderingContext2D] => {
   const c = document.createElement("canvas");
@@ -28,7 +43,6 @@ const makeCanvas = (w: number, h: number): [Canvas, CanvasRenderingContext2D] =>
   return [c, c.getContext("2d")!];
 };
 
-/** A soft radial glow, pre-rendered once per colour (instead of per-frame shadowBlur). */
 function glowSprite(color: string, size = 128): Canvas {
   const [c, x] = makeCanvas(size, size);
   const g = x.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
@@ -40,105 +54,136 @@ function glowSprite(color: string, size = 128): Canvas {
   return c;
 }
 
-/** Lightens (amount > 0) or darkens a #rrggbb colour. */
-function shade(hex: string, amount: number): string {
+const hexRgb = (hex: string): [number, number, number] => {
   const n = parseInt(hex.replace("#", ""), 16);
-  const ch = (v: number) => Math.round(Math.min(255, Math.max(0, amount > 0 ? v + (255 - v) * amount : v * (1 + amount))));
-  return `rgb(${ch((n >> 16) & 255)},${ch((n >> 8) & 255)},${ch(n & 255)})`;
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
+const rgbStr = (c: [number, number, number], k = 1) => `rgb(${Math.min(255, Math.round(c[0] * k))},${Math.min(255, Math.round(c[1] * k))},${Math.min(255, Math.round(c[2] * k))})`;
+
+/** A solid made of planar faces (each listed counter-clockwise from outside, or flipped by `fix`). */
+interface Solid {
+  faces: V[][];
+  color: [number, number, number];
+  /** Faces drawn unlit (lamps, glass highlights). */
+  flat?: boolean;
+  center: V;
 }
 
-const rgba = (hex: string, a = 1) => {
-  const n = parseInt(hex.replace("#", ""), 16);
-  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
-};
+/** Axis-aligned box from two corners. */
+function box(x0: number, x1: number, y0: number, y1: number, z0: number, z1: number, color: [number, number, number], flat = false): Solid {
+  const p = (x: number, y: number, z: number): V => [x, y, z];
+  const a = p(x0, y0, z0), b = p(x1, y0, z0), c = p(x1, y1, z0), d = p(x0, y1, z0);
+  const e = p(x0, y0, z1), f = p(x1, y0, z1), g = p(x1, y1, z1), h = p(x0, y1, z1);
+  return { faces: [[a, d, c, b], [e, f, g, h], [a, e, h, d], [b, c, g, f], [d, h, g, c], [a, b, f, e]], color, flat, center: [(x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2] };
+}
 
-/** The car seen from above, nose to the right (canvas x = along the car, y = across). */
-function topSprite(cfg: VehicleConfig): Canvas {
-  const bike = cfg.type === "bike";
-  const formula = cfg.ui.silhouette === "formula";
-  const L = 320;
-  const W = bike ? 64 : 140;
-  const [c, x] = makeCanvas(L, W);
-  const accent = cfg.ui.accent;
-  const rr = (l: number, t: number, w: number, h: number, r: number, fill: string | CanvasGradient) => {
-    x.fillStyle = fill;
-    x.beginPath();
-    x.roundRect(l, t, w, h, r);
-    x.fill();
-  };
-  const body = x.createLinearGradient(0, 0, 0, W);
-  body.addColorStop(0, shade(accent, -0.35));
-  body.addColorStop(0.5, shade(accent, 0.25));
-  body.addColorStop(1, shade(accent, -0.35));
-  if (bike) {
-    rr(14, W / 2 - 8, 70, 16, 8, "#0a0a0d"); // rear tyre
-    rr(L - 84, W / 2 - 7, 70, 14, 7, "#0a0a0d"); // front tyre
-    rr(60, W / 2 - 18, 190, 36, 16, body); // tank and tail
-    rr(150, 4, 14, W - 8, 6, "#1a1a20"); // bars
-    x.fillStyle = "#26262e";
-    x.beginPath();
-    x.arc(130, W / 2, 20, 0, Math.PI * 2); // helmet
-    x.fill();
-    x.fillStyle = accent;
-    x.fillRect(118, W / 2 - 3, 24, 6);
-    return c;
+/** A tapered block (bottom x0..x1 wide w0, top x2..x3 wide w1), centred on z = 0. */
+function frustum(x0: number, x1: number, x2: number, x3: number, y0: number, y1: number, w0: number, w1: number, color: [number, number, number]): Solid {
+  const a: V = [x0, y0, -w0 / 2], b: V = [x1, y0, -w0 / 2], c: V = [x3, y1, -w1 / 2], d: V = [x2, y1, -w1 / 2];
+  const e: V = [x0, y0, w0 / 2], f: V = [x1, y0, w0 / 2], g: V = [x3, y1, w1 / 2], h: V = [x2, y1, w1 / 2];
+  return { faces: [[a, d, c, b], [e, f, g, h], [a, e, h, d], [b, c, g, f], [d, h, g, c], [a, b, f, e]], color, center: [(x0 + x1 + x2 + x3) / 4, (y0 + y1) / 2, 0] };
+}
+
+/** A wheel: an n-sided cylinder along z, rotated by `spin`. */
+function wheel(cx: number, cy: number, r: number, z0: number, z1: number, spin: number, color: [number, number, number]): Solid {
+  const n = 10;
+  const ring = (z: number) => Array.from({ length: n }, (_, i): V => {
+    const a = spin + (i * Math.PI * 2) / n;
+    return [cx + Math.cos(a) * r, cy + Math.sin(a) * r, z];
+  });
+  const A = ring(z0);
+  const B = ring(z1);
+  const faces: V[][] = [A.slice().reverse(), B];
+  for (let i = 0; i < n; i++) faces.push([A[i], A[(i + 1) % n], B[(i + 1) % n], B[i]]);
+  return { faces, color, center: [cx, cy, (z0 + z1) / 2] };
+}
+
+/** The car as parts, in car space: x from the rear (0) to the nose (len), y up, z across. */
+function carModel(cfg: VehicleConfig, spin: number): { parts: Solid[]; len: number; width: number; rims: { x: number; y: number; r: number; z: number }[] } {
+  const acc = hexRgb(cfg.ui.accent);
+  const dark = acc.map((v) => v * 0.55) as [number, number, number];
+  const tyre: [number, number, number] = [14, 14, 17];
+  const glass: [number, number, number] = [16, 20, 30];
+  const kind = cfg.ui.silhouette;
+  const parts: Solid[] = [];
+  const rims: { x: number; y: number; r: number; z: number }[] = [];
+  if (cfg.type === "bike") {
+    const len = 2.1;
+    const r = 0.32;
+    for (const x of [0.38, 1.72]) {
+      parts.push(wheel(x, r, r, -0.07, 0.07, spin, tyre));
+      rims.push({ x, y: r, r: r * 0.6, z: 0.08 });
+    }
+    parts.push(box(0.35, 1.75, 0.35, 0.7, -0.17, 0.17, acc)); // frame and fairing
+    parts.push(box(1.35, 1.8, 0.6, 0.95, -0.2, 0.2, acc)); // nose fairing
+    parts.push(box(0.5, 1.0, 0.7, 0.85, -0.14, 0.14, dark)); // seat
+    parts.push(box(0.75, 1.15, 0.85, 1.35, -0.2, 0.2, [24, 24, 30])); // rider
+    parts.push(box(1.05, 1.35, 1.25, 1.55, -0.15, 0.15, acc)); // helmet
+    return { parts, len, width: 0.45, rims };
   }
-  // tyres poking out at the corners
-  const tw = formula ? 64 : 56;
-  const th = formula ? 30 : 20;
-  for (const tx of formula ? [26, L - 26 - tw] : [40, L - 40 - tw]) {
-    rr(tx, 0, tw, th, 6, "#0a0a0d");
-    rr(tx, W - th, tw, th, 6, "#0a0a0d");
+  if (kind === "formula") {
+    const len = 4.8;
+    const r = 0.34;
+    for (const x of [0.75, 3.85]) {
+      for (const s of [-1, 1]) {
+        parts.push(wheel(x, r, r, s > 0 ? 0.62 : -0.98, s > 0 ? 0.98 : -0.62, spin, tyre));
+        if (s > 0) rims.push({ x, y: r, r: r * 0.6, z: 0.99 });
+      }
+    }
+    parts.push(box(0.4, 4.6, 0.12, 0.5, -0.38, 0.38, acc)); // tub
+    parts.push(box(1.2, 2.6, 0.12, 0.45, -0.62, 0.62, dark)); // sidepods
+    parts.push(box(4.4, 4.9, 0.06, 0.14, -0.9, 0.9, dark)); // front wing
+    parts.push(box(-0.05, 0.35, 0.75, 0.95, -0.55, 0.55, dark)); // rear wing
+    parts.push(box(0.05, 0.25, 0.3, 0.75, -0.08, 0.08, dark));
+    parts.push(box(2.2, 2.75, 0.5, 0.78, -0.18, 0.18, [24, 24, 30])); // driver
+    return { parts, len, width: 1.9, rims };
   }
-  if (formula) {
-    rr(30, W / 2 - 22, 230, 44, 20, body); // tub
-    rr(250, W / 2 - 8, 66, 16, 8, body); // nose
-    rr(L - 18, 18, 14, W - 36, 4, "#16161c"); // front wing
-    rr(4, 14, 18, W - 28, 4, "#16161c"); // rear wing
-    x.fillStyle = "#0b0b10";
-    x.beginPath();
-    x.arc(150, W / 2, 14, 0, Math.PI * 2); // cockpit
-    x.fill();
-    return c;
+  const len = 4.6;
+  const w = 1.86;
+  const r = 0.33;
+  for (const x of [0.85, 3.7]) {
+    for (const s of [-1, 1]) {
+      parts.push(wheel(x, r, r, s * (w / 2 - 0.27), s * (w / 2 + 0.03), spin, tyre));
+      if (s > 0) rims.push({ x, y: r, r: r * 0.62, z: w / 2 + 0.035 });
+    }
   }
-  rr(10, 12, L - 20, W - 24, 34, body); // body
-  // glasshouse: rear window, roof, windscreen
-  rr(84, 22, 46, W - 44, 12, "rgba(10,12,20,0.9)");
-  rr(128, 22, 66, W - 44, 14, shade(accent, 0.12));
-  rr(136, 30, 50, W - 60, 10, shade(accent, 0.3)); // roof highlight
-  rr(192, 22, 46, W - 44, 12, "rgba(10,12,20,0.9)");
-  // bonnet line and mirrors
-  x.strokeStyle = "rgba(255,255,255,0.18)";
-  x.lineWidth = 2;
-  x.beginPath();
-  x.moveTo(246, W / 2);
-  x.lineTo(L - 22, W / 2);
-  x.stroke();
-  rr(196, 8, 14, 10, 4, shade(accent, -0.3));
-  rr(196, W - 18, 14, 10, 4, shade(accent, -0.3));
-  // lights
-  rr(L - 18, 20, 8, 26, 4, "#f5f5f0");
-  rr(L - 18, W - 46, 8, 26, 4, "#f5f5f0");
-  rr(10, 20, 8, 28, 4, "#a8141a");
-  rr(10, W - 48, 8, 28, 4, "#a8141a");
-  if (cfg.ui.silhouette === "rally" || cfg.ui.silhouette === "gtcar" || cfg.ui.silhouette === "supercar") rr(4, 16, 22, W - 32, 5, "#121217"); // wing
-  return c;
+  const low = kind === "supercar" || kind === "gtcar";
+  const beltY = low ? 0.78 : 0.86;
+  parts.push(box(0.05, len, 0.26, beltY, -w / 2, w / 2, acc)); // lower body
+  // cabin: glass sides, with the roof on top
+  const cab = low ? [1.25, 3.55, 1.65, 3.05] : [1.05, 3.4, 1.4, 2.95];
+  const roofY = low ? 1.14 : 1.32;
+  parts.push(frustum(cab[0], cab[1], cab[2], cab[3], beltY, roofY, w * 0.86, w * 0.7, glass));
+  parts.push(frustum(cab[2] + 0.05, cab[3] - 0.05, cab[2] + 0.12, cab[3] - 0.12, roofY, roofY + 0.04, w * 0.7, w * 0.66, acc)); // roof
+  // lamps (unlit = bright)
+  parts.push(box(-0.02, 0.06, beltY - 0.24, beltY - 0.1, -w / 2 + 0.12, -w / 2 + 0.5, [200, 30, 26], true));
+  parts.push(box(-0.02, 0.06, beltY - 0.24, beltY - 0.1, w / 2 - 0.5, w / 2 - 0.12, [200, 30, 26], true));
+  parts.push(box(len - 0.06, len + 0.02, beltY - 0.2, beltY - 0.08, -w / 2 + 0.12, -w / 2 + 0.45, [245, 245, 235], true));
+  parts.push(box(len - 0.06, len + 0.02, beltY - 0.2, beltY - 0.08, w / 2 - 0.45, w / 2 - 0.12, [245, 245, 235], true));
+  if (kind === "rally" || kind === "gtcar" || kind === "supercar") {
+    parts.push(box(-0.05, 0.4, beltY + 0.28, beltY + 0.36, -w / 2 + 0.05, w / 2 - 0.05, dark)); // wing
+    for (const s of [-1, 1]) parts.push(box(0.12, 0.24, beltY, beltY + 0.3, s * 0.55 - 0.04, s * 0.55 + 0.04, dark));
+  }
+  return { parts, len, width: w, rims };
 }
 
 interface Puff {
   x: number;
-  z: number;
   y: number;
+  z: number;
   r: number;
   life: number;
   max: number;
   vx: number;
   vz: number;
 }
+interface Item {
+  depth: number;
+  draw: () => void;
+}
 
 export class DragScene25D {
   private readonly glows = new Map<string, Canvas>();
-  private readonly tops = new Map<string, Canvas>();
   private readonly boards = new Map<string, Canvas>();
   private timing: { canvas: Canvas; ctx: CanvasRenderingContext2D; key: string } | null = null;
   private crowd: Canvas | null = null;
@@ -146,9 +191,14 @@ export class DragScene25D {
   private lastTime = 0;
   private prevSpeed = { me: 0, opp: 0 };
   private braking = { me: 0, opp: 0 };
-  private squat = { me: 0, opp: 0 };
-  private camX = -10;
+  private pitch = { me: 0, opp: 0 };
+  private camX = -6;
   private zoom = 1;
+  // per-frame projection state
+  private cx = 0;
+  private cy = 0;
+  private k = 1;
+  private cam: V = [0, 0, 0];
 
   constructor(private readonly ctx: CanvasRenderingContext2D) {}
 
@@ -156,12 +206,6 @@ export class DragScene25D {
     let g = this.glows.get(color);
     if (!g) this.glows.set(color, (g = glowSprite(color)));
     return g;
-  }
-
-  private top(cfg: VehicleConfig) {
-    let t = this.tops.get(cfg.id);
-    if (!t) this.tops.set(cfg.id, (t = topSprite(cfg)));
-    return t;
   }
 
   private board(label: string) {
@@ -182,16 +226,12 @@ export class DragScene25D {
 
   private crowdTex() {
     if (!this.crowd) {
-      const [c, x] = makeCanvas(512, 128);
-      x.fillStyle = "#121119";
-      x.fillRect(0, 0, 512, 128);
-      for (let i = 0; i < 1500; i++) {
-        x.fillStyle = `hsla(${Math.floor(Math.random() * 360)},35%,${40 + Math.random() * 25}%,0.85)`;
-        x.fillRect(Math.random() * 512, Math.random() * 128, 3, 3);
-      }
-      for (let r = 1; r < 6; r++) {
-        x.fillStyle = "rgba(0,0,0,0.55)";
-        x.fillRect(0, r * 21, 512, 3);
+      const [c, x] = makeCanvas(256, 64);
+      x.fillStyle = "#15141c";
+      x.fillRect(0, 0, 256, 64);
+      for (let i = 0; i < 520; i++) {
+        x.fillStyle = `hsla(${Math.floor(Math.random() * 360)},38%,${42 + Math.random() * 25}%,0.9)`;
+        x.fillRect(Math.random() * 256, 4 + Math.random() * 56, 2.5, 3.5);
       }
       this.crowd = c;
     }
@@ -209,9 +249,6 @@ export class DragScene25D {
       const c = this.timing.ctx;
       c.fillStyle = "#050508";
       c.fillRect(0, 0, 512, 200);
-      c.strokeStyle = "#2a2833";
-      c.lineWidth = 6;
-      c.strokeRect(3, 3, 506, 194);
       c.font = "700 20px system-ui, sans-serif";
       c.fillStyle = "#71717a";
       c.fillText("ET", 24, 36);
@@ -228,6 +265,71 @@ export class DragScene25D {
     return this.timing.canvas;
   }
 
+  // ---------------------------------------------------------------- projection
+
+  private p(v: V): [number, number] {
+    const d = sub(v, this.cam);
+    const x = dot(d, R);
+    const up = dot(d, FWD) * Math.sin(PITCH) + d[1] * Math.cos(PITCH);
+    return [this.cx + x * this.k, this.cy - up * this.k];
+  }
+
+  private depth(v: V) {
+    return dot(sub(v, this.cam), VIEW);
+  }
+
+  private poly(pts: V[], fill: string) {
+    const ctx = this.ctx;
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    pts.forEach((v, i) => {
+      const [x, y] = this.p(v);
+      if (i) ctx.lineTo(x, y);
+      else ctx.moveTo(x, y);
+    });
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  /** Draws a solid's visible faces with flat shading. */
+  private solid(s: Solid, xf: (v: V) => V) {
+    const c = xf(s.center);
+    for (const face of s.faces) {
+      const w = face.map(xf);
+      let n = norm(cross(sub(w[1], w[0]), sub(w[2], w[0])));
+      const fc = w.reduce<V>((a, v) => [a[0] + v[0] / w.length, a[1] + v[1] / w.length, a[2] + v[2] / w.length], [0, 0, 0]);
+      if (dot(n, sub(fc, c)) < 0) n = [-n[0], -n[1], -n[2]]; // make it face outwards
+      if (dot(n, VIEW) >= 0) continue; // facing away from the camera
+      const light = s.flat ? 1.25 : 0.42 + 0.7 * Math.max(0, dot(n, LIGHT));
+      this.poly(w, rgbStr(s.color, light));
+    }
+  }
+
+  /** Maps an image onto a vertical face: top-left, top-right, bottom-left corners in world space. */
+  private image(img: CanvasImageSource, iw: number, ih: number, tl: V, tr: V, bl: V) {
+    const [ax, ay] = this.p(tl);
+    const [bx, by] = this.p(tr);
+    const [cx, cy] = this.p(bl);
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.transform((bx - ax) / iw, (by - ay) / iw, (cx - ax) / ih, (cy - ay) / ih, ax, ay);
+    ctx.drawImage(img, 0, 0);
+    ctx.restore();
+  }
+
+  private sprite(img: Canvas, at: V, size: number, alpha = 1, add = false) {
+    const [x, y] = this.p(at);
+    const s = size * this.k;
+    const ctx = this.ctx;
+    ctx.globalAlpha = alpha;
+    if (add) ctx.globalCompositeOperation = "lighter";
+    ctx.drawImage(img, x - s / 2, y - s / 2, s, s);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = "source-over";
+  }
+
+  // ---------------------------------------------------------------- frame
+
   draw(f: SceneFrame, w: number, h: number) {
     const ctx = this.ctx;
     const dt = Math.min(0.05, Math.max(0, f.time - this.lastTime));
@@ -235,236 +337,174 @@ export class DragScene25D {
     const me = f.me;
     const portrait = h > w;
 
-    // camera: high over the near side, tilted towards the stands; follows your car along x
-    // (your car sits left of centre, so you see the strip ahead) and rises a little with speed
+    // follow your car (it sits a little below and left of centre so you see the strip ahead)
     const myX = me.distM - me.rollBackM;
-    const H0 = (portrait ? 30 : 21) * this.zoom;
-    // keep your car about a third of the way across (it's 4.6 m long; the strip ahead matters)
-    const tiltA = (34 * Math.PI) / 180;
-    const camZ0 = portrait ? 14 : 11;
-    const depthMe = H0 * Math.cos(tiltA) + (camZ0 - LANE_Z.me) * Math.sin(tiltA);
-    const scaleMe = (portrait ? w * 1.6 : h * 1.45) / depthMe;
-    const lead = (w * (portrait ? 0.1 : 0.16)) / scaleMe;
-    // before the launch, frame the start: the tree and both staged cars
     const launched = me.distM > 0.05;
-    const camTarget = launched ? myX - 2.3 + lead : -3.5;
-    this.camX += (camTarget - this.camX) * Math.min(1, dt * 8);
-    if (Math.abs(camTarget - this.camX) > 40) this.camX = camTarget;
-    this.zoom += (1 + Math.min(0.35, me.speedKmh / 700) - this.zoom) * Math.min(1, dt * 2);
-    const H = H0; // camera height
-    const camZ = camZ0; // over the near side
-    const tilt = tiltA; // from straight down, towards the far side
-    const fz = -Math.sin(tilt);
-    const fy = -Math.cos(tilt);
-    const uz = -Math.cos(tilt);
-    const uy = Math.sin(tilt);
-    const F = portrait ? w * 1.6 : h * 1.45;
-    const shake = f.shake * f.shake;
-    const ox = w / 2 + (Math.random() - 0.5) * 6 * shake;
-    const oy = h * (portrait ? 0.5 : 0.48) + (Math.random() - 0.5) * 4 * shake;
-    const camX = this.camX;
-    const proj = (x: number, y: number, z: number): P => {
-      const dx = x - camX;
-      const dy = y - H;
-      const dz = z - camZ;
-      const depth = dy * fy + dz * fz;
-      if (depth < 0.5) return { x: 0, y: 0, s: 0, ok: false };
-      const s = F / depth;
-      return { x: ox + dx * s, y: oy - (dy * uy + dz * uz) * s, s, ok: true };
-    };
-    const quad = (a: P, b: P, c: P, d: P, fill: string) => {
-      if (!a.ok || !b.ok || !c.ok || !d.ok) return;
-      ctx.fillStyle = fill;
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.lineTo(c.x, c.y);
-      ctx.lineTo(d.x, d.y);
-      ctx.closePath();
-      ctx.fill();
-    };
-    // a flat strip along x between z0 and z1 at height y (straight edges: one quad)
-    const strip = (xa: number, xb: number, z0: number, z1: number, fill: string, y = 0) => quad(proj(xa, y, z0), proj(xb, y, z0), proj(xb, y, z1), proj(xa, y, z1), fill);
-    // a vertical face at constant z between y0 and y1
-    const face = (xa: number, xb: number, z: number, y0: number, y1: number, fill: string) => quad(proj(xa, y1, z), proj(xb, y1, z), proj(xb, y0, z), proj(xa, y0, z), fill);
+    const target = launched ? myX + (portrait ? 3 : 6) : 1;
+    this.camX += (target - this.camX) * Math.min(1, dt * 7);
+    if (Math.abs(target - this.camX) > 40) this.camX = target;
+    this.zoom += (1 - Math.min(0.25, me.speedKmh / 900) - this.zoom) * Math.min(1, dt * 2);
+    this.k = (portrait ? w / 11.5 : Math.min(w / 30, h / 15)) * this.zoom;
+    this.cx = w / 2 + (Math.random() - 0.5) * 6 * f.shake * f.shake;
+    this.cy = h * (portrait ? 0.6 : 0.52) + (Math.random() - 0.5) * 4 * f.shake * f.shake;
+    this.cam = [this.camX, 0, 0];
+    const x0 = this.camX - (portrait ? 40 : 55);
+    const x1 = this.camX + (portrait ? 55 : 75);
 
-    // the stretch of track in view
-    const span = (w / F) * H * 1.8 + 30;
-    const x0 = camX - span;
-    const x1 = camX + span;
-
-    // background: the night beyond the stands
-    const g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, "#05050b");
-    g.addColorStop(1, "#0d0c13");
-    ctx.fillStyle = g;
+    // night backdrop
+    const bg = ctx.createLinearGradient(0, 0, 0, h);
+    bg.addColorStop(0, "#07060d");
+    bg.addColorStop(1, "#0e0d14");
+    ctx.fillStyle = bg;
     ctx.fillRect(0, 0, w, h);
 
-    // ground outside the walls, then the asphalt with faint bands every 8 m (a speed cue)
-    strip(x0, x1, -40, 40, "#0c0b11");
-    for (let k = Math.floor(x0 / 8); k < Math.ceil(x1 / 8); k++) strip(k * 8, k * 8 + 8, -WALL_Z, WALL_Z, k % 2 ? "#1b1a21" : "#18171d");
-    // rubbered-in launch area
-    for (const lz of [LANE_Z.me, LANE_Z.opp]) {
-      for (let k = 0; k < 10; k++) strip(-4 + k * 8, 4 + k * 8, lz - 0.9, lz + 0.9, `rgba(0,0,0,${0.5 * (1 - k / 10)})`);
-    }
-    // lines: centre, lane edges, dashes
-    strip(x0, x1, -0.06, 0.06, "#c99a1c");
-    strip(x0, x1, LINE_Z - 0.05, LINE_Z + 0.05, "#bdbdc6");
-    strip(x0, x1, -LINE_Z - 0.05, -LINE_Z + 0.05, "#bdbdc6");
+    // ---- ground (flat, drawn first) ----
+    const G = (xa: number, xb: number, za: number, zb: number, fill: string, y = 0) =>
+      this.poly([[xa, y, za], [xb, y, za], [xb, y, zb], [xa, y, zb]], fill);
+    G(x0, x1, -60, 60, "#0b0a10");
+    for (let k = Math.floor(x0 / 8); k < Math.ceil(x1 / 8); k++) G(k * 8, k * 8 + 8, -WALL_Z, WALL_Z, k % 2 ? "#1c1b22" : "#19181f");
+    for (const lz of [LANE_Z.me, LANE_Z.opp]) for (let k = 0; k < 10; k++) G(-4 + k * 8, 4 + k * 8, lz - 0.9, lz + 0.9, `rgba(0,0,0,${0.5 * (1 - k / 10)})`);
+    G(x0, x1, -0.06, 0.06, "#c99a1c");
+    G(x0, x1, LINE_Z - 0.05, LINE_Z + 0.05, "#bdbdc6");
+    G(x0, x1, -LINE_Z - 0.05, -LINE_Z + 0.05, "#bdbdc6");
     for (let k = Math.floor(x0 / 6); k < Math.ceil(x1 / 6); k++) {
-      strip(k * 6, k * 6 + 2.4, 3.36, 3.44, "#5c5b66");
-      strip(k * 6, k * 6 + 2.4, -3.44, -3.36, "#5c5b66");
+      G(k * 6, k * 6 + 2.4, 3.36, 3.44, "#5c5b66");
+      G(k * 6, k * 6 + 2.4, -3.44, -3.36, "#5c5b66");
     }
-    // pools of light under the towers
-    const pool = this.glow("rgba(255,241,214,1)");
-    ctx.globalAlpha = 0.07;
-    ctx.globalCompositeOperation = "lighter";
-    for (let k = Math.floor((x0 - 10) / 34); k <= Math.ceil(x1 / 34); k++) {
-      const p = proj(k * 34 + 10, 0, 0);
-      if (p.ok) ctx.drawImage(pool, p.x - 14 * p.s, p.y - 8 * p.s, 28 * p.s, 16 * p.s);
-    }
-    ctx.globalCompositeOperation = "source-over";
-    ctx.globalAlpha = 1;
-    // start line and finish checker
-    strip(-0.15, 0.15, -WALL_Z, WALL_Z, "#f4f4f5");
+    G(-0.15, 0.15, -WALL_Z, WALL_Z, "#f4f4f5");
     for (let k = 0; k < 14; k++) {
       const za = -WALL_Z + (k * 2 * WALL_Z) / 14;
       const zb = za + (2 * WALL_Z) / 14;
-      strip(QUARTER_MILE_M - 0.5, QUARTER_MILE_M, za, zb, k % 2 ? "#f4f4f5" : "#0b0b0f");
-      strip(QUARTER_MILE_M, QUARTER_MILE_M + 0.5, za, zb, k % 2 ? "#0b0b0f" : "#f4f4f5");
+      G(QUARTER_MILE_M - 0.5, QUARTER_MILE_M, za, zb, k % 2 ? "#f4f4f5" : "#0b0b0f");
+      G(QUARTER_MILE_M, QUARTER_MILE_M + 0.5, za, zb, k % 2 ? "#0b0b0f" : "#f4f4f5");
     }
+    // light pools under the towers
+    const pool = this.glow("rgba(255,241,214,1)");
+    for (let k = Math.floor((x0 - 10) / 34); k <= Math.ceil(x1 / 34); k++) this.sprite(pool, [k * 34 + 10, 0, -1], 20, 0.06, true);
 
-    // far side: grandstand tiers rising away from the track, then the wall with its ads
-    const crowd = this.crowdTex();
-    for (let t = 5; t >= 0; t--) {
-      const z = -8.4 - t * 2.4;
-      const y = 1 + t * 1.1;
-      strip(x0, x1, z - 2.4, z, "#14131b", y); // tier top
-      // tier front with the crowd (one textured slice per 16 m)
-      for (let k = Math.floor(x0 / 16); k < Math.ceil(x1 / 16); k++) {
-        const a = proj(k * 16, y + 1.1, z);
-        const b = proj(k * 16 + 16, y, z);
-        if (a.ok && b.ok && b.x > 0 && a.x < w) ctx.drawImage(crowd, (((k * 97) % 400) + 400) % 400, 0, 112, 128, a.x, a.y, b.x - a.x + 1, b.y - a.y);
+    // ---- everything with height, sorted back to front ----
+    const items: Item[] = [];
+    const add = (center: V, draw: () => void) => items.push({ depth: this.depth(center), draw });
+    const id = (v: V) => v;
+    const wallC: [number, number, number] = [52, 51, 60];
+    for (let k = Math.floor(x0 / 12); k < Math.ceil(x1 / 12); k++) {
+      const xa = k * 12;
+      const xb = xa + 12;
+      // far wall with ad panels on its inner face
+      add([xa + 6, 0.5, -WALL_Z], () => {
+        this.solid(box(xa, xb, 0, 1.1, -WALL_Z - 0.35, -WALL_Z, wallC), id);
+        const panel = ((Math.floor(xa / 24) % 3) + 3) % 3;
+        if (k % 2 === 0) this.poly([[xa + 0.4, 0.95, -WALL_Z + 0.01], [xa + 23.6, 0.95, -WALL_Z + 0.01], [xa + 23.6, 0.2, -WALL_Z + 0.01], [xa + 0.4, 0.2, -WALL_Z + 0.01]], panel === 0 ? "#c2580f" : panel === 1 ? "#2a2834" : "#7fae1f");
+      });
+      // near wall (low, in front of everything else)
+      add([xa + 6, 0.5, WALL_Z], () => this.solid(box(xa, xb, 0, 0.9, WALL_Z, WALL_Z + 0.35, wallC), id));
+      // grandstand tiers behind the far wall, crowd on the front faces
+      for (let t = 0; t < 5; t++) {
+        const z1 = -8.2 - t * 2.2;
+        const y1 = 0.9 + t * 0.9;
+        add([xa + 6, y1 / 2, z1 - 1.1], () => {
+          this.solid(box(xa, xb, 0, y1, z1 - 2.2, z1, [21, 20, 28]), id);
+          this.image(this.crowdTex(), 256, 64, [xa, y1, z1 + 0.01], [xb, y1, z1 + 0.01], [xa, y1 - 0.85, z1 + 0.01]);
+        });
       }
     }
-    // far wall: inner face with ad panels, then its top
-    for (let k = Math.floor(x0 / 24); k < Math.ceil(x1 / 24); k++) {
-      const panel = ((k % 3) + 3) % 3;
-      face(k * 24, k * 24 + 24, -WALL_Z, 0, 1.1, "#2f2e38");
-      face(k * 24 + 0.5, k * 24 + 23.5, -WALL_Z + 0.01, 0.2, 0.95, panel === 0 ? "#c2580f" : panel === 1 ? "#24222e" : "#7fae1f");
-    }
-    strip(x0, x1, -WALL_Z - 0.35, -WALL_Z, "#46454f", 1.1);
     // distance boards on the far wall
     for (const [m, label] of [[SIXTY_FT_M, "60 FT"], [100.584, "330 FT"], [EIGHTH_MILE_M, "1/8 MILE"], [304.8, "1000 FT"]] as [number, string][]) {
       if (m < x0 || m > x1) continue;
-      const a = proj(m - 1.3, 2.5, -WALL_Z - 0.2);
-      const b = proj(m + 1.3, 1.5, -WALL_Z - 0.2);
-      if (a.ok && b.ok) ctx.drawImage(this.board(label), a.x, a.y, b.x - a.x, b.y - a.y);
+      add([m, 2, -WALL_Z - 0.2], () => {
+        this.solid(box(m - 0.06, m + 0.06, 1.1, 1.6, -WALL_Z - 0.25, -WALL_Z - 0.15, [40, 40, 48]), id);
+        this.image(this.board(label), 256, 96, [m - 1.3, 2.6, -WALL_Z - 0.1], [m + 1.3, 2.6, -WALL_Z - 0.1], [m - 1.3, 1.6, -WALL_Z - 0.1]);
+      });
     }
-    // finish gantry with the timing board (far side)
-    if (QUARTER_MILE_M > x0 && QUARTER_MILE_M < x1 + 20) {
-      face(QUARTER_MILE_M + 5.3, QUARTER_MILE_M + 5.7, -WALL_Z - 1.2, 0, 3.8, "#24232c");
-      const a = proj(QUARTER_MILE_M + 2, 6.5, -WALL_Z - 1.2);
-      const b = proj(QUARTER_MILE_M + 9, 3.8, -WALL_Z - 1.2);
-      if (a.ok && b.ok) ctx.drawImage(this.timingBoard(f.me, f.opp), a.x, a.y, b.x - a.x, b.y - a.y);
-    }
-    // light towers on the far side (rising towards the top of the screen)
+    // light towers on the far side
     const lamp = this.glow("rgba(255,244,214,1)");
     for (let k = Math.floor((x0 - 10) / 34); k <= Math.ceil(x1 / 34); k++) {
       const x = k * 34 + 10;
-      const base = proj(x, 0, -7.6);
-      const top = proj(x, 15, -7.6);
-      if (!base.ok || !top.ok) continue;
-      ctx.strokeStyle = "#2a2932";
-      ctx.lineWidth = Math.max(1, 0.25 * base.s);
-      ctx.beginPath();
-      ctx.moveTo(base.x, base.y);
-      ctx.lineTo(top.x, top.y);
-      ctx.stroke();
-      const gsz = 7 * top.s;
-      ctx.globalCompositeOperation = "lighter";
-      ctx.drawImage(lamp, top.x - gsz / 2, top.y - gsz / 2, gsz, gsz);
-      ctx.globalCompositeOperation = "source-over";
+      add([x, 6, -7.4], () => {
+        this.solid(box(x - 0.15, x + 0.15, 0, 13, -7.55, -7.25, [40, 39, 48]), id);
+        this.solid(box(x - 0.9, x + 0.9, 13, 13.5, -7.8, -7.0, [235, 230, 210], true), id);
+        this.sprite(lamp, [x, 13.2, -7.4], 6, 0.9, true);
+      });
     }
+    // finish gantry with the timing board
+    if (QUARTER_MILE_M > x0 - 10 && QUARTER_MILE_M < x1 + 10) {
+      const gx = QUARTER_MILE_M + 6;
+      add([gx, 3, -WALL_Z - 1], () => {
+        this.solid(box(gx - 0.2, gx + 0.2, 0, 3.6, -WALL_Z - 1.2, -WALL_Z - 0.8, [40, 39, 48]), id);
+        this.solid(box(gx - 3.4, gx + 3.4, 3.6, 6.4, -WALL_Z - 1.2, -WALL_Z - 0.9, [10, 10, 14]), id);
+        this.image(this.timingBoard(f.me, f.opp), 512, 200, [gx - 3.3, 6.3, -WALL_Z - 0.89], [gx + 3.3, 6.3, -WALL_Z - 0.89], [gx - 3.3, 3.7, -WALL_Z - 0.89]);
+      });
+    }
+    // the tree, on the centre line just past the start, lights facing the cars
+    add([5, 2, 0], () => this.tree(f));
 
-    // the christmas tree, standing on the centre line behind the staged cars
-    this.tree(f, proj);
-
-    // cars, smoke and effects: far lane first
+    // cars and their smoke
     for (const lane of ["opp", "me"] as const) {
       const c = f[lane];
-      const dims = c.cfg.type === "bike" ? CAR.bike : CAR.car;
       const a = (c.speedKmh - this.prevSpeed[lane]) / 3.6 / Math.max(dt, 1e-3);
       this.prevSpeed[lane] = c.speedKmh;
       this.braking[lane] += ((a < -2 ? 1 : 0) - this.braking[lane]) * Math.min(1, dt * 6);
-      this.squat[lane] += (Math.max(-1, Math.min(1, a / 12)) - this.squat[lane]) * Math.min(1, dt * 8);
+      this.pitch[lane] += (Math.max(-1, Math.min(1, a / 12)) - this.pitch[lane]) * Math.min(1, dt * 7);
       const nose = c.distM - c.rollBackM;
+      const len = c.cfg.type === "bike" ? 2.1 : c.cfg.ui.silhouette === "formula" ? 4.8 : 4.6;
+      const rear = nose - len;
+      const z = LANE_Z[lane];
       if (c.distM > 0.05 && c.distM < 24) {
         const n = Math.random() < 1 - c.distM / 24 ? 2 : 1;
         for (let i = 0; i < n; i++) {
-          this.puffs.push({
-            x: nose - dims.len * 0.85,
-            z: LANE_Z[lane] + (Math.random() < 0.5 ? -1 : 1) * dims.w * 0.42,
-            y: 0.3,
-            r: 0.45,
-            life: 0,
-            max: 1.1 + Math.random(),
-            vx: -2 - Math.random() * 2.5,
-            vz: (Math.random() - 0.5) * 2,
-          });
+          this.puffs.push({ x: rear + 0.4, y: 0.3, z: z + (Math.random() < 0.5 ? -0.8 : 0.8), r: 0.5, life: 0, max: 1.2 + Math.random(), vx: -2 - Math.random() * 2.5, vz: (Math.random() - 0.5) * 2 });
         }
       }
-      this.drawPuffs(proj, LANE_Z[lane]);
-      this.car(c, lane, nose, proj, f.time);
+      add([rear + len / 2, 0.6, z], () => this.car(c, lane, rear, f.time));
     }
+    const smoke = this.glow("rgba(205,205,214,1)");
     for (const p of this.puffs) {
+      add([p.x, p.y, p.z], () => this.sprite(smoke, [p.x, p.y, p.z], p.r * 2, 0.34 * (1 - p.life / p.max)));
       p.life += dt;
       p.x += p.vx * dt;
       p.z += p.vz * dt;
-      p.y += 0.6 * dt;
-      p.r += 1.8 * dt;
+      p.y += 0.7 * dt;
+      p.r += 1.7 * dt;
     }
-    this.puffs = this.puffs.filter((p) => p.life < p.max).slice(-220);
+    this.puffs = this.puffs.filter((p) => p.life < p.max).slice(-200);
 
-    // speed streaks
+    items.sort((a, b) => b.depth - a.depth);
+    for (const it of items) it.draw();
+
+    // speed streaks, along the strip's direction on screen
     if (me.speedKmh > 80) {
-      const k = Math.min(1, (me.speedKmh - 80) / 220);
-      ctx.strokeStyle = `rgba(255,255,255,${0.05 + 0.1 * k})`;
+      const kk = Math.min(1, (me.speedKmh - 80) / 220);
+      const [ax, ay] = this.p([0, 0, 0]);
+      const [bx, by] = this.p([1, 0, 0]);
+      const dl = Math.hypot(bx - ax, by - ay) || 1;
+      const ux = (bx - ax) / dl;
+      const uy = (by - ay) / dl;
+      ctx.strokeStyle = `rgba(255,255,255,${0.05 + 0.1 * kk})`;
       ctx.lineWidth = 1;
       ctx.beginPath();
-      for (let i = 0; i < 22; i++) {
-        const y = (((i * 97) % 100) / 100) * h;
-        const x = ((((i * 53.7 - f.time * (900 + 1600 * k)) % (w + 200)) + w + 200) % (w + 200)) - 100;
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + 40 + 120 * k, y);
+      for (let i = 0; i < 24; i++) {
+        const t = ((i * 0.618 + f.time * (1.2 + 2 * kk)) % 1) * (w + h);
+        const off = ((i * 97) % 100) / 100;
+        const sx = -h * 0.5 + t * 0.9;
+        const sy = h * off + 0.0;
+        const len = 40 + 140 * kk;
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(sx - ux * len, sy - uy * len);
       }
       ctx.stroke();
     }
   }
 
-  private tree(f: SceneFrame, proj: (x: number, y: number, z: number) => P) {
-    const ctx = this.ctx;
-    const x = -7.5;
-    const base = proj(x, 0, 0);
-    const top = proj(x, 4.8, 0);
-    if (!base.ok || !top.ok) return;
-    ctx.strokeStyle = "#1d1c24";
-    ctx.lineWidth = Math.max(1, 0.16 * base.s);
-    ctx.beginPath();
-    ctx.moveTo(base.x, base.y);
-    ctx.lineTo(top.x, top.y);
-    ctx.stroke();
-    // housing facing the camera, bulbs for both lanes
-    const tl = proj(x, 4.85, -0.5);
-    const br = proj(x, 2.35, 0.5);
-    if (tl.ok && br.ok) {
-      ctx.fillStyle = "#0b0b0f";
-      ctx.fillRect(Math.min(tl.x, br.x) - 0.25 * top.s, tl.y, Math.abs(br.x - tl.x) + 0.5 * top.s, br.y - tl.y);
-    }
+  private tree(f: SceneFrame) {
+    const x = 5;
+    const id = (v: V) => v;
+    this.solid(box(x - 0.08, x + 0.08, 0, 2.4, -0.08, 0.08, [32, 31, 38]), id);
+    this.solid(box(x - 0.2, x + 0.2, 2.4, 4.8, -0.5, 0.5, [12, 12, 16]), id);
     const lanes: [SceneCar["lights"], number][] = [
-      [f.opp.lights, -0.22],
-      [f.me.lights, 0.22],
+      [f.opp.lights, -0.24],
+      [f.me.lights, 0.24],
     ];
+    const ctx = this.ctx;
     for (const [l, dz] of lanes) {
       const rows: [boolean, string][] = [
         [l.stage, "rgba(253,230,138,1)"],
@@ -476,107 +516,78 @@ export class DragScene25D {
         [l.red, "rgba(239,68,68,1)"],
       ];
       rows.forEach(([on, color], i) => {
-        const p = proj(x + 0.25, 4.6 - i * 0.3, dz);
-        if (!p.ok) return;
-        const r = Math.max(1.2, (i < 2 ? 0.06 : 0.11) * p.s);
-        ctx.fillStyle = on ? color : "#1b1b21";
+        const at: V = [x - 0.21, 4.6 - i * 0.3, dz];
+        const [px, py] = this.p(at);
+        const r = Math.max(1.2, (i < 2 ? 0.06 : 0.11) * this.k);
+        ctx.fillStyle = on ? color : "#1c1c22";
         ctx.beginPath();
-        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+        ctx.arc(px, py, r, 0, Math.PI * 2);
         ctx.fill();
-        if (on) {
-          const gs = r * 7;
-          ctx.globalCompositeOperation = "lighter";
-          ctx.drawImage(this.glow(color), p.x - gs / 2, p.y - gs / 2, gs, gs);
-          ctx.globalCompositeOperation = "source-over";
-        }
+        if (on) this.sprite(this.glow(color), at, 1.1, 1, true);
       });
     }
   }
 
-  private drawPuffs(proj: (x: number, y: number, z: number) => P, laneZ: number) {
-    const ctx = this.ctx;
-    const smoke = this.glow("rgba(205,205,214,1)");
-    for (const p of this.puffs) {
-      if (Math.abs(p.z - laneZ) > 2.5) continue;
-      const q = proj(p.x, p.y, p.z);
-      if (!q.ok) continue;
-      const r = p.r * q.s;
-      ctx.globalAlpha = 0.34 * (1 - p.life / p.max);
-      ctx.drawImage(smoke, q.x - r, q.y - r, r * 2, r * 2);
-    }
-    ctx.globalAlpha = 1;
-  }
-
-  private car(c: SceneCar, lane: "me" | "opp", nose: number, proj: (x: number, y: number, z: number) => P, time: number) {
-    const ctx = this.ctx;
-    const dims = c.cfg.type === "bike" ? CAR.bike : CAR.car;
+  private car(c: SceneCar, lane: "me" | "opp", rear: number, time: number) {
     const z = LANE_Z[lane];
-    const rear = nose - dims.len;
-    // headlight beams on the track ahead
-    const lampP = proj(nose, 0, z);
-    const beamP = proj(nose + 9, 0, z);
-    const a = proj(nose, 0, z - dims.w * 0.4);
-    const b = proj(nose + 9, 0, z - dims.w * 1.2);
-    const cc = proj(nose + 9, 0, z + dims.w * 1.2);
-    const d = proj(nose, 0, z + dims.w * 0.4);
-    if (lampP.ok && beamP.ok && a.ok && b.ok && cc.ok && d.ok) {
-      const g = ctx.createLinearGradient(lampP.x, lampP.y, beamP.x, beamP.y);
-      g.addColorStop(0, "rgba(255,250,235,0.18)");
-      g.addColorStop(1, "rgba(255,250,235,0)");
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.lineTo(cc.x, cc.y);
-      ctx.lineTo(d.x, d.y);
-      ctx.fill();
-    }
+    const spin = -(c.distM - c.rollBackM) / 0.33;
+    const model = carModel(c.cfg, spin);
+    const pitch = this.pitch[lane] * 0.035; // rear squats under power, nose dives on the brakes
+    const axle = model.len * 0.18;
+    const toWorld =
+      (pitchable: boolean) =>
+      (v: V): V => {
+        let [x, y] = v;
+        if (pitchable && pitch) {
+          const dx = x - axle;
+          const dy = y - 0.33;
+          x = axle + dx * Math.cos(pitch) - dy * Math.sin(pitch);
+          y = 0.33 + dx * Math.sin(pitch) + dy * Math.cos(pitch);
+        }
+        return [rear + x, y, z + v[2]];
+      };
     // shadow and underglow on the ground
-    const s0 = proj(rear - 0.3, 0, z - dims.w * 0.75);
-    const s1 = proj(nose + 0.3, 0, z + dims.w * 0.75);
-    if (s0.ok && s1.ok) {
-      const top = Math.min(s0.y, s1.y);
-      const hgt = Math.abs(s1.y - s0.y);
-      ctx.globalAlpha = 0.75;
-      ctx.drawImage(this.glow("rgba(0,0,0,1)"), s0.x, top, s1.x - s0.x, hgt * 1.4);
-      ctx.globalAlpha = 0.45;
-      ctx.globalCompositeOperation = "lighter";
-      ctx.drawImage(this.glow(rgba(c.cfg.ui.accent)), s0.x - 0.4 * s0.s, top - 0.3 * s0.s, s1.x - s0.x + 0.8 * s0.s, hgt * 1.6);
-      ctx.globalCompositeOperation = "source-over";
-      ctx.globalAlpha = 1;
+    this.poly([[rear - 0.15, 0, z - model.width / 2 - 0.15], [rear + model.len + 0.15, 0, z - model.width / 2 - 0.15], [rear + model.len + 0.35, 0, z + model.width / 2 + 0.35], [rear + 0.05, 0, z + model.width / 2 + 0.35]], "rgba(0,0,0,0.55)");
+    this.sprite(this.glow(`rgba(${hexRgb(c.cfg.ui.accent).join(",")},1)`), [rear + model.len / 2, 0, z], model.len * 1.1, 0.28, true);
+    // headlight beam on the track ahead
+    this.poly([[rear + model.len, 0.01, z - 0.6], [rear + model.len + 10, 0.01, z - 1.6], [rear + model.len + 10, 0.01, z + 1.6], [rear + model.len, 0.01, z + 0.6]], "rgba(255,250,235,0.05)");
+    // parts, back to front within the car
+    const ordered = model.parts
+      .map((s) => {
+        const isWheel = s.faces.length > 6;
+        return { s, xf: toWorld(!isWheel), d: this.depth(toWorld(!isWheel)(s.center)) };
+      })
+      .sort((a, b) => b.d - a.d);
+    for (const o of ordered) this.solid(o.s, o.xf);
+    // rims with turning spokes on the near-side wheels
+    const ctx = this.ctx;
+    for (const rim of model.rims) {
+      const centre: V = [rear + rim.x, rim.y, z + rim.z];
+      const [cxp, cyp] = this.p(centre);
+      ctx.strokeStyle = c.cfg.ui.accent;
+      ctx.lineWidth = Math.max(1, 0.05 * this.k);
+      ctx.beginPath();
+      for (let i = 0; i < 5; i++) {
+        const a = spin + (i * Math.PI * 2) / 5;
+        const [ex, ey] = this.p([centre[0] + Math.cos(a) * rim.r, centre[1] + Math.sin(a) * rim.r, centre[2]]);
+        ctx.moveTo(cxp, cyp);
+        ctx.lineTo(ex, ey);
+      }
+      ctx.stroke();
     }
-    // the car on its roof plane, mapped by three corners (rear squats a touch under power)
-    const sprite = this.top(c.cfg);
-    const hy = dims.h * (1 - this.squat[lane] * 0.03);
-    const rf = proj(rear, hy, z - dims.w / 2);
-    const nf = proj(nose, hy, z - dims.w / 2);
-    const rn = proj(rear, hy, z + dims.w / 2);
-    if (rf.ok && nf.ok && rn.ok) {
-      ctx.save();
-      ctx.transform((nf.x - rf.x) / sprite.width, (nf.y - rf.y) / sprite.width, (rn.x - rf.x) / sprite.height, (rn.y - rf.y) / sprite.height, rf.x, rf.y);
-      ctx.drawImage(sprite, 0, 0);
-      ctx.restore();
-    }
-    // taillights (brighter on the brakes) and exhaust flames at the back
+    // taillight glow (brighter on the brakes) and exhaust flames
     const brake = this.braking[lane];
     const tail = this.glow("rgba(255,40,30,1)");
-    ctx.globalCompositeOperation = "lighter";
-    for (const side of c.cfg.type === "bike" ? [0] : [-0.3, 0.3]) {
-      const p = proj(rear, hy * 0.8, z + side * dims.w);
-      if (!p.ok) continue;
-      const gs = (0.7 + 1.1 * brake) * p.s;
-      ctx.globalAlpha = 0.55 + 0.45 * brake;
-      ctx.drawImage(tail, p.x - gs / 2, p.y - gs / 2, gs, gs);
-      if (c.flame > 0.02) {
-        const q = proj(rear - 0.5 - 0.4 * c.flame, 0.4, z + side * dims.w * 0.6);
-        if (q.ok) {
-          const fs = (0.8 + 1.2 * c.flame) * (0.85 + 0.15 * Math.sin(time * 80)) * q.s;
-          ctx.globalAlpha = Math.min(1, c.flame * 1.2);
-          ctx.drawImage(this.glow("rgba(120,170,255,1)"), q.x - fs / 2, q.y - fs / 2, fs, fs);
-        }
+    const sides = c.cfg.type === "bike" ? [0] : [-0.62, 0.62];
+    for (const s of sides) this.sprite(tail, [rear - 0.05, 0.65, z + s], 0.7 + 1.1 * brake, 0.55 + 0.45 * brake, true);
+    if (c.flame > 0.02) {
+      const fl = this.glow("rgba(120,170,255,1)");
+      for (const s of c.cfg.type === "bike" ? [0] : [-0.45, 0.45]) {
+        this.sprite(fl, [rear - 0.35 - 0.3 * c.flame, 0.35, z + s], (0.8 + 1.2 * c.flame) * (0.85 + 0.15 * Math.sin(time * 80)), Math.min(1, c.flame * 1.2), true);
       }
     }
-    ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = "source-over";
+    // headlamp glow
+    const head = this.glow("rgba(255,250,235,1)");
+    for (const s of c.cfg.type === "bike" ? [0] : [-0.6, 0.6]) this.sprite(head, [rear + model.len + 0.05, 0.65, z + s], 0.9, 0.7, true);
   }
 }
