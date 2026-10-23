@@ -34,5 +34,6 @@ export default async function DrivePage({ params }: PageProps<"/drive/[vehicleId
     const v = vehicles[(k + vehicles.length) % vehicles.length];
     return { id: v.id, name: v.name };
   };
-  return <SimulatorLoader vehicle={vehicle} prev={at(i - 1)} next={at(i + 1)} maxKmh={gaugeMaxKmh(vehicle)} />;
+  const garage = vehicles.map((v) => ({ id: v.id, name: v.name, make: v.ui.make, year: v.ui.year, layout: v.ui.layout, accent: v.ui.accent }));
+  return <SimulatorLoader vehicle={vehicle} prev={at(i - 1)} next={at(i + 1)} maxKmh={gaugeMaxKmh(vehicle)} garage={garage} />;
 }

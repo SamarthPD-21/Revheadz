@@ -199,14 +199,14 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.07);
   transition: transform 250ms cubic-bezier(.2,.8,.2,1), border-color 250ms, box-shadow 250ms;
 }
-.vehicle-card:hover, .vehicle-card:focus-visible {
+.vehicle-card:hover, .vehicle-card:has(.card-link:focus-visible) {
   transform: translateY(-3px);
   border-color: color-mix(in srgb, var(--accent) 55%, transparent);
   box-shadow: 0 18px 50px -20px color-mix(in srgb, var(--accent) 70%, transparent);
 }
 .vehicle-card:active { transform: translateY(-1px) scale(0.99); }
 .vehicle-silhouette { transition: transform 450ms cubic-bezier(.2,.8,.2,1); }
-.vehicle-card:hover .vehicle-silhouette, .vehicle-card:focus-visible .vehicle-silhouette { transform: translateX(6px) scale(1.04); }
+.vehicle-card:hover .vehicle-silhouette, .vehicle-card:has(.card-link:focus-visible) .vehicle-silhouette { transform: translateX(6px) scale(1.04); }
 
 /* Redline meter: rests at a third of the vehicle's redline, sweeps up to it on hover. */
 .rev-meter {
@@ -220,10 +220,10 @@ body {
   border-radius: inherit;
   transition: transform 700ms cubic-bezier(.3,1.4,.4,1);
 }
-.vehicle-card:hover .rev-meter > span, .vehicle-card:focus-visible .rev-meter > span { transform: scaleX(var(--rev)); }
+.vehicle-card:hover .rev-meter > span, .vehicle-card:has(.card-link:focus-visible) .rev-meter > span { transform: scaleX(var(--rev)); }
 
 .card-go { opacity: 0; transform: translateX(-6px); transition: opacity 200ms, transform 250ms cubic-bezier(.2,.8,.2,1); }
-.vehicle-card:hover .card-go, .vehicle-card:focus-visible .card-go { opacity: 1; transform: none; }
+.vehicle-card:hover .card-go, .vehicle-card:has(.card-link:focus-visible) .card-go { opacity: 1; transform: none; }
 
 @keyframes card-enter { from { opacity: 0; transform: translateY(8px); } }
 .card-enter { animation: card-enter 380ms cubic-bezier(.2,.8,.2,1) both; }
@@ -280,3 +280,154 @@ body {
 .brake-pad[data-on="1"] { background-image: none; }
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ---- Garage toolbar, search, card actions -------------------------------------- */
+.garage-toolbar {
+  background: linear-gradient(to bottom, rgba(11, 11, 15, 0.92) 70%, rgba(11, 11, 15, 0));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.search {
+  display: flex; flex: 1; min-width: 0; align-items: center; gap: 0.6rem;
+  height: 2.5rem; padding: 0 0.9rem; border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.9rem; color: #fafafa;
+  transition: border-color 150ms, background-color 150ms, box-shadow 150ms;
+}
+.search:focus-within {
+  border-color: rgba(249, 115, 22, 0.6); background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
+}
+.search input::-webkit-search-cancel-button { display: none; }
+.select { position: relative; display: inline-flex; }
+.select select {
+  width: 100%; appearance: none; height: 2.5rem; padding: 0 2rem 0 0.9rem; border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.875rem; color: #d4d4d8; cursor: pointer;
+}
+.select select:hover { border-color: rgba(255, 255, 255, 0.25); color: #fff; }
+.select select option { background: #16161c; }
+.select::after {
+  content: ""; position: absolute; right: 0.85rem; top: 50%; width: 6px; height: 6px; pointer-events: none;
+  border-right: 1.5px solid #a1a1aa; border-bottom: 1.5px solid #a1a1aa; transform: translateY(-70%) rotate(45deg);
+}
+
+.recent-pill {
+  display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap;
+  border-radius: 0.9rem; padding: 0.55rem 0.9rem; font-size: 0.85rem; font-weight: 500; color: #e4e4e7;
+  background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: border-color 150ms, transform 120ms, background-color 150ms;
+}
+.recent-pill:hover { border-color: color-mix(in srgb, var(--accent) 60%, transparent); background: rgba(255, 255, 255, 0.07); }
+.recent-pill:active { transform: scale(0.97); }
+
+/* The whole card is the link (stretched ::after); buttons sit above it. */
+.card-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: 1; }
+.vehicle-card { cursor: pointer; }
+.card-btn {
+  position: relative; z-index: 2;
+  display: inline-grid; grid-auto-flow: column; align-items: center; gap: 0.35rem;
+  height: 1.75rem; min-width: 1.75rem; padding: 0 0.4rem; justify-content: center;
+  border-radius: 9999px; color: #a1a1aa;
+  transition: color 150ms, background-color 150ms, transform 120ms;
+}
+.card-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+.card-btn:active { transform: scale(0.88); }
+.card-btn[aria-pressed="true"] { color: var(--accent); }
+.card-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.preview-btn {
+  position: absolute; right: 0; bottom: 0.25rem;
+  padding: 0 0.7rem; color: #e4e4e7;
+  background: rgba(11, 11, 15, 0.65); border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  opacity: 0; transform: translateY(4px);
+  transition: opacity 200ms, transform 200ms, border-color 150ms, color 150ms;
+}
+.vehicle-card:hover .preview-btn, .vehicle-card:focus-within .preview-btn, .preview-btn[aria-pressed="true"] { opacity: 1; transform: none; }
+@media (hover: none) { .preview-btn { opacity: 1; transform: none; } }
+.preview-btn:hover { border-color: color-mix(in srgb, var(--accent) 70%, transparent); background: rgba(11, 11, 15, 0.8); }
+.preview-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+
+/* while a preview plays: the silhouette shakes a little and the meter sweeps to the redline */
+@keyframes idle-shake { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(0.6px, -0.6px); } 75% { transform: translate(-0.6px, 0.4px); } }
+.vehicle-card[data-playing="1"] .vehicle-silhouette { animation: idle-shake 90ms linear infinite; }
+@keyframes rev-sweep { 0%, 20% { transform: scaleX(calc(var(--rev) * 0.12)); } 50%, 62% { transform: scaleX(var(--rev)); } 100% { transform: scaleX(calc(var(--rev) * 0.12)); } }
+.vehicle-card[data-playing="1"] .rev-meter > span { animation: rev-sweep 2.1s cubic-bezier(.4,0,.3,1) both; }
+
+.eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
+.eq > span { width: 2.5px; height: 100%; border-radius: 1px; background: currentColor; transform-origin: bottom; animation: eq 600ms ease-in-out infinite alternate; }
+.eq > span:nth-child(2) { animation-delay: -200ms; }
+.eq > span:nth-child(3) { animation-delay: -400ms; }
+@keyframes eq { from { transform: scaleY(0.25); } to { transform: scaleY(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .vehicle-card[data-playing="1"] .vehicle-silhouette, .vehicle-card[data-playing="1"] .rev-meter > span, .eq > span { animation: none; }
+  .preview-btn { transition: none; }
+}
+
+/* ---- Drive screen vehicle picker ---------------------------------------------- */
+.picker-panel {
+  position: absolute; left: 0; top: calc(100% + 6px); z-index: 60;
+  width: min(22rem, calc(100vw - 2rem));
+  border-radius: 1rem; overflow: hidden;
+  background: rgba(20, 20, 26, 0.96); border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  animation: picker-in 160ms cubic-bezier(.2,.8,.2,1);
+}
+@keyframes picker-in { from { opacity: 0; transform: translateY(-4px) scale(0.98); } }
+.picker-item {
+  display: flex; width: 100%; align-items: center; gap: 0.65rem;
+  border-radius: 0.6rem; padding: 0.55rem 0.7rem; text-align: left; font-size: 0.875rem; color: #d4d4d8;
+}
+.picker-item-on { background: rgba(255, 255, 255, 0.07); color: #fff; }
+@media (prefers-reduced-motion: reduce) { .picker-panel { animation: none; } }
+.search input:focus, .search input:focus-visible { outline: none; box-shadow: none; }
+@media (max-width: 639px) { .garage-toolbar .search { flex-basis: 100%; } }
+
+/* ---- Home: mode cards --------------------------------------------------------- */
+.mode-card {
+  position: relative; display: flex; flex-direction: column; overflow: hidden;
+  border-radius: 1.5rem; padding: 1.5rem;
+  background:
+    radial-gradient(ellipse 80% 70% at 100% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: transform 250ms cubic-bezier(.2,.8,.2,1), border-color 250ms, box-shadow 250ms;
+}
+@media (min-width: 640px) { .mode-card { padding: 2rem; } }
+a.mode-card:hover, a.mode-card:focus-visible {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  box-shadow: 0 24px 60px -24px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+a.mode-card:active { transform: translateY(-1px) scale(0.995); }
+.mode-go {
+  display: grid; place-items: center; width: 2.75rem; height: 2.75rem; flex-shrink: 0; border-radius: 9999px;
+  background: var(--accent); color: #000; transition: transform 250ms cubic-bezier(.2,.8,.2,1);
+}
+a.mode-card:hover .mode-go { transform: translateX(4px); }
+.mode-card-soon { cursor: default; }
+.mode-card-soon h2, .mode-card-soon p { opacity: 0.85; }
+
+/* silhouettes drifting across the Playground card; the track holds the list twice so it loops */
+.mode-parade { mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
+.mode-parade-track { display: flex; gap: 1.5rem; width: max-content; animation: parade 36s linear infinite; }
+a.mode-card:hover .mode-parade-track { animation-duration: 14s; }
+@keyframes parade { to { transform: translateX(-50%); } }
+
+/* drag-strip christmas tree: ambers count down, then green */
+.tree-light {
+  width: 2.25rem; height: 2.25rem; border-radius: 9999px;
+  background: color-mix(in srgb, var(--c) 18%, #111);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  animation: tree 3.6s infinite;
+}
+@keyframes tree {
+  0%, 8% { background: color-mix(in srgb, var(--c) 18%, #111); box-shadow: none; }
+  10%, 70% { background: var(--c); box-shadow: 0 0 24px 2px color-mix(in srgb, var(--c) 70%, transparent); }
+  72%, 100% { background: color-mix(in srgb, var(--c) 18%, #111); box-shadow: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mode-parade-track, .tree-light { animation: none; }
+}

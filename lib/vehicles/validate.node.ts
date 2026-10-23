@@ -16,5 +16,9 @@ export function assertVehicleFilesExist(): void {
       }
     }
   }
-  if (missing.length) throw new Error(`Missing sound files:\n - ${missing.join("\n - ")}`);
+  if (!missing.length) return;
+  const message = `Missing sound files:\n - ${missing.join("\n - ")}`;
+  // in dev, a sound set being rebuilt shouldn't take the whole site down: warn (that vehicle falls back to synthesis)
+  if (process.env.NODE_ENV === "development") console.warn(message);
+  else throw new Error(message);
 }

@@ -22,6 +22,8 @@ import { pressHandlers } from "./press";
 import { KeyLegend } from "./KeyLegend";
 import { LogoMark } from "./Logo";
 import { flash } from "./useFrame";
+import { VehiclePicker, type PickerVehicle } from "./VehiclePicker";
+import { markDriven } from "../lib/garageStore";
 
 export type SoundSet = "recorded" | "generated";
 
@@ -131,10 +133,11 @@ interface Props {
   prev: Neighbour;
   next: Neighbour;
   maxKmh: number;
+  garage: PickerVehicle[];
 }
 
 /** Owns the simulation loop, input and audio for one vehicle. Client-only. */
-export default function Simulator({ vehicle, prev, next, maxKmh }: Props) {
+export default function Simulator({ vehicle, prev, next, maxKmh, garage }: Props) {
   const [volume, setVolume] = useState(0.8);
   const [loadState, setLoadState] = useState<LoadState>("idle");
   const [everStarted, setEverStarted] = useState(false);
@@ -183,6 +186,8 @@ export default function Simulator({ vehicle, prev, next, maxKmh }: Props) {
       document.removeEventListener("fullscreenchange", onFs);
     };
   }, [prev.id, next.id]);
+
+  useEffect(() => markDriven(vehicle.id), [vehicle.id]);
 
   useEffect(() => {
     const { sim, audio, input } = rig;
@@ -246,18 +251,17 @@ export default function Simulator({ vehicle, prev, next, maxKmh }: Props) {
       <div className="limiter-vignette pointer-events-none fixed inset-0 z-50" />
       <header className="drive-header flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1 sm:gap-2">
-          <Link href="/" className="group mr-1 flex shrink-0 items-center gap-2 rounded-xl p-0.5 transition active:scale-95" aria-label="Back to garage" title="Garage">
+          <Link href="/playground" className="group mr-1 flex shrink-0 items-center gap-2 rounded-xl p-0.5 transition active:scale-95" aria-label="Back to the playground" title="Playground">
             <LogoMark className="h-9 w-9 transition group-hover:brightness-125" />
           </Link>
           <Link href={`/drive/${prev.id}`} className={navLink} aria-label={`Previous vehicle: ${prev.name}`} title={`${prev.name} ( [ )`}>
             <Chevron dir="left" />
           </Link>
-          <div className="min-w-0 text-left sm:text-center">
-            <p className="truncate text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: accent }}>
-              {vehicle.ui.category} · {vehicle.ui.layout}
-            </p>
-            <h1 className="truncate text-sm font-bold text-zinc-100 sm:text-base">{vehicle.name}</h1>
-          </div>
+          <VehiclePicker
+            current={{ id: vehicle.id, name: vehicle.name, make: vehicle.ui.make, year: vehicle.ui.year, layout: vehicle.ui.layout, accent }}
+            vehicles={garage}
+            eyebrow={[vehicle.ui.make ?? vehicle.ui.category, vehicle.ui.year, vehicle.ui.layout].filter(Boolean).join(" · ")}
+          />
           <Link href={`/drive/${next.id}`} className={navLink} aria-label={`Next vehicle: ${next.name}`} title={`${next.name} ( ] )`}>
             <Chevron dir="right" />
           </Link>

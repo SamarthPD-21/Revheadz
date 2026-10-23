@@ -13,6 +13,7 @@ const ROWS: { keys: string; codes: string[]; label: string }[] = [
   { keys: "I", codes: ["KeyI"], label: "engine start / stop" },
   { keys: "M", codes: [], label: "mute" },
   { keys: "[ ]", codes: [], label: "previous / next vehicle" },
+  { keys: "V", codes: [], label: "switch vehicle" },
 ];
 
 /** Keyboard legend whose keys light up while held. Shown only with a fine pointer (desktop). */
