@@ -8,7 +8,8 @@ import type { SimListener, SimState } from "../../lib/sim/types";
 import type { VehicleConfig } from "../../lib/vehicles/types";
 import { Silhouette } from "../Silhouette";
 import { Tachometer } from "../Tachometer";
-import { DragScene, type SceneCar, type SceneFrame } from "./scene";
+import type { SceneCar, SceneFrame } from "./scene";
+import { DragScene25D } from "./scene25d";
 import type { Sfx } from "./sfx";
 
 export interface Lane {
@@ -255,10 +256,12 @@ export function RaceView({ me, opp, startAt, opponent, audio, oppAudio, sfx, onI
   // ---- the frame loop: advance both runs, draw the strip, drive the sound ----
   useEffect(() => {
     const canvas = canvasRef.current!;
-    const ctx = canvas.getContext("2d")!;
-    const s2 = new DragScene(ctx);
+    const ctx = canvas.getContext("2d", { alpha: false })!;
+    const s2 = new DragScene25D(ctx);
+    // fill rate is the limit on low-end phones: cap the backing store
+    const maxDpr = window.matchMedia("(pointer: coarse)").matches ? 1.25 : 1.5;
     const draw = (f: SceneFrame, w: number, h: number) => {
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const dpr = Math.min(maxDpr, window.devicePixelRatio || 1);
       if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
         canvas.width = Math.round(w * dpr);
         canvas.height = Math.round(h * dpr);
