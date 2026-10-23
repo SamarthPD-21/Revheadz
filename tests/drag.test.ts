@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { driveWithCpu, CPU_LEVELS } from "../lib/drag/cpu";
+import { CLASSES } from "../lib/drag/classes";
 import { AUTO_SHIFT_MS, bracketOffsets, decide, dialIn, DragRun, replay, TREE_MS, type DriveLog } from "../lib/drag/race";
 import { loadConfig } from "./helpers";
 
@@ -77,25 +78,20 @@ describe("drag racing", () => {
     expect(r.elapsedMs).toBeGreaterThan(dialIn(loadConfig("muscle_v8")) + 500);
   });
 
-  it("bracket racing: two perfect drivers tie whatever they drive", () => {
-    const pairs = [
-      ["bugatti_chiron", "honda_s2000"],
-      ["ferrari_f2004", "vtwin_cruiser"],
-      ["hellcat", "supra_mk4"],
-    ] as const;
-    for (const [a, b] of pairs) {
-      const [oa, ob] = bracketOffsets(dialIn(loadConfig(a)), dialIn(loadConfig(b)));
-      const ra = drive(a, 0, 0, TREE_MS + oa).result;
-      const rb = drive(b, 0, 0, TREE_MS + ob).result;
-      expect(Math.abs(oa + ra.elapsedMs - (ob + rb.elapsedMs))).toBeLessThan(2);
+  it("heads-up in a class: two perfect drivers tie whatever they drive", () => {
+    for (const c of CLASSES) {
+      const times = c.cars.map((id) => drive(id, 0, 0).result.elapsedMs);
+      expect(Math.max(...times) - Math.min(...times), c.id).toBeLessThan(8);
     }
   });
 
-  it("bracket racing: the quicker reactions win, even in the slower car", () => {
-    const [oa, ob] = bracketOffsets(dialIn(loadConfig("bugatti_chiron")), dialIn(loadConfig("honda_s2000")));
-    const chiron = drive("bugatti_chiron", 220, 180, TREE_MS + oa).result;
-    const s2000 = drive("honda_s2000", 160, 140, TREE_MS + ob).result;
-    expect(decide(chiron, s2000, [oa, ob])).toBe("b");
+  it("heads-up in a class: the quicker reactions win, whichever car", () => {
+    const chiron = drive("bugatti_chiron", 220, 180).result;
+    const h2 = drive("ninja_h2", 160, 140).result;
+    expect(decide(chiron, h2, [0, 0])).toBe("b");
+    const s2000 = drive("honda_s2000", 150, 120).result;
+    const supra = drive("supra_mk4", 190, 160).result;
+    expect(decide(s2000, supra, [0, 0])).toBe("a");
   });
 
   it("the CPU drives a full run with human reaction times", () => {
@@ -148,5 +144,31 @@ describe("drag racing", () => {
     const clean = pro("mustang_gt", [[-1400, "gas+"], [150, "launch"]]).elapsedMs;
     const dragged = pro("mustang_gt", [[-1400, "gas+"], [150, "launch"], [2000, "brake+"], [2300, "brake-"]]).elapsedMs;
     expect(dragged).toBeGreaterThan(clean + 100);
+  });
+
+  it("after the line the car lifts, brakes and works down the gears to a stop", () => {
+    const run = new DragRun(loadConfig("supra_mk4"), TREE_MS);
+    run.press(0);
+    run.on((e) => {
+      if (e.type === "cue") run.press(run.t);
+    });
+    run.advanceTo(60000);
+    const finishGear = run.sim.state.gear;
+    let downshifts = 0;
+    run.sim.subscribe((e) => {
+      if (e.type === "shift" && e.direction === "down") downshifts++;
+    });
+    const end = run.result!.elapsedMs;
+    const speeds: number[] = [];
+    for (let t = 0; t <= 14000; t += 500) {
+      run.coastTo(end + t);
+      speeds.push(run.sim.state.speedKmh);
+    }
+    expect(downshifts).toBeGreaterThanOrEqual(finishGear - 1);
+    expect(run.sim.state.speedKmh).toBeLessThan(5);
+    expect(run.sim.state.gear).toBeLessThanOrEqual(1);
+    expect(run.distM).toBeGreaterThan(402.336);
+    for (let i = 1; i < speeds.length; i++) expect(speeds[i]).toBeLessThanOrEqual(speeds[i - 1] + 0.01); // never speeds up
+    expect(run.result!.elapsedMs).toBe(end); // the cool-down doesn't touch the result
   });
 });

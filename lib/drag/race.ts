@@ -1,4 +1,5 @@
 import { Simulation } from "../sim/Simulation";
+import PARITY from "./parity.json";
 import type { VehicleConfig } from "../vehicles/types";
 
 /**
@@ -89,8 +90,8 @@ export function cueRpm(cfg: VehicleConfig): number {
 }
 
 /** Green to finish with a 0 ms launch and every shift the instant the revs reach `cue`. */
-function perfectRun(cfg: VehicleConfig, cue: number): number {
-  const run = new DragRun(cfg, TREE_MS, { cue, assist: true });
+export function perfectRun(cfg: VehicleConfig, cue: number, torqueScale = 1): number {
+  const run = new DragRun(cfg, TREE_MS, { cue, assist: true, torqueScale });
   run.press(0);
   run.on((ev) => {
     if (ev.type === "cue") run.press(run.t);
@@ -149,15 +150,18 @@ export class DragRun {
   constructor(
     readonly cfg: VehicleConfig,
     readonly treeMs: number,
-    opts: { cue?: number; assist?: boolean } = {},
+    opts: { cue?: number; assist?: boolean; torqueScale?: number } = {},
   ) {
-    this.cue = opts.cue ?? cueRpm(cfg);
+    // class parity: each car's shift light and engine trim come from lib/drag/parity.json
+    const p = PARITY.cars[cfg.id as keyof typeof PARITY.cars] as { cue: number; trim: number } | undefined;
+    this.cue = opts.cue ?? p?.cue ?? cueRpm(cfg);
+    const trim = opts.torqueScale ?? (opts.cue === undefined ? (p?.trim ?? 1) : 1);
     this.assist = opts.assist ?? true;
     // Drag ECU: the rev limiter sits at the shift light, so every millisecond late on a shift is
     // spent bouncing off it. (Without this, cars whose best shift is below the limiter could
     // shift late for free.)
     const limiterRpm = Math.min(cfg.engine.limiterRpm, Math.max(this.cue, cfg.engine.idleRpm * 2));
-    this.sim = new Simulation({ ...cfg, engine: { ...cfg.engine, limiterRpm } }, seeded());
+    this.sim = new Simulation({ ...cfg, engine: { ...cfg.engine, limiterRpm, peakTorqueNm: cfg.engine.peakTorqueNm * trim } }, seeded());
     // canonical start: engine running and settled at idle in neutral (silent; not subscribed yet)
     this.sim.toggleIgnition();
     for (let i = 0; i < 1500; i++) this.sim.step(DT);
@@ -207,6 +211,35 @@ export class DragRun {
   /** Steps the run forward to `ms` since green. */
   advanceTo(ms: number) {
     while (!this.finished && this.t + 1e-9 < ms) this.tick();
+  }
+
+  private coastT = 0;
+  private finishedAtT = 0;
+
+  /**
+   * After the line (cosmetic: the result is already fixed): lift, brake progressively and
+   * work down the gears as the revs fall, each downshift rev-matched by the gearbox's blip,
+   * until the car rolls to a stop in neutral. Steps the same physics, so it sounds right.
+   */
+  coastTo(ms: number) {
+    if (!this.finished || !this.result || !Number.isFinite(this.result.elapsedMs)) return;
+    const sim = this.sim;
+    const s = sim.state;
+    const e = this.cfg.engine;
+    if (this.coastT === 0) this.coastT = this.finishedAtT = this.t;
+    const step = 4 * DT; // coarser steps are fine for the cool-down
+    while (this.coastT + 1e-9 < ms) {
+      const since = (this.coastT - this.finishedAtT) / 1000;
+      sim.input.throttle = 0;
+      // ease onto the brakes after a second of coasting through the traps
+      sim.input.brake = s.speedKmh < 3 ? 0.6 : Math.min(0.42, Math.max(0, since - 0.9) * 0.3);
+      const downAt = Math.max(e.idleRpm * 1.9, e.redlineRpm * 0.42);
+      if (!s.shifting && s.gear > 1 && s.rpm < downAt) sim.shiftDown();
+      else if (!s.shifting && s.gear === 1 && s.speedKmh < 12) sim.neutral();
+      sim.step(step);
+      this.distM += (s.speedKmh / 3.6) * step;
+      this.coastT += step * 1000;
+    }
   }
 
   private emit(type: "cue" | "launch" | "shift" | "finish") {
@@ -351,11 +384,12 @@ export function replay(cfg: VehicleConfig, log: DriveLog, treeMs = TREE_MS): Run
 
 const dialCache = new Map<string, number>();
 
-/** The car's perfect run, green to finish (ms): 0 ms reaction and every shift exactly on the cue. */
+/** The car's perfect run in drag trim, green to finish (ms): 0 ms reaction, every shift on the cue. */
 export function dialIn(cfg: VehicleConfig): number {
   const hit = dialCache.get(cfg.id);
   if (hit !== undefined) return hit;
-  const ms = perfectRun(cfg, cueRpm(cfg));
+  const p = PARITY.cars[cfg.id as keyof typeof PARITY.cars] as { cue: number; trim: number } | undefined;
+  const ms = p ? perfectRun(cfg, p.cue, p.trim) : perfectRun(cfg, cueRpm(cfg));
   dialCache.set(cfg.id, ms);
   return ms;
 }

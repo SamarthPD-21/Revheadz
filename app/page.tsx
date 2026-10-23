@@ -73,7 +73,7 @@ export default function Home() {
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.24em] text-lime-300">Head to head</p>
                 <h2 className="mt-2 text-3xl font-black italic tracking-tight text-white sm:text-4xl">Drag Racing</h2>
-                <p className="mt-2 max-w-sm text-sm text-zinc-400">Race a friend online with a room code. Bracket rules make every matchup even: your reactions decide it.</p>
+                <p className="mt-2 max-w-sm text-sm text-zinc-400">Race a friend online with a room code. Heads-up in classes of equal cars: your reactions decide it.</p>
               </div>
               <span className="tag shrink-0 border-lime-300/30 text-lime-200">New · PvP</span>
             </div>

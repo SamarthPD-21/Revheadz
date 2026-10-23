@@ -1,0 +1,188 @@
+{
+  "classes": {
+    "street": 13139.5,
+    "muscle": 11976.2,
+    "gt": 11301.3,
+    "supercar": 10794.3,
+    "track": 9630.2,
+    "hyper": 8572.9,
+    "formula": 7405.4
+  },
+  "cars": {
+    "supra_mk4": {
+      "cue": 6999,
+      "trim": 1.0466,
+      "stockMs": 13350
+    },
+    "skyline_r34": {
+      "cue": 8199,
+      "trim": 0.958,
+      "stockMs": 12944
+    },
+    "rx7_fd": {
+      "cue": 8199,
+      "trim": 1,
+      "stockMs": 13139
+    },
+    "jdm_i6_turbo": {
+      "cue": 7399,
+      "trim": 0.9815,
+      "stockMs": 13059
+    },
+    "synth_v6": {
+      "cue": 7599,
+      "trim": 0.9899,
+      "stockMs": 13094
+    },
+    "bmw_m3_e46": {
+      "cue": 7999,
+      "trim": 0.9699,
+      "stockMs": 13005
+    },
+    "subaru_sti": {
+      "cue": 7199,
+      "trim": 1.0295,
+      "stockMs": 13263
+    },
+    "honda_s2000": {
+      "cue": 8999,
+      "trim": 1.2646,
+      "stockMs": 14324
+    },
+    "vtwin_cruiser": {
+      "cue": 5677,
+      "trim": 1.018,
+      "stockMs": 13216
+    },
+    "mustang_gt": {
+      "cue": 7499,
+      "trim": 1,
+      "stockMs": 11976
+    },
+    "muscle_v8": {
+      "cue": 6499,
+      "trim": 1.0483,
+      "stockMs": 12162
+    },
+    "hot_hatch": {
+      "cue": 6999,
+      "trim": 0.9768,
+      "stockMs": 11882
+    },
+    "ferrari_f40": {
+      "cue": 7899,
+      "trim": 0.9405,
+      "stockMs": 11069
+    },
+    "twin_turbo_v6": {
+      "cue": 7099,
+      "trim": 0.9455,
+      "stockMs": 11083
+    },
+    "flat6_sports": {
+      "cue": 7345,
+      "trim": 1,
+      "stockMs": 11301
+    },
+    "v12_gt": {
+      "cue": 6857,
+      "trim": 1.01,
+      "stockMs": 11339
+    },
+    "amg_c63": {
+      "cue": 7199,
+      "trim": 1.0496,
+      "stockMs": 11494
+    },
+    "corvette_z06": {
+      "cue": 8599,
+      "trim": 0.9008,
+      "stockMs": 10402
+    },
+    "aventador_svj": {
+      "cue": 8699,
+      "trim": 0.9263,
+      "stockMs": 10489
+    },
+    "v10_supercar": {
+      "cue": 8499,
+      "trim": 0.9427,
+      "stockMs": 10596
+    },
+    "hellcat": {
+      "cue": 6299,
+      "trim": 1,
+      "stockMs": 10794
+    },
+    "porsche_gt3rs": {
+      "cue": 8999,
+      "trim": 1.0014,
+      "stockMs": 10800
+    },
+    "lexus_lfa": {
+      "cue": 9199,
+      "trim": 1.0256,
+      "stockMs": 10889
+    },
+    "twin_turbo_i6": {
+      "cue": 7599,
+      "trim": 1.028,
+      "stockMs": 10894
+    },
+    "audi_r8_v10": {
+      "cue": 8527,
+      "trim": 1.0273,
+      "stockMs": 10901
+    },
+    "superbike_i4": {
+      "cue": 13146,
+      "trim": 0.9773,
+      "stockMs": 9545
+    },
+    "gt_racer": {
+      "cue": 8822,
+      "trim": 1,
+      "stockMs": 9630
+    },
+    "boxer4_rally": {
+      "cue": 7799,
+      "trim": 1.0384,
+      "stockMs": 9726
+    },
+    "pagani_zonda": {
+      "cue": 7699,
+      "trim": 1.1058,
+      "stockMs": 9932
+    },
+    "bugatti_chiron": {
+      "cue": 6799,
+      "trim": 1.0688,
+      "stockMs": 8774
+    },
+    "rotary_twin": {
+      "cue": 9199,
+      "trim": 1.1774,
+      "stockMs": 9069
+    },
+    "ninja_h2": {
+      "cue": 13737,
+      "trim": 0.9995,
+      "stockMs": 8571
+    },
+    "panigale_v4": {
+      "cue": 15034,
+      "trim": 1,
+      "stockMs": 8573
+    },
+    "ferrari_f2004": {
+      "cue": 17904,
+      "trim": 1,
+      "stockMs": 7405
+    },
+    "gp_racer": {
+      "cue": 17487,
+      "trim": 1.198,
+      "stockMs": 7907
+    }
+  }
+}

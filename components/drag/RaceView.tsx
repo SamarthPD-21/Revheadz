@@ -8,13 +8,13 @@ import type { SimListener, SimState } from "../../lib/sim/types";
 import type { VehicleConfig } from "../../lib/vehicles/types";
 import { Silhouette } from "../Silhouette";
 import { Tachometer } from "../Tachometer";
-import { DragScene, type SceneCar } from "./scene";
+import { DragScene, type SceneCar, type SceneFrame } from "./scene";
 import type { Sfx } from "./sfx";
 
 export interface Lane {
   name: string;
   cfg: VehicleConfig;
-  /** Bracket delay of this lane's green, ms. */
+  /** Delay of this lane's green, ms (0 in heads-up racing). */
   offsetMs: number;
   /** Simple controls (gas held for you). */
   assist: boolean;
@@ -37,6 +37,8 @@ interface Props {
   startAt: number;
   opponent: Opponent;
   audio: AudioEngine;
+  /** The other car's engine (quieter), if loaded. */
+  oppAudio?: AudioEngine | null;
   sfx: Sfx;
   onInput?: (ms: number, key: DriveKey) => void;
   /** My run is over: send the log to the opponent. */
@@ -92,7 +94,7 @@ const keyAction = (code: string): Action | null =>
           ? "down"
           : null;
 
-export function RaceView({ me, opp, startAt, opponent, audio, sfx, onInput, onFinish, onDone }: Props) {
+export function RaceView({ me, opp, startAt, opponent, audio, oppAudio, sfx, onInput, onFinish, onDone }: Props) {
   const [, setFrame] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [touch] = useState(() => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches);
@@ -123,8 +125,9 @@ export function RaceView({ me, opp, startAt, opponent, audio, sfx, onInput, onFi
       lastGreen: false,
       lastRed: false,
       lastStage: false,
-      outcome: null as null | { text: string; tone: "win" | "lose" | "tie"; at: number },
+      outcome: null as null | { word: string; text: string; sub: string; tone: "win" | "lose" | "tie"; at: number },
       done: false,
+      skip: false,
       sentLog: false,
       now: startAt - 3000,
       subscribeTach: (fn: SimListener) => {
@@ -168,6 +171,12 @@ export function RaceView({ me, opp, startAt, opponent, audio, sfx, onInput, onFi
     latest.current = { onInput, onFinish, onDone, opponent, me, opp };
   });
 
+  // the opponent's engine is only heard while racing
+  useEffect(() => {
+    oppAudio?.setVolume(0.38);
+    return () => oppAudio?.setVolume(0);
+  }, [oppAudio]);
+
   // ---- input: W gas, S brake (let go on green to launch), E / Space shift up, Q down ----
   useEffect(() => {
     const run = race.myRun;
@@ -201,6 +210,7 @@ export function RaceView({ me, opp, startAt, opponent, audio, sfx, onInput, onFi
       } else if (down) emit(at, action);
     };
     const onKey = (e: KeyboardEvent) => {
+      if (race.outcome && e.type === "keydown" && (e.code === "Space" || e.code === "Enter")) race.skip = true;
       const a = keyAction(e.code);
       if (!a) return;
       e.preventDefault();
@@ -212,6 +222,7 @@ export function RaceView({ me, opp, startAt, opponent, audio, sfx, onInput, onFi
     };
     const pads = new Map<number, Action>();
     const onPointerDown = (e: PointerEvent) => {
+      if (race.outcome) race.skip = true;
       const el = (e.target as HTMLElement).closest?.("[data-pad]") as HTMLElement | null;
       if (!el) return;
       e.preventDefault();
@@ -245,9 +256,19 @@ export function RaceView({ me, opp, startAt, opponent, audio, sfx, onInput, onFi
   useEffect(() => {
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
-    const scene = new DragScene(ctx);
+    const s2 = new DragScene(ctx);
+    const draw = (f: SceneFrame, w: number, h: number) => {
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      s2.draw(f, w, h);
+    };
     const watchOpp = (r: DragRun) => {
       r.sim.subscribe((e) => {
+        oppAudio?.handleEvent(e);
         if (!r.launched) return;
         if (e.type === "shift" || e.type === "shiftCrack") race.flames[0] = 1;
         if (e.type === "limiter") race.flames[0] = Math.max(race.flames[0], 0.45);
@@ -263,6 +284,7 @@ export function RaceView({ me, opp, startAt, opponent, audio, sfx, onInput, onFi
       race.now = now;
       const run = race.myRun;
       run.advanceTo(now - myGreen);
+      run.coastTo(now - myGreen);
       Object.assign(race.view, run.sim.state);
       audio.update(run.sim.state);
 
@@ -280,12 +302,16 @@ export function RaceView({ me, opp, startAt, opponent, audio, sfx, onInput, onFi
           race.oppEventCount = events.length;
           const r = new DragRun(opp.cfg, TREE_MS + opp.offsetMs, { assist: o.log.current?.assist ?? opp.assist });
           for (const [ms, k] of events) r.input(ms, k);
+          r.advanceTo(now - oppGreen); // catch up silently, then listen (no burst of replayed shifts)
           race.oppRun = r;
           watchOpp(r);
         }
       }
       const or = race.oppRun!;
       or.advanceTo(now - oppGreen);
+      // a remote car only cools down once its final log is in (until then it may still be racing)
+      if (o.kind === "cpu" || o.log.current) or.coastTo(now - oppGreen);
+      oppAudio?.update(or.sim.state);
 
       // tree sounds follow my lane
       const lights = treeLights(now - myGreen, run.launchMs, stagedT(me.offsetMs), false);
@@ -311,16 +337,20 @@ export function RaceView({ me, opp, startAt, opponent, audio, sfx, onInput, onFi
         const w = decide(run.result!, or.result!, [me.offsetMs, opp.offsetMs]);
         const margin = Math.abs(me.offsetMs + run.result!.elapsedMs - (opp.offsetMs + or.result!.elapsedMs));
         const by = Number.isFinite(margin) ? ` by ${(margin / 1000).toFixed(3)} s` : "";
+        const rt = (r: RunResult) => (r.reactionMs === null ? "–" : r.redLight ? "RED" : (r.reactionMs / 1000).toFixed(3));
+        const sub = `Reaction ${rt(run.result!)} vs ${rt(or.result!)}`;
         race.outcome =
           w === "a"
-            ? { text: or.result!.redLight ? "They red-lit. You win!" : `You win${by}`, tone: "win", at: now }
+            ? { word: "WIN", text: or.result!.redLight ? "They red-lit" : by ? by.trim() : "They didn't finish", sub, tone: "win", at: now }
             : w === "b"
-              ? { text: run.result!.redLight ? "Red light. You lose." : `You lose${by}`, tone: "lose", at: now }
-              : { text: "Dead heat!", tone: "tie", at: now };
+              ? { word: run.result!.redLight ? "RED LIGHT" : "LOSE", text: run.result!.redLight ? "You jumped the green" : by ? by.trim() : "You didn't finish", sub, tone: "lose", at: now }
+              : { word: "DEAD HEAT", text: "Nothing in it", sub, tone: "tie", at: now };
         if (w === "a") sfx.crowd(true);
         navigator.vibrate?.(w === "a" ? [30, 60, 30, 60, 90] : 80);
       }
-      if (race.outcome && !race.done && now - race.outcome.at > 2200) {
+      // results once the car has cooled down through the gears (or after a skip / time limit)
+      const age = race.outcome ? now - race.outcome.at : 0;
+      if (race.outcome && !race.done && ((age > 2500 && run.sim.state.speedKmh < 25) || age > 7000 || (race.skip && age > 900))) {
         race.done = true;
         latest.current.onDone({ myLog: race.log, myResult: run.result!, oppResult: or.result });
       }
@@ -330,19 +360,14 @@ export function RaceView({ me, opp, startAt, opponent, audio, sfx, onInput, onFi
       race.shake = Math.max(0, race.shake - dt * 3);
 
       // draw
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
-      if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
-        canvas.width = Math.round(w * dpr);
-        canvas.height = Math.round(h * dpr);
-      }
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const rollBack = ROLL_IN_M * (1 - smooth((now - startAt) / (STAGE_MS * 0.75)));
       const tone = race.outcome?.tone;
       const car = (r: DragRun, lane: Lane, green: number, i: 0 | 1, win: boolean): SceneCar => ({
         cfg: lane.cfg,
-        ...coast(r, now - green),
+        distM: r.distM,
+        speedKmh: r.sim.state.speedKmh,
         rollBackM: rollBack,
         flame: race.flames[i],
         et: r.result && !r.result.dnf && !r.result.redLight ? r.result.etMs / 1000 : null,
@@ -352,7 +377,7 @@ export function RaceView({ me, opp, startAt, opponent, audio, sfx, onInput, onFi
       // (a zero-size canvas mid-layout has nothing to draw; a drawing error must never stop the race)
       if (w > 10 && h > 10) {
         try {
-          scene.draw({ me: car(run, me, myGreen, 1, tone === "win"), opp: car(or, opp, oppGreen, 0, tone === "lose"), time: now / 1000, shake: race.shake }, w, h);
+          draw({ me: car(run, me, myGreen, 1, tone === "win"), opp: car(or, opp, oppGreen, 0, tone === "lose"), time: now / 1000, shake: race.shake }, w, h);
         } catch (err) {
           console.error(err);
         }
@@ -362,7 +387,7 @@ export function RaceView({ me, opp, startAt, opponent, audio, sfx, onInput, onFi
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [race, audio, sfx, startAt, myGreen, oppGreen]);
+  }, [race, audio, oppAudio, sfx, startAt, myGreen, oppGreen]);
 
   // ---- HUD ----
   const now = race.now;
@@ -514,26 +539,43 @@ export function RaceView({ me, opp, startAt, opponent, audio, sfx, onInput, onFi
       )}
 
       {race.outcome && (
-        <div className={`drag-banner drag-banner-${race.outcome.tone}`} role="status">
-          <b>{race.outcome.text}</b>
-        </div>
+        <>
+          <div className={`drag-outcome-flash drag-outcome-flash-${race.outcome.tone}`} aria-hidden />
+          {race.outcome.tone === "win" && (
+            <div className="confetti" aria-hidden>
+              {CONFETTI.map((c, i) => (
+                <i key={i} style={c} />
+              ))}
+            </div>
+          )}
+          <div className={`drag-banner drag-banner-${race.outcome.tone}`} role="status">
+            <b>{race.outcome.word}</b>
+            <em>{race.outcome.text}</em>
+            <span className="drag-banner-sub">{race.outcome.sub}</span>
+            <span className="drag-banner-skip">{touch ? "Tap" : "Space"} for the time slip</span>
+          </div>
+        </>
       )}
     </div>
   );
 }
 
-/**
- * Where to draw a car: the run itself until it finishes, then coasting through the traps and
- * braking (the run stops at the line; the show doesn't).
- */
-function coast(r: DragRun, t: number): { distM: number; speedKmh: number } {
-  const res = r.result;
-  if (!res || !Number.isFinite(res.elapsedMs)) return { distM: r.distM, speedKmh: r.sim.state.speedKmh };
-  const since = Math.max(0, (t - res.elapsedMs) / 1000);
-  const k = 0.55; // braking after the line
-  const v = res.trapKmh / 3.6;
-  return { distM: QUARTER_MILE_M + (v * (1 - Math.exp(-k * since))) / k, speedKmh: res.trapKmh * Math.exp(-k * since) };
-}
+/** Confetti pieces: fixed pseudo-random layout so renders stay pure. */
+const CONFETTI = Array.from({ length: 46 }, (_, i) => {
+  const r = (n: number) => {
+    const x = Math.sin((i + 1) * 12.9898 + n * 78.233) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  const colors = ["#a3e635", "#f97316", "#facc15", "#38bdf8", "#f472b6", "#fafafa"];
+  return {
+    left: `${r(1) * 100}%`,
+    background: colors[i % colors.length],
+    animationDelay: `${r(2) * 0.5}s`,
+    animationDuration: `${1.6 + r(3) * 1.4}s`,
+    "--drift": `${(r(4) - 0.5) * 220}px`,
+    "--spin": `${(r(5) - 0.5) * 1440}deg`,
+  } as React.CSSProperties;
+});
 
 function TreeColumn({ label, lights, accent }: { label: string; lights: ReturnType<typeof treeLights>; accent: string }) {
   return (

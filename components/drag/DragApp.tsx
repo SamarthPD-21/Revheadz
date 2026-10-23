@@ -6,7 +6,8 @@ import { trackEvent } from "../../lib/analytics";
 import { AudioEngine } from "../../lib/audio/AudioEngine";
 import { CPU_LEVELS } from "../../lib/drag/cpu";
 import { hostRoom, joinRoom, normaliseCode, randomCode, type Message, type Player, type Room } from "../../lib/drag/net";
-import { bracketOffsets, decide, dialIn, type DriveKey, type DriveLog, type RunResult } from "../../lib/drag/race";
+import { CLASSES, classOf, type DragClass } from "../../lib/drag/classes";
+import { decide, dialIn, type DriveKey, type DriveLog, type RunResult } from "../../lib/drag/race";
 import { Simulation } from "../../lib/sim/Simulation";
 import { getVehicle, vehicles } from "../../lib/vehicles";
 import type { VehicleConfig } from "../../lib/vehicles/types";
@@ -82,10 +83,17 @@ export function DragApp() {
   const audioRef = useRef<{ engine: AudioEngine; carId: string } | null>(null);
   // the same engine, as state, for rendering the race
   const [raceAudio, setRaceAudio] = useState<AudioEngine | null>(null);
+  // the opponent's engine, heard beside you (quieter)
+  const oppAudioRef = useRef<{ engine: AudioEngine; carId: string } | null>(null);
+  const [oppAudio, setOppAudio] = useState<AudioEngine | null>(null);
   const warmSim = useRef<Simulation | null>(null);
 
   const myCfg = getVehicle(carId)!;
-  const oppCfg = mode === "cpu" ? getVehicle(cpuCarId)! : opponent ? getVehicle(opponent.carId) ?? null : null;
+  // heads-up classes: the CPU always brings a car from your class
+  const myClass = classOf(carId);
+  const cpuCar = myClass.cars.includes(cpuCarId) && (cpuCarId !== carId || myClass.cars.length === 1) ? cpuCarId : rivalIn(myClass, carId);
+  const oppCfg = mode === "cpu" ? getVehicle(cpuCar)! : opponent ? getVehicle(opponent.carId) ?? null : null;
+  const classMismatch = mode === "online" && Boolean(opponent) && classOf(opponent!.carId).id !== myClass.id;
 
   // remembered name and car; a ?room= link joins straight away
   useEffect(() => {
@@ -115,6 +123,18 @@ export function DragApp() {
     const a = audioRef.current.engine;
     a.unlock(); // inside the tap
     return a;
+  };
+  const ensureOppAudio = (cfg: VehicleConfig | null) => {
+    if (!cfg) return;
+    if (oppAudioRef.current?.carId !== cfg.id) {
+      oppAudioRef.current?.engine.dispose();
+      const engine = new AudioEngine(cfg);
+      engine.attach();
+      engine.setVolume(0.38);
+      oppAudioRef.current = { engine, carId: cfg.id };
+      setOppAudio(engine);
+    }
+    oppAudioRef.current.engine.unlock(); // inside the tap
   };
   const startWarmEngine = (cfg: VehicleConfig) => {
     const a = ensureAudio(cfg);
@@ -160,6 +180,7 @@ export function DragApp() {
   useEffect(
     () => () => {
       audioRef.current?.engine.dispose();
+      oppAudioRef.current?.engine.dispose();
       cancelRef.current?.();
       roomRef.current?.close();
     },
@@ -192,7 +213,8 @@ export function DragApp() {
   };
 
   const beginRace = (startAt: number, id: number, oppCar: VehicleConfig) => {
-    const [mine, theirs] = bracketOffsets(dialIn(myCfg), dialIn(oppCar));
+    void oppCar; // heads-up: no head starts
+    const [mine, theirs] = [0, 0];
     remoteEvents.current = [];
     remoteLog.current = null;
     setResult(null);
@@ -267,10 +289,11 @@ export function DragApp() {
   // Ready: warms the engine (this tap unlocks audio). The host starts the race when both are ready.
   const ready = () => {
     startWarmEngine(myCfg);
+    ensureOppAudio(oppCfg);
     sfx.unlock();
     if (mode === "cpu") {
       raceCounter.current += 1;
-      beginRace(performance.now() + LEAD_MS, raceCounter.current, getVehicle(cpuCarId)!);
+      beginRace(performance.now() + LEAD_MS, raceCounter.current, getVehicle(cpuCar)!);
       return;
     }
     const next = !meReady;
@@ -280,12 +303,12 @@ export function DragApp() {
   // host: both ready -> schedule the tree
   useEffect(() => {
     const room = roomRef.current;
-    if (!room?.isHost || mode !== "online" || !meReady || !oppReady || phase === "race" || !oppCfg) return;
+    if (!room?.isHost || mode !== "online" || !meReady || !oppReady || phase === "race" || !oppCfg || classMismatch) return;
     raceCounter.current += 1;
     const at = performance.now() + LEAD_MS;
     room.send({ type: "start", race: raceCounter.current, atHost: at });
     latest.current.beginRace(at, raceCounter.current, oppCfg);
-  }, [meReady, oppReady, phase, mode, oppCfg]);
+  }, [meReady, oppReady, phase, mode, oppCfg, classMismatch]);
 
   const onDone = (o: RaceOutcome) => {
     if (!race) return;
@@ -314,6 +337,7 @@ export function DragApp() {
         startAt={race.startAt}
         opponent={opponentView}
         audio={raceAudio}
+        oppAudio={oppAudio}
         sfx={sfx}
         onInput={mode === "online" ? (ms, key) => send({ type: "input", race: race.id, ms, key }) : undefined}
         onFinish={mode === "online" ? (log) => send({ type: "log", race: race.id, log }) : undefined}
@@ -346,8 +370,9 @@ export function DragApp() {
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-lime-300">Head to head</p>
             <h1 className="mt-2 text-4xl font-black italic tracking-tight text-zinc-50 sm:text-5xl">Drag Racing</h1>
             <p className="mt-3 max-w-xl text-zinc-400">
-              Bracket racing: the slower car gets a head start worth the difference in perfect runs, so every matchup is even. Launch on the green,
-              hit every shift light, stay on the gas. Your reactions decide it. Jump the light and you red-light.
+              Heads-up drag racing: both trees go green together and first to the line wins. Cars race in classes, and every car in a class runs
+              the same perfect quarter mile, so there's no mismatch. Launch on the green, hit every shift light, stay on the gas. Jump the light and
+              you red-light.
             </p>
             <ul className="mt-4 flex flex-wrap gap-2 text-xs text-zinc-300">
               <li className="stat-pill">Online PvP · room codes</li>
@@ -440,7 +465,7 @@ export function DragApp() {
               <PlayerCard side="left" title={me.name} you cfg={myCfg} ready={mode === "cpu" || meReady} score={score.me} />
               <div className="faceoff-vs">
                 <span>VS</span>
-                {oppCfg && <BracketLine me={myCfg} opp={oppCfg} oppName={oppName} />}
+                {oppCfg && <HeadsUpLine me={myCfg} opp={oppCfg} oppName={oppName} />}
               </div>
               {oppCfg ? (
                 <PlayerCard side="right" title={oppName} cfg={oppCfg} ready={mode === "cpu" || oppReady} score={score.them} />
@@ -450,20 +475,35 @@ export function DragApp() {
                 </div>
               )}
             </div>
-            <button type="button" className={`drag-cta drag-cta-big w-full ${meReady ? "drag-cta-ghost" : ""}`} onClick={ready} disabled={mode === "online" && !oppCfg}>
+            {classMismatch && opponent && (
+              <p role="alert" className="rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-center text-sm text-amber-100">
+                {opponent.name} is in the <b>{classOf(opponent.carId).name}</b> class. Pick a {classOf(opponent.carId).name} car (or ask them to pick a {myClass.name} one): heads-up races are within a class.
+              </p>
+            )}
+            <button type="button" className={`drag-cta drag-cta-big w-full ${meReady ? "drag-cta-ghost" : ""}`} onClick={ready} disabled={mode === "online" && (!oppCfg || classMismatch)}>
               <b>{mode === "cpu" ? (phase === "results" ? "Race again" : "Stage it") : meReady ? "Ready! Waiting for them…" : phase === "results" ? "Rematch" : "I'm ready"}</b>
               <span>{mode === "online" ? `Room ${code} · the tree starts when you're both ready` : "Engines start now. Turn your volume down a little."}</span>
             </button>
-            <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+            <div className="grid items-start gap-4 lg:grid-cols-[1.3fr_1fr]">
               <div className="drag-panel">
+                <ClassPicker
+                  value={myClass.id}
+                  onChange={(c) => {
+                    if (c.id === myClass.id) return;
+                    setCarId(c.cars[0]);
+                    setMeReady(false);
+                    send({ type: "ready", ready: false });
+                  }}
+                />
                 <CarPicker
                   value={carId}
+                  ids={myClass.cars}
                   onChange={(id) => {
                     setCarId(id);
                     setMeReady(false);
                     send({ type: "ready", ready: false });
                   }}
-                  label="Your car"
+                  label={`Your ${myClass.name} car`}
                 />
               </div>
               <div className="space-y-4">
@@ -485,7 +525,7 @@ export function DragApp() {
                         </button>
                       ))}
                     </div>
-                    <CarPicker value={cpuCarId} onChange={setCpuCarId} label="CPU car" compact />
+                    <CarPicker value={cpuCar} ids={myClass.cars} onChange={setCpuCarId} label={`CPU ${myClass.name} car`} compact />
                   </div>
                 )}
               </div>
@@ -510,30 +550,54 @@ function ControlsPanel({ assist, onChange }: { assist: boolean; onChange: (assis
         </button>
       </div>
       {assist ? (
-        <p className="mt-3 text-sm text-zinc-400">
-          One button: <kbd className="keycap">Space</kbd> or tap on the green, then on every shift light. The gas is held for you.
-        </p>
+        <dl className="controls-table mt-4">
+          <dt>
+            <kbd className="keycap">Space</kbd>
+            <span className="text-zinc-600">/ tap</span>
+          </dt>
+          <dd>Launch on the green, then shift on every light</dd>
+          <dt>
+            <kbd className="keycap">Q</kbd>
+          </dt>
+          <dd>Shift down</dd>
+          <dt className="text-zinc-500">Gas</dt>
+          <dd>Held flat for you</dd>
+        </dl>
       ) : (
-        <ul className="mt-3 space-y-1.5 text-sm text-zinc-400">
-          <li>
-            <kbd className="keycap">S</kbd> + <kbd className="keycap">W</kbd> hold to stage on the two-step
-          </li>
-          <li>
-            Let go of <kbd className="keycap">S</kbd> on the green to launch
-          </li>
-          <li>
-            <kbd className="keycap">E</kbd> / <kbd className="keycap">Space</kbd> shift up, <kbd className="keycap">Q</kbd> down. Stay on <kbd className="keycap">W</kbd>
-          </li>
-        </ul>
+        <dl className="controls-table mt-4">
+          <dt>
+            <kbd className="keycap">S</kbd>+<kbd className="keycap">W</kbd>
+          </dt>
+          <dd>Hold to stage on the two-step</dd>
+          <dt>
+            <kbd className="keycap">S</kbd>
+            <span className="text-zinc-600">release</span>
+          </dt>
+          <dd>Launch on the green (early = red light)</dd>
+          <dt>
+            <kbd className="keycap">E</kbd>
+            <kbd className="keycap">Space</kbd>
+          </dt>
+          <dd>Shift up when the lights flash</dd>
+          <dt>
+            <kbd className="keycap">Q</kbd>
+          </dt>
+          <dd>Shift down</dd>
+          <dt>
+            <kbd className="keycap">W</kbd>
+            <span className="text-zinc-600">hold</span>
+          </dt>
+          <dd>Stay flat: lifting costs time</dd>
+        </dl>
       )}
     </div>
   );
 }
 
-function CarPicker({ value, onChange, label, compact }: { value: string; onChange: (id: string) => void; label: string; compact?: boolean }) {
+function CarPicker({ value, onChange, label, compact, ids }: { value: string; onChange: (id: string) => void; label: string; compact?: boolean; ids?: string[] }) {
   const [q, setQ] = useState("");
   const words = q.toLowerCase().split(/\s+/).filter(Boolean);
-  const list = vehicles.filter((v) => words.every((w) => `${v.name} ${v.ui.make ?? ""} ${v.ui.layout}`.toLowerCase().includes(w)));
+  const list = vehicles.filter((v) => (!ids || ids.includes(v.id)) && words.every((w) => `${v.name} ${v.ui.make ?? ""} ${v.ui.layout}`.toLowerCase().includes(w)));
   return (
     <div className="mt-4 first:mt-0">
       <div className="flex items-center justify-between gap-3">
@@ -583,11 +647,15 @@ function PlayerCard({ title, cfg, ready, score, you, side }: { title: string; cf
           </dd>
         </div>
         <div>
-          <dt>Dial-in</dt>
+          <dt>Perfect</dt>
           <dd>
             <span className="stat-bar" style={{ "--v": Math.min(1, Math.max(0.05, (16 - dial / 1000) / 9)) } as React.CSSProperties} />
             {fmt(dial)} s
           </dd>
+        </div>
+        <div>
+          <dt>Class</dt>
+          <dd className="!font-sans font-semibold">{classOf(cfg.id).name}</dd>
         </div>
       </dl>
       {ready && <span className="player-ready">Ready</span>}
@@ -595,11 +663,40 @@ function PlayerCard({ title, cfg, ready, score, you, side }: { title: string; cf
   );
 }
 
-function BracketLine({ me, opp, oppName }: { me: VehicleConfig; opp: VehicleConfig; oppName: string }) {
-  const [mine, theirs] = bracketOffsets(dialIn(me), dialIn(opp));
-  const text =
-    mine === theirs ? "Same dial-in: you both leave together." : mine > 0 ? `${oppName} leaves ${fmt(mine)} s before you.` : `You leave ${fmt(theirs)} s before ${oppName}.`;
-  return <p className="text-center text-sm text-zinc-400">{text}</p>;
+function HeadsUpLine({ me, opp, oppName }: { me: VehicleConfig; opp: VehicleConfig; oppName: string }) {
+  const c = classOf(me.id);
+  if (classOf(opp.id).id !== c.id) return <p className="text-sm text-amber-200">Different classes</p>;
+  const gap = Math.abs(dialIn(me) - dialIn(opp));
+  return (
+    <p className="text-sm text-zinc-400">
+      Heads-up · <b className="text-zinc-200">{c.name}</b> class
+      <br />
+      Perfect runs within {Math.max(1, Math.round(gap))} ms of each other. First to the line beats {oppName}: reactions decide it.
+    </p>
+  );
+}
+
+/** A random car from the class other than `not` (or `not` itself in a one-car class). */
+function rivalIn(c: DragClass, not: string): string {
+  const others = c.cars.filter((id) => id !== not);
+  return others.length ? others[Math.floor(Math.random() * others.length)] : not;
+}
+
+function ClassPicker({ value, onChange }: { value: string; onChange: (c: DragClass) => void }) {
+  return (
+    <div className="mb-5">
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Class</p>
+      <div className="class-chips mt-2" role="group" aria-label="Class">
+        {CLASSES.map((c) => (
+          <button key={c.id} type="button" aria-pressed={value === c.id} onClick={() => onChange(c)} className="class-chip" title={c.blurb}>
+            <b>{c.name}</b>
+            <span>{fmt(dialIn(getVehicle(c.cars[0])!), 2)} s · {c.cars.length}</span>
+          </button>
+        ))}
+      </div>
+      <p className="mt-2 text-xs text-zinc-500">{CLASSES.find((c) => c.id === value)?.blurb}. Every car in a class runs the same perfect quarter mile (performance parity), so the driver decides it.</p>
+    </div>
+  );
 }
 
 function quality(ms: number) {
@@ -624,6 +721,7 @@ function TimeSlip({
   oppCfg: VehicleConfig;
   offsets: [number, number];
 }) {
+  void offsets; // heads-up: both zero
   const { outcome, marginMs, mine, theirs } = result;
   const headline = mine.redLight
     ? "Red light! You jumped the start."
@@ -638,14 +736,13 @@ function TimeSlip({
   const lostVsPerfect = (r: RunResult) => (r.redLight || r.dnf ? null : r.elapsedMs - dialIn(r === mine ? myCfg : oppCfg));
   type Row = [string, (r: RunResult) => number | null, (r: RunResult) => string, "low" | "high" | null];
   const rows: Row[] = [
-    ["Dial-in", () => null, (r) => fmt(r === mine ? dialIn(myCfg) : dialIn(oppCfg)), null],
-    ["Head start", () => null, (r) => fmt(r === mine ? offsets[1] : offsets[0]), null],
+    ["Perfect run", () => null, (r) => fmt(r === mine ? dialIn(myCfg) : dialIn(oppCfg)), null],
     ["Reaction", (r) => (r.redLight || r.reactionMs === null ? null : r.reactionMs), (r) => (r.reactionMs === null ? "–" : r.redLight ? `RED ${fmt(r.reactionMs)}` : fmt(r.reactionMs)), "low"],
     ["60 ft", () => null, (r) => fmt(r.sixtyFtMs), null],
     ["1/8 mile", () => null, (r) => fmt(r.eighthMs), null],
     ["1/4 mile ET", () => null, (r) => fmt(r.etMs), null],
     ["Trap speed", () => null, (r) => (r.trapKmh ? `${Math.round(r.trapKmh)} km/h` : "–"), null],
-    // what decides a bracket race: time given away against the car's perfect run
+    // what decides a heads-up race in a class: time given away against the (shared) perfect run
     ["Lost vs perfect", (r) => lostVsPerfect(r), (r) => (lostVsPerfect(r) === null ? "–" : `+${fmt(lostVsPerfect(r)!)}`), "low"],
     ["Avg shift", (r) => (r.shiftReactionsMs.length ? r.shiftReactionsMs.reduce((a, b) => a + b, 0) / r.shiftReactionsMs.length : null), (r) => (r.shiftReactionsMs.length ? `${Math.round(r.shiftReactionsMs.reduce((a, b) => a + b, 0) / r.shiftReactionsMs.length)} ms` : "–"), "low"],
     ["Off the gas", (r) => r.offGasMs, (r) => (r.offGasMs > 0.5 ? `${fmt(r.offGasMs, 2)} s` : "–"), "low"],
@@ -701,8 +798,74 @@ function TimeSlip({
             })}
           </div>
         )}
-        <div className="slip-foot">Margin of victory {fmt(marginMs)} s · reaction decides it</div>
+        <div className="slip-foot">
+          {classOf(myCfg.id).name} class · heads-up · margin {fmt(marginMs)} s
+        </div>
       </div>
+      {t && <Breakdown mine={mine} theirs={t} myCfg={myCfg} oppCfg={oppCfg} oppName={oppName} outcome={outcome} />}
+    </div>
+  );
+}
+
+/**
+ * Why it went the way it did: the finish-line gap split exactly into reaction off the line,
+ * shifting and throttle (everything else the driver gave away against a perfect run), and the
+ * car (the tiny parity residual within a class). The three parts add up to the margin.
+ */
+function Breakdown({ mine, theirs, myCfg, oppCfg, oppName, outcome }: { mine: RunResult; theirs: RunResult; myCfg: VehicleConfig; oppCfg: VehicleConfig; oppName: string; outcome: Result["outcome"] }) {
+  if (mine.redLight || theirs.redLight || mine.dnf || theirs.dnf) {
+    const who = mine.redLight ? "You" : theirs.redLight ? oppName : mine.dnf ? "You" : oppName;
+    const what = mine.redLight || theirs.redLight ? "left before the green: a red light loses, whatever happens after" : "never launched";
+    return (
+      <div className="breakdown">
+        <p className="breakdown-verdict">
+          {who} {what}.
+        </p>
+      </div>
+    );
+  }
+  const reaction = mine.reactionMs! - theirs.reactionMs!;
+  const myDrive = mine.elapsedMs - dialIn(myCfg) - mine.reactionMs!;
+  const theirDrive = theirs.elapsedMs - dialIn(oppCfg) - theirs.reactionMs!;
+  const driving = myDrive - theirDrive;
+  const car = dialIn(myCfg) - dialIn(oppCfg);
+  const parts: [string, number, string][] = [
+    ["Reaction off the line", reaction, "the time from green to launch"],
+    ["Shifts and throttle", driving, "late or early shifts, lifting, bogging"],
+    ["Car", car, "parity keeps this to a few ms"],
+  ];
+  const scale = Math.max(30, ...parts.map((p) => Math.abs(p[1])));
+  const decisive = [...parts].sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))[0];
+  const won = outcome === "win";
+  const verdict =
+    outcome === "tie"
+      ? "Dead heat: nothing between you."
+      : `${won ? "You won it" : `${oppName} won it`} ${decisive[0] === "Reaction off the line" ? "off the line" : decisive[0] === "Shifts and throttle" ? "on the shifts" : "on the car"}: ${fmt(Math.abs(decisive[1]))} s ${decisive[1] < 0 ? "in your favour" : "against you"}.`;
+  return (
+    <div className="breakdown">
+      <p className="breakdown-title">Why you {outcome === "win" ? "won" : outcome === "lose" ? "lost" : "tied"}</p>
+      <ul>
+        {parts.map(([label, ms, help], i) => {
+          const good = ms < 0;
+          const w = Math.min(50, (Math.abs(ms) / scale) * 50);
+          return (
+            <li key={label} style={{ animationDelay: `${900 + i * 120}ms` }}>
+              <div className="breakdown-row">
+                <span>{label}</span>
+                <b className={Math.abs(ms) < 0.5 ? "" : good ? "text-lime-300" : "text-red-300"}>
+                  {Math.abs(ms) < 0.5 ? "even" : `${good ? "−" : "+"}${fmt(Math.abs(ms))} s`}
+                </b>
+              </div>
+              <div className="breakdown-bar" aria-hidden>
+                <span data-good={good ? "1" : "0"} style={good ? { right: "50%", width: `${w}%` } : { left: "50%", width: `${w}%` }} />
+              </div>
+              <small>{help}</small>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="breakdown-verdict">{verdict}</p>
+      <p className="breakdown-note">− is time you gained on {oppName}, + is time you gave away. They add up to the margin.</p>
     </div>
   );
 }
