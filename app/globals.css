@@ -412,9 +412,9 @@ a.mode-card:hover .mode-go { transform: translateX(4px); }
 
 /* silhouettes drifting across the Playground card; the track holds the list twice so it loops */
 .mode-parade { mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
-.mode-parade-track { display: flex; gap: 1.5rem; width: max-content; animation: parade 36s linear infinite; }
-a.mode-card:hover .mode-parade-track { animation-duration: 14s; }
-@keyframes parade { to { transform: translateX(-50%); } }
+/* no flex gap: each item carries its own right padding, so -50% is exactly one copy of the list and the wrap is seamless */
+.mode-parade-track { display: flex; width: max-content; animation: parade 36s linear infinite; will-change: transform; }
+@keyframes parade { to { transform: translate3d(-50%, 0, 0); } }
 
 /* drag-strip christmas tree: ambers count down, then green */
 .tree-light {

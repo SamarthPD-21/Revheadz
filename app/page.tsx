@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "../components/Logo";
+import { Parade } from "../components/Parade";
 import { Silhouette } from "../components/Silhouette";
 import { garageList } from "../lib/vehicles/garage";
 
@@ -45,14 +46,16 @@ export default function Home() {
               </span>
             </div>
             <div className="mode-parade relative mt-6" aria-hidden>
-              <div className="mode-parade-track">
+              <Parade>
                 {[...showcase, ...showcase].map((v, i) => (
-                  <div key={`${v.id}-${i}`} className="w-40 shrink-0 sm:w-48">
-                    <Silhouette kind={v.silhouette} accent={v.accent} className="h-16 w-full" />
-                    <p className="mt-1 truncate text-center text-[11px] font-medium text-zinc-500">{v.name}</p>
+                  <div key={`${v.id}-${i}`} className="shrink-0 pr-6">
+                    <div className="w-40 sm:w-48">
+                      <Silhouette kind={v.silhouette} accent={v.accent} className="h-16 w-full" />
+                      <p className="mt-1 truncate text-center text-[11px] font-medium text-zinc-500">{v.name}</p>
+                    </div>
                   </div>
                 ))}
-              </div>
+              </Parade>
             </div>
             <ul className="relative mt-5 flex flex-wrap gap-2 text-xs text-zinc-300">
               <li className="stat-pill">
