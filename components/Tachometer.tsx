@@ -53,7 +53,8 @@ export function Tachometer({ state, redlineRpm, limiterRpm, accent, subscribe }:
     if (sp.o < -40) sp.o = -40; // a hair of overshoot past the limiter, like a real needle
     const raw = shown.current - sp.o;
     const needleRpm = Math.max(0, atLimiter ? Math.min(limiterRpm + 40, Math.max(limiterRpm - MAX_DIP, raw)) : raw);
-    const r = Math.min(w, h) / 2 - 2;
+    // leave room for the bezel stroke and the redline glow, so nothing is clipped at the canvas edge
+    const r = Math.min(w, h) / 2 - Math.max(4, Math.min(w, h) * 0.045);
     const cx = w / 2;
     const cy = h / 2;
     const pulse = state.limiterActive ? 1 : state.rpm > redlineRpm ? 0.5 + 0.5 * Math.sin(clock.current * 30) : 0;
