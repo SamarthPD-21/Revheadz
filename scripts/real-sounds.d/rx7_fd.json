@@ -1,0 +1,276 @@
+{
+  "rx7_fd": {
+    "pitchRange": [
+      4,
+      130
+    ],
+    "calibration": {
+      "rpmPerHz": 120
+    },
+    "offLoadLowpassHz": 2000,
+    "loopLengthBias": 0.04,
+    "sources": {
+      "cold": {
+        "title": "Fd3s Rx7 cold start",
+        "author": "Dspec",
+        "youtube": "kAd-T76NLLg",
+        "cacheName": "yt_rx7_fd_kAd-T76NLLg.flac"
+      },
+      "rew": {
+        "title": "Mazda RX7 FD Twin Turbo 13B REW - Dyno",
+        "author": "Philip James",
+        "youtube": "oEkS8JIece8",
+        "cacheName": "yt_rx7_fd_oEkS8JIece8.flac",
+        "pitchRange": [
+          18,
+          90
+        ]
+      },
+      "tune": {
+        "title": "1992 Mazda RX7 FD FD3S Dyno tune stock Twin turbos",
+        "author": "Driven7",
+        "youtube": "kAC3jz7uHhA",
+        "cacheName": "yt_rx7_fd_kAC3jz7uHhA.flac"
+      },
+      "stockport": {
+        "title": "Dyno FD3S stock twins stock port 14.5psi",
+        "author": "Aur\u00e9lien Bedu",
+        "youtube": "s2ydwm7d5Zs",
+        "cacheName": "yt_rx7_fd_s2ydwm7d5Zs.flac"
+      },
+      "jet": {
+        "title": "13B RX7 FD3S Dyno Jet",
+        "author": "SushiRotor",
+        "youtube": "Yua-BzPpsm8",
+        "cacheName": "yt_rx7_fd_Yua-BzPpsm8.flac"
+      }
+    },
+    "loops": [
+      {
+        "kind": "idle",
+        "source": "cold",
+        "t": [
+          17.5,
+          27.5
+        ],
+        "flatten": false,
+        "rpm": 1290
+      },
+      {
+        "kind": "on",
+        "source": "rew",
+        "t": [
+          1.4,
+          2.9
+        ],
+        "matchTo": {
+          "source": "stockport",
+          "t": [
+            0.5,
+            12.8
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "rew",
+        "ramp": [
+          1.4,
+          11.6
+        ],
+        "targets": [
+          3600
+        ],
+        "maxHalfS": 0.75,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "stockport",
+          "t": [
+            0.5,
+            12.8
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "rew",
+        "ramp": [
+          1.4,
+          11.6
+        ],
+        "targets": [
+          4200
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "stockport",
+          "t": [
+            0.5,
+            12.8
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "jet",
+        "ramp": [
+          7.3,
+          14.6
+        ],
+        "targets": [
+          4500
+        ],
+        "maxHalfS": 0.55,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "stockport",
+          "t": [
+            0.5,
+            12.8
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "rew",
+        "ramp": [
+          1.4,
+          11.6
+        ],
+        "targets": [
+          5700
+        ],
+        "maxHalfS": 0.75,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "stockport",
+          "t": [
+            0.5,
+            12.8
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "rew",
+        "ramp": [
+          1.4,
+          11.6
+        ],
+        "targets": [
+          6000
+        ],
+        "maxHalfS": 0.55,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "stockport",
+          "t": [
+            0.5,
+            12.8
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "stockport",
+        "ramp": [
+          0.3,
+          13.1
+        ],
+        "targets": [
+          6300
+        ],
+        "maxHalfS": 0.55,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "stockport",
+        "ramp": [
+          0.3,
+          13.1
+        ],
+        "targets": [
+          6600
+        ],
+        "maxHalfS": 0.55,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "tune",
+        "ramp": [
+          5.3,
+          9.9
+        ],
+        "targets": [
+          7200
+        ],
+        "maxHalfS": 0.55,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "stockport",
+          "t": [
+            0.5,
+            12.8
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "tune",
+        "ramp": [
+          5.3,
+          9.9
+        ],
+        "targets": [
+          7500
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "stockport",
+          "t": [
+            0.5,
+            12.8
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "stockport",
+        "ramp": [
+          0.3,
+          13.1
+        ],
+        "targets": [
+          8100
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "shiftFrom": 1290,
+        "rpm": 1700
+      },
+      {
+        "kind": "on",
+        "shiftFrom": 2963,
+        "rpm": 2250
+      }
+    ],
+    "oneShots": {
+      "start": {
+        "source": "cold",
+        "t": [
+          7.6,
+          12.5
+        ],
+        "fadeIn": 0.02,
+        "fadeOut": 0.4
+      }
+    }
+  }
+}

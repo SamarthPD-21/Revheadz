@@ -1,0 +1,107 @@
+{
+  "pagani_zonda": {
+    "pitchRange": [
+      4,
+      130
+    ],
+    "offLoadLowpassHz": 1600,
+    "loopLengthBias": 0.05,
+    "sources": {
+      "dyno": {
+        "title": "Pagani Zonda on the dyno",
+        "author": "nxttruck2002",
+        "youtube": "u9VHpv-6Ce4",
+        "cacheName": "yt_pagani_zonda_u9VHpv-6Ce4.flac"
+      },
+      "barchetta": {
+        "title": "Start up Exhaust Pagani Zonda HP Barchetta Startup",
+        "author": "kdsek",
+        "youtube": "8_-9bqaucdo",
+        "cacheName": "yt_pagani_zonda_8_-9bqaucdo.flac"
+      }
+    },
+    "loops": [
+      {
+        "kind": "idle",
+        "source": "barchetta",
+        "t": [
+          23,
+          46
+        ],
+        "flatten": false,
+        "rpm": 1145
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "t": [
+          51.9,
+          53.3
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          53.4,
+          66
+        ],
+        "targets": [
+          2500,
+          2850,
+          3250,
+          3700,
+          4200,
+          4700
+        ],
+        "maxHalfS": 0.8,
+        "tol": 0.05
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          103.9,
+          116.3
+        ],
+        "targets": [
+          5250,
+          5750,
+          6150
+        ],
+        "maxHalfS": 0.5,
+        "tol": 0.06
+      },
+      {
+        "kind": "on",
+        "shiftFrom": 1145,
+        "rpm": 1480
+      },
+      {
+        "kind": "on",
+        "shiftFrom": 2215,
+        "rpm": 1850
+      },
+      {
+        "kind": "on",
+        "shiftFrom": 6152,
+        "rpm": 6650
+      },
+      {
+        "kind": "on",
+        "shiftFrom": 6152,
+        "rpm": 7000
+      }
+    ],
+    "oneShots": {
+      "start": {
+        "source": "barchetta",
+        "t": [
+          18.9,
+          25.5
+        ],
+        "fadeOut": 1.5
+      }
+    }
+  }
+}

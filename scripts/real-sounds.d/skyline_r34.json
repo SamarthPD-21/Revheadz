@@ -1,0 +1,472 @@
+{
+  "skyline_r34": {
+    "pitchRange": [
+      4,
+      130
+    ],
+    "offLoadLowpassHz": 1700,
+    "loopLengthBias": 0.04,
+    "sources": {
+      "rb26": {
+        "title": "RB26DETT 8500rpm Dyno Run",
+        "author": "shaun54",
+        "youtube": "iCZbGlewDLs",
+        "cacheName": "yt_skyline_r34_iCZbGlewDLs.flac"
+      },
+      "r34dyno": {
+        "title": "1999 R34 GT-R dyno Run",
+        "author": "CARBUCKLE",
+        "youtube": "EtjbtlFyhJA",
+        "cacheName": "yt_skyline_r34_EtjbtlFyhJA.flac"
+      },
+      "cold": {
+        "title": "Nissan Skyline R34 Stock Exhaust Cold Start Up.",
+        "author": "Mixed Clips. Wog N\u2019 Oz",
+        "youtube": "mZzNHuek2Vk",
+        "cacheName": "yt_skyline_r34_mZzNHuek2Vk.flac"
+      },
+      "rb26A": {
+        "title": "RB26DETT 8500rpm Dyno Run",
+        "author": "shaun54",
+        "youtube": "iCZbGlewDLs",
+        "cacheName": "yt_skyline_r34_iCZbGlewDLs.flac",
+        "pitchRange": [
+          4,
+          131
+        ],
+        "anchors": [
+          [
+            6.5,
+            1959
+          ],
+          [
+            7,
+            2035
+          ],
+          [
+            7.5,
+            2045
+          ],
+          [
+            8,
+            2047
+          ],
+          [
+            8.5,
+            2091
+          ],
+          [
+            9,
+            2161
+          ],
+          [
+            9.5,
+            2220
+          ],
+          [
+            10,
+            2363
+          ],
+          [
+            10.5,
+            2649
+          ],
+          [
+            11,
+            2891
+          ],
+          [
+            11.5,
+            3078
+          ],
+          [
+            12,
+            3319
+          ],
+          [
+            12.5,
+            3562
+          ],
+          [
+            13,
+            3824
+          ],
+          [
+            13.5,
+            4107
+          ],
+          [
+            14,
+            4378
+          ],
+          [
+            14.5,
+            4628
+          ],
+          [
+            15,
+            4885
+          ],
+          [
+            15.5,
+            5158
+          ],
+          [
+            16,
+            5433
+          ],
+          [
+            16.5,
+            5710
+          ],
+          [
+            17,
+            5983
+          ],
+          [
+            17.5,
+            6266
+          ],
+          [
+            18,
+            6558
+          ],
+          [
+            18.5,
+            6847
+          ],
+          [
+            19,
+            7140
+          ],
+          [
+            19.5,
+            7422
+          ],
+          [
+            20,
+            7661
+          ],
+          [
+            20.5,
+            7900
+          ],
+          [
+            21,
+            8146
+          ]
+        ]
+      }
+    },
+    "loops": [
+      {
+        "kind": "idle",
+        "source": "cold",
+        "t": [
+          48,
+          60
+        ],
+        "flatten": false,
+        "rpm": 1232
+      },
+      {
+        "kind": "on",
+        "source": "rb26",
+        "t": [
+          4.45,
+          5.45
+        ],
+        "matchTo": {
+          "source": "r34dyno",
+          "t": [
+            18.5,
+            27.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "rb26",
+        "t": [
+          7.25,
+          8.55
+        ],
+        "matchTo": {
+          "source": "r34dyno",
+          "t": [
+            18.5,
+            27.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "rb26",
+        "ramp": [
+          6.3,
+          21.2
+        ],
+        "targets": [
+          2200
+        ],
+        "maxHalfS": 0.7,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "r34dyno",
+          "t": [
+            18.5,
+            27.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "r34dyno",
+        "ramp": [
+          18.3,
+          28.2
+        ],
+        "targets": [
+          2400
+        ],
+        "maxHalfS": 0.5,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "r34dyno",
+        "ramp": [
+          12.3,
+          17.2
+        ],
+        "targets": [
+          2800
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "r34dyno",
+        "ramp": [
+          18.3,
+          28.2
+        ],
+        "targets": [
+          3000
+        ],
+        "maxHalfS": 0.7,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "r34dyno",
+        "ramp": [
+          18.3,
+          28.2
+        ],
+        "targets": [
+          3200
+        ],
+        "maxHalfS": 0.7,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "rb26",
+        "ramp": [
+          6.3,
+          21.2
+        ],
+        "targets": [
+          3800
+        ],
+        "maxHalfS": 0.7,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "r34dyno",
+          "t": [
+            18.5,
+            27.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "rb26A",
+        "ramp": [
+          9.8,
+          21.1
+        ],
+        "targets": [
+          4400
+        ],
+        "maxHalfS": 0.45,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "r34dyno",
+          "t": [
+            18.5,
+            27.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "rb26A",
+        "ramp": [
+          9.8,
+          21.1
+        ],
+        "targets": [
+          4800
+        ],
+        "maxHalfS": 0.6,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "r34dyno",
+          "t": [
+            18.5,
+            27.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "rb26A",
+        "ramp": [
+          9.8,
+          21.1
+        ],
+        "targets": [
+          5400
+        ],
+        "maxHalfS": 0.45,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "r34dyno",
+          "t": [
+            18.5,
+            27.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "rb26",
+        "ramp": [
+          6.3,
+          21.2
+        ],
+        "targets": [
+          5800
+        ],
+        "maxHalfS": 0.7,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "r34dyno",
+          "t": [
+            18.5,
+            27.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "rb26",
+        "ramp": [
+          6.3,
+          21.2
+        ],
+        "targets": [
+          6400
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "r34dyno",
+          "t": [
+            18.5,
+            27.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "rb26A",
+        "ramp": [
+          9.8,
+          21.1
+        ],
+        "targets": [
+          7000
+        ],
+        "maxHalfS": 0.6,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "r34dyno",
+          "t": [
+            18.5,
+            27.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "rb26A",
+        "ramp": [
+          9.8,
+          21.1
+        ],
+        "targets": [
+          7400
+        ],
+        "maxHalfS": 0.6,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "r34dyno",
+          "t": [
+            18.5,
+            27.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "rb26",
+        "ramp": [
+          6.3,
+          21.2
+        ],
+        "targets": [
+          8000
+        ],
+        "maxHalfS": 0.5,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "r34dyno",
+          "t": [
+            18.5,
+            27.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "shiftFrom": 2046,
+        "rpm": 1780
+      }
+    ],
+    "oneShots": {
+      "start": {
+        "source": "cold",
+        "t": [
+          15.1,
+          21.5
+        ],
+        "fadeIn": 0.02,
+        "fadeOut": 0.4
+      }
+    }
+  }
+}

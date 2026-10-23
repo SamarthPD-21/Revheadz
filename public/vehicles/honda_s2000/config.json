@@ -1,0 +1,311 @@
+{
+  "id": "honda_s2000",
+  "name": "Honda S2000 AP1",
+  "type": "car",
+  "engineType": "Naturally aspirated inline-four",
+  "description": "The F20C: a 2.0-litre VTEC four making 240 hp without a turbo, with a hard cam change at 6,000 rpm and a howl that runs all the way to 9,000. Built from real recordings of an AP1.",
+  "engine": {
+    "cylinders": 4,
+    "idleRpm": 900,
+    "redlineRpm": 8800,
+    "limiterRpm": 9000,
+    "inertia": 0.18,
+    "engineBraking": 0.45,
+    "peakTorqueNm": 208,
+    "crackle": 0.2
+  },
+  "gearbox": {
+    "type": "manual",
+    "ratios": [
+      3.133,
+      2.045,
+      1.481,
+      1.161,
+      0.97,
+      0.81
+    ],
+    "finalDrive": 4.1,
+    "wheelRadiusM": 0.31,
+    "shiftTimeMs": 220
+  },
+  "dynamics": {
+    "massKg": 1250,
+    "cdA": 0.6,
+    "brakeDecel": 10
+  },
+  "ui": {
+    "accent": "#f87171",
+    "silhouette": "sport",
+    "category": "JDM",
+    "layout": "Inline-4 VTEC",
+    "displacement": "2.0 L",
+    "powerHp": 240,
+    "recorded": true,
+    "make": "Honda",
+    "year": "2000"
+  },
+  "credits": [],
+  "voice": "hot_hatch",
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_1059.ogg",
+        "rpm": 1059.488
+      },
+      {
+        "file": "on_1320.ogg",
+        "rpm": 1319.69
+      },
+      {
+        "file": "on_1593.ogg",
+        "rpm": 1592.973
+      },
+      {
+        "file": "on_1799.ogg",
+        "rpm": 1799.002
+      },
+      {
+        "file": "on_2104.ogg",
+        "rpm": 2104.463
+      },
+      {
+        "file": "on_2516.ogg",
+        "rpm": 2515.653
+      },
+      {
+        "file": "on_2915.ogg",
+        "rpm": 2915.388
+      },
+      {
+        "file": "on_3603.ogg",
+        "rpm": 3603.499
+      },
+      {
+        "file": "on_3909.ogg",
+        "rpm": 3909.028
+      },
+      {
+        "file": "on_4502.ogg",
+        "rpm": 4501.777
+      },
+      {
+        "file": "on_5411.ogg",
+        "rpm": 5410.741
+      },
+      {
+        "file": "on_6005.ogg",
+        "rpm": 6005.266
+      },
+      {
+        "file": "on_6601.ogg",
+        "rpm": 6600.849
+      },
+      {
+        "file": "on_7208.ogg",
+        "rpm": 7207.624
+      },
+      {
+        "file": "on_7800.ogg",
+        "rpm": 7800.239
+      },
+      {
+        "file": "on_8401.ogg",
+        "rpm": 8401.263
+      },
+      {
+        "file": "on_8719.ogg",
+        "rpm": 8719.015
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_1059.ogg",
+        "rpm": 1059.488
+      },
+      {
+        "file": "off_1320.ogg",
+        "rpm": 1319.69
+      },
+      {
+        "file": "off_1593.ogg",
+        "rpm": 1592.973
+      },
+      {
+        "file": "off_1799.ogg",
+        "rpm": 1799.002
+      },
+      {
+        "file": "off_2104.ogg",
+        "rpm": 2104.463
+      },
+      {
+        "file": "off_2516.ogg",
+        "rpm": 2515.653
+      },
+      {
+        "file": "off_2915.ogg",
+        "rpm": 2915.388
+      },
+      {
+        "file": "off_3603.ogg",
+        "rpm": 3603.499
+      },
+      {
+        "file": "off_3909.ogg",
+        "rpm": 3909.028
+      },
+      {
+        "file": "off_4502.ogg",
+        "rpm": 4501.777
+      },
+      {
+        "file": "off_5411.ogg",
+        "rpm": 5410.741
+      },
+      {
+        "file": "off_6005.ogg",
+        "rpm": 6005.266
+      },
+      {
+        "file": "off_6601.ogg",
+        "rpm": 6600.849
+      },
+      {
+        "file": "off_7208.ogg",
+        "rpm": 7207.624
+      },
+      {
+        "file": "off_7800.ogg",
+        "rpm": 7800.239
+      },
+      {
+        "file": "off_8401.ogg",
+        "rpm": 8401.263
+      },
+      {
+        "file": "off_8719.ogg",
+        "rpm": 8719.015
+      }
+    ],
+    "idle": {
+      "file": "idle_890.ogg",
+      "rpm": 890
+    },
+    "oneShots": {
+      "start": "start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_1080.ogg",
+        "rpm": 1080
+      },
+      {
+        "file": "gen/on_1365.ogg",
+        "rpm": 1365.377
+      },
+      {
+        "file": "gen/on_1726.ogg",
+        "rpm": 1726.156
+      },
+      {
+        "file": "gen/on_2182.ogg",
+        "rpm": 2182.268
+      },
+      {
+        "file": "gen/on_2759.ogg",
+        "rpm": 2758.915
+      },
+      {
+        "file": "gen/on_3488.ogg",
+        "rpm": 3487.906
+      },
+      {
+        "file": "gen/on_4410.ogg",
+        "rpm": 4409.541
+      },
+      {
+        "file": "gen/on_5575.ogg",
+        "rpm": 5574.703
+      },
+      {
+        "file": "gen/on_7048.ogg",
+        "rpm": 7047.736
+      },
+      {
+        "file": "gen/on_8910.ogg",
+        "rpm": 8910.018
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_1215.ogg",
+        "rpm": 1215.004
+      },
+      {
+        "file": "gen/off_1555.ogg",
+        "rpm": 1554.642
+      },
+      {
+        "file": "gen/off_1989.ogg",
+        "rpm": 1989.231
+      },
+      {
+        "file": "gen/off_2545.ogg",
+        "rpm": 2545.311
+      },
+      {
+        "file": "gen/off_3257.ogg",
+        "rpm": 3256.831
+      },
+      {
+        "file": "gen/off_4167.ogg",
+        "rpm": 4167.245
+      },
+      {
+        "file": "gen/off_5332.ogg",
+        "rpm": 5332.166
+      },
+      {
+        "file": "gen/off_6823.ogg",
+        "rpm": 6822.755
+      },
+      {
+        "file": "gen/off_8730.ogg",
+        "rpm": 8730.039
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_900.ogg",
+      "rpm": 900
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

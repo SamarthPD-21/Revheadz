@@ -1,0 +1,295 @@
+{
+  "id": "mustang_gt",
+  "name": "Ford Mustang GT",
+  "type": "car",
+  "engineType": "5.0 Coyote V8",
+  "description": "The 5.0-litre Coyote V8 in its third-generation form: dual injection, a 7,500 rpm redline and a cross-plane burble that turns into a full-throated howl. Six-speed manual, rear-wheel drive.",
+  "engine": {
+    "cylinders": 8,
+    "idleRpm": 740,
+    "redlineRpm": 7400,
+    "limiterRpm": 7500,
+    "inertia": 0.3,
+    "engineBraking": 0.6,
+    "peakTorqueNm": 569,
+    "crackle": 0.4
+  },
+  "gearbox": {
+    "type": "manual",
+    "ratios": [
+      3.66,
+      2.43,
+      1.69,
+      1.32,
+      1,
+      0.65
+    ],
+    "finalDrive": 3.73,
+    "wheelRadiusM": 0.35,
+    "shiftTimeMs": 260
+  },
+  "dynamics": {
+    "massKg": 1750,
+    "cdA": 0.75,
+    "brakeDecel": 10
+  },
+  "ui": {
+    "accent": "#1e40af",
+    "silhouette": "muscle",
+    "category": "Muscle",
+    "layout": "Cross-plane V8",
+    "displacement": "5.0 L",
+    "powerHp": 460,
+    "make": "Ford",
+    "year": "2018",
+    "recorded": true
+  },
+  "voice": "muscle_v8",
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_998.ogg",
+        "rpm": 998.356
+      },
+      {
+        "file": "on_1227.ogg",
+        "rpm": 1226.601
+      },
+      {
+        "file": "on_1569.ogg",
+        "rpm": 1568.557
+      },
+      {
+        "file": "on_1708.ogg",
+        "rpm": 1707.956
+      },
+      {
+        "file": "on_1881.ogg",
+        "rpm": 1881.191
+      },
+      {
+        "file": "on_2246.ogg",
+        "rpm": 2246.427
+      },
+      {
+        "file": "on_2732.ogg",
+        "rpm": 2732.112
+      },
+      {
+        "file": "on_3108.ogg",
+        "rpm": 3107.602
+      },
+      {
+        "file": "on_3603.ogg",
+        "rpm": 3603.432
+      },
+      {
+        "file": "on_4009.ogg",
+        "rpm": 4008.581
+      },
+      {
+        "file": "on_4506.ogg",
+        "rpm": 4506.176
+      },
+      {
+        "file": "on_5039.ogg",
+        "rpm": 5038.871
+      },
+      {
+        "file": "on_5609.ogg",
+        "rpm": 5608.891
+      },
+      {
+        "file": "on_6204.ogg",
+        "rpm": 6204.203
+      },
+      {
+        "file": "on_6806.ogg",
+        "rpm": 6806.412
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_998.ogg",
+        "rpm": 998.356
+      },
+      {
+        "file": "off_1227.ogg",
+        "rpm": 1226.601
+      },
+      {
+        "file": "off_1569.ogg",
+        "rpm": 1568.557
+      },
+      {
+        "file": "off_1708.ogg",
+        "rpm": 1707.956
+      },
+      {
+        "file": "off_1881.ogg",
+        "rpm": 1881.191
+      },
+      {
+        "file": "off_2246.ogg",
+        "rpm": 2246.427
+      },
+      {
+        "file": "off_2732.ogg",
+        "rpm": 2732.112
+      },
+      {
+        "file": "off_3108.ogg",
+        "rpm": 3107.602
+      },
+      {
+        "file": "off_3603.ogg",
+        "rpm": 3603.432
+      },
+      {
+        "file": "off_4009.ogg",
+        "rpm": 4008.581
+      },
+      {
+        "file": "off_4506.ogg",
+        "rpm": 4506.176
+      },
+      {
+        "file": "off_5039.ogg",
+        "rpm": 5038.871
+      },
+      {
+        "file": "off_5609.ogg",
+        "rpm": 5608.891
+      },
+      {
+        "file": "off_6204.ogg",
+        "rpm": 6204.203
+      },
+      {
+        "file": "off_6806.ogg",
+        "rpm": 6806.412
+      }
+    ],
+    "idle": {
+      "file": "idle_740.ogg",
+      "rpm": 740
+    },
+    "oneShots": {
+      "start": "start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_888.ogg",
+        "rpm": 888.002
+      },
+      {
+        "file": "gen/on_1124.ogg",
+        "rpm": 1124.316
+      },
+      {
+        "file": "gen/on_1424.ogg",
+        "rpm": 1423.524
+      },
+      {
+        "file": "gen/on_1802.ogg",
+        "rpm": 1802.35
+      },
+      {
+        "file": "gen/on_2282.ogg",
+        "rpm": 2281.997
+      },
+      {
+        "file": "gen/on_2889.ogg",
+        "rpm": 2889.299
+      },
+      {
+        "file": "gen/on_3658.ogg",
+        "rpm": 3658.226
+      },
+      {
+        "file": "gen/on_4632.ogg",
+        "rpm": 4631.751
+      },
+      {
+        "file": "gen/on_5864.ogg",
+        "rpm": 5864.351
+      },
+      {
+        "file": "gen/on_7425.ogg",
+        "rpm": 7424.974
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_999.ogg",
+        "rpm": 998.999
+      },
+      {
+        "file": "gen/off_1280.ogg",
+        "rpm": 1280.414
+      },
+      {
+        "file": "gen/off_1641.ogg",
+        "rpm": 1641.084
+      },
+      {
+        "file": "gen/off_2103.ogg",
+        "rpm": 2103.378
+      },
+      {
+        "file": "gen/off_2696.ogg",
+        "rpm": 2695.874
+      },
+      {
+        "file": "gen/off_3455.ogg",
+        "rpm": 3455.289
+      },
+      {
+        "file": "gen/off_4429.ogg",
+        "rpm": 4428.577
+      },
+      {
+        "file": "gen/off_5676.ogg",
+        "rpm": 5676.082
+      },
+      {
+        "file": "gen/off_7275.ogg",
+        "rpm": 7274.98
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_740.ogg",
+      "rpm": 739.998
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

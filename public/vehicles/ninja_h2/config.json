@@ -1,0 +1,307 @@
+{
+  "id": "ninja_h2",
+  "name": "Kawasaki Ninja H2",
+  "type": "bike",
+  "engineType": "998 cc supercharged inline-four",
+  "description": "The only supercharged production superbike: a 998 cc inline-four with a centrifugal blower spinning near 130,000 rpm for 231 hp and that unmistakable whine. Real recordings.",
+  "engine": {
+    "cylinders": 4,
+    "idleRpm": 1300,
+    "redlineRpm": 14000,
+    "limiterRpm": 14300,
+    "inertia": 0.17,
+    "engineBraking": 0.5,
+    "peakTorqueNm": 141,
+    "crackle": 0.5
+  },
+  "gearbox": {
+    "type": "sequential",
+    "ratios": [
+      3.188,
+      2.526,
+      2.045,
+      1.727,
+      1.524,
+      1.36
+    ],
+    "finalDrive": 3.617,
+    "wheelRadiusM": 0.31,
+    "shiftTimeMs": 60
+  },
+  "dynamics": {
+    "massKg": 315,
+    "cdA": 0.36,
+    "brakeDecel": 10
+  },
+  "turbo": {
+    "spoolRpm": 2500,
+    "lagS": 0.06
+  },
+  "ui": {
+    "accent": "#a8a29e",
+    "silhouette": "superbike",
+    "category": "Superbike",
+    "layout": "Inline-4 supercharged",
+    "displacement": "1.0 L",
+    "powerHp": 228,
+    "make": "Kawasaki",
+    "year": "2015",
+    "recorded": true
+  },
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_1820.ogg",
+        "rpm": 1820
+      },
+      {
+        "file": "on_2400.ogg",
+        "rpm": 2400
+      },
+      {
+        "file": "on_3200.ogg",
+        "rpm": 3200
+      },
+      {
+        "file": "on_4200.ogg",
+        "rpm": 4200
+      },
+      {
+        "file": "on_4734.ogg",
+        "rpm": 4734.291
+      },
+      {
+        "file": "on_5278.ogg",
+        "rpm": 5277.826
+      },
+      {
+        "file": "on_5806.ogg",
+        "rpm": 5806.106
+      },
+      {
+        "file": "on_6574.ogg",
+        "rpm": 6574.458
+      },
+      {
+        "file": "on_7518.ogg",
+        "rpm": 7517.743
+      },
+      {
+        "file": "on_8413.ogg",
+        "rpm": 8412.902
+      },
+      {
+        "file": "on_9286.ogg",
+        "rpm": 9285.913
+      },
+      {
+        "file": "on_10198.ogg",
+        "rpm": 10198.219
+      },
+      {
+        "file": "on_11137.ogg",
+        "rpm": 11136.623
+      },
+      {
+        "file": "on_12067.ogg",
+        "rpm": 12067.388
+      },
+      {
+        "file": "on_12881.ogg",
+        "rpm": 12880.51
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_1820.ogg",
+        "rpm": 1820
+      },
+      {
+        "file": "off_2400.ogg",
+        "rpm": 2400
+      },
+      {
+        "file": "off_3200.ogg",
+        "rpm": 3200
+      },
+      {
+        "file": "off_4200.ogg",
+        "rpm": 4200
+      },
+      {
+        "file": "off_4734.ogg",
+        "rpm": 4734.291
+      },
+      {
+        "file": "off_5278.ogg",
+        "rpm": 5277.826
+      },
+      {
+        "file": "off_5806.ogg",
+        "rpm": 5806.106
+      },
+      {
+        "file": "off_6574.ogg",
+        "rpm": 6574.458
+      },
+      {
+        "file": "off_7518.ogg",
+        "rpm": 7517.743
+      },
+      {
+        "file": "off_8413.ogg",
+        "rpm": 8412.902
+      },
+      {
+        "file": "off_9286.ogg",
+        "rpm": 9285.913
+      },
+      {
+        "file": "off_10198.ogg",
+        "rpm": 10198.219
+      },
+      {
+        "file": "off_11137.ogg",
+        "rpm": 11136.623
+      },
+      {
+        "file": "off_12067.ogg",
+        "rpm": 12067.388
+      },
+      {
+        "file": "off_12881.ogg",
+        "rpm": 12880.51
+      }
+    ],
+    "idle": {
+      "file": "idle_1400.ogg",
+      "rpm": 1400
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "voice": "superbike_i4",
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_1320.ogg",
+        "rpm": 1320.005
+      },
+      {
+        "file": "gen/on_1673.ogg",
+        "rpm": 1673.448
+      },
+      {
+        "file": "gen/on_2122.ogg",
+        "rpm": 2121.548
+      },
+      {
+        "file": "gen/on_2690.ogg",
+        "rpm": 2689.632
+      },
+      {
+        "file": "gen/on_3410.ogg",
+        "rpm": 3409.826
+      },
+      {
+        "file": "gen/on_4323.ogg",
+        "rpm": 4322.872
+      },
+      {
+        "file": "gen/on_5480.ogg",
+        "rpm": 5480.375
+      },
+      {
+        "file": "gen/on_6948.ogg",
+        "rpm": 6947.899
+      },
+      {
+        "file": "gen/on_8808.ogg",
+        "rpm": 8808.322
+      },
+      {
+        "file": "gen/on_11167.ogg",
+        "rpm": 11166.881
+      },
+      {
+        "file": "gen/on_14157.ogg",
+        "rpm": 14156.955
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_1485.ogg",
+        "rpm": 1485.001
+      },
+      {
+        "file": "gen/off_1903.ogg",
+        "rpm": 1903.471
+      },
+      {
+        "file": "gen/off_2440.ogg",
+        "rpm": 2439.88
+      },
+      {
+        "file": "gen/off_3127.ogg",
+        "rpm": 3127.425
+      },
+      {
+        "file": "gen/off_4009.ogg",
+        "rpm": 4008.749
+      },
+      {
+        "file": "gen/off_5138.ogg",
+        "rpm": 5138.397
+      },
+      {
+        "file": "gen/off_6586.ogg",
+        "rpm": 6586.372
+      },
+      {
+        "file": "gen/off_8442.ogg",
+        "rpm": 8442.422
+      },
+      {
+        "file": "gen/off_10821.ogg",
+        "rpm": 10821.471
+      },
+      {
+        "file": "gen/off_13871.ogg",
+        "rpm": 13870.969
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_1100.ogg",
+      "rpm": 1100.004
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

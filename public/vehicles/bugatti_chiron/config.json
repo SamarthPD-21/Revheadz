@@ -1,0 +1,152 @@
+{
+  "id": "bugatti_chiron",
+  "name": "Bugatti Chiron",
+  "type": "car",
+  "engineType": "8.0 L quad-turbo W16, 1,500 hp",
+  "description": "Sixteen cylinders, four turbochargers and 1,600 Nm: the Chiron's 8.0-litre W16 is a rolling power station that gets to 420 km/h.",
+  "engine": {
+    "cylinders": 16,
+    "idleRpm": 850,
+    "redlineRpm": 6700,
+    "limiterRpm": 6800,
+    "inertia": 0.3,
+    "engineBraking": 0.45,
+    "peakTorqueNm": 1600,
+    "crackle": 0.25
+  },
+  "gearbox": {
+    "type": "dct",
+    "ratios": [
+      3.15,
+      2.27,
+      1.68,
+      1.31,
+      1.05,
+      0.88,
+      0.72
+    ],
+    "finalDrive": 3,
+    "wheelRadiusM": 0.36,
+    "shiftTimeMs": 100
+  },
+  "dynamics": {
+    "massKg": 1995,
+    "cdA": 0.75,
+    "brakeDecel": 14
+  },
+  "turbo": {
+    "spoolRpm": 2200,
+    "lagS": 0.4,
+    "release": "pssh"
+  },
+  "ui": {
+    "accent": "#3b5bdb",
+    "silhouette": "supercar",
+    "category": "Hypercar",
+    "layout": "W16 quad-turbo",
+    "displacement": "8.0 L",
+    "powerHp": 1479,
+    "make": "Bugatti",
+    "year": "2016",
+    "recorded": false
+  },
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_1020.ogg",
+        "rpm": 1019.997
+      },
+      {
+        "file": "on_1291.ogg",
+        "rpm": 1291.35
+      },
+      {
+        "file": "on_1635.ogg",
+        "rpm": 1634.878
+      },
+      {
+        "file": "on_2070.ogg",
+        "rpm": 2069.81
+      },
+      {
+        "file": "on_2620.ogg",
+        "rpm": 2620.426
+      },
+      {
+        "file": "on_3318.ogg",
+        "rpm": 3317.522
+      },
+      {
+        "file": "on_4200.ogg",
+        "rpm": 4200.079
+      },
+      {
+        "file": "on_5317.ogg",
+        "rpm": 5317.433
+      },
+      {
+        "file": "on_6732.ogg",
+        "rpm": 6732
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_1147.ogg",
+        "rpm": 1147.496
+      },
+      {
+        "file": "off_1473.ogg",
+        "rpm": 1473.189
+      },
+      {
+        "file": "off_1891.ogg",
+        "rpm": 1891.298
+      },
+      {
+        "file": "off_2428.ogg",
+        "rpm": 2428.091
+      },
+      {
+        "file": "off_3117.ogg",
+        "rpm": 3117.23
+      },
+      {
+        "file": "off_4002.ogg",
+        "rpm": 4001.966
+      },
+      {
+        "file": "off_5138.ogg",
+        "rpm": 5137.816
+      },
+      {
+        "file": "off_6596.ogg",
+        "rpm": 6596.011
+      }
+    ],
+    "idle": {
+      "file": "idle_850.ogg",
+      "rpm": 849.997
+    },
+    "oneShots": {
+      "start": "start.ogg",
+      "stop": "stop.ogg",
+      "shift": [
+        "shift_1.ogg",
+        "shift_2.ogg"
+      ],
+      "backfire": [
+        "pop_1.ogg",
+        "pop_2.ogg",
+        "pop_3.ogg"
+      ],
+      "blowoff": [
+        "bov_1.ogg",
+        "bov_2.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "voice": "twin_turbo_v6"
+}

@@ -1,0 +1,293 @@
+{
+  "id": "corvette_z06",
+  "name": "Chevrolet Corvette Z06",
+  "type": "car",
+  "engineType": "5.5 LT6 flat-plane V8",
+  "description": "The LT6: a 5.5-litre flat-plane-crank V8 with dual overhead cams that revs to 8,600 rpm, the most powerful naturally aspirated V8 ever put in a production car. Mid-engined, eight-speed dual-clutch.",
+  "engine": {
+    "cylinders": 8,
+    "idleRpm": 925,
+    "redlineRpm": 8500,
+    "limiterRpm": 8600,
+    "inertia": 0.17,
+    "engineBraking": 0.6,
+    "peakTorqueNm": 623,
+    "crackle": 0.5
+  },
+  "gearbox": {
+    "type": "dct",
+    "ratios": [
+      2.91,
+      1.76,
+      1.22,
+      0.88,
+      0.65,
+      0.51,
+      0.4,
+      0.33
+    ],
+    "finalDrive": 5.56,
+    "wheelRadiusM": 0.36,
+    "shiftTimeMs": 100
+  },
+  "dynamics": {
+    "massKg": 1660,
+    "cdA": 0.75,
+    "brakeDecel": 12
+  },
+  "ui": {
+    "accent": "#10b981",
+    "silhouette": "supercar",
+    "category": "Supercar",
+    "layout": "Flat-plane V8",
+    "displacement": "5.5 L",
+    "powerHp": 670,
+    "make": "Chevrolet",
+    "year": "2023",
+    "recorded": true
+  },
+  "voice": "gt_racer",
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_1220.ogg",
+        "rpm": 1220
+      },
+      {
+        "file": "on_1599.ogg",
+        "rpm": 1598.606
+      },
+      {
+        "file": "on_2129.ogg",
+        "rpm": 2129.103
+      },
+      {
+        "file": "on_2554.ogg",
+        "rpm": 2553.531
+      },
+      {
+        "file": "on_2993.ogg",
+        "rpm": 2992.787
+      },
+      {
+        "file": "on_3311.ogg",
+        "rpm": 3311.319
+      },
+      {
+        "file": "on_3647.ogg",
+        "rpm": 3647.379
+      },
+      {
+        "file": "on_3881.ogg",
+        "rpm": 3880.691
+      },
+      {
+        "file": "on_4329.ogg",
+        "rpm": 4329.324
+      },
+      {
+        "file": "on_5306.ogg",
+        "rpm": 5306.376
+      },
+      {
+        "file": "on_5921.ogg",
+        "rpm": 5920.656
+      },
+      {
+        "file": "on_6384.ogg",
+        "rpm": 6383.756
+      },
+      {
+        "file": "on_6925.ogg",
+        "rpm": 6925.337
+      },
+      {
+        "file": "on_7821.ogg",
+        "rpm": 7821.229
+      },
+      {
+        "file": "on_8131.ogg",
+        "rpm": 8131.177
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_1220.ogg",
+        "rpm": 1220
+      },
+      {
+        "file": "off_1599.ogg",
+        "rpm": 1598.606
+      },
+      {
+        "file": "off_2129.ogg",
+        "rpm": 2129.103
+      },
+      {
+        "file": "off_2554.ogg",
+        "rpm": 2553.531
+      },
+      {
+        "file": "off_2993.ogg",
+        "rpm": 2992.787
+      },
+      {
+        "file": "off_3311.ogg",
+        "rpm": 3311.319
+      },
+      {
+        "file": "off_3647.ogg",
+        "rpm": 3647.379
+      },
+      {
+        "file": "off_3881.ogg",
+        "rpm": 3880.691
+      },
+      {
+        "file": "off_4329.ogg",
+        "rpm": 4329.324
+      },
+      {
+        "file": "off_5306.ogg",
+        "rpm": 5306.376
+      },
+      {
+        "file": "off_5921.ogg",
+        "rpm": 5920.656
+      },
+      {
+        "file": "off_6384.ogg",
+        "rpm": 6383.756
+      },
+      {
+        "file": "off_6925.ogg",
+        "rpm": 6925.337
+      },
+      {
+        "file": "off_7821.ogg",
+        "rpm": 7821.229
+      },
+      {
+        "file": "off_8131.ogg",
+        "rpm": 8131.177
+      }
+    ],
+    "idle": {
+      "file": "idle_925.ogg",
+      "rpm": 925
+    },
+    "oneShots": {
+      "start": "start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_1110.ogg",
+        "rpm": 1110.005
+      },
+      {
+        "file": "gen/on_1392.ogg",
+        "rpm": 1391.991
+      },
+      {
+        "file": "gen/on_1746.ogg",
+        "rpm": 1745.613
+      },
+      {
+        "file": "gen/on_2189.ogg",
+        "rpm": 2189.079
+      },
+      {
+        "file": "gen/on_2745.ogg",
+        "rpm": 2745.176
+      },
+      {
+        "file": "gen/on_3443.ogg",
+        "rpm": 3442.584
+      },
+      {
+        "file": "gen/on_4317.ogg",
+        "rpm": 4317.131
+      },
+      {
+        "file": "gen/on_5414.ogg",
+        "rpm": 5413.862
+      },
+      {
+        "file": "gen/on_6789.ogg",
+        "rpm": 6789.223
+      },
+      {
+        "file": "gen/on_8514.ogg",
+        "rpm": 8513.997
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_1249.ogg",
+        "rpm": 1248.749
+      },
+      {
+        "file": "gen/off_1638.ogg",
+        "rpm": 1637.96
+      },
+      {
+        "file": "gen/off_2148.ogg",
+        "rpm": 2148.478
+      },
+      {
+        "file": "gen/off_2818.ogg",
+        "rpm": 2818.106
+      },
+      {
+        "file": "gen/off_3696.ogg",
+        "rpm": 3696.473
+      },
+      {
+        "file": "gen/off_4849.ogg",
+        "rpm": 4848.58
+      },
+      {
+        "file": "gen/off_6360.ogg",
+        "rpm": 6359.794
+      },
+      {
+        "file": "gen/off_8342.ogg",
+        "rpm": 8341.961
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_925.ogg",
+      "rpm": 924.999
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

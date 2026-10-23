@@ -1,0 +1,364 @@
+{
+  "supra_mk4": {
+    "pitchRange": [
+      4,
+      130
+    ],
+    "offLoadLowpassHz": 1500,
+    "loopLengthBias": 0.04,
+    "sources": {
+      "dyno": {
+        "title": "Stock 2JZ-GTE VVTi base line dyno",
+        "author": "NgoFcukinWay",
+        "youtube": "B_9vHJBKJa4",
+        "cacheName": "yt_supra_mk4_B_9vHJBKJa4.flac"
+      },
+      "stock": {
+        "title": "Toyota Supra MKIV Twin Turbo Stock Exhaust vs TRD 2nd Gen Exhaust Sound",
+        "author": "ToyRocket27",
+        "youtube": "PRHSUscHrJ8",
+        "cacheName": "yt_supra_mk4_PRHSUscHrJ8.flac"
+      },
+      "dynoA": {
+        "title": "Stock 2JZ-GTE VVTi base line dyno",
+        "author": "NgoFcukinWay",
+        "youtube": "B_9vHJBKJa4",
+        "cacheName": "yt_supra_mk4_B_9vHJBKJa4.flac",
+        "anchors": [
+          [
+            9.4,
+            2470
+          ],
+          [
+            9.75,
+            2510
+          ],
+          [
+            10.1,
+            2585
+          ],
+          [
+            10.45,
+            2682
+          ],
+          [
+            10.8,
+            2777
+          ],
+          [
+            11.15,
+            2854
+          ],
+          [
+            11.5,
+            2876
+          ],
+          [
+            12.85,
+            2232
+          ],
+          [
+            13.35,
+            2283
+          ],
+          [
+            13.85,
+            2344
+          ],
+          [
+            14.35,
+            2412
+          ],
+          [
+            14.85,
+            2486
+          ],
+          [
+            15.35,
+            2553
+          ],
+          [
+            15.85,
+            2618
+          ],
+          [
+            16.35,
+            2691
+          ],
+          [
+            16.85,
+            2767
+          ],
+          [
+            17.35,
+            2862
+          ],
+          [
+            17.85,
+            2991
+          ],
+          [
+            18.35,
+            3142
+          ],
+          [
+            18.85,
+            3328
+          ],
+          [
+            19.35,
+            3543
+          ],
+          [
+            19.85,
+            3782
+          ],
+          [
+            20.35,
+            4033
+          ],
+          [
+            20.85,
+            4287
+          ],
+          [
+            21.35,
+            4527
+          ],
+          [
+            21.85,
+            4814
+          ],
+          [
+            22.35,
+            5069
+          ],
+          [
+            22.85,
+            5332
+          ],
+          [
+            23.35,
+            5568
+          ],
+          [
+            23.85,
+            5775
+          ],
+          [
+            24.35,
+            5971
+          ],
+          [
+            24.85,
+            6140
+          ],
+          [
+            25.35,
+            6330
+          ],
+          [
+            25.7,
+            6460
+          ]
+        ],
+        "pitchRange": [
+          4,
+          131
+        ]
+      }
+    },
+    "loops": [
+      {
+        "kind": "idle",
+        "source": "stock",
+        "t": [
+          24,
+          33
+        ],
+        "flatten": false,
+        "rpm": 1060
+      },
+      {
+        "kind": "on",
+        "source": "stock",
+        "ramp": [
+          51.4,
+          55.3
+        ],
+        "targets": [
+          1400
+        ],
+        "maxHalfS": 0.4,
+        "tol": 0.06
+      },
+      {
+        "kind": "on",
+        "source": "stock",
+        "t": [
+          56.0,
+          59.2
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dynoA",
+        "ramp": [
+          12.75,
+          25.8
+        ],
+        "targets": [
+          2300
+        ],
+        "maxHalfS": 0.5,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "dynoA",
+        "ramp": [
+          12.75,
+          25.8
+        ],
+        "targets": [
+          2600
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "dynoA",
+        "ramp": [
+          12.75,
+          25.8
+        ],
+        "targets": [
+          2800
+        ],
+        "maxHalfS": 0.65,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "dynoA",
+        "ramp": [
+          12.75,
+          25.8
+        ],
+        "targets": [
+          3200
+        ],
+        "maxHalfS": 0.5,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          12.75,
+          25.8
+        ],
+        "targets": [
+          3500
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          12.75,
+          25.8
+        ],
+        "targets": [
+          3800
+        ],
+        "maxHalfS": 0.65,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "dynoA",
+        "ramp": [
+          12.75,
+          25.8
+        ],
+        "targets": [
+          4400
+        ],
+        "maxHalfS": 0.65,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          12.75,
+          25.8
+        ],
+        "targets": [
+          5000
+        ],
+        "maxHalfS": 0.5,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "dynoA",
+        "ramp": [
+          12.75,
+          25.8
+        ],
+        "targets": [
+          5300
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          12.75,
+          25.8
+        ],
+        "targets": [
+          6000
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "dynoA",
+        "ramp": [
+          12.75,
+          25.8
+        ],
+        "targets": [
+          6200
+        ],
+        "maxHalfS": 0.5,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "shiftFrom": 2303,
+        "rpm": 1950
+      }
+    ],
+    "oneShots": {
+      "start": {
+        "source": "stock",
+        "t": [
+          7.37,
+          12.5
+        ],
+        "fadeIn": 0.01,
+        "fadeOut": 0.4
+      }
+    }
+  }
+}

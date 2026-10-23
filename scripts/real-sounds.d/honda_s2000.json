@@ -1,0 +1,493 @@
+{
+  "honda_s2000": {
+    "pitchRange": [
+      4,
+      130
+    ],
+    "offLoadLowpassHz": 2200,
+    "loopLengthBias": 0.04,
+    "sources": {
+      "dyno": {
+        "title": "honda s2000 dyno",
+        "author": "ketkuvelmu",
+        "youtube": "CdqsZUrwJgA",
+        "cacheName": "yt_honda_s2000_CdqsZUrwJgA.flac"
+      },
+      "ap1dyno": {
+        "title": "2002 s2000 AP1 F20c1 Dyno 228whp / 236whp WCF",
+        "author": "Patrick Hidden",
+        "youtube": "zfgSFM-qD5U",
+        "cacheName": "yt_honda_s2000_zfgSFM-qD5U.flac"
+      },
+      "warm": {
+        "title": "Cold Starting a 2000 Honda S2000 AP1 | 2.0L DOHC VTEC",
+        "author": "Neighborhood Car Reviews",
+        "youtube": "ZdTPdNOkQh0",
+        "cacheName": "yt_honda_s2000_ZdTPdNOkQh0.flac"
+      },
+      "cold": {
+        "title": "S2000 Stock Exhaust - Cold Start (No Revs)",
+        "author": "Aspireonthego",
+        "youtube": "XOe_R7f7t4s",
+        "cacheName": "yt_honda_s2000_XOe_R7f7t4s.flac"
+      },
+      "dynoA": {
+        "title": "honda s2000 dyno",
+        "author": "ketkuvelmu",
+        "youtube": "CdqsZUrwJgA",
+        "cacheName": "yt_honda_s2000_CdqsZUrwJgA.flac",
+        "pitchRange": [
+          4,
+          131
+        ],
+        "anchors": [
+          [
+            24.8,
+            2042
+          ],
+          [
+            25.2,
+            2073
+          ],
+          [
+            25.6,
+            2121
+          ],
+          [
+            26.0,
+            2197
+          ],
+          [
+            26.4,
+            2342
+          ],
+          [
+            26.8,
+            2467
+          ],
+          [
+            27.2,
+            2611
+          ],
+          [
+            27.6,
+            2762
+          ],
+          [
+            28.0,
+            2914
+          ],
+          [
+            28.4,
+            3084
+          ],
+          [
+            28.8,
+            3233
+          ],
+          [
+            29.2,
+            3420
+          ],
+          [
+            29.6,
+            3580
+          ],
+          [
+            30.0,
+            3740
+          ],
+          [
+            30.4,
+            3893
+          ],
+          [
+            30.8,
+            4033
+          ],
+          [
+            31.2,
+            4196
+          ],
+          [
+            31.6,
+            4336
+          ],
+          [
+            32.0,
+            4494
+          ],
+          [
+            32.4,
+            4651
+          ],
+          [
+            32.8,
+            4800
+          ],
+          [
+            33.2,
+            4971
+          ],
+          [
+            33.6,
+            5134
+          ],
+          [
+            34.0,
+            5324
+          ],
+          [
+            34.4,
+            5517
+          ],
+          [
+            34.8,
+            5701
+          ],
+          [
+            35.2,
+            5896
+          ],
+          [
+            35.6,
+            6103
+          ],
+          [
+            36.0,
+            6335
+          ],
+          [
+            36.4,
+            6583
+          ],
+          [
+            36.8,
+            6807
+          ],
+          [
+            37.2,
+            7044
+          ],
+          [
+            37.6,
+            7277
+          ],
+          [
+            38.0,
+            7490
+          ],
+          [
+            38.4,
+            7689
+          ],
+          [
+            38.8,
+            7892
+          ],
+          [
+            39.2,
+            8084
+          ],
+          [
+            39.6,
+            8257
+          ],
+          [
+            40.0,
+            8404
+          ],
+          [
+            40.4,
+            8554
+          ],
+          [
+            40.8,
+            8686
+          ],
+          [
+            41.2,
+            8795
+          ],
+          [
+            41.6,
+            8867
+          ]
+        ]
+      }
+    },
+    "loops": [
+      {
+        "kind": "idle",
+        "source": "warm",
+        "t": [
+          27.3,
+          32.5
+        ],
+        "flatten": false,
+        "rpm": 890
+      },
+      {
+        "kind": "on",
+        "source": "ap1dyno",
+        "t": [
+          0.4,
+          1.2
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "ap1dyno",
+        "t": [
+          1.25,
+          1.88
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "warm",
+        "t": [
+          89.7,
+          90.5
+        ],
+        "matchTo": {
+          "source": "ap1dyno",
+          "t": [
+            2.2,
+            19.8
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "cold",
+        "t": [
+          28,
+          33
+        ],
+        "matchTo": {
+          "source": "ap1dyno",
+          "t": [
+            2.2,
+            19.8
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          24.75,
+          41.7
+        ],
+        "targets": [
+          2100
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "ap1dyno",
+          "t": [
+            2.2,
+            19.8
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dynoA",
+        "ramp": [
+          24.8,
+          41.6
+        ],
+        "targets": [
+          2500
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "ap1dyno",
+          "t": [
+            2.2,
+            19.8
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dynoA",
+        "ramp": [
+          24.8,
+          41.6
+        ],
+        "targets": [
+          2900
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "ap1dyno",
+          "t": [
+            2.2,
+            19.8
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "ap1dyno",
+        "ramp": [
+          1.9,
+          20.2
+        ],
+        "targets": [
+          3600
+        ],
+        "maxHalfS": 0.75,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "ap1dyno",
+        "ramp": [
+          1.9,
+          20.2
+        ],
+        "targets": [
+          3900
+        ],
+        "maxHalfS": 0.55,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "ap1dyno",
+        "ramp": [
+          1.9,
+          20.2
+        ],
+        "targets": [
+          4500
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "dynoA",
+        "ramp": [
+          24.8,
+          41.6
+        ],
+        "targets": [
+          5400
+        ],
+        "maxHalfS": 0.55,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "ap1dyno",
+          "t": [
+            2.2,
+            19.8
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          24.75,
+          41.7
+        ],
+        "targets": [
+          6000
+        ],
+        "maxHalfS": 0.55,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "ap1dyno",
+          "t": [
+            2.2,
+            19.8
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "ap1dyno",
+        "ramp": [
+          1.9,
+          20.2
+        ],
+        "targets": [
+          6600
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "ap1dyno",
+        "ramp": [
+          1.9,
+          20.2
+        ],
+        "targets": [
+          7200
+        ],
+        "maxHalfS": 0.55,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "ap1dyno",
+        "ramp": [
+          1.9,
+          20.2
+        ],
+        "targets": [
+          7800
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "ap1dyno",
+        "ramp": [
+          1.9,
+          20.2
+        ],
+        "targets": [
+          8400
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "ap1dyno",
+        "ramp": [
+          1.9,
+          20.2
+        ],
+        "targets": [
+          8700
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08
+      }
+    ],
+    "oneShots": {
+      "start": {
+        "source": "cold",
+        "t": [
+          5.7,
+          11.0
+        ],
+        "fadeIn": 0.02,
+        "fadeOut": 0.4
+      }
+    }
+  }
+}

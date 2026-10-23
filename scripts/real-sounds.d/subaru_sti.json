@@ -1,0 +1,269 @@
+{
+  "subaru_sti": {
+    "pitchRange": [
+      4,
+      130
+    ],
+    "offLoadLowpassHz": 1400,
+    "loopLengthBias": 0.04,
+    "sources": {
+      "tuned": {
+        "title": "Stock Turbo STI Dyno Tuned by Scott Siegel 2",
+        "author": "Kevlar",
+        "youtube": "_AX51oOXzcQ",
+        "cacheName": "yt_subaru_sti__AX51oOXzcQ.flac"
+      },
+      "dyno": {
+        "title": "dyno run subaru sti",
+        "author": "darthhandsom33",
+        "youtube": "iUiPC32Uajs",
+        "cacheName": "yt_subaru_sti_iUiPC32Uajs.flac"
+      },
+      "stock": {
+        "title": "Subaru Impreza WRX STi 2006 Stock Exhaust Sound",
+        "author": "killgoth2445",
+        "youtube": "ieXxZRnIdVo",
+        "cacheName": "yt_subaru_sti_ieXxZRnIdVo.flac"
+      },
+      "cold": {
+        "title": "Cold start up stock exhaust sound / 2014 Subaru Impreza WRX STi Sedan WRB",
+        "author": "NyiNZaw",
+        "youtube": "ZdfxVj5tmhQ",
+        "cacheName": "yt_subaru_sti_ZdfxVj5tmhQ.flac"
+      }
+    },
+    "loops": [
+      {
+        "kind": "idle",
+        "source": "stock",
+        "t": [
+          7,
+          20
+        ],
+        "flatten": false,
+        "rpm": 1050
+      },
+      {
+        "kind": "on",
+        "source": "cold",
+        "t": [
+          30.0,
+          34.0
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "tuned",
+        "ramp": [
+          15.4,
+          32.3
+        ],
+        "targets": [
+          1900
+        ],
+        "maxHalfS": 0.55,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "tuned",
+        "ramp": [
+          15.4,
+          32.3
+        ],
+        "targets": [
+          2300
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          27.4,
+          37.8
+        ],
+        "targets": [
+          2700
+        ],
+        "maxHalfS": 0.75,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "tuned",
+          "t": [
+            16,
+            32
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          27.4,
+          37.8
+        ],
+        "targets": [
+          2900
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "tuned",
+          "t": [
+            16,
+            32
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "tuned",
+        "ramp": [
+          15.4,
+          32.3
+        ],
+        "targets": [
+          3300
+        ],
+        "maxHalfS": 0.75,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "tuned",
+        "ramp": [
+          15.4,
+          32.3
+        ],
+        "targets": [
+          3900
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          27.4,
+          37.8
+        ],
+        "targets": [
+          4300
+        ],
+        "maxHalfS": 0.55,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "tuned",
+          "t": [
+            16,
+            32
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "tuned",
+        "ramp": [
+          15.4,
+          32.3
+        ],
+        "targets": [
+          4700
+        ],
+        "maxHalfS": 0.75,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "tuned",
+        "ramp": [
+          15.4,
+          32.3
+        ],
+        "targets": [
+          5100
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          27.4,
+          37.8
+        ],
+        "targets": [
+          5500
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08,
+        "matchTo": {
+          "source": "tuned",
+          "t": [
+            16,
+            32
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "tuned",
+        "ramp": [
+          15.4,
+          32.3
+        ],
+        "targets": [
+          5900
+        ],
+        "maxHalfS": 0.55,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "tuned",
+        "ramp": [
+          15.4,
+          32.3
+        ],
+        "targets": [
+          6300
+        ],
+        "maxHalfS": 0.55,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "source": "tuned",
+        "ramp": [
+          15.4,
+          32.3
+        ],
+        "targets": [
+          6900
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.08
+      },
+      {
+        "kind": "on",
+        "shiftFrom": 1600,
+        "rpm": 1300
+      }
+    ],
+    "oneShots": {
+      "start": {
+        "source": "cold",
+        "t": [
+          13.2,
+          18.5
+        ],
+        "fadeIn": 0.02,
+        "fadeOut": 0.4
+      }
+    }
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "lexus_lfa": {
+    "pitchRange": [
+      4,
+      130
+    ],
+    "offLoadLowpassHz": 1900,
+    "loopLengthBias": 0.05,
+    "sources": {
+      "dyno": {
+        "title": "2012 Lexus LFA Whitest White Dyno Run 1 @ SP Engineering",
+        "author": "pshu007",
+        "youtube": "IuDn3vE93cA",
+        "cacheName": "yt_lexus_lfa_IuDn3vE93cA.flac"
+      },
+      "forged": {
+        "title": "Lexus LFA Dyno - Forged Performance",
+        "author": "ARFNSX",
+        "youtube": "uMQ0UmMCSbg",
+        "cacheName": "yt_lexus_lfa_uMQ0UmMCSbg.flac"
+      },
+      "onboard": {
+        "title": "200 MPH in a Lexus LFA",
+        "author": "MotorTrend Channel",
+        "youtube": "syayxE5xwDA",
+        "cacheName": "yt_lexus_lfa_syayxE5xwDA.flac"
+      },
+      "start": {
+        "title": "Lexus LFA: start-up + monster revs!",
+        "author": "MTHRFKNWIN",
+        "youtube": "KJRkEPeIyjc",
+        "cacheName": "yt_lexus_lfa_KJRkEPeIyjc.flac"
+      },
+      "accel": {
+        "title": "Lexus LFA full-acceleration sound up to 270km/h.",
+        "author": "CARGRAPHICcojp",
+        "youtube": "bpv7N8smafY",
+        "cacheName": "yt_lexus_lfa_bpv7N8smafY.flac"
+      }
+    },
+    "loops": [
+      {
+        "kind": "idle",
+        "source": "accel",
+        "t": [
+          7.55,
+          11.0
+        ],
+        "flatten": false
+      },
+      {
+        "kind": "on",
+        "source": "start",
+        "t": [
+          15.8,
+          16.6
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            24,
+            34
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "forged",
+        "t": [
+          67.9,
+          68.6
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "accel",
+        "t": [
+          4.6,
+          7.1
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            24,
+            34
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "t": [
+          59.4,
+          60.4
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "onboard",
+        "ramp": [
+          12.5,
+          20
+        ],
+        "targets": [
+          2350,
+          2650
+        ],
+        "maxHalfS": 0.9,
+        "tol": 0.05,
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            24,
+            34
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          23.2,
+          38.8
+        ],
+        "targets": [
+          3050,
+          3500,
+          4700,
+          5400,
+          6100,
+          6900,
+          7700,
+          8500,
+          9100
+        ],
+        "maxHalfS": 0.5,
+        "tol": 0.07
+      },
+      {
+        "kind": "on",
+        "source": "forged",
+        "t": [
+          48.85,
+          49.75
+        ]
+      }
+    ],
+    "oneShots": {
+      "start": {
+        "source": "start",
+        "t": [
+          13.95,
+          18.3
+        ],
+        "fadeIn": 0.02,
+        "fadeOut": 1
+      }
+    }
+  }
+}

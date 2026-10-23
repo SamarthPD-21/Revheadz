@@ -1,0 +1,284 @@
+{
+  "id": "audi_r8_v10",
+  "name": "Audi R8 V10 Plus",
+  "type": "car",
+  "engineType": "Naturally aspirated V10",
+  "description": "Audi's 5.2 FSI V10, shared with the Huracan, makes 610 PS and wails to 8,700 rpm through a 7-speed S tronic dual-clutch and quattro AWD.",
+  "engine": {
+    "cylinders": 10,
+    "idleRpm": 900,
+    "redlineRpm": 8500,
+    "limiterRpm": 8700,
+    "inertia": 0.18,
+    "engineBraking": 0.55,
+    "peakTorqueNm": 560,
+    "crackle": 0.6
+  },
+  "gearbox": {
+    "type": "dct",
+    "ratios": [
+      3.13,
+      2.59,
+      1.96,
+      1.57,
+      1.29,
+      1.09,
+      0.88
+    ],
+    "finalDrive": 3.6,
+    "wheelRadiusM": 0.34,
+    "shiftTimeMs": 110
+  },
+  "dynamics": {
+    "massKg": 1555,
+    "cdA": 0.68,
+    "brakeDecel": 11.5
+  },
+  "ui": {
+    "accent": "#3b82f6",
+    "silhouette": "supercar",
+    "category": "Supercar",
+    "layout": "V10",
+    "displacement": "5.2 L",
+    "powerHp": 602,
+    "make": "Audi",
+    "year": "2016",
+    "recorded": true
+  },
+  "voice": "v10_supercar",
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_1200.ogg",
+        "rpm": 1199.971
+      },
+      {
+        "file": "on_1414.ogg",
+        "rpm": 1413.575
+      },
+      {
+        "file": "on_1778.ogg",
+        "rpm": 1778.302
+      },
+      {
+        "file": "on_2171.ogg",
+        "rpm": 2170.505
+      },
+      {
+        "file": "on_2487.ogg",
+        "rpm": 2487.409
+      },
+      {
+        "file": "on_2790.ogg",
+        "rpm": 2789.926
+      },
+      {
+        "file": "on_3303.ogg",
+        "rpm": 3303.192
+      },
+      {
+        "file": "on_3919.ogg",
+        "rpm": 3918.515
+      },
+      {
+        "file": "on_4506.ogg",
+        "rpm": 4505.862
+      },
+      {
+        "file": "on_5258.ogg",
+        "rpm": 5258.024
+      },
+      {
+        "file": "on_5937.ogg",
+        "rpm": 5937.039
+      },
+      {
+        "file": "on_6689.ogg",
+        "rpm": 6688.761
+      },
+      {
+        "file": "on_7305.ogg",
+        "rpm": 7304.762
+      },
+      {
+        "file": "on_8015.ogg",
+        "rpm": 8014.985
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_1200.ogg",
+        "rpm": 1199.971
+      },
+      {
+        "file": "off_1414.ogg",
+        "rpm": 1413.575
+      },
+      {
+        "file": "off_1778.ogg",
+        "rpm": 1778.302
+      },
+      {
+        "file": "off_2171.ogg",
+        "rpm": 2170.505
+      },
+      {
+        "file": "off_2487.ogg",
+        "rpm": 2487.409
+      },
+      {
+        "file": "off_2790.ogg",
+        "rpm": 2789.926
+      },
+      {
+        "file": "off_3303.ogg",
+        "rpm": 3303.192
+      },
+      {
+        "file": "off_3919.ogg",
+        "rpm": 3918.515
+      },
+      {
+        "file": "off_4506.ogg",
+        "rpm": 4505.862
+      },
+      {
+        "file": "off_5258.ogg",
+        "rpm": 5258.024
+      },
+      {
+        "file": "off_5937.ogg",
+        "rpm": 5937.039
+      },
+      {
+        "file": "off_6689.ogg",
+        "rpm": 6688.761
+      },
+      {
+        "file": "off_7305.ogg",
+        "rpm": 7304.762
+      },
+      {
+        "file": "off_8015.ogg",
+        "rpm": 8014.985
+      }
+    ],
+    "idle": {
+      "file": "idle_883.ogg",
+      "rpm": 883.112
+    },
+    "oneShots": {
+      "start": "start.ogg",
+      "stop": "stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_1080.ogg",
+        "rpm": 1080
+      },
+      {
+        "file": "gen/on_1360.ogg",
+        "rpm": 1360.243
+      },
+      {
+        "file": "gen/on_1713.ogg",
+        "rpm": 1713.208
+      },
+      {
+        "file": "gen/on_2158.ogg",
+        "rpm": 2157.747
+      },
+      {
+        "file": "gen/on_2718.ogg",
+        "rpm": 2717.64
+      },
+      {
+        "file": "gen/on_3423.ogg",
+        "rpm": 3422.832
+      },
+      {
+        "file": "gen/on_4311.ogg",
+        "rpm": 4310.997
+      },
+      {
+        "file": "gen/on_5430.ogg",
+        "rpm": 5429.634
+      },
+      {
+        "file": "gen/on_6838.ogg",
+        "rpm": 6838.499
+      },
+      {
+        "file": "gen/on_8613.ogg",
+        "rpm": 8613.02
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_1215.ogg",
+        "rpm": 1215.004
+      },
+      {
+        "file": "gen/off_1603.ogg",
+        "rpm": 1602.589
+      },
+      {
+        "file": "gen/off_2114.ogg",
+        "rpm": 2113.821
+      },
+      {
+        "file": "gen/off_2788.ogg",
+        "rpm": 2788.119
+      },
+      {
+        "file": "gen/off_3678.ogg",
+        "rpm": 3677.519
+      },
+      {
+        "file": "gen/off_4851.ogg",
+        "rpm": 4850.642
+      },
+      {
+        "file": "gen/off_6398.ogg",
+        "rpm": 6398.005
+      },
+      {
+        "file": "gen/off_8439.ogg",
+        "rpm": 8438.997
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_900.ogg",
+      "rpm": 900
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

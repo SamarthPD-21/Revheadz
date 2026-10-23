@@ -1,3 +1,23 @@
+import supraMk4 from "../../public/vehicles/supra_mk4/config.json";
+import skylineR34 from "../../public/vehicles/skyline_r34/config.json";
+import ferrariF40 from "../../public/vehicles/ferrari_f40/config.json";
+import lexusLfa from "../../public/vehicles/lexus_lfa/config.json";
+import porscheGt3rs from "../../public/vehicles/porsche_gt3rs/config.json";
+import audiR8V10 from "../../public/vehicles/audi_r8_v10/config.json";
+import corvetteZ06 from "../../public/vehicles/corvette_z06/config.json";
+import mustangGt from "../../public/vehicles/mustang_gt/config.json";
+import hellcat from "../../public/vehicles/hellcat/config.json";
+import aventadorSvj from "../../public/vehicles/aventador_svj/config.json";
+import paganiZonda from "../../public/vehicles/pagani_zonda/config.json";
+import amgC63 from "../../public/vehicles/amg_c63/config.json";
+import bmwM3E46 from "../../public/vehicles/bmw_m3_e46/config.json";
+import hondaS2000 from "../../public/vehicles/honda_s2000/config.json";
+import rx7Fd from "../../public/vehicles/rx7_fd/config.json";
+import subaruSti from "../../public/vehicles/subaru_sti/config.json";
+import bugattiChiron from "../../public/vehicles/bugatti_chiron/config.json";
+import ferrariF2004 from "../../public/vehicles/ferrari_f2004/config.json";
+import panigaleV4 from "../../public/vehicles/panigale_v4/config.json";
+import ninjaH2 from "../../public/vehicles/ninja_h2/config.json";
 import boxer4Rally from "../../public/vehicles/boxer4_rally/config.json";
 import flat6Sports from "../../public/vehicles/flat6_sports/config.json";
 import gpRacer from "../../public/vehicles/gp_racer/config.json";
@@ -18,21 +38,18 @@ import { validateVehicle } from "./validate";
 
 /** Garage order. Adding a vehicle = a new folder + one line here. */
 const RAW = [
-  gpRacer,
-  gtRacer,
-  muscleV8,
-  jdmI6Turbo,
-  twinTurboV6,
-  twinTurboI6,
-  flat6Sports,
-  v10Supercar,
-  v12Gt,
-  hotHatch,
-  boxer4Rally,
-  rotaryTwin,
-  superbikeI4,
-  vtwinCruiser,
-  synthV6,
+  // JDM
+  supraMk4, skylineR34, twinTurboV6, rx7Fd, hondaS2000, subaruSti, jdmI6Turbo, synthV6,
+  // supercars and hypercars
+  ferrariF40, lexusLfa, porscheGt3rs, v10Supercar, aventadorSvj, paganiZonda, bugattiChiron, gtRacer, audiR8V10, corvetteZ06,
+  // American muscle
+  mustangGt, hellcat, muscleV8,
+  // European
+  twinTurboI6, bmwM3E46, amgC63, flat6Sports, v12Gt, hotHatch,
+  // race cars
+  ferrariF2004, gpRacer, rotaryTwin, boxer4Rally,
+  // bikes
+  panigaleV4, ninjaH2, superbikeI4, vtwinCruiser,
 ] as unknown as VehicleConfig[];
 
 export const vehicles: readonly VehicleConfig[] = RAW.map((v) => {

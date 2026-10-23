@@ -1,0 +1,277 @@
+{
+  "id": "hellcat",
+  "name": "Dodge Challenger SRT Hellcat",
+  "type": "car",
+  "engineType": "Supercharged 6.2 HEMI V8",
+  "description": "A 2.4-litre supercharger bolted on top of the 6.2 HEMI: 707 hp, a blower whine over a thunderous cross-plane V8, and an eight-speed automatic that fires through the gears. Rear tyres not included.",
+  "engine": {
+    "cylinders": 8,
+    "idleRpm": 740,
+    "redlineRpm": 6200,
+    "limiterRpm": 6300,
+    "inertia": 0.36,
+    "engineBraking": 0.6,
+    "peakTorqueNm": 881,
+    "crackle": 0.35
+  },
+  "gearbox": {
+    "type": "dct",
+    "ratios": [
+      4.71,
+      3.14,
+      2.1,
+      1.67,
+      1.29,
+      1,
+      0.84,
+      0.67
+    ],
+    "finalDrive": 2.62,
+    "wheelRadiusM": 0.36,
+    "shiftTimeMs": 160
+  },
+  "dynamics": {
+    "massKg": 2000,
+    "cdA": 0.85,
+    "brakeDecel": 10
+  },
+  "turbo": {
+    "spoolRpm": 1200,
+    "lagS": 0.05
+  },
+  "ui": {
+    "accent": "#7e22ce",
+    "silhouette": "muscle",
+    "category": "Muscle",
+    "layout": "Supercharged V8",
+    "displacement": "6.2 L",
+    "powerHp": 707,
+    "make": "Dodge",
+    "year": "2015",
+    "recorded": true
+  },
+  "voice": "muscle_v8",
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_995.ogg",
+        "rpm": 994.823
+      },
+      {
+        "file": "on_1281.ogg",
+        "rpm": 1280.542
+      },
+      {
+        "file": "on_1459.ogg",
+        "rpm": 1459.123
+      },
+      {
+        "file": "on_1805.ogg",
+        "rpm": 1805.17
+      },
+      {
+        "file": "on_2217.ogg",
+        "rpm": 2216.57
+      },
+      {
+        "file": "on_2708.ogg",
+        "rpm": 2707.532
+      },
+      {
+        "file": "on_2990.ogg",
+        "rpm": 2990.326
+      },
+      {
+        "file": "on_3676.ogg",
+        "rpm": 3675.976
+      },
+      {
+        "file": "on_3982.ogg",
+        "rpm": 3982.071
+      },
+      {
+        "file": "on_4499.ogg",
+        "rpm": 4498.712
+      },
+      {
+        "file": "on_4917.ogg",
+        "rpm": 4917.484
+      },
+      {
+        "file": "on_5351.ogg",
+        "rpm": 5351.06
+      },
+      {
+        "file": "on_5797.ogg",
+        "rpm": 5796.942
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_995.ogg",
+        "rpm": 994.823
+      },
+      {
+        "file": "off_1281.ogg",
+        "rpm": 1280.542
+      },
+      {
+        "file": "off_1459.ogg",
+        "rpm": 1459.123
+      },
+      {
+        "file": "off_1805.ogg",
+        "rpm": 1805.17
+      },
+      {
+        "file": "off_2217.ogg",
+        "rpm": 2216.57
+      },
+      {
+        "file": "off_2708.ogg",
+        "rpm": 2707.532
+      },
+      {
+        "file": "off_2990.ogg",
+        "rpm": 2990.326
+      },
+      {
+        "file": "off_3676.ogg",
+        "rpm": 3675.976
+      },
+      {
+        "file": "off_3982.ogg",
+        "rpm": 3982.071
+      },
+      {
+        "file": "off_4499.ogg",
+        "rpm": 4498.712
+      },
+      {
+        "file": "off_4917.ogg",
+        "rpm": 4917.484
+      },
+      {
+        "file": "off_5351.ogg",
+        "rpm": 5351.06
+      },
+      {
+        "file": "off_5797.ogg",
+        "rpm": 5796.942
+      }
+    ],
+    "idle": {
+      "file": "idle_740.ogg",
+      "rpm": 740
+    },
+    "oneShots": {
+      "start": "start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_888.ogg",
+        "rpm": 888.002
+      },
+      {
+        "file": "gen/on_1133.ogg",
+        "rpm": 1133.011
+      },
+      {
+        "file": "gen/on_1446.ogg",
+        "rpm": 1445.616
+      },
+      {
+        "file": "gen/on_1844.ogg",
+        "rpm": 1844.476
+      },
+      {
+        "file": "gen/on_2353.ogg",
+        "rpm": 2353.402
+      },
+      {
+        "file": "gen/on_3003.ogg",
+        "rpm": 3002.724
+      },
+      {
+        "file": "gen/on_3831.ogg",
+        "rpm": 3831.213
+      },
+      {
+        "file": "gen/on_4888.ogg",
+        "rpm": 4888.269
+      },
+      {
+        "file": "gen/on_6237.ogg",
+        "rpm": 6236.977
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_999.ogg",
+        "rpm": 998.999
+      },
+      {
+        "file": "gen/off_1294.ogg",
+        "rpm": 1293.985
+      },
+      {
+        "file": "gen/off_1676.ogg",
+        "rpm": 1676.072
+      },
+      {
+        "file": "gen/off_2171.ogg",
+        "rpm": 2170.984
+      },
+      {
+        "file": "gen/off_2812.ogg",
+        "rpm": 2812.036
+      },
+      {
+        "file": "gen/off_3642.ogg",
+        "rpm": 3642.36
+      },
+      {
+        "file": "gen/off_4718.ogg",
+        "rpm": 4717.875
+      },
+      {
+        "file": "gen/off_6111.ogg",
+        "rpm": 6111.028
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_740.ogg",
+      "rpm": 739.998
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

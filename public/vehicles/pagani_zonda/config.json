@@ -1,0 +1,275 @@
+{
+  "id": "pagani_zonda",
+  "name": "Pagani Zonda F",
+  "type": "car",
+  "engineType": "Naturally aspirated V12",
+  "description": "Hand-built carbon hypercar around a Mercedes-AMG M120 7.3 L V12, with a titanium exhaust whose raw, operatic bark made the Zonda a legend.",
+  "engine": {
+    "cylinders": 12,
+    "idleRpm": 1100,
+    "redlineRpm": 7500,
+    "limiterRpm": 7700,
+    "inertia": 0.22,
+    "engineBraking": 0.55,
+    "peakTorqueNm": 760,
+    "crackle": 0.6
+  },
+  "gearbox": {
+    "type": "manual",
+    "ratios": [
+      3.05,
+      2.06,
+      1.52,
+      1.21,
+      1,
+      0.84
+    ],
+    "finalDrive": 3.45,
+    "wheelRadiusM": 0.34,
+    "shiftTimeMs": 300
+  },
+  "dynamics": {
+    "massKg": 1230,
+    "cdA": 0.75,
+    "brakeDecel": 12
+  },
+  "ui": {
+    "accent": "#e879f9",
+    "silhouette": "supercar",
+    "category": "Hypercar",
+    "layout": "V12",
+    "displacement": "7.3 L",
+    "powerHp": 594,
+    "make": "Pagani",
+    "year": "2005",
+    "recorded": true
+  },
+  "voice": "v12_gt",
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_1480.ogg",
+        "rpm": 1480
+      },
+      {
+        "file": "on_1850.ogg",
+        "rpm": 1850
+      },
+      {
+        "file": "on_2215.ogg",
+        "rpm": 2215.43
+      },
+      {
+        "file": "on_2490.ogg",
+        "rpm": 2489.908
+      },
+      {
+        "file": "on_2830.ogg",
+        "rpm": 2829.872
+      },
+      {
+        "file": "on_3269.ogg",
+        "rpm": 3268.937
+      },
+      {
+        "file": "on_3727.ogg",
+        "rpm": 3726.932
+      },
+      {
+        "file": "on_4199.ogg",
+        "rpm": 4199.119
+      },
+      {
+        "file": "on_4700.ogg",
+        "rpm": 4700.157
+      },
+      {
+        "file": "on_5255.ogg",
+        "rpm": 5255.399
+      },
+      {
+        "file": "on_5752.ogg",
+        "rpm": 5752.175
+      },
+      {
+        "file": "on_6152.ogg",
+        "rpm": 6151.523
+      },
+      {
+        "file": "on_6650.ogg",
+        "rpm": 6650
+      },
+      {
+        "file": "on_7000.ogg",
+        "rpm": 7000
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_1480.ogg",
+        "rpm": 1480
+      },
+      {
+        "file": "off_1850.ogg",
+        "rpm": 1850
+      },
+      {
+        "file": "off_2215.ogg",
+        "rpm": 2215.43
+      },
+      {
+        "file": "off_2490.ogg",
+        "rpm": 2489.908
+      },
+      {
+        "file": "off_2830.ogg",
+        "rpm": 2829.872
+      },
+      {
+        "file": "off_3269.ogg",
+        "rpm": 3268.937
+      },
+      {
+        "file": "off_3727.ogg",
+        "rpm": 3726.932
+      },
+      {
+        "file": "off_4199.ogg",
+        "rpm": 4199.119
+      },
+      {
+        "file": "off_4700.ogg",
+        "rpm": 4700.157
+      },
+      {
+        "file": "off_5255.ogg",
+        "rpm": 5255.399
+      },
+      {
+        "file": "off_5752.ogg",
+        "rpm": 5752.175
+      },
+      {
+        "file": "off_6152.ogg",
+        "rpm": 6151.523
+      },
+      {
+        "file": "off_6650.ogg",
+        "rpm": 6650
+      },
+      {
+        "file": "off_7000.ogg",
+        "rpm": 7000
+      }
+    ],
+    "idle": {
+      "file": "idle_1145.ogg",
+      "rpm": 1145
+    },
+    "oneShots": {
+      "start": "start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_1320.ogg",
+        "rpm": 1320.005
+      },
+      {
+        "file": "gen/on_1643.ogg",
+        "rpm": 1643.494
+      },
+      {
+        "file": "gen/on_2046.ogg",
+        "rpm": 2046.269
+      },
+      {
+        "file": "gen/on_2548.ogg",
+        "rpm": 2547.737
+      },
+      {
+        "file": "gen/on_3172.ogg",
+        "rpm": 3172.119
+      },
+      {
+        "file": "gen/on_3950.ogg",
+        "rpm": 3949.515
+      },
+      {
+        "file": "gen/on_4917.ogg",
+        "rpm": 4917.423
+      },
+      {
+        "file": "gen/on_6123.ogg",
+        "rpm": 6122.56
+      },
+      {
+        "file": "gen/on_7623.ogg",
+        "rpm": 7622.976
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_1485.ogg",
+        "rpm": 1485.001
+      },
+      {
+        "file": "gen/off_1944.ogg",
+        "rpm": 1943.792
+      },
+      {
+        "file": "gen/off_2544.ogg",
+        "rpm": 2544.327
+      },
+      {
+        "file": "gen/off_3330.ogg",
+        "rpm": 3330.396
+      },
+      {
+        "file": "gen/off_4359.ogg",
+        "rpm": 4359.308
+      },
+      {
+        "file": "gen/off_5706.ogg",
+        "rpm": 5706.092
+      },
+      {
+        "file": "gen/off_7469.ogg",
+        "rpm": 7468.983
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_1100.ogg",
+      "rpm": 1100.004
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

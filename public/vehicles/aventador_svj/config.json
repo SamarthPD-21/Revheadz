@@ -1,0 +1,292 @@
+{
+  "id": "aventador_svj",
+  "name": "Lamborghini Aventador SVJ",
+  "type": "car",
+  "engineType": "Naturally aspirated V12",
+  "description": "The L539 6.5 L V12 at its most savage: 770 PS, an 8,700 rpm howl and a brutal ISR single-clutch that kicks on every upshift.",
+  "engine": {
+    "cylinders": 12,
+    "idleRpm": 900,
+    "redlineRpm": 8500,
+    "limiterRpm": 8700,
+    "inertia": 0.2,
+    "engineBraking": 0.6,
+    "peakTorqueNm": 720,
+    "crackle": 0.7
+  },
+  "gearbox": {
+    "type": "dct",
+    "ratios": [
+      3.91,
+      2.44,
+      1.81,
+      1.46,
+      1.19,
+      0.97,
+      0.84
+    ],
+    "finalDrive": 2.87,
+    "wheelRadiusM": 0.36,
+    "shiftTimeMs": 150
+  },
+  "dynamics": {
+    "massKg": 1750,
+    "cdA": 0.75,
+    "brakeDecel": 12
+  },
+  "ui": {
+    "accent": "#fb923c",
+    "silhouette": "supercar",
+    "category": "Supercar",
+    "layout": "V12",
+    "displacement": "6.5 L",
+    "powerHp": 759,
+    "make": "Lamborghini",
+    "year": "2019",
+    "recorded": true
+  },
+  "voice": "v12_gt",
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_1022.ogg",
+        "rpm": 1022.295
+      },
+      {
+        "file": "on_1260.ogg",
+        "rpm": 1260
+      },
+      {
+        "file": "on_1553.ogg",
+        "rpm": 1552.734
+      },
+      {
+        "file": "on_1747.ogg",
+        "rpm": 1746.961
+      },
+      {
+        "file": "on_2309.ogg",
+        "rpm": 2308.875
+      },
+      {
+        "file": "on_2837.ogg",
+        "rpm": 2836.658
+      },
+      {
+        "file": "on_3320.ogg",
+        "rpm": 3319.556
+      },
+      {
+        "file": "on_3950.ogg",
+        "rpm": 3949.962
+      },
+      {
+        "file": "on_4629.ogg",
+        "rpm": 4629.276
+      },
+      {
+        "file": "on_5306.ogg",
+        "rpm": 5305.931
+      },
+      {
+        "file": "on_6043.ogg",
+        "rpm": 6042.695
+      },
+      {
+        "file": "on_6708.ogg",
+        "rpm": 6708.243
+      },
+      {
+        "file": "on_7415.ogg",
+        "rpm": 7415.016
+      },
+      {
+        "file": "on_8103.ogg",
+        "rpm": 8103.265
+      },
+      {
+        "file": "on_8509.ogg",
+        "rpm": 8508.549
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_1022.ogg",
+        "rpm": 1022.295
+      },
+      {
+        "file": "off_1260.ogg",
+        "rpm": 1260
+      },
+      {
+        "file": "off_1553.ogg",
+        "rpm": 1552.734
+      },
+      {
+        "file": "off_1747.ogg",
+        "rpm": 1746.961
+      },
+      {
+        "file": "off_2309.ogg",
+        "rpm": 2308.875
+      },
+      {
+        "file": "off_2837.ogg",
+        "rpm": 2836.658
+      },
+      {
+        "file": "off_3320.ogg",
+        "rpm": 3319.556
+      },
+      {
+        "file": "off_3950.ogg",
+        "rpm": 3949.962
+      },
+      {
+        "file": "off_4629.ogg",
+        "rpm": 4629.276
+      },
+      {
+        "file": "off_5306.ogg",
+        "rpm": 5305.931
+      },
+      {
+        "file": "off_6043.ogg",
+        "rpm": 6042.695
+      },
+      {
+        "file": "off_6708.ogg",
+        "rpm": 6708.243
+      },
+      {
+        "file": "off_7415.ogg",
+        "rpm": 7415.016
+      },
+      {
+        "file": "off_8103.ogg",
+        "rpm": 8103.265
+      },
+      {
+        "file": "off_8509.ogg",
+        "rpm": 8508.549
+      }
+    ],
+    "idle": {
+      "file": "idle_900.ogg",
+      "rpm": 900
+    },
+    "oneShots": {
+      "start": "start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_1080.ogg",
+        "rpm": 1080
+      },
+      {
+        "file": "gen/on_1360.ogg",
+        "rpm": 1360.243
+      },
+      {
+        "file": "gen/on_1713.ogg",
+        "rpm": 1713.208
+      },
+      {
+        "file": "gen/on_2158.ogg",
+        "rpm": 2157.747
+      },
+      {
+        "file": "gen/on_2718.ogg",
+        "rpm": 2717.64
+      },
+      {
+        "file": "gen/on_3423.ogg",
+        "rpm": 3422.832
+      },
+      {
+        "file": "gen/on_4311.ogg",
+        "rpm": 4310.997
+      },
+      {
+        "file": "gen/on_5430.ogg",
+        "rpm": 5429.634
+      },
+      {
+        "file": "gen/on_6838.ogg",
+        "rpm": 6838.499
+      },
+      {
+        "file": "gen/on_8613.ogg",
+        "rpm": 8613.02
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_1215.ogg",
+        "rpm": 1215.004
+      },
+      {
+        "file": "gen/off_1603.ogg",
+        "rpm": 1602.589
+      },
+      {
+        "file": "gen/off_2114.ogg",
+        "rpm": 2113.821
+      },
+      {
+        "file": "gen/off_2788.ogg",
+        "rpm": 2788.119
+      },
+      {
+        "file": "gen/off_3678.ogg",
+        "rpm": 3677.519
+      },
+      {
+        "file": "gen/off_4851.ogg",
+        "rpm": 4850.642
+      },
+      {
+        "file": "gen/off_6398.ogg",
+        "rpm": 6398.005
+      },
+      {
+        "file": "gen/off_8439.ogg",
+        "rpm": 8438.997
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_900.ogg",
+      "rpm": 900
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

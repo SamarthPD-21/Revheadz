@@ -1,0 +1,323 @@
+{
+  "id": "panigale_v4",
+  "name": "Ducati Panigale V4 R",
+  "type": "bike",
+  "engineType": "1,000 cc V4, twin-pulse, 16,000 rpm",
+  "description": "Ducati's homologation special: the 998 cc Desmosedici Stradale R V4 with its twin-pulse firing order, revving to 16,000 rpm. Real recordings.",
+  "engine": {
+    "cylinders": 4,
+    "idleRpm": 1450,
+    "redlineRpm": 15500,
+    "limiterRpm": 16000,
+    "inertia": 0.14,
+    "engineBraking": 0.55,
+    "peakTorqueNm": 112,
+    "crackle": 0.6
+  },
+  "gearbox": {
+    "type": "sequential",
+    "ratios": [
+      2.714,
+      2.118,
+      1.737,
+      1.524,
+      1.364,
+      1.25
+    ],
+    "finalDrive": 4.92,
+    "wheelRadiusM": 0.31,
+    "shiftTimeMs": 60
+  },
+  "dynamics": {
+    "massKg": 255,
+    "cdA": 0.33,
+    "brakeDecel": 10
+  },
+  "ui": {
+    "accent": "#e5383b",
+    "silhouette": "superbike",
+    "category": "Superbike",
+    "layout": "V4 90-degree",
+    "displacement": "1.0 L",
+    "powerHp": 218,
+    "make": "Ducati",
+    "year": "2019",
+    "recorded": true
+  },
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_2000.ogg",
+        "rpm": 2000
+      },
+      {
+        "file": "on_2600.ogg",
+        "rpm": 2600
+      },
+      {
+        "file": "on_3341.ogg",
+        "rpm": 3340.739
+      },
+      {
+        "file": "on_3833.ogg",
+        "rpm": 3832.942
+      },
+      {
+        "file": "on_4350.ogg",
+        "rpm": 4349.608
+      },
+      {
+        "file": "on_5110.ogg",
+        "rpm": 5110.205
+      },
+      {
+        "file": "on_5875.ogg",
+        "rpm": 5875.053
+      },
+      {
+        "file": "on_6668.ogg",
+        "rpm": 6668.38
+      },
+      {
+        "file": "on_7426.ogg",
+        "rpm": 7426.473
+      },
+      {
+        "file": "on_8424.ogg",
+        "rpm": 8423.829
+      },
+      {
+        "file": "on_9269.ogg",
+        "rpm": 9268.698
+      },
+      {
+        "file": "on_10149.ogg",
+        "rpm": 10148.943
+      },
+      {
+        "file": "on_10967.ogg",
+        "rpm": 10966.621
+      },
+      {
+        "file": "on_11945.ogg",
+        "rpm": 11945.247
+      },
+      {
+        "file": "on_12825.ogg",
+        "rpm": 12824.923
+      },
+      {
+        "file": "on_13787.ogg",
+        "rpm": 13786.562
+      },
+      {
+        "file": "on_14697.ogg",
+        "rpm": 14697.104
+      },
+      {
+        "file": "on_15482.ogg",
+        "rpm": 15482.154
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_2000.ogg",
+        "rpm": 2000
+      },
+      {
+        "file": "off_2600.ogg",
+        "rpm": 2600
+      },
+      {
+        "file": "off_3341.ogg",
+        "rpm": 3340.739
+      },
+      {
+        "file": "off_3833.ogg",
+        "rpm": 3832.942
+      },
+      {
+        "file": "off_4350.ogg",
+        "rpm": 4349.608
+      },
+      {
+        "file": "off_5110.ogg",
+        "rpm": 5110.205
+      },
+      {
+        "file": "off_5875.ogg",
+        "rpm": 5875.053
+      },
+      {
+        "file": "off_6668.ogg",
+        "rpm": 6668.38
+      },
+      {
+        "file": "off_7426.ogg",
+        "rpm": 7426.473
+      },
+      {
+        "file": "off_8424.ogg",
+        "rpm": 8423.829
+      },
+      {
+        "file": "off_9269.ogg",
+        "rpm": 9268.698
+      },
+      {
+        "file": "off_10149.ogg",
+        "rpm": 10148.943
+      },
+      {
+        "file": "off_10967.ogg",
+        "rpm": 10966.621
+      },
+      {
+        "file": "off_11945.ogg",
+        "rpm": 11945.247
+      },
+      {
+        "file": "off_12825.ogg",
+        "rpm": 12824.923
+      },
+      {
+        "file": "off_13787.ogg",
+        "rpm": 13786.562
+      },
+      {
+        "file": "off_14697.ogg",
+        "rpm": 14697.104
+      },
+      {
+        "file": "off_15482.ogg",
+        "rpm": 15482.154
+      }
+    ],
+    "idle": {
+      "file": "idle_1516.ogg",
+      "rpm": 1516.022
+    },
+    "oneShots": {
+      "start": "start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "voice": "superbike_i4",
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_1560.ogg",
+        "rpm": 1559.993
+      },
+      {
+        "file": "gen/on_1967.ogg",
+        "rpm": 1966.93
+      },
+      {
+        "file": "gen/on_2480.ogg",
+        "rpm": 2479.99
+      },
+      {
+        "file": "gen/on_3127.ogg",
+        "rpm": 3126.897
+      },
+      {
+        "file": "gen/on_3943.ogg",
+        "rpm": 3942.55
+      },
+      {
+        "file": "gen/on_4971.ogg",
+        "rpm": 4970.947
+      },
+      {
+        "file": "gen/on_6268.ogg",
+        "rpm": 6267.647
+      },
+      {
+        "file": "gen/on_7903.ogg",
+        "rpm": 7902.539
+      },
+      {
+        "file": "gen/on_9964.ogg",
+        "rpm": 9963.933
+      },
+      {
+        "file": "gen/on_12563.ogg",
+        "rpm": 12562.938
+      },
+      {
+        "file": "gen/on_15840.ogg",
+        "rpm": 15839.973
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_1755.ogg",
+        "rpm": 1755.008
+      },
+      {
+        "file": "gen/off_2305.ogg",
+        "rpm": 2304.638
+      },
+      {
+        "file": "gen/off_3026.ogg",
+        "rpm": 3026.438
+      },
+      {
+        "file": "gen/off_3974.ogg",
+        "rpm": 3974.257
+      },
+      {
+        "file": "gen/off_5219.ogg",
+        "rpm": 5218.984
+      },
+      {
+        "file": "gen/off_6853.ogg",
+        "rpm": 6853.497
+      },
+      {
+        "file": "gen/off_9000.ogg",
+        "rpm": 8999.915
+      },
+      {
+        "file": "gen/off_11819.ogg",
+        "rpm": 11818.536
+      },
+      {
+        "file": "gen/off_15520.ogg",
+        "rpm": 15519.942
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_1300.ogg",
+      "rpm": 1300.004
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

@@ -1,0 +1,292 @@
+{
+  "id": "supra_mk4",
+  "name": "Toyota Supra MK4",
+  "type": "car",
+  "engineType": "Twin-turbo straight-six",
+  "description": "The A80 Turbo and its legendary 2JZ-GTE: a cast-iron 3.0 straight-six with sequential twin turbos and a silky, rising howl. Built from real recordings of a stock car on the dyno.",
+  "engine": {
+    "cylinders": 6,
+    "idleRpm": 900,
+    "redlineRpm": 6800,
+    "limiterRpm": 7000,
+    "inertia": 0.32,
+    "engineBraking": 0.5,
+    "peakTorqueNm": 427,
+    "crackle": 0.3
+  },
+  "gearbox": {
+    "type": "manual",
+    "ratios": [
+      3.827,
+      2.36,
+      1.685,
+      1.312,
+      1,
+      0.793
+    ],
+    "finalDrive": 3.266,
+    "wheelRadiusM": 0.33,
+    "shiftTimeMs": 280
+  },
+  "dynamics": {
+    "massKg": 1570,
+    "cdA": 0.6,
+    "brakeDecel": 9.5
+  },
+  "turbo": {
+    "spoolRpm": 3000,
+    "lagS": 0.45,
+    "release": "pssh"
+  },
+  "ui": {
+    "accent": "#fb923c",
+    "silhouette": "coupe",
+    "category": "JDM",
+    "layout": "Inline-6 twin-turbo",
+    "displacement": "3.0 L",
+    "powerHp": 320,
+    "recorded": true,
+    "make": "Toyota",
+    "year": "1998"
+  },
+  "credits": [],
+  "voice": "jdm_i6_turbo",
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_1400.ogg",
+        "rpm": 1400.309
+      },
+      {
+        "file": "on_1636.ogg",
+        "rpm": 1636.363
+      },
+      {
+        "file": "on_1950.ogg",
+        "rpm": 1950
+      },
+      {
+        "file": "on_2303.ogg",
+        "rpm": 2303.01
+      },
+      {
+        "file": "on_2604.ogg",
+        "rpm": 2604.107
+      },
+      {
+        "file": "on_2804.ogg",
+        "rpm": 2803.755
+      },
+      {
+        "file": "on_3209.ogg",
+        "rpm": 3208.783
+      },
+      {
+        "file": "on_3524.ogg",
+        "rpm": 3524.026
+      },
+      {
+        "file": "on_3812.ogg",
+        "rpm": 3811.885
+      },
+      {
+        "file": "on_4421.ogg",
+        "rpm": 4421.476
+      },
+      {
+        "file": "on_5010.ogg",
+        "rpm": 5009.889
+      },
+      {
+        "file": "on_5307.ogg",
+        "rpm": 5306.75
+      },
+      {
+        "file": "on_6009.ogg",
+        "rpm": 6008.61
+      },
+      {
+        "file": "on_6209.ogg",
+        "rpm": 6208.822
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_1400.ogg",
+        "rpm": 1400.309
+      },
+      {
+        "file": "off_1636.ogg",
+        "rpm": 1636.363
+      },
+      {
+        "file": "off_1950.ogg",
+        "rpm": 1950
+      },
+      {
+        "file": "off_2303.ogg",
+        "rpm": 2303.01
+      },
+      {
+        "file": "off_2604.ogg",
+        "rpm": 2604.107
+      },
+      {
+        "file": "off_2804.ogg",
+        "rpm": 2803.755
+      },
+      {
+        "file": "off_3209.ogg",
+        "rpm": 3208.783
+      },
+      {
+        "file": "off_3524.ogg",
+        "rpm": 3524.026
+      },
+      {
+        "file": "off_3812.ogg",
+        "rpm": 3811.885
+      },
+      {
+        "file": "off_4421.ogg",
+        "rpm": 4421.476
+      },
+      {
+        "file": "off_5010.ogg",
+        "rpm": 5009.889
+      },
+      {
+        "file": "off_5307.ogg",
+        "rpm": 5306.75
+      },
+      {
+        "file": "off_6009.ogg",
+        "rpm": 6008.61
+      },
+      {
+        "file": "off_6209.ogg",
+        "rpm": 6208.822
+      }
+    ],
+    "idle": {
+      "file": "idle_1060.ogg",
+      "rpm": 1060
+    },
+    "oneShots": {
+      "start": "start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ],
+      "blowoff": [
+        "gen/bov_1.ogg",
+        "gen/bov_2.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_1080.ogg",
+        "rpm": 1080
+      },
+      {
+        "file": "gen/on_1362.ogg",
+        "rpm": 1362.5
+      },
+      {
+        "file": "gen/on_1719.ogg",
+        "rpm": 1718.904
+      },
+      {
+        "file": "gen/on_2169.ogg",
+        "rpm": 2168.522
+      },
+      {
+        "file": "gen/on_2736.ogg",
+        "rpm": 2735.758
+      },
+      {
+        "file": "gen/on_3451.ogg",
+        "rpm": 3451.37
+      },
+      {
+        "file": "gen/on_4354.ogg",
+        "rpm": 4354.155
+      },
+      {
+        "file": "gen/on_5493.ogg",
+        "rpm": 5493.149
+      },
+      {
+        "file": "gen/on_6930.ogg",
+        "rpm": 6930.03
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_1215.ogg",
+        "rpm": 1215.004
+      },
+      {
+        "file": "gen/off_1554.ogg",
+        "rpm": 1553.582
+      },
+      {
+        "file": "gen/off_1987.ogg",
+        "rpm": 1986.505
+      },
+      {
+        "file": "gen/off_2540.ogg",
+        "rpm": 2540.064
+      },
+      {
+        "file": "gen/off_3248.ogg",
+        "rpm": 3247.883
+      },
+      {
+        "file": "gen/off_4153.ogg",
+        "rpm": 4152.943
+      },
+      {
+        "file": "gen/off_5310.ogg",
+        "rpm": 5310.235
+      },
+      {
+        "file": "gen/off_6790.ogg",
+        "rpm": 6789.992
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_900.ogg",
+      "rpm": 900
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ],
+      "blowoff": [
+        "gen/bov_1.ogg",
+        "gen/bov_2.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

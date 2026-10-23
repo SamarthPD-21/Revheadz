@@ -1,0 +1,275 @@
+{
+  "id": "rx7_fd",
+  "name": "Mazda RX-7 FD3S",
+  "type": "car",
+  "engineType": "Twin-turbo two-rotor Wankel",
+  "description": "The 13B-REW: a 1.3-litre twin-rotor Wankel with sequential twin turbos, a lumpy brap at idle and a smooth, buzzing scream to 8,000 rpm. All from real FD3S recordings.",
+  "engine": {
+    "cylinders": 4,
+    "idleRpm": 1000,
+    "redlineRpm": 8000,
+    "limiterRpm": 8200,
+    "inertia": 0.22,
+    "engineBraking": 0.4,
+    "peakTorqueNm": 294,
+    "crackle": 0.6
+  },
+  "gearbox": {
+    "type": "manual",
+    "ratios": [
+      3.483,
+      2.015,
+      1.391,
+      1,
+      0.762
+    ],
+    "finalDrive": 4.1,
+    "wheelRadiusM": 0.31,
+    "shiftTimeMs": 260
+  },
+  "dynamics": {
+    "massKg": 1280,
+    "cdA": 0.56,
+    "brakeDecel": 10
+  },
+  "turbo": {
+    "spoolRpm": 3000,
+    "lagS": 0.35,
+    "release": "pssh"
+  },
+  "ui": {
+    "accent": "#fde047",
+    "silhouette": "coupe",
+    "category": "JDM",
+    "layout": "2-rotor twin-turbo",
+    "displacement": "1.3 L",
+    "powerHp": 255,
+    "recorded": true,
+    "make": "Mazda",
+    "year": "1993"
+  },
+  "credits": [],
+  "voice": "rotary_twin",
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_1700.ogg",
+        "rpm": 1700
+      },
+      {
+        "file": "on_2250.ogg",
+        "rpm": 2250
+      },
+      {
+        "file": "on_2963.ogg",
+        "rpm": 2962.698
+      },
+      {
+        "file": "on_3601.ogg",
+        "rpm": 3600.597
+      },
+      {
+        "file": "on_4211.ogg",
+        "rpm": 4210.939
+      },
+      {
+        "file": "on_4519.ogg",
+        "rpm": 4519.052
+      },
+      {
+        "file": "on_5580.ogg",
+        "rpm": 5579.983
+      },
+      {
+        "file": "on_6066.ogg",
+        "rpm": 6066.377
+      },
+      {
+        "file": "on_6303.ogg",
+        "rpm": 6302.71
+      },
+      {
+        "file": "on_6604.ogg",
+        "rpm": 6603.945
+      },
+      {
+        "file": "on_7237.ogg",
+        "rpm": 7237.498
+      },
+      {
+        "file": "on_7612.ogg",
+        "rpm": 7611.832
+      },
+      {
+        "file": "on_8092.ogg",
+        "rpm": 8091.803
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_1700.ogg",
+        "rpm": 1700
+      },
+      {
+        "file": "off_2250.ogg",
+        "rpm": 2250
+      },
+      {
+        "file": "off_2963.ogg",
+        "rpm": 2962.698
+      },
+      {
+        "file": "off_3601.ogg",
+        "rpm": 3600.597
+      },
+      {
+        "file": "off_4211.ogg",
+        "rpm": 4210.939
+      },
+      {
+        "file": "off_4519.ogg",
+        "rpm": 4519.052
+      },
+      {
+        "file": "off_5580.ogg",
+        "rpm": 5579.983
+      },
+      {
+        "file": "off_6066.ogg",
+        "rpm": 6066.377
+      },
+      {
+        "file": "off_6303.ogg",
+        "rpm": 6302.71
+      },
+      {
+        "file": "off_6604.ogg",
+        "rpm": 6603.945
+      },
+      {
+        "file": "off_7237.ogg",
+        "rpm": 7237.498
+      },
+      {
+        "file": "off_7612.ogg",
+        "rpm": 7611.832
+      },
+      {
+        "file": "off_8092.ogg",
+        "rpm": 8091.803
+      }
+    ],
+    "idle": {
+      "file": "idle_1290.ogg",
+      "rpm": 1290
+    },
+    "oneShots": {
+      "start": "start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_1200.ogg",
+        "rpm": 1200
+      },
+      {
+        "file": "gen/on_1524.ogg",
+        "rpm": 1523.93
+      },
+      {
+        "file": "gen/on_1935.ogg",
+        "rpm": 1935.299
+      },
+      {
+        "file": "gen/on_2458.ogg",
+        "rpm": 2457.709
+      },
+      {
+        "file": "gen/on_3121.ogg",
+        "rpm": 3121.144
+      },
+      {
+        "file": "gen/on_3964.ogg",
+        "rpm": 3963.669
+      },
+      {
+        "file": "gen/on_5034.ogg",
+        "rpm": 5033.64
+      },
+      {
+        "file": "gen/on_6392.ogg",
+        "rpm": 6392.45
+      },
+      {
+        "file": "gen/on_8118.ogg",
+        "rpm": 8118.025
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_1350.ogg",
+        "rpm": 1350
+      },
+      {
+        "file": "gen/off_1739.ogg",
+        "rpm": 1739.286
+      },
+      {
+        "file": "gen/off_2241.ogg",
+        "rpm": 2240.811
+      },
+      {
+        "file": "gen/off_2887.ogg",
+        "rpm": 2886.962
+      },
+      {
+        "file": "gen/off_3719.ogg",
+        "rpm": 3719.434
+      },
+      {
+        "file": "gen/off_4792.ogg",
+        "rpm": 4791.986
+      },
+      {
+        "file": "gen/off_6174.ogg",
+        "rpm": 6173.741
+      },
+      {
+        "file": "gen/off_7954.ogg",
+        "rpm": 7953.983
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_1000.ogg",
+      "rpm": 1000
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

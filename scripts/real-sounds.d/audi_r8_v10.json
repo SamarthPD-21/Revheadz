@@ -1,0 +1,130 @@
+{
+  "audi_r8_v10": {
+    "pitchRange": [
+      4,
+      130
+    ],
+    "offLoadLowpassHz": 1700,
+    "loopLengthBias": 0.05,
+    "sources": {
+      "dyno": {
+        "title": "Audi R8 V10 PLUS V10 on the Dyno",
+        "author": "Carspotter Jeroen",
+        "youtube": "EpXorfGl4Jc",
+        "cacheName": "yt_audi_r8_v10_EpXorfGl4Jc.flac"
+      },
+      "cold": {
+        "title": "Audi R8 V10 Plus Cold Start",
+        "author": "Carros na Alemanha",
+        "youtube": "5j-mBcieMaQ",
+        "cacheName": "yt_audi_r8_v10_5j-mBcieMaQ.flac"
+      }
+    },
+    "loops": [
+      {
+        "kind": "idle",
+        "source": "cold",
+        "t": [
+          107.9,
+          110.9
+        ],
+        "flatten": false
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "t": [
+          119.8,
+          125.8
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "cold",
+        "t": [
+          25,
+          45
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            2.6,
+            6
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "cold",
+        "t": [
+          19.2,
+          20.1
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            2.6,
+            6
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "t": [
+          188.36,
+          188.87
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "t": [
+          2.44,
+          3.15
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          2.5,
+          12.7
+        ],
+        "targets": [
+          2800,
+          3300,
+          3900,
+          4500,
+          5200,
+          5900,
+          6600,
+          7300,
+          8000
+        ],
+        "maxHalfS": 0.45,
+        "tol": 0.07
+      }
+    ],
+    "oneShots": {
+      "start": {
+        "source": "cold",
+        "t": [
+          17.15,
+          23
+        ],
+        "fadeOut": 1.5,
+        "fadeIn": 0.02
+      },
+      "stop": {
+        "source": "cold",
+        "t": [
+          110,
+          112.4
+        ],
+        "fadeIn": 0.1,
+        "fadeOut": 0.4
+      }
+    }
+  }
+}

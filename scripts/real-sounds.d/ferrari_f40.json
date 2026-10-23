@@ -1,0 +1,118 @@
+{
+  "ferrari_f40": {
+    "pitchRange": [
+      4,
+      130
+    ],
+    "offLoadLowpassHz": 1500,
+    "loopLengthBias": 0.05,
+    "sources": {
+      "dyno": {
+        "title": "Ferrari F40 dyno",
+        "author": "schein609",
+        "youtube": "FybrIDAyavA",
+        "cacheName": "yt_ferrari_f40_FybrIDAyavA.flac"
+      },
+      "dyno91": {
+        "title": "1991 FERRARI F40 - Dyno Testing (508 HP!!)",
+        "author": "The Marconi",
+        "youtube": "pRefCoqxvFI",
+        "cacheName": "yt_ferrari_f40_pRefCoqxvFI.flac"
+      },
+      "cold": {
+        "title": "Ferrari F40 Cold Start, revs, & acceleration! My God What a Sound!",
+        "author": "Peter ",
+        "youtube": "JIusJnu47zo",
+        "cacheName": "yt_ferrari_f40_JIusJnu47zo.flac"
+      }
+    },
+    "loops": [
+      {
+        "kind": "idle",
+        "source": "cold",
+        "t": [
+          42,
+          56
+        ],
+        "flatten": false
+      },
+      {
+        "kind": "on",
+        "source": "cold",
+        "t": [
+          6.3,
+          7.9
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dyno91",
+        "ramp": [
+          9.9,
+          15.5
+        ],
+        "targets": [
+          1650,
+          1950,
+          2250
+        ],
+        "maxHalfS": 0.5
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          48,
+          59
+        ],
+        "targets": [
+          2550,
+          2900,
+          3300,
+          3800
+        ],
+        "maxHalfS": 0.9,
+        "tol": 0.06
+      },
+      {
+        "kind": "on",
+        "source": "dyno91",
+        "ramp": [
+          28,
+          40
+        ],
+        "targets": [
+          4300,
+          4900
+        ],
+        "maxHalfS": 0.5
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          75,
+          85.8
+        ],
+        "targets": [
+          5500,
+          6100,
+          6700,
+          7250
+        ],
+        "maxHalfS": 0.5
+      }
+    ],
+    "oneShots": {
+      "start": {
+        "source": "cold",
+        "t": [
+          3.0,
+          8.0
+        ],
+        "fadeIn": 0.03,
+        "fadeOut": 1.5
+      }
+    }
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "hellcat": {
+    "pitchRange": [
+      4,
+      130
+    ],
+    "offLoadLowpassHz": 1300,
+    "loopLengthBias": 0.04,
+    "sources": {
+      "parked": {
+        "title": "COLD START & REVS Stock Exhaust 2016 Dodge Challenger SRT Hellcat",
+        "author": "B5 BEAST",
+        "youtube": "_tZFJrKwjsU",
+        "cacheName": "yt_hellcat__tZFJrKwjsU.flac"
+      },
+      "dyno": {
+        "title": "Hellcat First Released Dyno Run With Numbers at K&N",
+        "author": "KNfilters",
+        "youtube": "iKgXNAHVWRE",
+        "cacheName": "yt_hellcat_iKgXNAHVWRE.flac"
+      }
+    },
+    "loops": [
+      {
+        "kind": "idle",
+        "source": "parked",
+        "t": [
+          148.4,
+          154.7
+        ],
+        "flatten": false,
+        "rpm": 740
+      },
+      {
+        "kind": "on",
+        "source": "parked",
+        "t": [
+          51.0,
+          54.5
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "parked",
+        "t": [
+          74,
+          82
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "parked",
+        "t": [
+          58.6,
+          61.6
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "parked",
+        "t": [
+          106.6,
+          108.7
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "parked",
+        "t": [
+          184.7,
+          185.9
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "parked",
+        "t": [
+          100.95,
+          102.3
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "parked",
+        "t": [
+          111.4,
+          112.3
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "parked",
+        "t": [
+          113.3,
+          114.25
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "parked",
+        "t": [
+          123.6,
+          124.8
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          77.7,
+          84.7
+        ],
+        "targets": [
+          4450,
+          4900,
+          5350
+        ],
+        "maxHalfS": 0.5,
+        "matchTo": {
+          "source": "parked",
+          "t": [
+            100.9,
+            114.4
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          90,
+          94.9
+        ],
+        "targets": [
+          5800
+        ],
+        "maxHalfS": 0.6,
+        "tol": 0.04,
+        "matchTo": {
+          "source": "parked",
+          "t": [
+            100.9,
+            114.4
+          ]
+        }
+      }
+    ],
+    "oneShots": {
+      "start": {
+        "source": "parked",
+        "t": [
+          36.7,
+          40.6
+        ],
+        "fadeIn": 0.02,
+        "fadeOut": 0.8
+      }
+    }
+  }
+}

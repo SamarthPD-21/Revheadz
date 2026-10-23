@@ -1,0 +1,144 @@
+{
+  "amg_c63": {
+    "pitchRange": [
+      4,
+      130
+    ],
+    "offLoadLowpassHz": 1300,
+    "loopLengthBias": 0.04,
+    "sources": {
+      "dyno": {
+        "title": "Mercedes Benz C63 AMG - Sedan Vs Coupe Dyno Runs",
+        "author": "Gareth Bargate",
+        "youtube": "GGmZkdKgQ0U",
+        "cacheName": "yt_amg_c63_GGmZkdKgQ0U.flac"
+      },
+      "idle": {
+        "title": "Mercedes-Benz C63 AMG (W204) Stock Exhaust Sound (M156 6.2L V8)",
+        "author": "Blue Ridge Motor Club",
+        "youtube": "IrWPPeO9ZuM",
+        "cacheName": "yt_amg_c63_IrWPPeO9ZuM.flac"
+      },
+      "cold": {
+        "title": "Mercedes C63 AMG Sound Exhaust Start Up - Revving Revs Cold Start 2013",
+        "author": "BerlinTomek",
+        "youtube": "IwciBgLO-rQ",
+        "cacheName": "yt_amg_c63_IwciBgLO-rQ.flac"
+      }
+    },
+    "loops": [
+      {
+        "kind": "idle",
+        "source": "idle",
+        "t": [
+          4.2,
+          11.2
+        ],
+        "flatten": false,
+        "rpm": 600
+      },
+      {
+        "kind": "on",
+        "source": "cold",
+        "t": [
+          51.0,
+          53.3
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            58.1,
+            65.3
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "cold",
+        "t": [
+          61.2,
+          62.2
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            58.1,
+            65.3
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "cold",
+        "t": [
+          28,
+          36
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            58.1,
+            65.3
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "t": [
+          55.7,
+          56.4
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "t": [
+          54.0,
+          54.9
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "t": [
+          52.6,
+          53.4
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          58,
+          65.4
+        ],
+        "targets": [
+          2300,
+          2700,
+          3100,
+          3600,
+          4100,
+          4600,
+          5100,
+          5600,
+          6100,
+          6600
+        ],
+        "maxHalfS": 0.6,
+        "tol": 0.14
+      }
+    ],
+    "oneShots": {
+      "start": {
+        "source": "cold",
+        "t": [
+          18.8,
+          23
+        ],
+        "fadeOut": 0.9,
+        "fadeIn": 0.02
+      }
+    }
+  }
+}

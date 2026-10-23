@@ -1,0 +1,276 @@
+{
+  "id": "porsche_gt3rs",
+  "name": "Porsche 911 GT3 RS",
+  "type": "car",
+  "engineType": "4.0 L naturally aspirated flat-six, 9,000 rpm",
+  "description": "The 991.2 GT3 RS: a 520 PS, 4.0-litre MA1.76 flat-six that screams all the way to 9,000 rpm, fed through a lightning PDK. Real recordings.",
+  "engine": {
+    "cylinders": 6,
+    "idleRpm": 1000,
+    "redlineRpm": 8800,
+    "limiterRpm": 9000,
+    "inertia": 0.15,
+    "engineBraking": 0.6,
+    "peakTorqueNm": 470,
+    "crackle": 0.45
+  },
+  "gearbox": {
+    "type": "dct",
+    "ratios": [
+      3.75,
+      2.38,
+      1.72,
+      1.34,
+      1.11,
+      0.96,
+      0.84
+    ],
+    "finalDrive": 3.97,
+    "wheelRadiusM": 0.35,
+    "shiftTimeMs": 80
+  },
+  "dynamics": {
+    "massKg": 1430,
+    "cdA": 0.7,
+    "brakeDecel": 13
+  },
+  "ui": {
+    "accent": "#c8ff00",
+    "silhouette": "supercar",
+    "category": "Track",
+    "layout": "Flat-6 NA",
+    "displacement": "4.0 L",
+    "powerHp": 513,
+    "make": "Porsche",
+    "year": "2019",
+    "recorded": true
+  },
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_1346.ogg",
+        "rpm": 1346
+      },
+      {
+        "file": "on_1780.ogg",
+        "rpm": 1780
+      },
+      {
+        "file": "on_2150.ogg",
+        "rpm": 2150
+      },
+      {
+        "file": "on_2556.ogg",
+        "rpm": 2555.79
+      },
+      {
+        "file": "on_3279.ogg",
+        "rpm": 3279.154
+      },
+      {
+        "file": "on_3883.ogg",
+        "rpm": 3882.83
+      },
+      {
+        "file": "on_4488.ogg",
+        "rpm": 4488.139
+      },
+      {
+        "file": "on_5189.ogg",
+        "rpm": 5189.314
+      },
+      {
+        "file": "on_5914.ogg",
+        "rpm": 5913.927
+      },
+      {
+        "file": "on_6618.ogg",
+        "rpm": 6618.145
+      },
+      {
+        "file": "on_7307.ogg",
+        "rpm": 7306.503
+      },
+      {
+        "file": "on_8024.ogg",
+        "rpm": 8024.233
+      },
+      {
+        "file": "on_8700.ogg",
+        "rpm": 8699.835
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_1346.ogg",
+        "rpm": 1346
+      },
+      {
+        "file": "off_1780.ogg",
+        "rpm": 1780
+      },
+      {
+        "file": "off_2150.ogg",
+        "rpm": 2150
+      },
+      {
+        "file": "off_2556.ogg",
+        "rpm": 2555.79
+      },
+      {
+        "file": "off_3279.ogg",
+        "rpm": 3279.154
+      },
+      {
+        "file": "off_3883.ogg",
+        "rpm": 3882.83
+      },
+      {
+        "file": "off_4488.ogg",
+        "rpm": 4488.139
+      },
+      {
+        "file": "off_5189.ogg",
+        "rpm": 5189.314
+      },
+      {
+        "file": "off_5914.ogg",
+        "rpm": 5913.927
+      },
+      {
+        "file": "off_6618.ogg",
+        "rpm": 6618.145
+      },
+      {
+        "file": "off_7307.ogg",
+        "rpm": 7306.503
+      },
+      {
+        "file": "off_8024.ogg",
+        "rpm": 8024.233
+      },
+      {
+        "file": "off_8700.ogg",
+        "rpm": 8699.835
+      }
+    ],
+    "idle": {
+      "file": "idle_1050.ogg",
+      "rpm": 1050
+    },
+    "oneShots": {
+      "start": "start.ogg",
+      "stop": "stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "voice": "flat6_sports",
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_1200.ogg",
+        "rpm": 1200
+      },
+      {
+        "file": "gen/on_1499.ogg",
+        "rpm": 1499.433
+      },
+      {
+        "file": "gen/on_1874.ogg",
+        "rpm": 1873.561
+      },
+      {
+        "file": "gen/on_2341.ogg",
+        "rpm": 2341.064
+      },
+      {
+        "file": "gen/on_2925.ogg",
+        "rpm": 2925.209
+      },
+      {
+        "file": "gen/on_3655.ogg",
+        "rpm": 3655.111
+      },
+      {
+        "file": "gen/on_4567.ogg",
+        "rpm": 4567.174
+      },
+      {
+        "file": "gen/on_5707.ogg",
+        "rpm": 5706.74
+      },
+      {
+        "file": "gen/on_7131.ogg",
+        "rpm": 7130.731
+      },
+      {
+        "file": "gen/on_8910.ogg",
+        "rpm": 8910.018
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_1350.ogg",
+        "rpm": 1350
+      },
+      {
+        "file": "gen/off_1763.ogg",
+        "rpm": 1762.573
+      },
+      {
+        "file": "gen/off_2301.ogg",
+        "rpm": 2301.218
+      },
+      {
+        "file": "gen/off_3004.ogg",
+        "rpm": 3004.485
+      },
+      {
+        "file": "gen/off_3923.ogg",
+        "rpm": 3922.645
+      },
+      {
+        "file": "gen/off_5121.ogg",
+        "rpm": 5121.436
+      },
+      {
+        "file": "gen/off_6687.ogg",
+        "rpm": 6686.544
+      },
+      {
+        "file": "gen/off_8730.ogg",
+        "rpm": 8730.039
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_1000.ogg",
+      "rpm": 1000
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

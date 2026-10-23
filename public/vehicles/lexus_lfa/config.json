@@ -1,0 +1,299 @@
+{
+  "id": "lexus_lfa",
+  "name": "Lexus LFA",
+  "type": "car",
+  "engineType": "Naturally aspirated V10",
+  "description": "Yamaha-tuned 1LR-GUE 4.8 L V10 that spins from idle to 9,000 rpm in 0.6 s, so quick it needed a digital tach. Its F1-style shriek is legendary.",
+  "engine": {
+    "cylinders": 10,
+    "idleRpm": 1000,
+    "redlineRpm": 9000,
+    "limiterRpm": 9200,
+    "inertia": 0.13,
+    "engineBraking": 0.6,
+    "peakTorqueNm": 480,
+    "crackle": 0.35
+  },
+  "gearbox": {
+    "type": "dct",
+    "ratios": [
+      3.231,
+      2.188,
+      1.609,
+      1.233,
+      0.97,
+      0.795
+    ],
+    "finalDrive": 4.56,
+    "wheelRadiusM": 0.34,
+    "shiftTimeMs": 150
+  },
+  "dynamics": {
+    "massKg": 1480,
+    "cdA": 0.59,
+    "brakeDecel": 11.5
+  },
+  "ui": {
+    "accent": "#fde047",
+    "silhouette": "supercar",
+    "category": "Supercar",
+    "layout": "V10",
+    "displacement": "4.8 L",
+    "powerHp": 553,
+    "make": "Lexus",
+    "year": "2011",
+    "recorded": true
+  },
+  "voice": "v10_supercar",
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_1239.ogg",
+        "rpm": 1239.401
+      },
+      {
+        "file": "on_1556.ogg",
+        "rpm": 1556.259
+      },
+      {
+        "file": "on_1678.ogg",
+        "rpm": 1677.981
+      },
+      {
+        "file": "on_2000.ogg",
+        "rpm": 1999.814
+      },
+      {
+        "file": "on_2352.ogg",
+        "rpm": 2352.363
+      },
+      {
+        "file": "on_2648.ogg",
+        "rpm": 2648.287
+      },
+      {
+        "file": "on_3078.ogg",
+        "rpm": 3078.264
+      },
+      {
+        "file": "on_3570.ogg",
+        "rpm": 3570.319
+      },
+      {
+        "file": "on_3978.ogg",
+        "rpm": 3978.456
+      },
+      {
+        "file": "on_4727.ogg",
+        "rpm": 4726.695
+      },
+      {
+        "file": "on_5418.ogg",
+        "rpm": 5417.766
+      },
+      {
+        "file": "on_6125.ogg",
+        "rpm": 6124.796
+      },
+      {
+        "file": "on_6926.ogg",
+        "rpm": 6925.529
+      },
+      {
+        "file": "on_7705.ogg",
+        "rpm": 7705.334
+      },
+      {
+        "file": "on_8537.ogg",
+        "rpm": 8536.682
+      },
+      {
+        "file": "on_9108.ogg",
+        "rpm": 9108.364
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_1239.ogg",
+        "rpm": 1239.401
+      },
+      {
+        "file": "off_1556.ogg",
+        "rpm": 1556.259
+      },
+      {
+        "file": "off_1678.ogg",
+        "rpm": 1677.981
+      },
+      {
+        "file": "off_2000.ogg",
+        "rpm": 1999.814
+      },
+      {
+        "file": "off_2352.ogg",
+        "rpm": 2352.363
+      },
+      {
+        "file": "off_2648.ogg",
+        "rpm": 2648.287
+      },
+      {
+        "file": "off_3078.ogg",
+        "rpm": 3078.264
+      },
+      {
+        "file": "off_3570.ogg",
+        "rpm": 3570.319
+      },
+      {
+        "file": "off_3978.ogg",
+        "rpm": 3978.456
+      },
+      {
+        "file": "off_4727.ogg",
+        "rpm": 4726.695
+      },
+      {
+        "file": "off_5418.ogg",
+        "rpm": 5417.766
+      },
+      {
+        "file": "off_6125.ogg",
+        "rpm": 6124.796
+      },
+      {
+        "file": "off_6926.ogg",
+        "rpm": 6925.529
+      },
+      {
+        "file": "off_7705.ogg",
+        "rpm": 7705.334
+      },
+      {
+        "file": "off_8537.ogg",
+        "rpm": 8536.682
+      },
+      {
+        "file": "off_9108.ogg",
+        "rpm": 9108.364
+      }
+    ],
+    "idle": {
+      "file": "idle_1012.ogg",
+      "rpm": 1011.999
+    },
+    "oneShots": {
+      "start": "start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_1200.ogg",
+        "rpm": 1200
+      },
+      {
+        "file": "gen/on_1503.ogg",
+        "rpm": 1503.096
+      },
+      {
+        "file": "gen/on_1883.ogg",
+        "rpm": 1882.745
+      },
+      {
+        "file": "gen/on_2358.ogg",
+        "rpm": 2358.289
+      },
+      {
+        "file": "gen/on_2954.ogg",
+        "rpm": 2953.935
+      },
+      {
+        "file": "gen/on_3700.ogg",
+        "rpm": 3700.035
+      },
+      {
+        "file": "gen/on_4635.ogg",
+        "rpm": 4634.586
+      },
+      {
+        "file": "gen/on_5805.ogg",
+        "rpm": 5805.156
+      },
+      {
+        "file": "gen/on_7271.ogg",
+        "rpm": 7271.435
+      },
+      {
+        "file": "gen/on_9108.ogg",
+        "rpm": 9108.003
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_1350.ogg",
+        "rpm": 1350
+      },
+      {
+        "file": "gen/off_1768.ogg",
+        "rpm": 1768.109
+      },
+      {
+        "file": "gen/off_2316.ogg",
+        "rpm": 2315.709
+      },
+      {
+        "file": "gen/off_3033.ogg",
+        "rpm": 3032.921
+      },
+      {
+        "file": "gen/off_3972.ogg",
+        "rpm": 3972.218
+      },
+      {
+        "file": "gen/off_5202.ogg",
+        "rpm": 5202.458
+      },
+      {
+        "file": "gen/off_6814.ogg",
+        "rpm": 6813.712
+      },
+      {
+        "file": "gen/off_8924.ogg",
+        "rpm": 8924.03
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_1000.ogg",
+      "rpm": 1000
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

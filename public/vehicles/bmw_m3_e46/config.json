@@ -1,0 +1,315 @@
+{
+  "id": "bmw_m3_e46",
+  "name": "BMW M3 E46",
+  "type": "car",
+  "engineType": "3.2 S54 inline-6",
+  "description": "The S54: a 3.2-litre naturally aspirated straight-six with individual throttle bodies and an 8,000 rpm redline, the rasping heart of the most beloved M3 of all.",
+  "engine": {
+    "cylinders": 6,
+    "idleRpm": 875,
+    "redlineRpm": 7900,
+    "limiterRpm": 8000,
+    "inertia": 0.2,
+    "engineBraking": 0.55,
+    "peakTorqueNm": 365,
+    "crackle": 0.3
+  },
+  "gearbox": {
+    "type": "manual",
+    "ratios": [
+      4.23,
+      2.53,
+      1.67,
+      1.23,
+      1,
+      0.83
+    ],
+    "finalDrive": 3.62,
+    "wheelRadiusM": 0.33,
+    "shiftTimeMs": 250
+  },
+  "dynamics": {
+    "massKg": 1570,
+    "cdA": 0.66,
+    "brakeDecel": 10
+  },
+  "ui": {
+    "accent": "#a16207",
+    "silhouette": "sport",
+    "category": "Euro",
+    "layout": "Inline-6",
+    "displacement": "3.2 L",
+    "powerHp": 333,
+    "make": "BMW",
+    "year": "2001",
+    "recorded": true
+  },
+  "voice": "twin_turbo_i6",
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_1043.ogg",
+        "rpm": 1042.624
+      },
+      {
+        "file": "on_1208.ogg",
+        "rpm": 1208.174
+      },
+      {
+        "file": "on_1641.ogg",
+        "rpm": 1641.003
+      },
+      {
+        "file": "on_1890.ogg",
+        "rpm": 1890.038
+      },
+      {
+        "file": "on_2154.ogg",
+        "rpm": 2154.141
+      },
+      {
+        "file": "on_2334.ogg",
+        "rpm": 2334.165
+      },
+      {
+        "file": "on_2823.ogg",
+        "rpm": 2823.132
+      },
+      {
+        "file": "on_3109.ogg",
+        "rpm": 3109.321
+      },
+      {
+        "file": "on_3541.ogg",
+        "rpm": 3540.702
+      },
+      {
+        "file": "on_4123.ogg",
+        "rpm": 4123.187
+      },
+      {
+        "file": "on_4619.ogg",
+        "rpm": 4619.341
+      },
+      {
+        "file": "on_5100.ogg",
+        "rpm": 5100.124
+      },
+      {
+        "file": "on_5603.ogg",
+        "rpm": 5603.373
+      },
+      {
+        "file": "on_6106.ogg",
+        "rpm": 6106.408
+      },
+      {
+        "file": "on_6608.ogg",
+        "rpm": 6607.855
+      },
+      {
+        "file": "on_7120.ogg",
+        "rpm": 7120.09
+      },
+      {
+        "file": "on_7632.ogg",
+        "rpm": 7631.847
+      },
+      {
+        "file": "on_8111.ogg",
+        "rpm": 8111.056
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_1043.ogg",
+        "rpm": 1042.624
+      },
+      {
+        "file": "off_1208.ogg",
+        "rpm": 1208.174
+      },
+      {
+        "file": "off_1641.ogg",
+        "rpm": 1641.003
+      },
+      {
+        "file": "off_1890.ogg",
+        "rpm": 1890.038
+      },
+      {
+        "file": "off_2154.ogg",
+        "rpm": 2154.141
+      },
+      {
+        "file": "off_2334.ogg",
+        "rpm": 2334.165
+      },
+      {
+        "file": "off_2823.ogg",
+        "rpm": 2823.132
+      },
+      {
+        "file": "off_3109.ogg",
+        "rpm": 3109.321
+      },
+      {
+        "file": "off_3541.ogg",
+        "rpm": 3540.702
+      },
+      {
+        "file": "off_4123.ogg",
+        "rpm": 4123.187
+      },
+      {
+        "file": "off_4619.ogg",
+        "rpm": 4619.341
+      },
+      {
+        "file": "off_5100.ogg",
+        "rpm": 5100.124
+      },
+      {
+        "file": "off_5603.ogg",
+        "rpm": 5603.373
+      },
+      {
+        "file": "off_6106.ogg",
+        "rpm": 6106.408
+      },
+      {
+        "file": "off_6608.ogg",
+        "rpm": 6607.855
+      },
+      {
+        "file": "off_7120.ogg",
+        "rpm": 7120.09
+      },
+      {
+        "file": "off_7632.ogg",
+        "rpm": 7631.847
+      },
+      {
+        "file": "off_8111.ogg",
+        "rpm": 8111.056
+      }
+    ],
+    "idle": {
+      "file": "idle_875.ogg",
+      "rpm": 875
+    },
+    "oneShots": {
+      "start": "start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_1050.ogg",
+        "rpm": 1050
+      },
+      {
+        "file": "gen/on_1314.ogg",
+        "rpm": 1314.293
+      },
+      {
+        "file": "gen/on_1645.ogg",
+        "rpm": 1645.119
+      },
+      {
+        "file": "gen/on_2059.ogg",
+        "rpm": 2059.222
+      },
+      {
+        "file": "gen/on_2578.ogg",
+        "rpm": 2577.546
+      },
+      {
+        "file": "gen/on_3226.ogg",
+        "rpm": 3226.345
+      },
+      {
+        "file": "gen/on_4038.ogg",
+        "rpm": 4038.439
+      },
+      {
+        "file": "gen/on_5055.ogg",
+        "rpm": 5054.967
+      },
+      {
+        "file": "gen/on_6327.ogg",
+        "rpm": 6327.343
+      },
+      {
+        "file": "gen/on_7920.ogg",
+        "rpm": 7919.98
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_1181.ogg",
+        "rpm": 1181.25
+      },
+      {
+        "file": "gen/off_1546.ogg",
+        "rpm": 1545.721
+      },
+      {
+        "file": "gen/off_2023.ogg",
+        "rpm": 2022.646
+      },
+      {
+        "file": "gen/off_2647.ogg",
+        "rpm": 2646.724
+      },
+      {
+        "file": "gen/off_3463.ogg",
+        "rpm": 3463.351
+      },
+      {
+        "file": "gen/off_4532.ogg",
+        "rpm": 4531.931
+      },
+      {
+        "file": "gen/off_5930.ogg",
+        "rpm": 5930.277
+      },
+      {
+        "file": "gen/off_7760.ogg",
+        "rpm": 7759.971
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_875.ogg",
+      "rpm": 875
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

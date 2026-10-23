@@ -1,0 +1,291 @@
+{
+  "id": "ferrari_f40",
+  "name": "Ferrari F40",
+  "type": "car",
+  "engineType": "Twin-turbo flat-plane V8",
+  "description": "Enzo's last Ferrari: a 2.9 L twin-turbo F120A V8 with savage lag, then 478 PS all at once, a gated 5-speed manual and wastegate chatter on every lift.",
+  "engine": {
+    "cylinders": 8,
+    "idleRpm": 1000,
+    "redlineRpm": 7750,
+    "limiterRpm": 7900,
+    "inertia": 0.18,
+    "engineBraking": 0.55,
+    "peakTorqueNm": 577,
+    "crackle": 0.6
+  },
+  "gearbox": {
+    "type": "manual",
+    "ratios": [
+      2.769,
+      1.684,
+      1.214,
+      0.952,
+      0.823
+    ],
+    "finalDrive": 3.9,
+    "wheelRadiusM": 0.33,
+    "shiftTimeMs": 300
+  },
+  "dynamics": {
+    "massKg": 1250,
+    "cdA": 0.62,
+    "brakeDecel": 10.5
+  },
+  "turbo": {
+    "spoolRpm": 3500,
+    "lagS": 0.6,
+    "release": "flutter"
+  },
+  "ui": {
+    "accent": "#ff2800",
+    "silhouette": "supercar",
+    "category": "Supercar",
+    "layout": "V8 twin-turbo",
+    "displacement": "2.9 L",
+    "powerHp": 471,
+    "make": "Ferrari",
+    "year": "1987",
+    "recorded": true
+  },
+  "voice": "twin_turbo_v6",
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_1291.ogg",
+        "rpm": 1290.919
+      },
+      {
+        "file": "on_1651.ogg",
+        "rpm": 1650.53
+      },
+      {
+        "file": "on_1962.ogg",
+        "rpm": 1962.233
+      },
+      {
+        "file": "on_2281.ogg",
+        "rpm": 2280.927
+      },
+      {
+        "file": "on_2552.ogg",
+        "rpm": 2552.229
+      },
+      {
+        "file": "on_2893.ogg",
+        "rpm": 2893.1
+      },
+      {
+        "file": "on_3286.ogg",
+        "rpm": 3285.714
+      },
+      {
+        "file": "on_3843.ogg",
+        "rpm": 3843.236
+      },
+      {
+        "file": "on_4309.ogg",
+        "rpm": 4308.634
+      },
+      {
+        "file": "on_4962.ogg",
+        "rpm": 4962.479
+      },
+      {
+        "file": "on_5589.ogg",
+        "rpm": 5588.588
+      },
+      {
+        "file": "on_6117.ogg",
+        "rpm": 6116.68
+      },
+      {
+        "file": "on_6708.ogg",
+        "rpm": 6707.52
+      },
+      {
+        "file": "on_7245.ogg",
+        "rpm": 7245.009
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_1291.ogg",
+        "rpm": 1290.919
+      },
+      {
+        "file": "off_1651.ogg",
+        "rpm": 1650.53
+      },
+      {
+        "file": "off_1962.ogg",
+        "rpm": 1962.233
+      },
+      {
+        "file": "off_2281.ogg",
+        "rpm": 2280.927
+      },
+      {
+        "file": "off_2552.ogg",
+        "rpm": 2552.229
+      },
+      {
+        "file": "off_2893.ogg",
+        "rpm": 2893.1
+      },
+      {
+        "file": "off_3286.ogg",
+        "rpm": 3285.714
+      },
+      {
+        "file": "off_3843.ogg",
+        "rpm": 3843.236
+      },
+      {
+        "file": "off_4309.ogg",
+        "rpm": 4308.634
+      },
+      {
+        "file": "off_4962.ogg",
+        "rpm": 4962.479
+      },
+      {
+        "file": "off_5589.ogg",
+        "rpm": 5588.588
+      },
+      {
+        "file": "off_6117.ogg",
+        "rpm": 6116.68
+      },
+      {
+        "file": "off_6708.ogg",
+        "rpm": 6707.52
+      },
+      {
+        "file": "off_7245.ogg",
+        "rpm": 7245.009
+      }
+    ],
+    "idle": {
+      "file": "idle_1008.ogg",
+      "rpm": 1007.704
+    },
+    "oneShots": {
+      "start": "start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ],
+      "blowoff": [
+        "gen/bov_1.ogg",
+        "gen/bov_2.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_1200.ogg",
+        "rpm": 1200
+      },
+      {
+        "file": "gen/on_1517.ogg",
+        "rpm": 1516.839
+      },
+      {
+        "file": "gen/on_1917.ogg",
+        "rpm": 1917.355
+      },
+      {
+        "file": "gen/on_2424.ogg",
+        "rpm": 2423.609
+      },
+      {
+        "file": "gen/on_3064.ogg",
+        "rpm": 3063.517
+      },
+      {
+        "file": "gen/on_3872.ogg",
+        "rpm": 3872.428
+      },
+      {
+        "file": "gen/on_4895.ogg",
+        "rpm": 4894.866
+      },
+      {
+        "file": "gen/on_6187.ogg",
+        "rpm": 6187.314
+      },
+      {
+        "file": "gen/on_7821.ogg",
+        "rpm": 7820.986
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_1350.ogg",
+        "rpm": 1350
+      },
+      {
+        "file": "gen/off_1730.ogg",
+        "rpm": 1730.042
+      },
+      {
+        "file": "gen/off_2217.ogg",
+        "rpm": 2217.072
+      },
+      {
+        "file": "gen/off_2841.ogg",
+        "rpm": 2841.222
+      },
+      {
+        "file": "gen/off_3641.ogg",
+        "rpm": 3641.056
+      },
+      {
+        "file": "gen/off_4666.ogg",
+        "rpm": 4666.091
+      },
+      {
+        "file": "gen/off_5980.ogg",
+        "rpm": 5979.661
+      },
+      {
+        "file": "gen/off_7663.ogg",
+        "rpm": 7663.032
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_1000.ogg",
+      "rpm": 1000
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ],
+      "blowoff": [
+        "gen/bov_1.ogg",
+        "gen/bov_2.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

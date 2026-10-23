@@ -1,0 +1,142 @@
+{
+  "mustang_gt": {
+    "pitchRange": [
+      4,
+      130
+    ],
+    "offLoadLowpassHz": 1300,
+    "loopLengthBias": 0.04,
+    "sources": {
+      "dyno": {
+        "title": "Gen 3 Coyote Dyno: This Might As Well Be A Stock 2021 Mustang GT",
+        "author": "Late Model Restoration (LMR)",
+        "youtube": "EEIsuaG_hl8",
+        "cacheName": "yt_mustang_gt_EEIsuaG_hl8.flac"
+      },
+      "stock": {
+        "title": "2018+ Mustang GT Stock Exhaust Sound (without Active Exhaust)",
+        "author": "JVette01",
+        "youtube": "UlXuUnQW8Xs",
+        "cacheName": "yt_mustang_gt_UlXuUnQW8Xs.flac"
+      }
+    },
+    "loops": [
+      {
+        "kind": "idle",
+        "source": "stock",
+        "t": [
+          77.5,
+          84.4
+        ],
+        "flatten": false,
+        "rpm": 740
+      },
+      {
+        "kind": "on",
+        "source": "stock",
+        "t": [
+          56.3,
+          59.4
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            72.5,
+            82.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "stock",
+        "t": [
+          43.6,
+          52.2
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            72.5,
+            82.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "stock",
+        "t": [
+          161,
+          162.2
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            72.5,
+            82.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "stock",
+        "t": [
+          90.3,
+          92.3
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            72.5,
+            82.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "t": [
+          57.4,
+          58.1
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "t": [
+          70.4,
+          71.7
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          72,
+          82.7
+        ],
+        "targets": [
+          2700,
+          3100,
+          3550,
+          4000,
+          4500,
+          5000,
+          5600,
+          6200,
+          6800
+        ],
+        "maxHalfS": 0.5
+      }
+    ],
+    "oneShots": {
+      "start": {
+        "source": "stock",
+        "t": [
+          41.4,
+          45.2
+        ],
+        "fadeOut": 0.8
+      }
+    }
+  }
+}

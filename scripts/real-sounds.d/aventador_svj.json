@@ -1,0 +1,170 @@
+{
+  "aventador_svj": {
+    "pitchRange": [
+      4,
+      130
+    ],
+    "offLoadLowpassHz": 1800,
+    "loopLengthBias": 0.05,
+    "sources": {
+      "dyno": {
+        "title": "Lamborghini Aventador SVJ feat. catless Capristo hits the DYNO | 800+hp BRUTAL V12 engine sounds!",
+        "author": "NM2255 | Raw Car Sounds",
+        "youtube": "pP53iMQouQA",
+        "cacheName": "yt_aventador_svj_pP53iMQouQA.flac"
+      },
+      "cold": {
+        "title": "Cold start of the new Lamborghini Aventador SVJ 2019",
+        "author": "Videos Es",
+        "youtube": "-rQZ9MOwHOQ",
+        "cacheName": "yt_aventador_svj_-rQZ9MOwHOQ.flac"
+      },
+      "cold2": {
+        "title": "Lamborghini Aventador SVJ Cold Start",
+        "author": "Crazy Supercars",
+        "youtube": "406PgCVkiqk",
+        "cacheName": "yt_aventador_svj_406PgCVkiqk.flac"
+      },
+      "idle": {
+        "title": "Lamborghini Aventador SVJ - Idling Walk Around",
+        "author": "annivflstf",
+        "youtube": "sm1zrCDLJjs",
+        "cacheName": "yt_aventador_svj_sm1zrCDLJjs.flac"
+      }
+    },
+    "loops": [
+      {
+        "kind": "idle",
+        "source": "idle",
+        "t": [
+          5.5,
+          17.5
+        ],
+        "flatten": false,
+        "rpm": 900
+      },
+      {
+        "kind": "on",
+        "source": "cold2",
+        "t": [
+          47.69,
+          48.32
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            60.5,
+            63
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "shiftFrom": 1022,
+        "rpm": 1260
+      },
+      {
+        "kind": "on",
+        "source": "cold2",
+        "t": [
+          44.05,
+          45.0
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            60.5,
+            63
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "cold",
+        "t": [
+          36,
+          51
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            60.5,
+            63
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          177.5,
+          180.5
+        ],
+        "targets": [
+          2300
+        ],
+        "maxHalfS": 0.4,
+        "tol": 0.07
+      },
+      {
+        "kind": "on",
+        "source": "cold2",
+        "t": [
+          51.3,
+          57.5
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            60.5,
+            63
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          60.4,
+          75.3
+        ],
+        "targets": [
+          3300,
+          3900,
+          4600,
+          5300,
+          6000,
+          6700,
+          7400,
+          8100
+        ],
+        "maxHalfS": 0.45,
+        "tol": 0.07
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          190,
+          193.7
+        ],
+        "targets": [
+          8500
+        ],
+        "maxHalfS": 0.35,
+        "tol": 0.05
+      }
+    ],
+    "oneShots": {
+      "start": {
+        "source": "cold",
+        "t": [
+          33.42,
+          38.2
+        ],
+        "fadeIn": 0.02,
+        "fadeOut": 1.2
+      }
+    }
+  }
+}

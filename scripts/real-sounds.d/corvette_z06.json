@@ -1,0 +1,168 @@
+{
+  "corvette_z06": {
+    "pitchRange": [
+      7,
+      76
+    ],
+    "offLoadLowpassHz": 1800,
+    "loopLengthBias": 0.04,
+    "sources": {
+      "pure": {
+        "title": "2026 Corvette Z06 | Stock exhaust 5.5L Flat Plane Crank V8 Pure Sounds",
+        "author": "8600RPMs",
+        "youtube": "dAjX5J9YT5M",
+        "cacheName": "yt_corvette_z06_dAjX5J9YT5M.flac"
+      },
+      "cold": {
+        "title": "C8 Corvette Z06 Cold Start Up And Revs",
+        "author": "Tk Turbo",
+        "youtube": "yxC4uyhY1pU",
+        "cacheName": "yt_corvette_z06_yxC4uyhY1pU.flac"
+      }
+    },
+    "loops": [
+      {
+        "kind": "idle",
+        "source": "pure",
+        "t": [
+          184,
+          187.6
+        ],
+        "flatten": false,
+        "rpm": 925
+      },
+      {
+        "kind": "on",
+        "shiftFrom": 1599,
+        "rpm": 1220
+      },
+      {
+        "kind": "on",
+        "source": "cold",
+        "t": [
+          8.4,
+          9.8
+        ],
+        "matchTo": {
+          "source": "pure",
+          "t": [
+            255.9,
+            263.3
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "pure",
+        "t": [
+          71,
+          73.5
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "pure",
+        "t": [
+          150,
+          152.2
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "pure",
+        "t": [
+          62.74,
+          64.55
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "pure",
+        "t": [
+          36,
+          38.2
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "pure",
+        "t": [
+          367.5,
+          370.2
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "pure",
+        "t": [
+          259.4,
+          261.8
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "pure",
+        "t": [
+          359.3,
+          360.6
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "pure",
+        "t": [
+          279.43,
+          280.45
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "pure",
+        "t": [
+          275,
+          276.2
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "pure",
+        "ramp": [
+          344.3,
+          348.3
+        ],
+        "targets": [
+          6300,
+          6900
+        ],
+        "maxHalfS": 0.5
+      },
+      {
+        "kind": "on",
+        "source": "pure",
+        "t": [
+          236.8,
+          239.26
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "pure",
+        "t": [
+          263.41,
+          265.22
+        ]
+      }
+    ],
+    "oneShots": {
+      "start": {
+        "source": "cold",
+        "t": [
+          4.1,
+          7.5
+        ],
+        "fadeOut": 1,
+        "fadeIn": 0.02
+      }
+    }
+  }
+}

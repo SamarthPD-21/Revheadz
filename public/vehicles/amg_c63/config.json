@@ -1,0 +1,308 @@
+{
+  "id": "amg_c63",
+  "name": "Mercedes-AMG C63",
+  "type": "car",
+  "engineType": "6.2 M156 V8",
+  "description": "AMG shoehorned its hand-built 6.2-litre M156 V8 into the compact C-Class: 457 hp, no turbos, and one of the most savage naturally aspirated soundtracks of its era.",
+  "engine": {
+    "cylinders": 8,
+    "idleRpm": 600,
+    "redlineRpm": 7000,
+    "limiterRpm": 7200,
+    "inertia": 0.28,
+    "engineBraking": 0.55,
+    "peakTorqueNm": 600,
+    "crackle": 0.5
+  },
+  "gearbox": {
+    "type": "dct",
+    "ratios": [
+      4.38,
+      2.86,
+      1.92,
+      1.37,
+      1,
+      0.82,
+      0.73
+    ],
+    "finalDrive": 3.06,
+    "wheelRadiusM": 0.34,
+    "shiftTimeMs": 150
+  },
+  "dynamics": {
+    "massKg": 1730,
+    "cdA": 0.7,
+    "brakeDecel": 10.5
+  },
+  "ui": {
+    "accent": "#9ca3af",
+    "silhouette": "sport",
+    "category": "Euro",
+    "layout": "Cross-plane V8",
+    "displacement": "6.2 L",
+    "powerHp": 457,
+    "make": "Mercedes-AMG",
+    "year": "2008-2014",
+    "recorded": true
+  },
+  "voice": "muscle_v8",
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_735.ogg",
+        "rpm": 734.619
+      },
+      {
+        "file": "on_917.ogg",
+        "rpm": 916.527
+      },
+      {
+        "file": "on_1096.ogg",
+        "rpm": 1095.956
+      },
+      {
+        "file": "on_1224.ogg",
+        "rpm": 1223.66
+      },
+      {
+        "file": "on_1489.ogg",
+        "rpm": 1488.981
+      },
+      {
+        "file": "on_1809.ogg",
+        "rpm": 1809.024
+      },
+      {
+        "file": "on_2216.ogg",
+        "rpm": 2216.202
+      },
+      {
+        "file": "on_2720.ogg",
+        "rpm": 2720.015
+      },
+      {
+        "file": "on_3113.ogg",
+        "rpm": 3113.398
+      },
+      {
+        "file": "on_3662.ogg",
+        "rpm": 3661.505
+      },
+      {
+        "file": "on_4112.ogg",
+        "rpm": 4112.114
+      },
+      {
+        "file": "on_4658.ogg",
+        "rpm": 4658.45
+      },
+      {
+        "file": "on_5146.ogg",
+        "rpm": 5146.302
+      },
+      {
+        "file": "on_5631.ogg",
+        "rpm": 5630.7
+      },
+      {
+        "file": "on_6196.ogg",
+        "rpm": 6196.21
+      },
+      {
+        "file": "on_6604.ogg",
+        "rpm": 6603.617
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_735.ogg",
+        "rpm": 734.619
+      },
+      {
+        "file": "off_917.ogg",
+        "rpm": 916.527
+      },
+      {
+        "file": "off_1096.ogg",
+        "rpm": 1095.956
+      },
+      {
+        "file": "off_1224.ogg",
+        "rpm": 1223.66
+      },
+      {
+        "file": "off_1489.ogg",
+        "rpm": 1488.981
+      },
+      {
+        "file": "off_1809.ogg",
+        "rpm": 1809.024
+      },
+      {
+        "file": "off_2216.ogg",
+        "rpm": 2216.202
+      },
+      {
+        "file": "off_2720.ogg",
+        "rpm": 2720.015
+      },
+      {
+        "file": "off_3113.ogg",
+        "rpm": 3113.398
+      },
+      {
+        "file": "off_3662.ogg",
+        "rpm": 3661.505
+      },
+      {
+        "file": "off_4112.ogg",
+        "rpm": 4112.114
+      },
+      {
+        "file": "off_4658.ogg",
+        "rpm": 4658.45
+      },
+      {
+        "file": "off_5146.ogg",
+        "rpm": 5146.302
+      },
+      {
+        "file": "off_5631.ogg",
+        "rpm": 5630.7
+      },
+      {
+        "file": "off_6196.ogg",
+        "rpm": 6196.21
+      },
+      {
+        "file": "off_6604.ogg",
+        "rpm": 6603.617
+      }
+    ],
+    "idle": {
+      "file": "idle_600.ogg",
+      "rpm": 600
+    },
+    "oneShots": {
+      "start": "start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_720.ogg",
+        "rpm": 720
+      },
+      {
+        "file": "gen/on_906.ogg",
+        "rpm": 905.518
+      },
+      {
+        "file": "gen/on_1139.ogg",
+        "rpm": 1138.831
+      },
+      {
+        "file": "gen/on_1432.ogg",
+        "rpm": 1432.259
+      },
+      {
+        "file": "gen/on_1801.ogg",
+        "rpm": 1801.31
+      },
+      {
+        "file": "gen/on_2265.ogg",
+        "rpm": 2265.433
+      },
+      {
+        "file": "gen/on_2849.ogg",
+        "rpm": 2849.139
+      },
+      {
+        "file": "gen/on_3583.ogg",
+        "rpm": 3583.242
+      },
+      {
+        "file": "gen/on_4507.ogg",
+        "rpm": 4506.515
+      },
+      {
+        "file": "gen/on_5668.ogg",
+        "rpm": 5667.671
+      },
+      {
+        "file": "gen/on_7128.ogg",
+        "rpm": 7127.978
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_810.ogg",
+        "rpm": 810.003
+      },
+      {
+        "file": "gen/off_1060.ogg",
+        "rpm": 1060.319
+      },
+      {
+        "file": "gen/off_1388.ogg",
+        "rpm": 1388.001
+      },
+      {
+        "file": "gen/off_1817.ogg",
+        "rpm": 1816.944
+      },
+      {
+        "file": "gen/off_2378.ogg",
+        "rpm": 2378.449
+      },
+      {
+        "file": "gen/off_3113.ogg",
+        "rpm": 3113.473
+      },
+      {
+        "file": "gen/off_4076.ogg",
+        "rpm": 4075.663
+      },
+      {
+        "file": "gen/off_5335.ogg",
+        "rpm": 5335.23
+      },
+      {
+        "file": "gen/off_6984.ogg",
+        "rpm": 6984.031
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_600.ogg",
+      "rpm": 600
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

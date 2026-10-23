@@ -1,0 +1,276 @@
+{
+  "id": "ferrari_f2004",
+  "name": "Ferrari F2004",
+  "type": "car",
+  "engineType": "3.0 L V10, 19,000 rpm",
+  "description": "Schumacher's record-breaking 2004 Formula 1 car: a 3.0-litre Tipo 053 V10 shrieking past 18,000 rpm. Real recordings.",
+  "engine": {
+    "cylinders": 10,
+    "idleRpm": 3600,
+    "redlineRpm": 18800,
+    "limiterRpm": 19000,
+    "inertia": 0.12,
+    "engineBraking": 0.6,
+    "peakTorqueNm": 350,
+    "crackle": 0.35
+  },
+  "gearbox": {
+    "type": "sequential",
+    "ratios": [
+      2.9,
+      2.35,
+      1.98,
+      1.72,
+      1.52,
+      1.36,
+      1.23
+    ],
+    "finalDrive": 5.6,
+    "wheelRadiusM": 0.33,
+    "shiftTimeMs": 30
+  },
+  "dynamics": {
+    "massKg": 605,
+    "cdA": 1.2,
+    "brakeDecel": 35
+  },
+  "ui": {
+    "accent": "#a4161a",
+    "silhouette": "formula",
+    "category": "Formula 1",
+    "layout": "V10 NA",
+    "displacement": "3.0 L",
+    "powerHp": 900,
+    "make": "Ferrari",
+    "year": "2004",
+    "recorded": true
+  },
+  "audio": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "on_4420.ogg",
+        "rpm": 4419.559
+      },
+      {
+        "file": "on_5298.ogg",
+        "rpm": 5298.138
+      },
+      {
+        "file": "on_6332.ogg",
+        "rpm": 6331.701
+      },
+      {
+        "file": "on_7200.ogg",
+        "rpm": 7199.962
+      },
+      {
+        "file": "on_8900.ogg",
+        "rpm": 8900
+      },
+      {
+        "file": "on_10728.ogg",
+        "rpm": 10728.218
+      },
+      {
+        "file": "on_11195.ogg",
+        "rpm": 11194.599
+      },
+      {
+        "file": "on_11983.ogg",
+        "rpm": 11982.657
+      },
+      {
+        "file": "on_12957.ogg",
+        "rpm": 12957.171
+      },
+      {
+        "file": "on_13765.ogg",
+        "rpm": 13765.433
+      },
+      {
+        "file": "on_14784.ogg",
+        "rpm": 14784.399
+      },
+      {
+        "file": "on_15338.ogg",
+        "rpm": 15338.3
+      },
+      {
+        "file": "on_16202.ogg",
+        "rpm": 16202.076
+      },
+      {
+        "file": "on_17005.ogg",
+        "rpm": 17004.9
+      },
+      {
+        "file": "on_17851.ogg",
+        "rpm": 17850.722
+      },
+      {
+        "file": "on_18380.ogg",
+        "rpm": 18379.54
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "off_4420.ogg",
+        "rpm": 4419.559
+      },
+      {
+        "file": "off_5298.ogg",
+        "rpm": 5298.138
+      },
+      {
+        "file": "off_6332.ogg",
+        "rpm": 6331.701
+      },
+      {
+        "file": "off_7200.ogg",
+        "rpm": 7199.962
+      },
+      {
+        "file": "off_8900.ogg",
+        "rpm": 8900
+      },
+      {
+        "file": "off_10728.ogg",
+        "rpm": 10728.218
+      },
+      {
+        "file": "off_11195.ogg",
+        "rpm": 11194.599
+      },
+      {
+        "file": "off_11983.ogg",
+        "rpm": 11982.657
+      },
+      {
+        "file": "off_12957.ogg",
+        "rpm": 12957.171
+      },
+      {
+        "file": "off_13765.ogg",
+        "rpm": 13765.433
+      },
+      {
+        "file": "off_14784.ogg",
+        "rpm": 14784.399
+      },
+      {
+        "file": "off_15338.ogg",
+        "rpm": 15338.3
+      },
+      {
+        "file": "off_16202.ogg",
+        "rpm": 16202.076
+      },
+      {
+        "file": "off_17005.ogg",
+        "rpm": 17004.9
+      },
+      {
+        "file": "off_17851.ogg",
+        "rpm": 17850.722
+      },
+      {
+        "file": "off_18380.ogg",
+        "rpm": 18379.54
+      }
+    ],
+    "idle": {
+      "file": "idle_3500.ogg",
+      "rpm": 3500
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  },
+  "credits": [],
+  "voice": "v10_supercar",
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_5400.ogg",
+        "rpm": 5400
+      },
+      {
+        "file": "gen/on_6649.ogg",
+        "rpm": 6648.555
+      },
+      {
+        "file": "gen/on_8186.ogg",
+        "rpm": 8185.769
+      },
+      {
+        "file": "gen/on_10078.ogg",
+        "rpm": 10078.384
+      },
+      {
+        "file": "gen/on_12409.ogg",
+        "rpm": 12408.676
+      },
+      {
+        "file": "gen/on_15278.ogg",
+        "rpm": 15277.626
+      },
+      {
+        "file": "gen/on_18810.ogg",
+        "rpm": 18809.952
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_6075.ogg",
+        "rpm": 6074.975
+      },
+      {
+        "file": "gen/off_8018.ogg",
+        "rpm": 8017.574
+      },
+      {
+        "file": "gen/off_10581.ogg",
+        "rpm": 10581.205
+      },
+      {
+        "file": "gen/off_13965.ogg",
+        "rpm": 13964.645
+      },
+      {
+        "file": "gen/off_18430.ogg",
+        "rpm": 18429.975
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_4500.ogg",
+      "rpm": 4500
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
+}

@@ -1,0 +1,200 @@
+{
+  "bmw_m3_e46": {
+    "pitchRange": [
+      4,
+      130
+    ],
+    "offLoadLowpassHz": 1500,
+    "loopLengthBias": 0.04,
+    "sources": {
+      "dyno": {
+        "title": "E46 M3 S54 - CSL airbox + 288/280 cams - Dyno Pull 1600-8300 RPM",
+        "author": "BBRTuning",
+        "youtube": "V7JV_BftgBI",
+        "cacheName": "yt_bmw_m3_e46_V7JV_BftgBI.flac"
+      },
+      "pure": {
+        "title": "BMW M3 E46 PURE SOUND REVS - DRIFT - ACCELERATION HILL CLIMB ON BOARD",
+        "author": "Filip Nikola",
+        "youtube": "7dpiDK9LZmI",
+        "cacheName": "yt_bmw_m3_e46_7dpiDK9LZmI.flac"
+      },
+      "stock": {
+        "title": "Stock M3 E46 Exhaust Sound (Downshift, Cold Start, Revs)",
+        "author": "The Racing Joker",
+        "youtube": "djKSeSSoDNU",
+        "cacheName": "yt_bmw_m3_e46_djKSeSSoDNU.flac"
+      },
+      "dyno2": {
+        "title": "BMW E46 M3 Dyno *** STOCK ***",
+        "author": "Jeff",
+        "youtube": "YUXB9L2DMsE",
+        "cacheName": "yt_bmw_m3_e46_YUXB9L2DMsE.flac"
+      },
+      "cold": {
+        "title": "2002 E46 BMW M3 Coupe with 6 Speed Manual Cold Startup and Rev with Stock Exhaust (4K)",
+        "author": "CarRex",
+        "youtube": "ysmcxO917jU",
+        "cacheName": "yt_bmw_m3_e46_ysmcxO917jU.flac"
+      }
+    },
+    "loops": [
+      {
+        "kind": "idle",
+        "source": "pure",
+        "t": [
+          2.9,
+          8.6
+        ],
+        "flatten": false,
+        "rpm": 875
+      },
+      {
+        "kind": "on",
+        "source": "cold",
+        "t": [
+          125,
+          137.5
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            8.5,
+            18.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "stock",
+        "t": [
+          21,
+          26
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            8.5,
+            18.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dyno2",
+        "t": [
+          0.6,
+          1.5
+        ],
+        "octave": 2,
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            8.5,
+            18.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dyno2",
+        "t": [
+          2.2,
+          2.95
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            8.5,
+            18.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dyno2",
+        "t": [
+          4.83,
+          5.7
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            8.5,
+            18.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dyno2",
+        "t": [
+          6.55,
+          7.3
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            8.5,
+            18.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "t": [
+          5.6,
+          8
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "stock",
+        "t": [
+          27.2,
+          29.2
+        ],
+        "matchTo": {
+          "source": "dyno",
+          "t": [
+            8.5,
+            18.5
+          ]
+        }
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "ramp": [
+          8,
+          18.9
+        ],
+        "targets": [
+          3100,
+          4100,
+          4600,
+          5100,
+          5600,
+          6100,
+          6600,
+          7100,
+          7600,
+          8100
+        ],
+        "maxHalfS": 0.45
+      }
+    ],
+    "oneShots": {
+      "start": {
+        "source": "stock",
+        "t": [
+          17.6,
+          22
+        ],
+        "fadeOut": 0.9,
+        "fadeIn": 0.03
+      }
+    }
+  }
+}
