@@ -413,7 +413,7 @@ export class DragScene25D {
     this.lead += (leadTarget - this.lead) * Math.min(1, dt * 2.5);
     this.camX = myX + this.lead;
     this.zoom += (1 - Math.min(0.25, me.speedKmh / 900) - this.zoom) * Math.min(1, dt * 2);
-    this.k = (portrait ? w / 11.5 : Math.min(w / 30, h / 15)) * this.zoom;
+    this.k = (portrait ? w / 10.5 : Math.min(w / 26, h / 13)) * this.zoom;
     // shake as smooth noise (summed sines), not a fresh random offset every frame
     const sh = f.shake * f.shake;
     const t = f.time;
