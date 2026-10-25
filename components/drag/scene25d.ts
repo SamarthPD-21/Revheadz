@@ -590,7 +590,7 @@ export class DragScene25D {
         [l.ambers[0], "rgba(251,191,36,1)"],
         [l.ambers[1], "rgba(251,191,36,1)"],
         [l.ambers[2], "rgba(251,191,36,1)"],
-        [l.red, "rgba(239,68,68,1)"],
+        l.red ? [true, "rgba(239,68,68,1)"] : [l.ambers[3], "rgba(251,191,36,1)"],
         [l.green || l.win, l.win ? "rgba(255,255,255,1)" : "rgba(74,222,128,1)"],
       ];
       rows.forEach(([on, color], i) => {

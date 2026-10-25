@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { AudioEngine } from "../../lib/audio/AudioEngine";
 import { driveWithCpu, type CpuSkill } from "../../lib/drag/cpu";
-import { AMBER_STEP_MS, decide, DragRun, QUARTER_MILE_M, STAGE_MS, TREE_MS, type DriveKey, type DriveLog, type RunResult } from "../../lib/drag/race";
+import { decide, DragRun, QUARTER_MILE_M, STAGE_MS, TREE_MS, type DriveKey, type DriveLog, type RunResult } from "../../lib/drag/race";
 import type { SimListener, SimState } from "../../lib/sim/types";
 import type { VehicleConfig } from "../../lib/vehicles/types";
 import { Silhouette } from "../Silhouette";
@@ -77,7 +77,8 @@ function treeLights(t: number, launchMs: number | null, stageT: number, win: boo
   const red = launchMs !== null && launchMs < 0 && t >= launchMs;
   return {
     stage: t >= stageT,
-    ambers: [0, 1, 2].map((k) => t >= -TREE_MS + k * AMBER_STEP_MS && t < 0 && !red),
+    // four ambers cascade through the countdown, then green (the last amber doubles as the red light)
+    ambers: [0, 1, 2, 3].map((k) => t >= -TREE_MS + (k * TREE_MS) / 4 && t < 0 && !red),
     green: t >= 0 && !red,
     red,
     win,
@@ -602,10 +603,13 @@ function TreeColumn({ label, lights, accent }: { label: string; lights: ReturnTy
       </span>
       <span className="bulb bulb-stage" data-on={lights.stage ? "1" : "0"} />
       <span className="bulb bulb-stage" data-on={lights.stage ? "1" : "0"} />
-      {lights.ambers.map((on, i) => (
-        <span key={i} className="bulb bulb-amber" data-on={on ? "1" : "0"} />
-      ))}
-      <span className="bulb bulb-red" data-on={lights.red ? "1" : "0"} />
+      {lights.ambers.map((on, i) =>
+        i === lights.ambers.length - 1 && lights.red ? (
+          <span key={i} className="bulb bulb-red" data-on="1" />
+        ) : (
+          <span key={i} className="bulb bulb-amber" data-on={on ? "1" : "0"} />
+        ),
+      )}
       <span className="bulb bulb-green" data-on={lights.green || lights.win ? "1" : "0"} />
     </div>
   );
