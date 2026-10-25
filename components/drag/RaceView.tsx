@@ -172,9 +172,11 @@ export function RaceView({ me, opp, startAt, opponent, audio, oppAudio, sfx, onI
     latest.current = { onInput, onFinish, onDone, opponent, me, opp };
   });
 
-  // the opponent's engine is only heard while racing
+  // the opponent's engine is only heard while racing,
+  // and fires up during the VS intro, start sound and all
   useEffect(() => {
     oppAudio?.setVolume(0.38);
+    oppAudio?.handleEvent({ type: "start" });
     return () => oppAudio?.setVolume(0);
   }, [oppAudio]);
 
