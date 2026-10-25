@@ -1,5 +1,6 @@
 import { EIGHTH_MILE_M, QUARTER_MILE_M, SIXTY_FT_M } from "../../lib/drag/race";
 import type { VehicleConfig } from "../../lib/vehicles/types";
+import { BODIES } from "../Silhouette";
 import type { SceneCar, SceneFrame } from "./scene";
 
 /**
@@ -77,13 +78,6 @@ function box(x0: number, x1: number, y0: number, y1: number, z0: number, z1: num
   return { faces: [[a, d, c, b], [e, f, g, h], [a, e, h, d], [b, c, g, f], [d, h, g, c], [a, b, f, e]], color, flat, center: [(x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2] };
 }
 
-/** A tapered block (bottom x0..x1 wide w0, top x2..x3 wide w1), centred on z = 0. */
-function frustum(x0: number, x1: number, x2: number, x3: number, y0: number, y1: number, w0: number, w1: number, color: [number, number, number]): Solid {
-  const a: V = [x0, y0, -w0 / 2], b: V = [x1, y0, -w0 / 2], c: V = [x3, y1, -w1 / 2], d: V = [x2, y1, -w1 / 2];
-  const e: V = [x0, y0, w0 / 2], f: V = [x1, y0, w0 / 2], g: V = [x3, y1, w1 / 2], h: V = [x2, y1, w1 / 2];
-  return { faces: [[a, d, c, b], [e, f, g, h], [a, e, h, d], [b, c, g, f], [d, h, g, c], [a, b, f, e]], color, center: [(x0 + x1 + x2 + x3) / 4, (y0 + y1) / 2, 0] };
-}
-
 /** A wheel: an n-sided cylinder along z, rotated by `spin`. */
 function wheel(cx: number, cy: number, r: number, z0: number, z1: number, spin: number, color: [number, number, number]): Solid {
   const n = 10;
@@ -98,73 +92,115 @@ function wheel(cx: number, cy: number, r: number, z0: number, z1: number, spin: 
   return { faces, color, center: [cx, cy, (z0 + z1) / 2] };
 }
 
-/** The car as parts, in car space: x from the rear (0) to the nose (len), y up, z across. */
-function carModel(cfg: VehicleConfig, spin: number): { parts: Solid[]; len: number; width: number; rims: { x: number; y: number; r: number; z: number }[] } {
-  const acc = hexRgb(cfg.ui.accent);
-  const dark = acc.map((v) => v * 0.55) as [number, number, number];
-  const tyre: [number, number, number] = [14, 14, 17];
-  const glass: [number, number, number] = [16, 20, 30];
-  const kind = cfg.ui.silhouette;
-  const parts: Solid[] = [];
-  const rims: { x: number; y: number; r: number; z: number }[] = [];
-  if (cfg.type === "bike") {
-    const len = 2.1;
-    const r = 0.32;
-    for (const x of [0.38, 1.72]) {
-      parts.push(wheel(x, r, r, -0.07, 0.07, spin, tyre));
-      rims.push({ x, y: r, r: r * 0.6, z: 0.08 });
-    }
-    parts.push(box(0.35, 1.75, 0.35, 0.7, -0.17, 0.17, acc)); // frame and fairing
-    parts.push(box(1.35, 1.8, 0.6, 0.95, -0.2, 0.2, acc)); // nose fairing
-    parts.push(box(0.5, 1.0, 0.7, 0.85, -0.14, 0.14, dark)); // seat
-    parts.push(box(0.75, 1.15, 0.85, 1.35, -0.2, 0.2, [24, 24, 30])); // rider
-    parts.push(box(1.05, 1.35, 1.25, 1.55, -0.15, 0.15, acc)); // helmet
-    return { parts, len, width: 0.45, rims };
-  }
-  if (kind === "formula") {
-    const len = 4.8;
-    const r = 0.34;
-    for (const x of [0.75, 3.85]) {
-      for (const s of [-1, 1]) {
-        parts.push(wheel(x, r, r, s > 0 ? 0.62 : -0.98, s > 0 ? 0.98 : -0.62, spin, tyre));
-        if (s > 0) rims.push({ x, y: r, r: r * 0.6, z: 0.99 });
+type XY = [number, number];
+
+/** The silhouette path syntax (absolute M / L / Q / Z) as polygons, curves sampled; open subpaths dropped. */
+function pathPolys(d: string): XY[][] {
+  const tok = d.match(/[MLQZ]|-?\d+(\.\d+)?/g) ?? [];
+  const out: XY[][] = [];
+  let cur: XY[] = [];
+  let i = 0;
+  const n = () => Number(tok[i++]);
+  while (i < tok.length) {
+    const c = tok[i++];
+    if (c === "M") {
+      cur = [[n(), n()]];
+    } else if (c === "L") cur.push([n(), n()]);
+    else if (c === "Q") {
+      const [x0, y0] = cur[cur.length - 1];
+      const cx = n(), cy = n(), x1 = n(), y1 = n();
+      for (let t = 1; t <= 4; t++) {
+        const u = t / 4;
+        cur.push([(1 - u) * (1 - u) * x0 + 2 * (1 - u) * u * cx + u * u * x1, (1 - u) * (1 - u) * y0 + 2 * (1 - u) * u * cy + u * u * y1]);
       }
-    }
-    parts.push(box(0.4, 4.6, 0.12, 0.5, -0.38, 0.38, acc)); // tub
-    parts.push(box(1.2, 2.6, 0.12, 0.45, -0.62, 0.62, dark)); // sidepods
-    parts.push(box(4.4, 4.9, 0.06, 0.14, -0.9, 0.9, dark)); // front wing
-    parts.push(box(-0.05, 0.35, 0.75, 0.95, -0.55, 0.55, dark)); // rear wing
-    parts.push(box(0.05, 0.25, 0.3, 0.75, -0.08, 0.08, dark));
-    parts.push(box(2.2, 2.75, 0.5, 0.78, -0.18, 0.18, [24, 24, 30])); // driver
-    return { parts, len, width: 1.9, rims };
-  }
-  const len = 4.6;
-  const w = 1.86;
-  const r = 0.33;
-  for (const x of [0.85, 3.7]) {
-    for (const s of [-1, 1]) {
-      parts.push(wheel(x, r, r, s * (w / 2 - 0.27), s * (w / 2 + 0.03), spin, tyre));
-      if (s > 0) rims.push({ x, y: r, r: r * 0.62, z: w / 2 + 0.035 });
+    } else if (c === "Z") {
+      if (cur.length >= 3) out.push(cur);
+      cur = [];
     }
   }
-  const low = kind === "supercar" || kind === "gtcar";
-  const beltY = low ? 0.78 : 0.86;
-  parts.push(box(0.05, len, 0.26, beltY, -w / 2, w / 2, acc)); // lower body
-  // cabin: glass sides, with the roof on top
-  const cab = low ? [1.25, 3.55, 1.65, 3.05] : [1.05, 3.4, 1.4, 2.95];
-  const roofY = low ? 1.14 : 1.32;
-  parts.push(frustum(cab[0], cab[1], cab[2], cab[3], beltY, roofY, w * 0.86, w * 0.7, glass));
-  parts.push(frustum(cab[2] + 0.05, cab[3] - 0.05, cab[2] + 0.12, cab[3] - 0.12, roofY, roofY + 0.04, w * 0.7, w * 0.66, acc)); // roof
-  // lamps (unlit = bright)
-  parts.push(box(-0.02, 0.06, beltY - 0.24, beltY - 0.1, -w / 2 + 0.12, -w / 2 + 0.5, [200, 30, 26], true));
-  parts.push(box(-0.02, 0.06, beltY - 0.24, beltY - 0.1, w / 2 - 0.5, w / 2 - 0.12, [200, 30, 26], true));
-  parts.push(box(len - 0.06, len + 0.02, beltY - 0.2, beltY - 0.08, -w / 2 + 0.12, -w / 2 + 0.45, [245, 245, 235], true));
-  parts.push(box(len - 0.06, len + 0.02, beltY - 0.2, beltY - 0.08, w / 2 - 0.45, w / 2 - 0.12, [245, 245, 235], true));
-  if (kind === "rally" || kind === "gtcar" || kind === "supercar") {
-    parts.push(box(-0.05, 0.4, beltY + 0.28, beltY + 0.36, -w / 2 + 0.05, w / 2 - 0.05, dark)); // wing
-    for (const s of [-1, 1]) parts.push(box(0.12, 0.24, beltY, beltY + 0.3, s * 0.55 - 0.04, s * 0.55 + 0.04, dark));
+  return out;
+}
+
+/** Keeps the part of a polygon above (keepAbove) or below a horizontal line (Sutherland-Hodgman). */
+function clipY(poly: XY[], yCut: number, keepAbove: boolean): XY[] {
+  const inside = (p: XY) => (keepAbove ? p[1] >= yCut : p[1] <= yCut);
+  const out: XY[] = [];
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i];
+    const b = poly[(i + 1) % poly.length];
+    if (inside(a)) out.push(a);
+    if (inside(a) !== inside(b)) {
+      const t = (yCut - a[1]) / (b[1] - a[1]);
+      out.push([a[0] + (b[0] - a[0]) * t, yCut]);
+    }
   }
-  return { parts, len, width: w, rims };
+  return out;
+}
+
+const area = (poly: XY[]) => poly.reduce((s, p, i) => {
+  const q = poly[(i + 1) % poly.length];
+  return s + p[0] * q[1] - q[0] * p[1];
+}, 0) / 2;
+
+/** A car built from its garage side profile: x from the rear (0) to the nose (len), y up. */
+interface CarShape {
+  len: number;
+  width: number;
+  height: number;
+  /** Body prisms (closed profiles, counter-clockwise). */
+  bodies: XY[][];
+  /** Near-side window glass, if any. */
+  windows: XY[];
+  /** Wings and spoilers, extruded thinner. */
+  wings: XY[][];
+  wheels: { x: number; r: number }[];
+  /** Wheel tread span across the car, from the centre line. */
+  wheelZ: [number, number];
+  belt: number;
+  bike: boolean;
+}
+
+const WIDTH: Record<string, number> = { muscle: 1.95, coupe: 1.85, sport: 1.8, supercar: 2.0, gt: 1.95, hatch: 1.8, rally: 1.85, gtcar: 2.05, formula: 0.8, superbike: 0.36, cruiser: 0.5 };
+const shapeCache = new Map<string, CarShape>();
+
+function carShape(cfg: VehicleConfig): CarShape {
+  const kind = cfg.ui.silhouette;
+  const hit = shapeCache.get(kind);
+  if (hit) return hit;
+  const b = BODIES[kind];
+  const bike = cfg.type === "bike";
+  const formula = kind === "formula";
+  const raw = pathPolys(b.body);
+  const all = raw.flat();
+  const minX = Math.min(...all.map((p) => p[0]));
+  const maxX = Math.max(...all.map((p) => p[0]));
+  const ground = Math.max(...b.wheels.map(([, wy]) => wy + b.r));
+  const len = bike ? 2.2 : formula ? 4.8 : 4.6;
+  const k = len / (maxX - minX);
+  // the silhouettes face left (nose at small x): mirror so the nose is at +x
+  const toCar = ([x, y]: XY): XY => [(maxX - x) * k, (ground - y) * k];
+  const ccw = (poly: XY[]) => (area(poly) < 0 ? [...poly].reverse() : poly);
+  const bodies = raw.map((poly) => ccw(poly.map(toCar)));
+  const height = Math.max(...bodies.flat().map((p) => p[1]));
+  const belt = height * (kind === "hatch" || kind === "rally" ? 0.55 : 0.6);
+  const main = bodies.reduce((a, c) => (Math.abs(area(c)) > Math.abs(area(a)) ? c : a));
+  // side glass: the body above the beltline, pulled in from the edges
+  let windows: XY[] = [];
+  if (!bike && !formula) {
+    const top = clipY(main, belt + 0.04, true);
+    if (top.length >= 3) {
+      const cx = top.reduce((s, p) => s + p[0], 0) / top.length;
+      const cy = top.reduce((s, p) => s + p[1], 0) / top.length;
+      windows = top.map(([x, y]) => [cx + (x - cx) * 0.86, cy + (y - cy) * 0.8]);
+    }
+  }
+  const wings = b.extra ? pathPolys(b.extra).map((poly) => ccw(poly.map(toCar))) : [];
+  const wheels = b.wheels.map(([wx]) => ({ x: (maxX - wx) * k, r: b.r * k }));
+  const width = WIDTH[kind] ?? 1.85;
+  const wheelZ: [number, number] = bike ? [-0.06, 0.06] : formula ? [0.62, 0.98] : [width / 2 - 0.26, width / 2 + 0.03];
+  const shape = { len, width, height, bodies, windows, wings, wheels, wheelZ, belt, bike };
+  shapeCache.set(kind, shape);
+  return shape;
 }
 
 interface Puff {
@@ -278,7 +314,8 @@ export class DragScene25D {
     return dot(sub(v, this.cam), VIEW);
   }
 
-  private poly(pts: V[], fill: string) {
+  /** `seal` also strokes the edge in the fill colour, closing antialiasing seams between touching faces. */
+  private poly(pts: V[], fill: string, seal = false) {
     const ctx = this.ctx;
     ctx.fillStyle = fill;
     ctx.beginPath();
@@ -289,6 +326,12 @@ export class DragScene25D {
     });
     ctx.closePath();
     ctx.fill();
+    if (seal) {
+      ctx.strokeStyle = fill;
+      ctx.lineWidth = 0.9;
+      ctx.lineJoin = "round";
+      ctx.stroke();
+    }
   }
 
   /** Draws a solid's visible faces with flat shading. */
@@ -301,7 +344,7 @@ export class DragScene25D {
       if (dot(n, sub(fc, c)) < 0) n = [-n[0], -n[1], -n[2]]; // make it face outwards
       if (dot(n, VIEW) >= 0) continue; // facing away from the camera
       const light = s.flat ? 1.25 : 0.42 + 0.7 * Math.max(0, dot(n, LIGHT));
-      this.poly(w, rgbStr(s.color, light));
+      this.poly(w, rgbStr(s.color, light), true);
     }
   }
 
@@ -530,64 +573,142 @@ export class DragScene25D {
 
   private car(c: SceneCar, lane: "me" | "opp", rear: number, time: number) {
     const z = LANE_Z[lane];
-    const spin = -(c.distM - c.rollBackM) / 0.33;
-    const model = carModel(c.cfg, spin);
+    const shape = carShape(c.cfg);
+    const W = shape.width;
+    const spin = -(c.distM - c.rollBackM) / (shape.wheels[0]?.r ?? 0.33);
+    const acc = hexRgb(c.cfg.ui.accent);
     const pitch = this.pitch[lane] * 0.035; // rear squats under power, nose dives on the brakes
-    const axle = model.len * 0.18;
-    const toWorld =
-      (pitchable: boolean) =>
-      (v: V): V => {
-        let [x, y] = v;
-        if (pitchable && pitch) {
-          const dx = x - axle;
-          const dy = y - 0.33;
-          x = axle + dx * Math.cos(pitch) - dy * Math.sin(pitch);
-          y = 0.33 + dx * Math.sin(pitch) + dy * Math.cos(pitch);
+    const axle = shape.len * 0.2;
+    const xf = (pitchable: boolean) => (v: V): V => {
+      let [x, y] = v;
+      if (pitchable && pitch) {
+        const dx = x - axle;
+        const dy = y - 0.33;
+        x = axle + dx * Math.cos(pitch) - dy * Math.sin(pitch);
+        y = 0.33 + dx * Math.sin(pitch) + dy * Math.cos(pitch);
+      }
+      return [rear + x, y, z + v[2]];
+    };
+    const body = xf(true);
+    const flat = xf(false);
+    const shade = (n: V, base: [number, number, number], lit = 1) => rgbStr(base, (0.42 + 0.7 * Math.max(0, dot(n, LIGHT))) * lit);
+
+    // ground: shadow, underglow, headlight beam
+    const halfW = Math.max(W, shape.bike ? 0.5 : W) / 2;
+    this.poly([flat([-0.15, 0, -halfW - 0.1]), flat([shape.len + 0.15, 0, -halfW - 0.1]), flat([shape.len + 0.35, 0, halfW + 0.35]), flat([0.05, 0, halfW + 0.35])], "rgba(0,0,0,0.55)");
+    this.sprite(this.glow(`rgba(${acc.join(",")},1)`), flat([shape.len / 2, 0, 0]), shape.len * 1.1, 0.26, true);
+    this.poly([flat([shape.len, 0.01, -0.6]), flat([shape.len + 10, 0.01, -1.6]), flat([shape.len + 10, 0.01, 1.6]), flat([shape.len, 0.01, 0.6])], "rgba(255,250,235,0.05)");
+
+    const tyre: [number, number, number] = [14, 14, 17];
+    const wheelSolids = (side: 1 | -1) =>
+      shape.wheels.map((w) => wheel(w.x, w.r, w.r, side > 0 ? shape.wheelZ[0] : -shape.wheelZ[1], side > 0 ? shape.wheelZ[1] : -shape.wheelZ[0], spin, tyre));
+    // far wheels first (behind the body)
+    if (!shape.bike) for (const s of wheelSolids(-1)) this.solid(s, flat);
+    else for (const s of wheelSolids(1)) this.solid(s, flat);
+
+    // a profile extruded across the car: the edge strips (roof, bonnet, screens, tail) back to front
+    const prism = (poly: XY[], z0: number, z1: number, base: [number, number, number], glassy: boolean) => {
+      const strips: { pts: V[]; n: V; glass: boolean; d: number }[] = [];
+      for (let i = 0; i < poly.length; i++) {
+        const [ax, ay] = poly[i];
+        const [bx, by] = poly[(i + 1) % poly.length];
+        const pts: V[] = [body([ax, ay, z0]), body([bx, by, z0]), body([bx, by, z1]), body([ax, ay, z1])];
+        // outward normal of a counter-clockwise edge in the side plane
+        const n = norm([by - ay, -(bx - ax), 0]);
+        if (dot(n, VIEW) >= 0 || n[1] < -0.2) continue;
+        const glass = glassy && ay > shape.belt + 0.02 && by > shape.belt + 0.02 && Math.abs(by - ay) > 0.35 * Math.abs(bx - ax);
+        const mid: V = [(pts[0][0] + pts[2][0]) / 2, (pts[0][1] + pts[2][1]) / 2, (pts[0][2] + pts[2][2]) / 2];
+        strips.push({ pts, n, glass, d: this.depth(mid) });
+      }
+      strips.sort((p, q) => q.d - p.d);
+      for (const st of strips) this.poly(st.pts, st.glass ? rgbStr([20, 26, 38], 0.5 + 0.6 * Math.max(0, dot(st.n, LIGHT))) : shade(st.n, base), true);
+      // the near side face
+      this.poly(poly.map(([x, y]) => body([x, y, z1])), shade([0, 0, 1], base), true);
+    };
+    for (const poly of shape.bodies) prism(poly, -W / 2, W / 2, acc, !shape.bike);
+
+    // near-side details: sills, window glass with a pillar, wheel arches
+    const side = W / 2 + 0.005;
+    for (const poly of shape.bodies) {
+      const sill = clipY(poly, shape.height * 0.18, false);
+      if (sill.length >= 3) this.poly(sill.map(([x, y]) => body([x, y, side])), rgbStr(acc, 0.32));
+    }
+    if (shape.windows.length) {
+      this.poly(shape.windows.map(([x, y]) => body([x, y, side + 0.002])), "rgb(17,21,31)");
+      const xs = shape.windows.map((p) => p[0]);
+      const pm = (Math.min(...xs) + Math.max(...xs)) / 2;
+      this.poly([body([pm - 0.05, shape.belt, side + 0.004]), body([pm + 0.05, shape.belt, side + 0.004]), body([pm + 0.05, shape.height, side + 0.004]), body([pm - 0.05, shape.height, side + 0.004])], rgbStr(acc, 0.6));
+    }
+    if (!shape.bike && c.cfg.ui.silhouette !== "formula") {
+      for (const w of shape.wheels) {
+        const arch: V[] = [];
+        for (let i = 0; i <= 10; i++) {
+          const a = (i / 10) * Math.PI;
+          arch.push(body([w.x + Math.cos(a) * w.r * 1.18, w.r + Math.sin(a) * w.r * 1.18, side + 0.006]));
         }
-        return [rear + x, y, z + v[2]];
-      };
-    // shadow and underglow on the ground
-    this.poly([[rear - 0.15, 0, z - model.width / 2 - 0.15], [rear + model.len + 0.15, 0, z - model.width / 2 - 0.15], [rear + model.len + 0.35, 0, z + model.width / 2 + 0.35], [rear + 0.05, 0, z + model.width / 2 + 0.35]], "rgba(0,0,0,0.55)");
-    this.sprite(this.glow(`rgba(${hexRgb(c.cfg.ui.accent).join(",")},1)`), [rear + model.len / 2, 0, z], model.len * 1.1, 0.28, true);
-    // headlight beam on the track ahead
-    this.poly([[rear + model.len, 0.01, z - 0.6], [rear + model.len + 10, 0.01, z - 1.6], [rear + model.len + 10, 0.01, z + 1.6], [rear + model.len, 0.01, z + 0.6]], "rgba(255,250,235,0.05)");
-    // parts, back to front within the car
-    const ordered = model.parts
-      .map((s) => {
-        const isWheel = s.faces.length > 6;
-        return { s, xf: toWorld(!isWheel), d: this.depth(toWorld(!isWheel)(s.center)) };
-      })
-      .sort((a, b) => b.d - a.d);
-    for (const o of ordered) this.solid(o.s, o.xf);
-    // rims with turning spokes on the near-side wheels
-    const ctx = this.ctx;
-    for (const rim of model.rims) {
-      const centre: V = [rear + rim.x, rim.y, z + rim.z];
-      const [cxp, cyp] = this.p(centre);
+        this.poly(arch, "rgb(8,8,11)");
+      }
+    }
+    // wings and spoilers, dark
+    for (const poly of shape.wings) prism(poly, -W / 2 + 0.05, W / 2 - 0.05, [26, 26, 32], false);
+    // rider on a bike
+    if (shape.bike) {
+      this.solid(box(shape.len * 0.4, shape.len * 0.58, 0.85, 1.32, -0.2, 0.2, [24, 24, 30]), body);
+      this.solid(box(shape.len * 0.52, shape.len * 0.66, 1.22, 1.5, -0.15, 0.15, acc), body);
+    }
+    // near wheels, with spokes turning at road speed
+    if (!shape.bike) {
+      const ctx = this.ctx;
+      for (const s of wheelSolids(1)) this.solid(s, flat);
+      // spokes strobe at speed (the wagon-wheel effect): fade them into a blurred rim
+      const spokeA = Math.max(0, 1 - c.speedKmh / 35);
+      if (c.speedKmh > 8) {
+        ctx.strokeStyle = c.cfg.ui.accent;
+        ctx.globalAlpha = Math.min(0.55, (c.speedKmh - 8) / 60);
+        ctx.lineWidth = Math.max(1.5, 0.12 * this.k);
+        for (const w of shape.wheels) {
+          const ctr = flat([w.x, w.r, shape.wheelZ[1] + 0.005]);
+          ctx.beginPath();
+          for (let i = 0; i <= 16; i++) {
+            const a = (i / 16) * Math.PI * 2;
+            const [ex, ey] = this.p([ctr[0] + Math.cos(a) * w.r * 0.45, ctr[1] + Math.sin(a) * w.r * 0.45, ctr[2]]);
+            if (i) ctx.lineTo(ex, ey);
+            else ctx.moveTo(ex, ey);
+          }
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      }
+      ctx.globalAlpha = spokeA;
       ctx.strokeStyle = c.cfg.ui.accent;
       ctx.lineWidth = Math.max(1, 0.05 * this.k);
       ctx.beginPath();
-      for (let i = 0; i < 5; i++) {
-        const a = spin + (i * Math.PI * 2) / 5;
-        const [ex, ey] = this.p([centre[0] + Math.cos(a) * rim.r, centre[1] + Math.sin(a) * rim.r, centre[2]]);
-        ctx.moveTo(cxp, cyp);
-        ctx.lineTo(ex, ey);
+      for (const w of shape.wheels) {
+        const centre = flat([w.x, w.r, shape.wheelZ[1] + 0.005]);
+        const [cxp, cyp] = this.p(centre);
+        for (let i = 0; i < 5; i++) {
+          const a = spin + (i * Math.PI * 2) / 5;
+          const [ex, ey] = this.p([centre[0] + Math.cos(a) * w.r * 0.62, centre[1] + Math.sin(a) * w.r * 0.62, centre[2]]);
+          ctx.moveTo(cxp, cyp);
+          ctx.lineTo(ex, ey);
+        }
       }
-      ctx.stroke();
+      if (spokeA > 0.01) ctx.stroke();
+      ctx.globalAlpha = 1;
     }
-    // taillight glow (brighter on the brakes) and exhaust flames
+
+    // lights: taillights (brighter on the brakes), headlights, exhaust flames
     const brake = this.braking[lane];
-    const tail = this.glow("rgba(255,40,30,1)");
-    const sides = c.cfg.type === "bike" ? [0] : [-0.62, 0.62];
-    for (const s of sides) this.sprite(tail, [rear - 0.05, 0.65, z + s], 0.7 + 1.1 * brake, 0.55 + 0.45 * brake, true);
+    const lampY = Math.min(shape.height * 0.55, 0.7);
+    const sides = shape.bike ? [0] : [-W * 0.33, W * 0.33];
+    for (const sz of sides) {
+      this.sprite(this.glow("rgba(255,40,30,1)"), body([0, lampY, sz]), 0.7 + 1.1 * brake, 0.55 + 0.45 * brake, true);
+      this.sprite(this.glow("rgba(255,250,235,1)"), body([shape.len, lampY * 0.85, sz]), 0.9, 0.7, true);
+    }
     if (c.flame > 0.02) {
-      const fl = this.glow("rgba(120,170,255,1)");
-      for (const s of c.cfg.type === "bike" ? [0] : [-0.45, 0.45]) {
-        this.sprite(fl, [rear - 0.35 - 0.3 * c.flame, 0.35, z + s], (0.8 + 1.2 * c.flame) * (0.85 + 0.15 * Math.sin(time * 80)), Math.min(1, c.flame * 1.2), true);
+      for (const sz of shape.bike ? [0] : [-W * 0.24, W * 0.24]) {
+        this.sprite(this.glow("rgba(120,170,255,1)"), flat([-0.35 - 0.3 * c.flame, 0.35, sz]), (0.8 + 1.2 * c.flame) * (0.85 + 0.15 * Math.sin(time * 80)), Math.min(1, c.flame * 1.2), true);
       }
     }
-    // headlamp glow
-    const head = this.glow("rgba(255,250,235,1)");
-    for (const s of c.cfg.type === "bike" ? [0] : [-0.6, 0.6]) this.sprite(head, [rear + model.len + 0.05, 0.65, z + s], 0.9, 0.7, true);
   }
 }
