@@ -398,6 +398,87 @@ export class DragScene25D {
     if (c.flame > 0.02) this.sprite(this.glow("rgba(120,170,255,1)"), flat([0.25, 0.58, 0]), 0.6 + 0.9 * c.flame, Math.min(1, c.flame), true);
   }
 
+  /**
+   * A motorbike and its rider, built part by part: thin wheels with bright rims (black discs
+   * vanish on the asphalt), forks, swingarm, engine, exhaust, tank, seat, tail and, on a sports
+   * bike, a full fairing with the rider tucked in behind the screen.
+   */
+  private bike(c: SceneCar, lane: "me" | "opp", body: (v: V) => V, flat: (v: V) => V, acc: [number, number, number], spin: number, time: number) {
+    const sport = c.cfg.ui.silhouette !== "cruiser";
+    const accDark = acc.map((v) => v * 0.6) as [number, number, number];
+    const metal: [number, number, number] = [120, 120, 130];
+    const engine: [number, number, number] = [44, 44, 52];
+    const leathers: [number, number, number] = [30, 30, 36];
+    const R = 0.31;
+    const RX = 0.32;
+    const FX = sport ? 1.86 : 1.95;
+    // a limb or tube between two points, `t` thick
+    const rod = (a: V, b: V, t: number, color: [number, number, number]) => loft(sec(a[0], a[1] - t, a[1] + t, t).map(([x, y, z]): V => [x, y, z + a[2]]), sec(b[0], b[1] - t, b[1] + t, t).map(([x, y, z]): V => [x, y, z + b[2]]), color);
+    const parts: Solid[] = [
+      // swingarm, engine, exhaust
+      rod([RX, R, 0.1], [0.95, 0.42, 0.1], 0.04, metal),
+      rod([RX, R, -0.1], [0.95, 0.42, -0.1], 0.04, metal),
+      box(0.82, 1.38, 0.22, 0.62, -0.17, 0.17, engine),
+      rod([1.25, 0.26, 0.2], [0.5, sport ? 0.62 : 0.34, 0.22], 0.06, [150, 150, 160]),
+      // forks up to the bars
+      rod([FX, R, 0.1], [FX - 0.24, sport ? 0.98 : 1.05, 0.1], 0.035, [190, 170, 120]),
+      rod([FX, R, -0.1], [FX - 0.24, sport ? 0.98 : 1.05, -0.1], 0.035, [190, 170, 120]),
+      // tank, seat and tail
+      loft(sec(1.32, 0.78, 1.02, 0.17), sec(0.95, 0.8, 0.94, 0.15), acc),
+      box(0.55, 0.98, sport ? 0.86 : 0.74, sport ? 0.93 : 0.8, -0.14, 0.14, [20, 20, 24]),
+      sport ? loft(sec(0.95, 0.78, 0.9, 0.14), sec(0.22, 0.96, 1.04, 0.05), acc) : box(0.25, 0.6, 0.6, 0.7, -0.15, 0.15, acc),
+      // front mudguard
+      box(FX - 0.25, FX + 0.12, R + 0.06, R + 0.1, -0.08, 0.08, sport ? accDark : acc),
+    ];
+    if (sport) {
+      parts.push(
+        // fairing: nose with the headlight, flanks over the engine, and a dark screen
+        loft(sec(1.95, 0.62, 0.92, 0.07), sec(1.45, 0.4, 1.06, 0.21), acc),
+        loft(sec(1.45, 0.34, 0.78, 0.21), sec(1.0, 0.32, 0.62, 0.19), accDark),
+        box(1.5, 1.68, 1.02, 1.16, -0.12, 0.12, [24, 30, 42], true),
+      );
+    } else {
+      parts.push(box(FX - 0.32, FX - 0.2, 0.88, 1.0, -0.12, 0.12, [220, 220, 210], true)); // round lamp
+      parts.push(rod([FX - 0.3, 1.05, -0.38], [FX - 0.3, 1.05, 0.38], 0.025, [190, 190, 200])); // wide bars
+    }
+    // the rider: sports bike tucked flat on the tank, cruiser upright with feet forward
+    const hip: V = sport ? [0.78, 1.0, 0] : [0.55, 0.88, 0];
+    const sh: V = sport ? [1.3, 1.2, 0] : [0.68, 1.42, 0];
+    const bars: V = sport ? [1.6, 0.98, 0] : [FX - 0.32, 1.08, 0];
+    const knee = sport ? 1.12 : 1.1;
+    const peg: V = sport ? [0.88, 0.48, 0] : [1.35, 0.42, 0];
+    parts.push(loft(sec(hip[0], hip[1] - 0.1, hip[1] + 0.12, 0.17), sec(sh[0], sh[1] - 0.11, sh[1] + 0.09, 0.2), accDark));
+    for (const side of [1, -1]) {
+      const z = 0.19 * side;
+      parts.push(rod([sh[0] - 0.02, sh[1], z], [bars[0], bars[1], z * 1.1], 0.05, leathers));
+      parts.push(rod([hip[0] + 0.05, hip[1], z * 0.9], [knee, sport ? 0.8 : 0.7, z * 1.25], 0.07, leathers));
+      parts.push(rod([knee, sport ? 0.8 : 0.7, z * 1.25], [peg[0], peg[1], z * 1.05], 0.06, leathers));
+    }
+    // round helmet (a short cylinder seen side-on) with a dark visor
+    const hx = sh[0] + (sport ? 0.12 : 0.06);
+    const hy = sh[1] + (sport ? 0.12 : 0.2);
+    parts.push(wheel(hx, hy, 0.15, -0.13, 0.13, 0, [226, 226, 232]));
+    parts.push(box(hx + 0.04, hx + 0.16, hy - 0.06, hy + 0.04, -0.1, 0.1, [16, 20, 30], true));
+    const wheels = [wheel(RX, R, R, -0.07, 0.07, spin * (0.33 / R), [16, 16, 19]), wheel(FX, R, R, -0.06, 0.06, spin * (0.33 / R), [16, 16, 19])];
+    this.assembly([...wheels, ...parts], body);
+    // rims and brake discs on the near side, so the wheels read against the track
+    for (const wx of [RX, FX]) {
+      const ring = (r: number, z: number) => Array.from({ length: 18 }, (_, i): V => {
+        const a = (i / 18) * Math.PI * 2;
+        return flat([wx + Math.cos(a) * r, R + Math.sin(a) * r, z]);
+      });
+      this.poly(ring(R * 0.74, 0.075), "rgb(150,150,160)");
+      this.poly(ring(R * 0.64, 0.076), "rgb(28,28,33)");
+      this.poly(ring(R * 0.42, 0.077), "rgb(110,110,120)");
+      this.poly(ring(R * 0.14, 0.078), rgbStr(acc, 0.9));
+    }
+    // lamps and flames
+    const brake = this.braking[lane];
+    this.sprite(this.glow("rgba(255,40,30,1)"), body([0.22, 0.98, 0]), 0.6 + 0.8 * brake, 0.55 + 0.45 * brake, true);
+    this.sprite(this.glow("rgba(255,250,235,1)"), body([sport ? 1.96 : FX - 0.2, sport ? 0.8 : 0.94, 0]), 0.9, 0.75, true);
+    if (c.flame > 0.02) this.sprite(this.glow("rgba(120,170,255,1)"), flat([0.42, sport ? 0.64 : 0.36, 0.22]), (0.6 + 0.9 * c.flame) * (0.85 + 0.15 * Math.sin(time * 80)), Math.min(1, c.flame * 1.2), true);
+  }
+
   /** A sponsor board for the far wall: dark, one accent bar, plain lettering. */
   private ad(label: string, accent: string) {
     let a = this.ads.get(label);
@@ -815,6 +896,10 @@ export class DragScene25D {
       this.formulaCar(c, lane, body, flat, acc, spin, time);
       return;
     }
+    if (shape.bike) {
+      this.bike(c, lane, body, flat, acc, spin, time);
+      return;
+    }
 
     const tyre: [number, number, number] = [14, 14, 17];
     const wheelSolids = (side: 1 | -1) =>
@@ -983,12 +1068,8 @@ export class DragScene25D {
       }
     }
     // wings and spoilers, dark
-    for (const poly of shape.wings) prism(poly, () => W / 2 - 0.05, [26, 26, 32], false);
+    for (const poly of shape.wings) prism(poly, () => W / 2 - 0.14, [58, 58, 68], false);
     // rider on a bike
-    if (shape.bike) {
-      this.solid(box(shape.len * 0.4, shape.len * 0.58, 0.85, 1.32, -0.2, 0.2, [24, 24, 30]), body);
-      this.solid(box(shape.len * 0.52, shape.len * 0.66, 1.22, 1.5, -0.15, 0.15, acc), body);
-    }
     // near wheels, with spokes turning at road speed
     if (!shape.bike) {
       const ctx = this.ctx;
