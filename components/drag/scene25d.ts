@@ -245,6 +245,19 @@ interface Puff {
   max: number;
   vx: number;
   vz: number;
+  /** Tyre smoke billows big and pale; exhaust smoke is a small dark wisp. */
+  kind: "tyre" | "exhaust";
+  rot: number;
+  spin: number;
+  tex: number;
+}
+
+/** Where the exhaust tips are, in car space (x from the rear). */
+function exhaustTips(cfg: VehicleConfig): V[] {
+  const kind = cfg.ui.silhouette;
+  if (kind === "formula") return [[0.25, 0.58, 0]];
+  if (cfg.type === "bike") return [[0.42, kind === "cruiser" ? 0.36 : 0.64, 0.22]];
+  return [[-0.02, 0.22, -0.42], [-0.02, 0.22, 0.42]];
 }
 interface Item {
   depth: number;
@@ -259,6 +272,7 @@ export class DragScene25D {
   private readonly ads = new Map<string, Canvas>();
   private readonly roundels = new Map<string, Canvas>();
   private puffs: Puff[] = [];
+  private readonly smokeTexes: Canvas[] = [];
   private lastTime = 0;
   private prevSpeed = { me: 0, opp: 0 };
   private braking = { me: 0, opp: 0 };
@@ -316,6 +330,90 @@ export class DragScene25D {
       this.roundels.set(num, (r = c));
     }
     return r;
+  }
+
+  /** A soft, billowy smoke puff (a few overlapping blobs), white or dark, three variants each. */
+  private smokeTex(i: number) {
+    if (!this.smokeTexes.length) {
+      let seed = 5;
+      const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      for (const tone of ["232,232,238", "70,70,78"]) {
+        for (let v = 0; v < 3; v++) {
+          const [c, x] = makeCanvas(128, 128);
+          for (let b = 0; b < 9; b++) {
+            const a = rand() * Math.PI * 2;
+            const d = rand() * 26;
+            const r = 22 + rand() * 24;
+            const cx = 64 + Math.cos(a) * d;
+            const cy = 64 + Math.sin(a) * d;
+            const g = x.createRadialGradient(cx, cy, 0, cx, cy, r);
+            g.addColorStop(0, `rgba(${tone},0.42)`);
+            g.addColorStop(0.6, `rgba(${tone},0.2)`);
+            g.addColorStop(1, `rgba(${tone},0)`);
+            x.fillStyle = g;
+            x.fillRect(0, 0, 128, 128);
+          }
+          this.smokeTexes.push(c);
+        }
+      }
+    }
+    return this.smokeTexes[i];
+  }
+
+  private puff(p: Puff) {
+    const t = p.life / p.max;
+    const alpha = (p.kind === "tyre" ? 0.75 : 0.6) * Math.min(1, p.life / 0.12) * Math.pow(1 - t, 1.5);
+    if (alpha < 0.01) return;
+    const [x, y] = this.p([p.x, p.y, p.z]);
+    const size = p.r * 2 * this.k;
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(x, y);
+    ctx.rotate(p.rot);
+    ctx.drawImage(this.smokeTex((p.kind === "tyre" ? 0 : 3) + p.tex), -size / 2, -size / 2, size, size);
+    ctx.restore();
+  }
+
+  /**
+   * A flame jetting back out of an exhaust tip: an orange outer flame, a yellow body and a
+   * blue-white core, each a flickering teardrop, drawn additively, with a warm glow around it.
+   */
+  private flameJet(tip: V, flame: number, scale = 1) {
+    const ctx = this.ctx;
+    const flicker = 0.75 + Math.random() * 0.45;
+    const len = (0.3 + 1.0 * flame) * scale * flicker;
+    const [bx, by] = this.p(tip);
+    const [ex, ey] = this.p([tip[0] - len, tip[1] + 0.06 * len, tip[2] + (Math.random() - 0.5) * 0.08]);
+    const dx = ex - bx;
+    const dy = ey - by;
+    const dl = Math.hypot(dx, dy) || 1;
+    const nx = -dy / dl;
+    const ny = dx / dl;
+    const w0 = 0.09 * this.k * scale * (0.6 + 0.6 * flame);
+    const layer = (reach: number, width: number, inner: string, outer: string) => {
+      const tx = bx + dx * reach;
+      const ty = by + dy * reach;
+      const mx = bx + dx * reach * 0.35;
+      const my = by + dy * reach * 0.35;
+      const w = w0 * width;
+      const g = ctx.createLinearGradient(bx, by, tx, ty);
+      g.addColorStop(0, inner);
+      g.addColorStop(1, outer);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(bx + nx * w * 0.6, by + ny * w * 0.6);
+      ctx.quadraticCurveTo(mx + nx * w * 1.5, my + ny * w * 1.5, tx, ty);
+      ctx.quadraticCurveTo(mx - nx * w * 1.5, my - ny * w * 1.5, bx - nx * w * 0.6, by - ny * w * 0.6);
+      ctx.closePath();
+      ctx.fill();
+    };
+    ctx.globalCompositeOperation = "lighter";
+    layer(1, 1.15, "rgba(255,120,30,0.85)", "rgba(200,40,10,0)");
+    layer(0.7, 0.75, "rgba(255,214,110,0.95)", "rgba(255,140,40,0)");
+    layer(0.32, 0.45, "rgba(190,215,255,1)", "rgba(120,160,255,0)");
+    ctx.globalCompositeOperation = "source-over";
+    this.sprite(this.glow("rgba(255,150,60,1)"), [tip[0] - len * 0.3, tip[1], tip[2]], (0.8 + 1.6 * flame) * scale, 0.5 * Math.min(1, flame * 1.3), true);
   }
 
   /** Draws solids back to front (by centre depth): for models built from separate parts. */
@@ -395,7 +493,7 @@ export class DragScene25D {
     // rain light blinking on the crash structure, flames from the single exhaust
     const blink = Math.sin(time * 18) > 0 ? 1 : 0.35;
     this.sprite(this.glow("rgba(255,40,30,1)"), body([0.05, 0.42, 0]), 0.9, 0.5 + 0.4 * blink * (0.5 + this.braking[lane]), true);
-    if (c.flame > 0.02) this.sprite(this.glow("rgba(120,170,255,1)"), flat([0.25, 0.58, 0]), 0.6 + 0.9 * c.flame, Math.min(1, c.flame), true);
+    if (c.flame > 0.02) this.flameJet(body([0.2, 0.58, 0]), c.flame, 0.8);
   }
 
   /**
@@ -403,7 +501,7 @@ export class DragScene25D {
    * vanish on the asphalt), forks, swingarm, engine, exhaust, tank, seat, tail and, on a sports
    * bike, a full fairing with the rider tucked in behind the screen.
    */
-  private bike(c: SceneCar, lane: "me" | "opp", body: (v: V) => V, flat: (v: V) => V, acc: [number, number, number], spin: number, time: number) {
+  private bike(c: SceneCar, lane: "me" | "opp", body: (v: V) => V, flat: (v: V) => V, acc: [number, number, number], spin: number) {
     const sport = c.cfg.ui.silhouette !== "cruiser";
     const accDark = acc.map((v) => v * 0.6) as [number, number, number];
     const metal: [number, number, number] = [120, 120, 130];
@@ -476,7 +574,7 @@ export class DragScene25D {
     const brake = this.braking[lane];
     this.sprite(this.glow("rgba(255,40,30,1)"), body([0.22, 0.98, 0]), 0.6 + 0.8 * brake, 0.55 + 0.45 * brake, true);
     this.sprite(this.glow("rgba(255,250,235,1)"), body([sport ? 1.96 : FX - 0.2, sport ? 0.8 : 0.94, 0]), 0.9, 0.75, true);
-    if (c.flame > 0.02) this.sprite(this.glow("rgba(120,170,255,1)"), flat([0.42, sport ? 0.64 : 0.36, 0.22]), (0.6 + 0.9 * c.flame) * (0.85 + 0.15 * Math.sin(time * 80)), Math.min(1, c.flame * 1.2), true);
+    if (c.flame > 0.02) this.flameJet(body([0.4, sport ? 0.64 : 0.36, 0.22]), c.flame, 0.7);
   }
 
   /** A sponsor board for the far wall: dark, one accent bar, plain lettering. */
@@ -778,24 +876,34 @@ export class DragScene25D {
       const len = carShape(c.cfg).len;
       const rear = nose - len;
       const z = LANE_Z[lane];
+      const spawn = (kind: Puff["kind"], x: number, y: number, pz: number, r: number, max: number, vx: number, vz: number) =>
+        this.puffs.push({ kind, x, y, z: pz, r, life: 0, max, vx, vz, rot: Math.random() * Math.PI * 2, spin: (Math.random() - 0.5) * 1.2, tex: Math.floor(Math.random() * 3) });
+      // tyre smoke off the line, heaviest in the first few metres
       if (c.distM > 0.05 && c.distM < 24) {
         const n = Math.random() < 1 - c.distM / 24 ? 2 : 1;
+        const wheelZ = c.cfg.type === "bike" ? [0] : [-0.8, 0.8];
         for (let i = 0; i < n; i++) {
-          this.puffs.push({ x: rear + 0.4, y: 0.3, z: z + (Math.random() < 0.5 ? -0.8 : 0.8), r: 0.5, life: 0, max: 1.2 + Math.random(), vx: -2 - Math.random() * 2.5, vz: (Math.random() - 0.5) * 2 });
+          spawn("tyre", rear + 0.4, 0.25, z + wheelZ[Math.floor(Math.random() * wheelZ.length)], 0.4, 1.4 + Math.random() * 1.2, -2 - Math.random() * 2.5, (Math.random() - 0.5) * 1.6);
         }
+      }
+      // a dark wisp after every pop or flame
+      if (c.flame > 0.3 && Math.random() < c.flame * 0.6) {
+        for (const [tx, ty, tz] of exhaustTips(c.cfg)) spawn("exhaust", rear + tx - 0.2, ty, z + tz, 0.14, 0.7 + Math.random() * 0.5, -1 - Math.random(), (Math.random() - 0.5) * 0.5);
       }
       add([rear + len / 2, 0.6, z], () => this.car(c, lane, rear, f.time));
     }
-    const smoke = this.glow("rgba(205,205,214,1)");
     for (const p of this.puffs) {
-      add([p.x, p.y, p.z], () => this.sprite(smoke, [p.x, p.y, p.z], p.r * 2, 0.34 * (1 - p.life / p.max)));
+      add([p.x, p.y, p.z], () => this.puff(p));
+      const t = p.life / p.max;
       p.life += dt;
       p.x += p.vx * dt;
       p.z += p.vz * dt;
-      p.y += 0.7 * dt;
-      p.r += 1.7 * dt;
+      p.vx *= 1 - Math.min(1, dt * 1.1); // the air slows it down
+      p.y += (p.kind === "tyre" ? 0.55 : 0.4) * dt;
+      p.r += (p.kind === "tyre" ? 1.9 : 0.9) * (1 - 0.6 * t) * dt; // grows fast, then slows as it spreads
+      p.rot += p.spin * dt;
     }
-    this.puffs = this.puffs.filter((p) => p.life < p.max).slice(-200);
+    this.puffs = this.puffs.filter((p) => p.life < p.max).slice(-240);
 
     items.sort((a, b) => b.depth - a.depth);
     for (const it of items) it.draw();
@@ -897,7 +1005,7 @@ export class DragScene25D {
       return;
     }
     if (shape.bike) {
-      this.bike(c, lane, body, flat, acc, spin, time);
+      this.bike(c, lane, body, flat, acc, spin);
       return;
     }
 
@@ -1128,10 +1236,6 @@ export class DragScene25D {
       this.sprite(this.glow("rgba(255,40,30,1)"), body([0, lampY, sz]), 0.7 + 1.1 * brake, 0.55 + 0.45 * brake, true);
       this.sprite(this.glow("rgba(255,250,235,1)"), body([shape.len, lampY * 0.85, sz]), 0.9, 0.7, true);
     }
-    if (c.flame > 0.02) {
-      for (const sz of shape.bike ? [0] : [-W * 0.24, W * 0.24]) {
-        this.sprite(this.glow("rgba(120,170,255,1)"), flat([-0.35 - 0.3 * c.flame, 0.35, sz]), (0.8 + 1.2 * c.flame) * (0.85 + 0.15 * Math.sin(time * 80)), Math.min(1, c.flame * 1.2), true);
-      }
-    }
+    if (c.flame > 0.02) for (const tip of exhaustTips(c.cfg)) this.flameJet(body(tip), c.flame);
   }
 }
