@@ -5,10 +5,12 @@ export interface OneShotBuffers {
   stop: AudioBuffer;
   shift: AudioBuffer[];
   backfire: AudioBuffer[];
+  /** Clusters of small overrun pops. */
+  crackle: AudioBuffer[];
   blowoff: AudioBuffer[];
 }
 
-export type OneShotKind = "start" | "stop" | "shift" | "backfire" | "blowoff";
+export type OneShotKind = "start" | "stop" | "shift" | "backfire" | "crackle" | "blowoff";
 
 const MAX_SIMULTANEOUS = 4;
 
@@ -33,7 +35,7 @@ export class OneShots {
     src.buffer = buffer;
     const gain = this.ctx.createGain();
     gain.gain.value = 1;
-    if (kind === "backfire") {
+    if (kind === "backfire" || kind === "crackle") {
       // random pitch (+-8%) and level so repeats don't sound copied
       src.playbackRate.value = 1 + (Math.random() * 2 - 1) * 0.08;
       gain.gain.value = 0.6 + Math.random() * 0.4;

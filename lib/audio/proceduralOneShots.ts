@@ -46,7 +46,3 @@ export function proceduralShift(ctx: BaseAudioContext, variant: number): AudioBu
   return make(ctx, 0.14, (t, rand) => (rand() * 2 - 1) * Math.exp(-t / 0.012) * 0.8 + Math.sin(2 * Math.PI * f * t) * Math.exp(-t / 0.035));
 }
 
-export function proceduralPop(ctx: BaseAudioContext, variant: number): AudioBuffer {
-  const decay = [0.03, 0.05, 0.04][variant % 3];
-  return make(ctx, 0.2, (t, rand) => (rand() * 2 - 1) * Math.exp(-t / decay) * Math.min(1, t * 900));
-}

@@ -5,11 +5,11 @@ import type { AudioConfig, SampleRef, VehicleConfig } from "../vehicles/types";
 import { equalPower, idleBlend, rateFor } from "./blend";
 import { OneShots, type OneShotBuffers, type OneShotKind } from "./OneShots";
 import {
-  proceduralPop,
   proceduralShift,
   proceduralStart,
   proceduralStop,
 } from "./proceduralOneShots";
+import { exhaustPops } from "./exhaustPops";
 import { SampleLayer } from "./SampleLayer";
 import { shuffleLoop } from "./loopShuffle";
 import { SynthEngine } from "./SynthEngine";
@@ -50,6 +50,7 @@ export class AudioEngine {
   private oneShots: OneShots | null = null;
   /** performance.now() of an ignition that came before the sounds were ready (played on arrival). */
   private pendingStart: number | null = null;
+  private lastCrackle = 0;
   private turbo: { whistle: OscillatorNode; whistle2: OscillatorNode; whistleGain: GainNode; hiss: AudioBufferSourceNode; hissFilter: BiquadFilterNode; hissGain: GainNode } | null = null;
   private volume = 0.8;
   private disposed = false;
@@ -266,7 +267,9 @@ export class AudioEngine {
           start: get(o.start) ?? proc.start,
           stop: get(o.stop) ?? proc.stop,
           shift: o.shift?.length ? o.shift.map((f) => get(f)!) : proc.shift,
-          backfire: o.backfire?.length ? o.backfire.map((f) => get(f)!) : proc.backfire,
+          // pops are always synthesised from the engine (the old per-car pop files were generated too)
+          backfire: proc.backfire,
+          crackle: proc.crackle,
           blowoff: o.blowoff?.length ? o.blowoff.map((f) => get(f)!) : [],
         };
         this.oneShots = new OneShots(ctx, one, compressor);
@@ -285,12 +288,23 @@ export class AudioEngine {
     }
   }
 
+  private popBank: { backfire: AudioBuffer[]; crackle: AudioBuffer[] } | null = null;
+
+  private pops(ctx: AudioContext) {
+    if (!this.popBank) {
+      const seed = this.cfg.id.split("").reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) % 100003, 7);
+      const bank = exhaustPops(ctx, { cylinders: this.cfg.engine.cylinders, bike: this.cfg.type === "bike" }, seed);
+      this.popBank = { backfire: bank.bangs, crackle: bank.crackles };
+    }
+    return this.popBank;
+  }
+
   private proceduralOneShots(ctx: AudioContext): OneShotBuffers {
     return {
       start: proceduralStart(ctx, this.cfg.engine.cylinders),
       stop: proceduralStop(ctx),
       shift: [proceduralShift(ctx, 0), proceduralShift(ctx, 1)],
-      backfire: [proceduralPop(ctx, 0), proceduralPop(ctx, 1), proceduralPop(ctx, 2)],
+      ...this.pops(ctx),
       blowoff: [],
     };
   }
@@ -303,7 +317,13 @@ export class AudioEngine {
   handleEvent(e: SimEvent): void {
     // Shifts are heard through the engine note itself (rpm drop, rev-match blip); no clunks or cracks.
     if (e.type === "limiter" || e.type === "shift" || e.type === "shiftCrack") return;
-    if (e.type === "crackle") this.oneShots?.play("backfire", { gain: 0.28, rate: 1.15 + Math.random() * 0.25 });
+    if (e.type === "crackle") {
+      // each crackle is a whole cluster of pops, so don't stack them on top of each other
+      const now = performance.now();
+      if (now - this.lastCrackle < 220) return;
+      this.lastCrackle = now;
+      this.oneShots?.play("crackle", { gain: 0.55 });
+    }
     else if (e.type === "blowoff") this.oneShots?.play("blowoff", { index: this.cfg.turbo?.release === "flutter" ? 1 : 0 });
     else if (e.type === "start" && !this.oneShots) this.pendingStart = performance.now(); // still loading: play it when ready
     else {
