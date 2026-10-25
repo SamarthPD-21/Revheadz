@@ -277,6 +277,9 @@ export class DragScene25D {
   private prevSpeed = { me: 0, opp: 0 };
   private braking = { me: 0, opp: 0 };
   private pitch = { me: 0, opp: 0 };
+  /** Wheel angle last frame per lane, and how far the wheels turned this frame (rad). */
+  private prevSpin = { me: 0, opp: 0 };
+  private dSpin = 0;
   private camX = -6;
   /** Camera position relative to your car (eased), m. */
   private lead = 7;
@@ -416,6 +419,36 @@ export class DragScene25D {
     this.sprite(this.glow("rgba(255,150,60,1)"), [tip[0] - len * 0.3, tip[1], tip[2]], (0.8 + 1.6 * flame) * scale, 0.5 * Math.min(1, flame * 1.3), true);
   }
 
+  /**
+   * A multi-spoke alloy on the near face of a wheel: bright lip, dark barrel, spokes and a
+   * coloured centre cap. The spokes are drawn several times across the angle the wheel turned
+   * this frame (a camera shutter), so they visibly turn when slow and smear into a spinning
+   * disc when fast, instead of strobing.
+   */
+  private rim(xf: (v: V) => V, cx: number, cy: number, z: number, r: number, spin: number, accent: [number, number, number], spokes = 7) {
+    const at = (rr: number, a: number) => xf([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, z]);
+    const disc = (rr: number, fill: string) => this.poly(Array.from({ length: 20 }, (_, i) => at(rr, (i / 20) * Math.PI * 2)), fill);
+    disc(r * 0.76, "rgb(190,190,200)");
+    disc(r * 0.69, "rgb(26,26,31)");
+    const spacing = (Math.PI * 2) / spokes;
+    const turn = Math.min(Math.abs(this.dSpin), spacing * 2) * Math.sign(this.dSpin);
+    if (Math.abs(turn) > spacing * 0.85) {
+      // too fast to follow: a blurred disc with a faint hint of spokes
+      disc(r * 0.68, "rgba(160,160,172,0.55)");
+    }
+    const ghosts = Math.max(1, Math.min(8, Math.ceil(Math.abs(turn) / 0.05)));
+    const alpha = Math.abs(turn) > spacing * 0.85 ? 0.12 : Math.min(1, 1.6 / ghosts);
+    for (let g = 0; g < ghosts; g++) {
+      const base = spin - (turn * g) / ghosts;
+      for (let i = 0; i < spokes; i++) {
+        const a = base + i * spacing;
+        this.poly([at(r * 0.17, a - 0.2), at(r * 0.68, a - 0.075), at(r * 0.68, a + 0.075), at(r * 0.17, a + 0.2)], `rgba(206,206,216,${alpha})`);
+      }
+    }
+    disc(r * 0.19, rgbStr(accent, 0.95));
+    disc(r * 0.07, "rgb(20,20,24)");
+  }
+
   /** Draws solids back to front (by centre depth): for models built from separate parts. */
   private assembly(parts: Solid[], xf: (v: V) => V) {
     parts
@@ -481,15 +514,7 @@ export class DragScene25D {
     this.assembly(wheels.filter((s) => s.center[2] < 0), flat);
     this.assembly(parts, body);
     this.assembly(wheels.filter((s) => s.center[2] > 0), flat);
-    for (const w of [FW, RW]) {
-      const ring = (r: number) => Array.from({ length: 16 }, (_, i): V => {
-        const a = (i / 16) * Math.PI * 2;
-        return flat([w.x + Math.cos(a) * r, w.r + Math.sin(a) * r, w.z[1] + 0.004]);
-      });
-      this.poly(ring(w.r * 0.7), "rgb(70,70,80)");
-      this.poly(ring(w.r * 0.58), "rgb(32,32,38)");
-      this.poly(ring(w.r * 0.18), rgbStr(acc, 0.9));
-    }
+    for (const w of [FW, RW]) this.rim(flat, w.x, w.r, w.z[1] + 0.004, w.r, spin * (0.33 / w.r), acc, 6);
     // rain light blinking on the crash structure, flames from the single exhaust
     const blink = Math.sin(time * 18) > 0 ? 1 : 0.35;
     this.sprite(this.glow("rgba(255,40,30,1)"), body([0.05, 0.42, 0]), 0.9, 0.5 + 0.4 * blink * (0.5 + this.braking[lane]), true);
@@ -560,16 +585,7 @@ export class DragScene25D {
     const wheels = [wheel(RX, R, R, -0.07, 0.07, spin * (0.33 / R), [16, 16, 19]), wheel(FX, R, R, -0.06, 0.06, spin * (0.33 / R), [16, 16, 19])];
     this.assembly([...wheels, ...parts], body);
     // rims and brake discs on the near side, so the wheels read against the track
-    for (const wx of [RX, FX]) {
-      const ring = (r: number, z: number) => Array.from({ length: 18 }, (_, i): V => {
-        const a = (i / 18) * Math.PI * 2;
-        return flat([wx + Math.cos(a) * r, R + Math.sin(a) * r, z]);
-      });
-      this.poly(ring(R * 0.74, 0.075), "rgb(150,150,160)");
-      this.poly(ring(R * 0.64, 0.076), "rgb(28,28,33)");
-      this.poly(ring(R * 0.42, 0.077), "rgb(110,110,120)");
-      this.poly(ring(R * 0.14, 0.078), rgbStr(acc, 0.9));
-    }
+    for (const wx of [RX, FX]) this.rim(flat, wx, R, 0.075, R, spin * (0.33 / R), acc, 5);
     // lamps and flames
     const brake = this.braking[lane];
     this.sprite(this.glow("rgba(255,40,30,1)"), body([0.22, 0.98, 0]), 0.6 + 0.8 * brake, 0.55 + 0.45 * brake, true);
@@ -977,6 +993,8 @@ export class DragScene25D {
     const shape = carShape(c.cfg);
     const W = shape.width;
     const spin = -(c.distM - c.rollBackM) / (shape.wheels[0]?.r ?? 0.33);
+    this.dSpin = Math.max(-3, Math.min(3, spin - this.prevSpin[lane]));
+    this.prevSpin[lane] = spin;
     const acc = hexRgb(c.cfg.ui.accent);
     const pitch = this.pitch[lane] * 0.035; // rear squats under power, nose dives on the brakes
     const axle = shape.len * 0.2;
@@ -1180,52 +1198,36 @@ export class DragScene25D {
     // rider on a bike
     // near wheels, with spokes turning at road speed
     if (!shape.bike) {
-      const ctx = this.ctx;
       for (const s of wheelSolids(1)) this.solid(s, flat);
-      // rims: a dark metal disc with a lighter lip
+      for (const w of shape.wheels) this.rim(flat, w.x, w.r, shape.wheelZ[1] + 0.004, w.r, spin, acc);
+      // flared fenders: a lip in body colour standing out from the arch over the top of each tyre
       for (const w of shape.wheels) {
-        const ring = (r: number) => Array.from({ length: 16 }, (_, i): V => {
-          const a = (i / 16) * Math.PI * 2;
-          return flat([w.x + Math.cos(a) * r, w.r + Math.sin(a) * r, shape.wheelZ[1] + 0.004]);
-        });
-        this.poly(ring(w.r * 0.72), "rgb(92,92,102)");
-        this.poly(ring(w.r * 0.64), "rgb(40,40,47)");
-      }
-      // spokes strobe at speed (the wagon-wheel effect): fade them into a blurred rim
-      const spokeA = Math.max(0, 1 - c.speedKmh / 35);
-      if (c.speedKmh > 8) {
-        ctx.strokeStyle = "rgb(150,150,162)";
-        ctx.globalAlpha = Math.min(0.55, (c.speedKmh - 8) / 60);
-        ctx.lineWidth = Math.max(1.5, 0.12 * this.k);
-        for (const w of shape.wheels) {
-          const ctr = flat([w.x, w.r, shape.wheelZ[1] + 0.005]);
-          ctx.beginPath();
-          for (let i = 0; i <= 16; i++) {
-            const a = (i / 16) * Math.PI * 2;
-            const [ex, ey] = this.p([ctr[0] + Math.cos(a) * w.r * 0.45, ctr[1] + Math.sin(a) * w.r * 0.45, ctr[2]]);
-            if (i) ctx.lineTo(ex, ey);
-            else ctx.moveTo(ex, ey);
-          }
-          ctx.stroke();
+        const N = 14;
+        const ro = w.r * 1.36;
+        const ri = w.r * 1.14;
+        const out = 0.1;
+        const base = (a: number): V => {
+          const x = w.x + Math.cos(a) * ro;
+          const y = w.r + Math.sin(a) * ro;
+          return body([x, y, hwAt(x, y)]);
+        };
+        const lip = (a: number, rr: number): V => {
+          const x = w.x + Math.cos(a) * rr;
+          const y = w.r + Math.sin(a) * rr;
+          return body([x, y, hwAt(w.x, w.r + ro) + out]);
+        };
+        const angles = Array.from({ length: N + 1 }, (_, k) => -0.12 + ((Math.PI + 0.24) * k) / N);
+        // the rounded top of the flare, lit by how it faces up
+        for (let k = 0; k < N; k++) {
+          const a0 = angles[k];
+          const a1 = angles[k + 1];
+          const am = (a0 + a1) / 2;
+          this.poly([base(a0), base(a1), lip(a1, ro), lip(a0, ro)], shade(norm([Math.cos(am), Math.sin(am), 0.6]), acc), true);
         }
-        ctx.globalAlpha = 1;
+        // its outer face, and a dark edge where it meets the tyre
+        this.poly([...angles.map((a) => lip(a, ro)), ...angles.slice().reverse().map((a) => lip(a, ri))], shade([0, 0.3, 1], acc, 1.08), true);
+        this.poly([...angles.map((a) => lip(a, ri)), ...angles.slice().reverse().map((a) => lip(a, ri - 0.025))], "rgb(10,10,12)");
       }
-      ctx.globalAlpha = spokeA;
-      ctx.strokeStyle = "rgb(170,170,182)";
-      ctx.lineWidth = Math.max(1, 0.05 * this.k);
-      ctx.beginPath();
-      for (const w of shape.wheels) {
-        const centre = flat([w.x, w.r, shape.wheelZ[1] + 0.005]);
-        const [cxp, cyp] = this.p(centre);
-        for (let i = 0; i < 5; i++) {
-          const a = spin + (i * Math.PI * 2) / 5;
-          const [ex, ey] = this.p([centre[0] + Math.cos(a) * w.r * 0.62, centre[1] + Math.sin(a) * w.r * 0.62, centre[2]]);
-          ctx.moveTo(cxp, cyp);
-          ctx.lineTo(ex, ey);
-        }
-      }
-      if (spokeA > 0.01) ctx.stroke();
-      ctx.globalAlpha = 1;
     }
 
     // lights: taillights (brighter on the brakes), headlights, exhaust flames
