@@ -382,7 +382,7 @@ export function RaceView({ me, opp, startAt, opponent, audio, oppAudio, sfx, onI
       const tone = race.outcome?.tone;
       const car = (r: DragRun, lane: Lane, green: number, i: 0 | 1, win: boolean): SceneCar => ({
         cfg: lane.cfg,
-        distM: r.distM,
+        distM: r.viewDistM(now - green),
         speedKmh: r.sim.state.speedKmh,
         rollBackM: rollBack,
         flame: race.flames[i],

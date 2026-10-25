@@ -217,6 +217,18 @@ export class DragRun {
   private finishedAtT = 0;
 
   /**
+   * Where to draw the car at `ms`. The physics moves in whole steps (1 ms racing, 4 ms in the
+   * cool-down) and stops on whichever step passes `ms`, so a frame can land up to a step past it.
+   * Carrying the position on to `ms` at the current speed keeps the motion even frame to frame;
+   * without it the cool-down alternated 16 and 20 ms of travel per frame and the cars shook.
+   */
+  viewDistM(ms: number) {
+    const at = this.coastT > 0 ? this.coastT : this.t;
+    const dt = Math.max(-0.02, Math.min(0.02, (ms - at) / 1000));
+    return this.distM + (this.sim.state.speedKmh / 3.6) * dt;
+  }
+
+  /**
    * After the line (cosmetic: the result is already fixed): lift, brake progressively and
    * work down the gears as the revs fall, each downshift rev-matched by the gearbox's blip,
    * until the car rolls to a stop in neutral. Steps the same physics, so it sounds right.
