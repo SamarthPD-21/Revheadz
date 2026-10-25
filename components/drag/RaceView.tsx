@@ -605,8 +605,8 @@ function TreeColumn({ label, lights, accent }: { label: string; lights: ReturnTy
       {lights.ambers.map((on, i) => (
         <span key={i} className="bulb bulb-amber" data-on={on ? "1" : "0"} />
       ))}
-      <span className="bulb bulb-green" data-on={lights.green || lights.win ? "1" : "0"} />
       <span className="bulb bulb-red" data-on={lights.red ? "1" : "0"} />
+      <span className="bulb bulb-green" data-on={lights.green || lights.win ? "1" : "0"} />
     </div>
   );
 }

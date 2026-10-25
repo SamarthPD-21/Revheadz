@@ -268,8 +268,8 @@ export class DragScene {
         [lane.ambers[0], "#fbbf24"],
         [lane.ambers[1], "#fbbf24"],
         [lane.ambers[2], "#fbbf24"],
-        [lane.green || lane.win, lane.win ? "#f4f4f5" : "#4ade80"],
         [lane.red, "#ef4444"],
+        [lane.green || lane.win, lane.win ? "#f4f4f5" : "#4ade80"],
       ];
       rows.forEach(([on, c], i) => {
         const y = mid - bulbR * 19 + i * bulbR * 2.3;
