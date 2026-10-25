@@ -151,7 +151,8 @@ export function RaceView({ me, opp, startAt, opponent, audio, oppAudio, sfx, onI
         r.shake = Math.max(r.shake, 0.45);
         navigator.vibrate?.(14);
       }
-      if (e.type === "shiftCrack") r.flames[1] = 1;
+      if (e.type === "shiftCrack" || e.type === "backfire") r.flames[1] = 1;
+      if (e.type === "crackle") r.flames[1] = Math.max(r.flames[1], 0.6);
       if (e.type === "limiter") r.flames[1] = Math.max(r.flames[1], 0.45);
     });
     myRun.on((e) => {
@@ -286,7 +287,8 @@ export function RaceView({ me, opp, startAt, opponent, audio, oppAudio, sfx, onI
       r.sim.subscribe((e) => {
         oppAudio?.handleEvent(e);
         if (!r.launched) return;
-        if (e.type === "shift" || e.type === "shiftCrack") race.flames[0] = 1;
+        if (e.type === "shift" || e.type === "shiftCrack" || e.type === "backfire") race.flames[0] = 1;
+        if (e.type === "crackle") race.flames[0] = Math.max(race.flames[0], 0.6);
         if (e.type === "limiter") race.flames[0] = Math.max(race.flames[0], 0.45);
       });
     };
