@@ -48,6 +48,8 @@ export class AudioEngine {
   private synth: SynthEngine | null = null;
   private synthRetiring = false;
   private oneShots: OneShots | null = null;
+  /** performance.now() of an ignition that came before the sounds were ready (played on arrival). */
+  private pendingStart: number | null = null;
   private turbo: { whistle: OscillatorNode; whistle2: OscillatorNode; whistleGain: GainNode; hiss: AudioBufferSourceNode; hissFilter: BiquadFilterNode; hissGain: GainNode } | null = null;
   private volume = 0.8;
   private disposed = false;
@@ -271,11 +273,13 @@ export class AudioEngine {
       } else {
         this.oneShots = new OneShots(ctx, proc, compressor);
       }
+      this.flushPendingStart();
       await synthPromise;
       this.setStatus("ready");
     } catch (e) {
       console.error("Failed to load vehicle sounds", e);
       this.oneShots ??= new OneShots(ctx, this.proceduralOneShots(ctx), compressor);
+      this.flushPendingStart();
       await synthPromise;
       this.setStatus("error"); // synth keeps running as the fallback
     }
@@ -301,7 +305,19 @@ export class AudioEngine {
     if (e.type === "limiter" || e.type === "shift" || e.type === "shiftCrack") return;
     if (e.type === "crackle") this.oneShots?.play("backfire", { gain: 0.28, rate: 1.15 + Math.random() * 0.25 });
     else if (e.type === "blowoff") this.oneShots?.play("blowoff", { index: this.cfg.turbo?.release === "flutter" ? 1 : 0 });
-    else this.oneShots?.play(e.type as OneShotKind);
+    else if (e.type === "start" && !this.oneShots) this.pendingStart = performance.now(); // still loading: play it when ready
+    else {
+      if (e.type === "stop") this.pendingStart = null;
+      this.oneShots?.play(e.type as OneShotKind);
+    }
+  }
+
+  /** Every car gets its start sound: one requested while loading plays as soon as the sounds arrive, caught up to now. */
+  private flushPendingStart() {
+    if (this.pendingStart === null || !this.oneShots) return;
+    const late = (performance.now() - this.pendingStart) / 1000;
+    this.pendingStart = null;
+    if (late < 4) this.oneShots.play("start", { offset: late });
   }
 
   /** Called every animation frame with the latest simulation state. */
