@@ -857,7 +857,7 @@ export class DragScene25D {
       strips.sort((p, q) => q.d - p.d);
       for (const st of strips) {
         const roof = paint && livery.darkRoof && st.a[1] > shape.belt + 0.05 && st.b[1] > shape.belt + 0.05;
-        this.poly(st.pts, st.glass ? rgbStr([30, 38, 54], 0.55 + 0.7 * Math.max(0, dot(st.n, LIGHT))) : shade(st.n, roof ? [24, 24, 29] : base), true);
+        this.poly(st.pts, st.glass ? rgbStr([30, 38, 54], 0.55 + 0.7 * Math.max(0, dot(st.n, LIGHT))) : shade(st.n, roof ? (base.map((v) => v * 0.42 + 10) as [number, number, number]) : base), true);
       }
       // twin stripes over the bonnet, roof and boot, after all the panels so none paints over them
       for (const st of strips) {
