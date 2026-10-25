@@ -9,7 +9,7 @@ import { hostRoom, joinRoom, normaliseCode, randomCode, type Message, type Playe
 import { CLASSES, classOf, type DragClass } from "../../lib/drag/classes";
 import { decide, dialIn, type DriveKey, type DriveLog, type RunResult } from "../../lib/drag/race";
 import { Simulation } from "../../lib/sim/Simulation";
-import { getVehicle, vehicles } from "../../lib/vehicles";
+import { getVehicle } from "../../lib/vehicles";
 import type { VehicleConfig } from "../../lib/vehicles/types";
 import { Logo } from "../Logo";
 import { Silhouette } from "../Silhouette";
@@ -445,75 +445,74 @@ export function DragApp() {
             {phase === "results" && result && race && oppCfg && (
               <TimeSlip result={result} meName={me.name} oppName={oppName} myCfg={myCfg} oppCfg={oppCfg} offsets={[race.myOffset, race.oppOffset]} />
             )}
-            <div className="faceoff">
-              <PlayerCard side="left" title={me.name} you cfg={myCfg} ready={mode === "cpu" || meReady} score={score.me} />
-              <div className="faceoff-vs">
-                <span>VS</span>
-                {oppCfg && <HeadsUpLine me={myCfg} opp={oppCfg} oppName={oppName} />}
+            <ClassBar
+              value={myClass.id}
+              locked={mode === "online" && Boolean(opponent)}
+              onChange={(c) => {
+                if (c.id === myClass.id) return;
+                setCarId(c.cars[0]);
+                setMeReady(false);
+                send({ type: "ready", ready: false });
+              }}
+            />
+            <div className="bays">
+              <CarBay
+                side="left"
+                label={`${me.name} (you)`}
+                cfg={myCfg}
+                cars={myClass.cars}
+                score={score.me}
+                ready={mode === "online" && meReady}
+                onChange={(id) => {
+                  setCarId(id);
+                  setMeReady(false);
+                  send({ type: "ready", ready: false });
+                }}
+              />
+              <div className="bays-vs" aria-hidden>
+                vs
               </div>
               {oppCfg ? (
-                <PlayerCard side="right" title={oppName} cfg={oppCfg} ready={mode === "cpu" || oppReady} score={score.them} />
+                <CarBay
+                  side="right"
+                  label={oppName}
+                  cfg={oppCfg}
+                  cars={myClass.cars}
+                  score={score.them}
+                  ready={mode === "online" && oppReady}
+                  onChange={mode === "cpu" ? setCpuCarId : undefined}
+                  footer={
+                    mode === "cpu" ? (
+                      <CpuControls
+                        level={cpuLevel}
+                        onLevel={setCpuLevel}
+                        onRandom={() => setCpuCarId(rivalIn(myClass, cpuCar === carId ? "" : cpuCar))}
+                      />
+                    ) : null
+                  }
+                />
               ) : (
-                <div className="drag-panel grid place-items-center text-center text-sm text-zinc-500">
-                  <span className="animate-pulse">Waiting for your opponent…</span>
-                </div>
+                <div className="bay bay-empty">Waiting for your opponent to join…</div>
               )}
             </div>
+            {oppCfg && <HeadsUpLine me={myCfg} opp={oppCfg} oppName={oppName} />}
             {classMismatch && opponent && (
-              <p role="alert" className="rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-center text-sm text-amber-100">
-                {opponent.name} is in the <b>{classOf(opponent.carId).name}</b> class. Pick a {classOf(opponent.carId).name} car (or ask them to pick a {myClass.name} one): heads-up races are within a class.
+              <p role="alert" className="notice">
+                {opponent.name} picked a {classOf(opponent.carId).name} car. Races are within a class: pick a {classOf(opponent.carId).name} car, or ask them to pick a {myClass.name} one.
               </p>
             )}
             <button type="button" className={`drag-cta drag-cta-big w-full ${meReady ? "drag-cta-ghost" : ""}`} onClick={ready} disabled={mode === "online" && (!oppCfg || classMismatch)}>
-              <b>{mode === "cpu" ? (phase === "results" ? "Race again" : "Stage it") : meReady ? "Ready! Waiting for them…" : phase === "results" ? "Rematch" : "I'm ready"}</b>
-              <span>{mode === "online" ? `Room ${code} · the tree starts when you're both ready` : "Engines start now. Turn your volume down a little."}</span>
+              <b>{mode === "cpu" ? (phase === "results" ? "Race again" : "Go to the line") : meReady ? "Ready. Waiting for them" : phase === "results" ? "Rematch" : "Ready"}</b>
+              <span>{mode === "online" ? `Room ${code}. The tree starts when you're both ready.` : "Engines start here, so check your volume."}</span>
             </button>
-            <div className="grid items-start gap-4 lg:grid-cols-[1.3fr_1fr]">
-              <div className="drag-panel">
-                <ClassPicker
-                  value={myClass.id}
-                  onChange={(c) => {
-                    if (c.id === myClass.id) return;
-                    setCarId(c.cars[0]);
-                    setMeReady(false);
-                    send({ type: "ready", ready: false });
-                  }}
-                />
-                <CarPicker
-                  value={carId}
-                  ids={myClass.cars}
-                  onChange={(id) => {
-                    setCarId(id);
-                    setMeReady(false);
-                    send({ type: "ready", ready: false });
-                  }}
-                  label={`Your ${myClass.name} car`}
-                />
-              </div>
-              <div className="space-y-4">
-                <ControlsPanel
-                  assist={assist}
-                  onChange={(a) => {
-                    setAssist(a);
-                    setMeReady(false);
-                    send({ type: "ready", ready: false });
-                  }}
-                />
-                {mode === "cpu" && (
-                  <div className="drag-panel">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">CPU skill</p>
-                    <div className="mt-3 flex gap-2" role="group" aria-label="CPU skill">
-                      {(Object.keys(CPU_LEVELS) as CpuLevel[]).map((l) => (
-                        <button key={l} type="button" aria-pressed={cpuLevel === l} onClick={() => setCpuLevel(l)} className={`chip capitalize ${cpuLevel === l ? "chip-on" : ""}`}>
-                          {l}
-                        </button>
-                      ))}
-                    </div>
-                    <CarPicker value={cpuCar} ids={myClass.cars} onChange={setCpuCarId} label={`CPU ${myClass.name} car`} compact />
-                  </div>
-                )}
-              </div>
-            </div>
+            <ControlsPanel
+              assist={assist}
+              onChange={(a) => {
+                setAssist(a);
+                setMeReady(false);
+                send({ type: "ready", ready: false });
+              }}
+            />
           </section>
         )}
       </div>
@@ -578,71 +577,132 @@ function ControlsPanel({ assist, onChange }: { assist: boolean; onChange: (assis
   );
 }
 
-function CarPicker({ value, onChange, label, compact, ids }: { value: string; onChange: (id: string) => void; label: string; compact?: boolean; ids?: string[] }) {
-  const [q, setQ] = useState("");
-  const words = q.toLowerCase().split(/\s+/).filter(Boolean);
-  const list = vehicles.filter((v) => (!ids || ids.includes(v.id)) && words.every((w) => `${v.name} ${v.ui.make ?? ""} ${v.ui.layout}`.toLowerCase().includes(w)));
+/** One side of the start line: the car, its numbers, and (if you can change it) arrows and the class's cars. */
+function CarBay({
+  side,
+  label,
+  cfg,
+  cars,
+  score,
+  ready,
+  onChange,
+  footer,
+}: {
+  side: "left" | "right";
+  label: string;
+  cfg: VehicleConfig;
+  cars: string[];
+  score: number;
+  ready: boolean;
+  onChange?: (id: string) => void;
+  footer?: React.ReactNode;
+}) {
+  const i = Math.max(0, cars.indexOf(cfg.id));
+  const step = (d: number) => onChange?.(cars[(i + d + cars.length) % cars.length]);
   return (
-    <div className="mt-4 first:mt-0">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">{label}</p>
-        <span className="text-xs text-zinc-600">{list.length} machines</span>
+    <section className="bay" data-ready={ready ? "1" : "0"} style={{ "--accent": cfg.ui.accent } as React.CSSProperties} aria-label={label}>
+      <header className="bay-head">
+        <span>{label}</span>
+        <span className="bay-score" aria-label={`${score} wins`}>
+          {score}
+        </span>
+      </header>
+      <div className="bay-stage">
+        {onChange && cars.length > 1 && (
+          <button type="button" className="bay-arrow" onClick={() => step(-1)} aria-label="Previous car">
+            <svg viewBox="0 0 16 16" aria-hidden>
+              <path d="M10 3L5 8l5 5" />
+            </svg>
+          </button>
+        )}
+        {/* both cars point at the middle */}
+        <Silhouette kind={cfg.ui.silhouette} accent={cfg.ui.accent} className={`bay-art ${side === "left" ? "-scale-x-100" : ""}`} />
+        {onChange && cars.length > 1 && (
+          <button type="button" className="bay-arrow" onClick={() => step(1)} aria-label="Next car">
+            <svg viewBox="0 0 16 16" aria-hidden>
+              <path d="M6 3l5 5-5 5" />
+            </svg>
+          </button>
+        )}
       </div>
-      <input className="drag-input mt-2" placeholder="Search Supra, V12, bike…" value={q} onChange={(e) => setQ(e.target.value)} aria-label={`Search ${label}`} />
-      <ul className={`car-grid no-scrollbar mt-3 ${compact ? "car-grid-compact" : ""}`} role="listbox" aria-label={label}>
-        {list.map((v) => (
-          <li key={v.id} role="option" aria-selected={v.id === value}>
-            <button type="button" onClick={() => onChange(v.id)} className="car-tile" data-on={v.id === value ? "1" : "0"} style={{ "--accent": v.ui.accent } as React.CSSProperties}>
-              <Silhouette kind={v.ui.silhouette} accent={v.ui.accent} className="car-tile-art" />
-              <span className="car-tile-name">{v.name}</span>
-              <span className="car-tile-meta">
-                {v.ui.powerHp} hp · {v.ui.layout}
-              </span>
-            </button>
-          </li>
+      <h3 className="bay-name">{cfg.name}</h3>
+      <p className="bay-sub">
+        {cfg.ui.make} {cfg.ui.year ? `· ${cfg.ui.year}` : ""}
+        {ready && <span className="bay-ready">Ready</span>}
+      </p>
+      <dl className="bay-specs">
+        <div>
+          <dt>Engine</dt>
+          <dd>{cfg.ui.layout}</dd>
+        </div>
+        <div>
+          <dt>Power</dt>
+          <dd>{cfg.ui.powerHp} hp</dd>
+        </div>
+        <div>
+          <dt>Perfect 1/4</dt>
+          <dd>{fmt(dialIn(cfg))} s</dd>
+        </div>
+      </dl>
+      {onChange && cars.length > 1 && (
+        <ul className="bay-rail" aria-label="Cars in this class">
+          {cars.map((id) => {
+            const v = getVehicle(id)!;
+            return (
+              <li key={id}>
+                <button type="button" aria-pressed={id === cfg.id} onClick={() => onChange(id)} title={v.name} style={{ "--accent": v.ui.accent } as React.CSSProperties}>
+                  <Silhouette kind={v.ui.silhouette} accent={v.ui.accent} className={`h-6 w-14 ${side === "left" ? "-scale-x-100" : ""}`} />
+                  <span>{v.name}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {footer}
+    </section>
+  );
+}
+
+const SKILL_NOTE: Record<CpuLevel, string> = {
+  easy: "reacts in about 0.26 s, shifts late",
+  club: "reacts in about 0.19 s",
+  pro: "reacts in about 0.13 s, rarely misses a shift",
+};
+
+function CpuControls({ level, onLevel, onRandom }: { level: CpuLevel; onLevel: (l: CpuLevel) => void; onRandom: () => void }) {
+  return (
+    <div className="bay-cpu">
+      <div className="segmented" role="group" aria-label="CPU skill">
+        {(Object.keys(CPU_LEVELS) as CpuLevel[]).map((l) => (
+          <button key={l} type="button" aria-pressed={level === l} onClick={() => onLevel(l)} className="capitalize">
+            {l}
+          </button>
         ))}
-      </ul>
+      </div>
+      <button type="button" className="btn-quiet" onClick={onRandom}>
+        Random car
+      </button>
+      <p className="bay-note">The CPU {SKILL_NOTE[level]}.</p>
     </div>
   );
 }
 
-function PlayerCard({ title, cfg, ready, score, you, side }: { title: string; cfg: VehicleConfig; ready: boolean; score: number; you?: boolean; side: "left" | "right" }) {
-  const dial = dialIn(cfg);
+function ClassBar({ value, onChange, locked }: { value: string; onChange: (c: DragClass) => void; locked?: boolean }) {
+  const current = CLASSES.find((c) => c.id === value)!;
   return (
-    <div className={`player-card player-card-${side}`} data-ready={ready ? "1" : "0"} style={{ "--accent": cfg.ui.accent } as React.CSSProperties}>
-      <div className="flex items-center justify-between gap-2">
-        <span className="truncate text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent)]">{you ? `${title} · you` : title}</span>
-        <span className="player-score">{score}</span>
+    <div className="classbar">
+      <div className="classbar-tabs" role="tablist" aria-label="Class">
+        {CLASSES.map((c) => (
+          <button key={c.id} type="button" role="tab" aria-selected={value === c.id} onClick={() => onChange(c)} disabled={locked && value !== c.id}>
+            {c.name}
+            <small>{fmt(dialIn(getVehicle(c.cars[0])!), 2)}</small>
+          </button>
+        ))}
       </div>
-      <div className="player-art">
-        {/* both cars point at the VS in the middle */}
-        <Silhouette kind={cfg.ui.silhouette} accent={cfg.ui.accent} className={`h-20 w-full ${side === "left" ? "-scale-x-100" : ""}`} />
-      </div>
-      <p className="truncate text-lg font-bold text-white">{cfg.name}</p>
-      <p className="text-xs text-zinc-500">
-        {cfg.ui.make} · {cfg.ui.layout} · {cfg.ui.displacement}
+      <p className="classbar-note">
+        {current.blurb}. Every car in a class runs the same perfect quarter mile, so the race comes down to the driver.
       </p>
-      <dl className="player-stats">
-        <div>
-          <dt>Power</dt>
-          <dd>
-            <span className="stat-bar" style={{ "--v": Math.min(1, cfg.ui.powerHp / 1500) } as React.CSSProperties} />
-            {cfg.ui.powerHp} hp
-          </dd>
-        </div>
-        <div>
-          <dt>Perfect</dt>
-          <dd>
-            <span className="stat-bar" style={{ "--v": Math.min(1, Math.max(0.05, (16 - dial / 1000) / 9)) } as React.CSSProperties} />
-            {fmt(dial)} s
-          </dd>
-        </div>
-        <div>
-          <dt>Class</dt>
-          <dd className="!font-sans font-semibold">{classOf(cfg.id).name}</dd>
-        </div>
-      </dl>
-      {ready && <span className="player-ready">Ready</span>}
     </div>
   );
 }
@@ -666,22 +726,6 @@ function rivalIn(c: DragClass, not: string): string {
   return others.length ? others[Math.floor(Math.random() * others.length)] : not;
 }
 
-function ClassPicker({ value, onChange }: { value: string; onChange: (c: DragClass) => void }) {
-  return (
-    <div className="mb-5">
-      <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Class</p>
-      <div className="class-chips mt-2" role="group" aria-label="Class">
-        {CLASSES.map((c) => (
-          <button key={c.id} type="button" aria-pressed={value === c.id} onClick={() => onChange(c)} className="class-chip" title={c.blurb}>
-            <b>{c.name}</b>
-            <span>{fmt(dialIn(getVehicle(c.cars[0])!), 2)} s · {c.cars.length}</span>
-          </button>
-        ))}
-      </div>
-      <p className="mt-2 text-xs text-zinc-500">{CLASSES.find((c) => c.id === value)?.blurb}. Every car in a class runs the same perfect quarter mile (performance parity), so the driver decides it.</p>
-    </div>
-  );
-}
 
 function quality(ms: number) {
   if (ms < 0) return { label: "early", cls: "q-early" };
