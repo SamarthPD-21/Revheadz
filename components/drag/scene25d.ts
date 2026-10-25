@@ -229,6 +229,10 @@ export class DragScene25D {
   private braking = { me: 0, opp: 0 };
   private pitch = { me: 0, opp: 0 };
   private camX = -6;
+  /** Camera position relative to your car (eased), m. */
+  private lead = 7;
+  /** Smoothed acceleration per lane, m/s². */
+  private accel = { me: 0, opp: 0 };
   private zoom = 1;
   // per-frame projection state
   private cx = 0;
@@ -383,13 +387,18 @@ export class DragScene25D {
     // follow your car (it sits a little below and left of centre so you see the strip ahead)
     const myX = me.distM - me.rollBackM;
     const launched = me.distM > 0.05;
-    const target = launched ? myX + (portrait ? 3 : 6) : 1;
-    this.camX += (target - this.camX) * Math.min(1, dt * 7);
-    if (Math.abs(target - this.camX) > 40) this.camX = target;
+    // The camera is locked to the car; only the framing offset eases. (Chasing the car with a
+    // lag made the gap between them wobble with every uneven frame: that was the jitter.)
+    const leadTarget = launched ? (portrait ? 3 : 6) : 1 - myX;
+    this.lead += (leadTarget - this.lead) * Math.min(1, dt * 2.5);
+    this.camX = myX + this.lead;
     this.zoom += (1 - Math.min(0.25, me.speedKmh / 900) - this.zoom) * Math.min(1, dt * 2);
     this.k = (portrait ? w / 11.5 : Math.min(w / 30, h / 15)) * this.zoom;
-    this.cx = w / 2 + (Math.random() - 0.5) * 6 * f.shake * f.shake;
-    this.cy = h * (portrait ? 0.6 : 0.52) + (Math.random() - 0.5) * 4 * f.shake * f.shake;
+    // shake as smooth noise (summed sines), not a fresh random offset every frame
+    const sh = f.shake * f.shake;
+    const t = f.time;
+    this.cx = w / 2 + (Math.sin(t * 47) + Math.sin(t * 31.7) * 0.6) * 3 * sh;
+    this.cy = h * (portrait ? 0.6 : 0.52) + (Math.sin(t * 39.3) + Math.sin(t * 57.1) * 0.5) * 2.2 * sh;
     this.cam = [this.camX, 0, 0];
     const x0 = this.camX - (portrait ? 40 : 55);
     const x1 = this.camX + (portrait ? 55 : 75);
@@ -484,12 +493,18 @@ export class DragScene25D {
     // cars and their smoke
     for (const lane of ["opp", "me"] as const) {
       const c = f[lane];
-      const a = (c.speedKmh - this.prevSpeed[lane]) / 3.6 / Math.max(dt, 1e-3);
+      // acceleration from frame-to-frame speed is noisy (uneven frames, gear changes): smooth it
+      // over ~0.25 s before it moves the body, or the cars twitch
+      if (dt > 0) {
+        const raw = Math.max(-15, Math.min(15, (c.speedKmh - this.prevSpeed[lane]) / 3.6 / dt));
+        this.accel[lane] += (raw - this.accel[lane]) * Math.min(1, dt / 0.25);
+      }
       this.prevSpeed[lane] = c.speedKmh;
-      this.braking[lane] += ((a < -2 ? 1 : 0) - this.braking[lane]) * Math.min(1, dt * 6);
-      this.pitch[lane] += (Math.max(-1, Math.min(1, a / 12)) - this.pitch[lane]) * Math.min(1, dt * 7);
+      const a = this.accel[lane];
+      this.braking[lane] += ((a < -2 ? 1 : 0) - this.braking[lane]) * Math.min(1, dt * 4);
+      this.pitch[lane] += (Math.max(-1, Math.min(1, a / 12)) - this.pitch[lane]) * Math.min(1, dt * 4);
       const nose = c.distM - c.rollBackM;
-      const len = c.cfg.type === "bike" ? 2.1 : c.cfg.ui.silhouette === "formula" ? 4.8 : 4.6;
+      const len = carShape(c.cfg).len;
       const rear = nose - len;
       const z = LANE_Z[lane];
       if (c.distM > 0.05 && c.distM < 24) {
