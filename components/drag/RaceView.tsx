@@ -290,6 +290,7 @@ export function RaceView({ me, opp, startAt, opponent, audio, oppAudio, sfx, onI
       });
     };
     let raf = 0;
+    let frameNo = 0;
     let last = performance.now();
     const loop = () => {
       const { me, opp } = latest.current;
@@ -397,7 +398,8 @@ export function RaceView({ me, opp, startAt, opponent, audio, oppAudio, sfx, onI
           console.error(err);
         }
       }
-      setFrame((f) => (f + 1) % 1e6);
+      // the HUD (numbers, lights) re-renders every other frame: React work off the critical path
+      if ((frameNo = (frameNo + 1) % 2) === 0) setFrame((f) => (f + 1) % 1e6);
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
