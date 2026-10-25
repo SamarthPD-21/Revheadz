@@ -22,7 +22,8 @@ export class OneShots {
     private readonly destination: AudioNode,
   ) {}
 
-  play(kind: OneShotKind, opts?: { gain?: number; rate?: number; index?: number }): void {
+  /** `offset` starts that far (s) into the sound, e.g. to catch up with a start requested while loading. */
+  play(kind: OneShotKind, opts?: { gain?: number; rate?: number; index?: number; offset?: number }): void {
     if (this.active.size >= MAX_SIMULTANEOUS) return;
     const b = this.buffers;
     const list = kind === "start" ? [b.start] : kind === "stop" ? [b.stop] : b[kind];
@@ -51,7 +52,9 @@ export class OneShots {
       src.disconnect();
       gain.disconnect();
     };
-    src.start();
+    const offset = Math.max(0, opts?.offset ?? 0);
+    if (offset >= buffer.duration - 0.05) return;
+    src.start(0, offset);
   }
 
   dispose(): void {
