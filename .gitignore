@@ -42,3 +42,8 @@ next-env.d.ts
 
 # downloaded source recordings (scripts/build-real-sounds.mjs)
 /.sound-cache/
+
+# local notes, not part of the app
+AGENTS.md
+CLAUDE.md
+*.pdf
