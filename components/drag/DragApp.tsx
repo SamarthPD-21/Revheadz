@@ -365,26 +365,12 @@ export function DragApp() {
           )}
         </nav>
 
-        <header className="mt-8 flex items-center justify-between gap-6">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-lime-300">Head to head</p>
-            <h1 className="mt-2 text-4xl font-black italic tracking-tight text-zinc-50 sm:text-5xl">Drag Racing</h1>
-            <p className="mt-3 max-w-xl text-zinc-400">
-              Heads-up drag racing: both trees go green together and first to the line wins. Cars race in classes, and every car in a class runs
-              the same perfect quarter mile, so there&apos;s no mismatch. Launch on the green, hit every shift light, stay on the gas. Jump the light and
-              you red-light.
-            </p>
-            <ul className="mt-4 flex flex-wrap gap-2 text-xs text-zinc-300">
-              <li className="stat-pill">Online PvP · room codes</li>
-              <li className="stat-pill">{vehicles.length} machines</li>
-              <li className="stat-pill">W S E Q · or one button</li>
-            </ul>
-          </div>
-          <div className="tree hidden shrink-0 flex-col gap-3 rounded-2xl border border-white/10 bg-black/40 p-4 sm:flex" aria-hidden>
-            {["#facc15", "#facc15", "#facc15", "#22c55e"].map((c, i) => (
-              <span key={i} className="tree-light" style={{ "--c": c, animationDelay: `${i * 0.45}s` } as React.CSSProperties} />
-            ))}
-          </div>
+        <header className="mt-10">
+          <h1 className="display text-5xl text-zinc-50 sm:text-6xl">Drag racing</h1>
+          <p className="mt-3 max-w-xl text-zinc-400">
+            A quarter mile, heads-up: both lights go green together and the first car to the line wins. Every car in a class runs the same
+            perfect time, so it comes down to your launch and your shifts. Leave before the green and you lose.
+          </p>
         </header>
 
         {error && (
@@ -394,24 +380,26 @@ export function DragApp() {
         )}
 
         {phase === "menu" && (
-          <section className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="drag-panel">
-              <label className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500" htmlFor="drag-name">
-                Your name
-              </label>
-              <input id="drag-name" className="drag-input mt-2" value={name} maxLength={16} onChange={(e) => setName(e.target.value)} />
-              <CarPicker value={carId} onChange={setCarId} label="Your car" />
-            </div>
-            <div className="flex flex-col gap-3">
-              <button type="button" className="drag-cta" onClick={() => void create()}>
-                <b>Create a room</b>
-                <span>Get a code to send a friend</span>
+          <section className="menu">
+            <label className="field">
+              <span>Your name</span>
+              <input className="drag-input" value={name} maxLength={16} onChange={(e) => setName(e.target.value)} />
+            </label>
+            <div className="menu-actions">
+              <button type="button" className="menu-option menu-option-primary" onClick={practice}>
+                <b>Race the CPU</b>
+                <span>Pick a class, pick a car, go.</span>
               </button>
-              <div className="drag-panel">
-                <label className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500" htmlFor="drag-code">
-                  Join with a code
+              <button type="button" className="menu-option" onClick={() => void create()}>
+                <b>Create a room</b>
+                <span>You get a four-letter code to send a friend.</span>
+              </button>
+              <div className="menu-option menu-join">
+                <label htmlFor="drag-code">
+                  <b>Join a room</b>
+                  <span>Enter your friend&apos;s code.</span>
                 </label>
-                <div className="mt-2 flex gap-2">
+                <div className="menu-join-row">
                   <input
                     id="drag-code"
                     className="drag-input font-mono uppercase tracking-[0.3em]"
@@ -420,15 +408,11 @@ export function DragApp() {
                     onChange={(e) => setJoinCode(normaliseCode(e.target.value))}
                     onKeyDown={(e) => e.key === "Enter" && void join()}
                   />
-                  <button type="button" className="chip chip-on shrink-0" onClick={() => void join()}>
+                  <button type="button" className="btn" onClick={() => void join()} disabled={joinCode.length !== 4}>
                     Join
                   </button>
                 </div>
               </div>
-              <button type="button" className="drag-cta drag-cta-ghost" onClick={practice}>
-                <b>Practice vs CPU</b>
-                <span>No friend handy? Race the computer</span>
-              </button>
             </div>
           </section>
         )}
