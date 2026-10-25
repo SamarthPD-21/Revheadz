@@ -223,6 +223,7 @@ export class DragScene25D {
   private readonly boards = new Map<string, Canvas>();
   private timing: { canvas: Canvas; ctx: CanvasRenderingContext2D; key: string } | null = null;
   private crowd: Canvas | null = null;
+  private readonly ads = new Map<string, Canvas>();
   private puffs: Puff[] = [];
   private lastTime = 0;
   private prevSpeed = { me: 0, opp: 0 };
@@ -264,6 +265,25 @@ export class DragScene25D {
     return b;
   }
 
+  /** A sponsor board for the far wall: dark, one accent bar, plain lettering. */
+  private ad(label: string, accent: string) {
+    let a = this.ads.get(label);
+    if (!a) {
+      const [c, x] = makeCanvas(1024, 40);
+      x.fillStyle = "#16151c";
+      x.fillRect(0, 0, 1024, 40);
+      x.fillStyle = accent;
+      x.fillRect(0, 0, 10, 40);
+      x.fillRect(1014, 0, 10, 40);
+      x.fillStyle = "#8b8a96";
+      x.font = "600 24px system-ui, sans-serif";
+      x.textBaseline = "middle";
+      for (let i = 0; i < 3; i++) x.fillText(label, 40 + i * 340, 21);
+      this.ads.set(label, (a = c));
+    }
+    return a;
+  }
+
   /**
    * The grandstand front: rows of seating with a sparse, soft crowd. Low contrast and no
    * pixel-sized detail, so it doesn't shimmer when scaled down and scrolled.
@@ -273,21 +293,21 @@ export class DragScene25D {
       // one tier = 12 m of seating, drawn at a realistic scale (~40 px per metre) so heads are
       // big enough not to shimmer, and softened slightly for clean downscaling
       const [c, x] = makeCanvas(512, 40);
-      x.fillStyle = "#17161e";
+      x.fillStyle = "#121118";
       x.fillRect(0, 0, 512, 40);
-      x.fillStyle = "#1e1d27";
+      x.fillStyle = "#1a1922";
       x.fillRect(0, 30, 512, 10); // the seat row
       x.filter = "blur(0.8px)";
       let seed = 11;
       const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
       for (let px = 6; px < 506; px += 9 + rand() * 14) {
-        if (rand() < 0.22) continue; // empty seats
+        if (rand() < 0.3) continue; // empty seats
         const hue = Math.floor(rand() * 360);
-        x.fillStyle = `hsl(${hue},16%,${30 + rand() * 12}%)`;
+        x.fillStyle = `hsl(${hue},12%,${22 + rand() * 9}%)`;
         x.beginPath();
         x.ellipse(px, 26, 6, 8, 0, 0, Math.PI * 2); // shoulders
         x.fill();
-        x.fillStyle = `hsl(${20 + rand() * 20},20%,${28 + rand() * 18}%)`;
+        x.fillStyle = `hsl(${20 + rand() * 20},16%,${22 + rand() * 12}%)`;
         x.beginPath();
         x.arc(px, 13, 4.5, 0, Math.PI * 2); // head
         x.fill();
@@ -434,15 +454,26 @@ export class DragScene25D {
     const G = (xa: number, xb: number, za: number, zb: number, fill: string, y = 0) =>
       this.poly([[xa, y, za], [xb, y, za], [xb, y, zb], [xa, y, zb]], fill);
     G(x0, x1, -60, 60, "#0b0a10");
-    for (let k = Math.floor(x0 / 8); k < Math.ceil(x1 / 8); k++) G(k * 8, k * 8 + 8, -WALL_Z, WALL_Z, k % 2 ? "#1c1b22" : "#19181f");
-    for (const lz of [LANE_Z.me, LANE_Z.opp]) for (let k = 0; k < 10; k++) G(-4 + k * 8, 4 + k * 8, lz - 0.9, lz + 0.9, `rgba(0,0,0,${0.5 * (1 - k / 10)})`);
-    G(x0, x1, -0.06, 0.06, "#c99a1c");
-    G(x0, x1, LINE_Z - 0.05, LINE_Z + 0.05, "#bdbdc6");
-    G(x0, x1, -LINE_Z - 0.05, -LINE_Z + 0.05, "#bdbdc6");
-    for (let k = Math.floor(x0 / 6); k < Math.ceil(x1 / 6); k++) {
-      G(k * 6, k * 6 + 2.4, 3.36, 3.44, "#5c5b66");
-      G(k * 6, k * 6 + 2.4, -3.44, -3.36, "#5c5b66");
+    // concrete launch pad for the first 100 m, as at real strips, then asphalt
+    const PAD = 100;
+    if (x1 > PAD) G(Math.max(x0, PAD), x1, -WALL_Z, WALL_Z, "#16151b");
+    if (x0 < PAD) {
+      G(Math.max(x0, -12), Math.min(PAD, x1), -WALL_Z, WALL_Z, "#222128");
+      for (let k = Math.ceil(Math.max(x0, -12) / 5); k * 5 < Math.min(PAD, x1); k++) G(k * 5 - 0.03, k * 5 + 0.03, -WALL_Z, WALL_Z, "#19181e");
     }
+    // laid rubber: the two tyre tracks in each lane, heavy off the line and fading out
+    for (const lz of [LANE_Z.me, LANE_Z.opp]) {
+      for (let k = 0; k < 16; k++) {
+        const xa = k * 8 - 2;
+        if (xa + 8 < x0 || xa > x1) continue;
+        const a = 0.55 * Math.pow(1 - k / 16, 1.6);
+        for (const tz of [-0.78, 0.78]) G(xa, xa + 8, lz + tz - 0.24, lz + tz + 0.24, `rgba(4,4,6,${a})`);
+        G(xa, xa + 8, lz - 0.55, lz + 0.55, `rgba(4,4,6,${a * 0.3})`);
+      }
+    }
+    G(x0, x1, -0.06, 0.06, "#b08a24");
+    G(x0, x1, LINE_Z - 0.05, LINE_Z + 0.05, "#a9a9b3");
+    G(x0, x1, -LINE_Z - 0.05, -LINE_Z + 0.05, "#a9a9b3");
     G(-0.15, 0.15, -WALL_Z, WALL_Z, "#f4f4f5");
     for (let k = 0; k < 14; k++) {
       const za = -WALL_Z + (k * 2 * WALL_Z) / 14;
@@ -450,32 +481,38 @@ export class DragScene25D {
       G(QUARTER_MILE_M - 0.5, QUARTER_MILE_M, za, zb, k % 2 ? "#f4f4f5" : "#0b0b0f");
       G(QUARTER_MILE_M, QUARTER_MILE_M + 0.5, za, zb, k % 2 ? "#0b0b0f" : "#f4f4f5");
     }
-    // light pools under the towers
-    const pool = this.glow("rgba(255,241,214,1)");
-    for (let k = Math.floor((x0 - 10) / 34); k <= Math.ceil(x1 / 34); k++) this.sprite(pool, [k * 34 + 10, 0, -1], 20, 0.06, true);
+    // warm pools of light from the towers
+    const pool = this.glow("rgba(255,226,180,1)");
+    for (let k = Math.floor((x0 - 10) / 34); k <= Math.ceil(x1 / 34); k++) this.sprite(pool, [k * 34 + 10, 0, -1.5], 22, 0.11, true);
 
     // ---- everything with height, sorted back to front ----
     const items: Item[] = [];
     const add = (center: V, draw: () => void) => items.push({ depth: this.depth(center), draw });
     const id = (v: V) => v;
-    const wallC: [number, number, number] = [52, 51, 60];
+    const wallC: [number, number, number] = [58, 57, 64];
+    const ADS: [string, string][] = [["REVHEADZ", "#f97316"], ["QUARTER MILE", "#a3a3ad"], ["STAGE  ·  LAUNCH  ·  SHIFT", "#65a30d"]];
     for (let k = Math.floor(x0 / 12); k < Math.ceil(x1 / 12); k++) {
       const xa = k * 12;
       const xb = xa + 12;
-      // far wall with ad panels on its inner face
+      // far wall with sponsor boards on its inner face, a catch fence on top
       add([xa + 6, 0.5, -WALL_Z], () => {
         this.solid(box(xa, xb, 0, 1.1, -WALL_Z - 0.35, -WALL_Z, wallC), id);
-        const panel = ((Math.floor(xa / 24) % 3) + 3) % 3;
-        if (k % 2 === 0) this.poly([[xa + 0.4, 0.95, -WALL_Z + 0.01], [xa + 23.6, 0.95, -WALL_Z + 0.01], [xa + 23.6, 0.2, -WALL_Z + 0.01], [xa + 0.4, 0.2, -WALL_Z + 0.01]], panel === 0 ? "#c2580f" : panel === 1 ? "#2a2834" : "#7fae1f");
+        if (k % 2 === 0) {
+          const [label, accent] = ADS[((Math.floor(xa / 24) % 3) + 3) % 3];
+          this.image(this.ad(label, accent), 1024, 40, [xa + 0.4, 0.95, -WALL_Z + 0.01], [xa + 23.6, 0.95, -WALL_Z + 0.01], [xa + 0.4, 0.2, -WALL_Z + 0.01]);
+        }
+        this.poly([[xa, 1.1, -WALL_Z - 0.18], [xb, 1.1, -WALL_Z - 0.18], [xb, 3, -WALL_Z - 0.18], [xa, 3, -WALL_Z - 0.18]], "rgba(150,150,170,0.07)");
+        for (let px = xa; px < xb; px += 3) this.solid(box(px - 0.03, px + 0.03, 1.1, 3, -WALL_Z - 0.21, -WALL_Z - 0.15, [44, 43, 52]), id);
+        this.solid(box(xa, xb, 2.96, 3.02, -WALL_Z - 0.21, -WALL_Z - 0.15, [44, 43, 52]), id);
       });
       // near wall (low, in front of everything else)
       add([xa + 6, 0.5, WALL_Z], () => this.solid(box(xa, xb, 0, 0.9, WALL_Z, WALL_Z + 0.35, wallC), id));
       // grandstand tiers behind the far wall, crowd on the front faces
-      for (let t = 0; t < 5; t++) {
-        const z1 = -8.2 - t * 2.2;
-        const y1 = 0.9 + t * 0.9;
+      for (let t = 0; t < 4; t++) {
+        const z1 = -8.6 - t * 2.2;
+        const y1 = 1.2 + t * 0.9;
         add([xa + 6, y1 / 2, z1 - 1.1], () => {
-          this.solid(box(xa, xb, 0, y1, z1 - 2.2, z1, [21, 20, 28]), id);
+          this.solid(box(xa, xb, 0, y1, z1 - 2.2, z1, t % 2 ? [19, 18, 25] : [23, 22, 30]), id);
           this.image(this.crowdTex(), 512, 40, [xa, y1 + 0.05, z1 + 0.01], [xb, y1 + 0.05, z1 + 0.01], [xa, y1 - 0.85, z1 + 0.01]);
         });
       }
@@ -548,6 +585,13 @@ export class DragScene25D {
 
     items.sort((a, b) => b.depth - a.depth);
     for (const it of items) it.draw();
+
+    // vignette: pulls the eye to the cars and hides the hard edge of the world
+    const vg = ctx.createRadialGradient(w / 2, h * 0.55, Math.min(w, h) * 0.35, w / 2, h * 0.55, Math.max(w, h) * 0.75);
+    vg.addColorStop(0, "rgba(4,4,8,0)");
+    vg.addColorStop(1, "rgba(4,4,8,0.6)");
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, w, h);
 
     // speed streaks, along the strip's direction on screen
     if (me.speedKmh > 80) {
