@@ -359,7 +359,7 @@ export class DragScene25D {
   }
 
   /** `seal` also strokes the edge in the fill colour, closing antialiasing seams between touching faces. */
-  private poly(pts: V[], fill: string, seal = false) {
+  private poly(pts: V[], fill: string | CanvasGradient, seal = false) {
     const ctx = this.ctx;
     ctx.fillStyle = fill;
     ctx.beginPath();
@@ -685,13 +685,29 @@ export class DragScene25D {
     if (!shape.bike) for (const s of wheelSolids(-1)) this.solid(s, flat);
     else for (const s of wheelSolids(1)) this.solid(s, flat);
 
+    // Half-width of the body at a point of the profile: the cabin leans in above the beltline
+    // (tumblehome) and the corners round off in plan at the nose and tail.
+    const shaped = !shape.bike;
+    const cabinH = Math.max(0.01, shape.height - shape.belt);
+    const hwAt = (x: number, y: number) => {
+      let hw = W / 2;
+      if (!shaped) return hw;
+      if (y > shape.belt) hw -= ((y - shape.belt) / cabinH) * W * 0.17;
+      const e = Math.min(x, shape.len - x) / (shape.len * 0.12);
+      if (e < 1) hw *= 0.88 + 0.12 * Math.sqrt(Math.max(0, e));
+      return hw;
+    };
+    const onSide = (poly: XY[], out = 0) => poly.map(([x, y]) => body([x, y, hwAt(x, y) + out]));
+
     // a profile extruded across the car: the edge strips (roof, bonnet, screens, tail) back to front
-    const prism = (poly: XY[], z0: number, z1: number, base: [number, number, number], glassy: boolean) => {
+    const prism = (poly: XY[], hw: (x: number, y: number) => number, base: [number, number, number], glassy: boolean) => {
       const strips: { pts: V[]; n: V; glass: boolean; d: number }[] = [];
       for (let i = 0; i < poly.length; i++) {
         const [ax, ay] = poly[i];
         const [bx, by] = poly[(i + 1) % poly.length];
-        const pts: V[] = [body([ax, ay, z0]), body([bx, by, z0]), body([bx, by, z1]), body([ax, ay, z1])];
+        const ha = hw(ax, ay);
+        const hb = hw(bx, by);
+        const pts: V[] = [body([ax, ay, -ha]), body([bx, by, -hb]), body([bx, by, hb]), body([ax, ay, ha])];
         // outward normal of a counter-clockwise edge in the side plane
         const n = norm([by - ay, -(bx - ax), 0]);
         if (dot(n, VIEW) >= 0 || n[1] < -0.2) continue;
@@ -700,36 +716,80 @@ export class DragScene25D {
         strips.push({ pts, n, glass, d: this.depth(mid) });
       }
       strips.sort((p, q) => q.d - p.d);
-      for (const st of strips) this.poly(st.pts, st.glass ? rgbStr([20, 26, 38], 0.5 + 0.6 * Math.max(0, dot(st.n, LIGHT))) : shade(st.n, base), true);
-      // the near side face
-      this.poly(poly.map(([x, y]) => body([x, y, z1])), shade([0, 0, 1], base), true);
+      for (const st of strips) this.poly(st.pts, st.glass ? rgbStr([30, 38, 54], 0.55 + 0.7 * Math.max(0, dot(st.n, LIGHT))) : shade(st.n, base), true);
+      // the near side face: lit from above, darker towards the sills
+      const lower = shaped ? clipY(poly, shape.belt, false) : poly;
+      if (lower.length >= 3) {
+        const xs = poly.map((q) => q[0]);
+        const mx = (Math.min(...xs) + Math.max(...xs)) / 2;
+        const [gx0, gy0] = this.p(body([mx, shape.belt, hw(mx, shape.belt)]));
+        const [gx1, gy1] = this.p(body([mx, 0, hw(mx, 0)]));
+        const g = this.ctx.createLinearGradient(gx0, gy0, gx1, gy1);
+        const lit = 0.42 + 0.7 * Math.max(0, LIGHT[2]);
+        g.addColorStop(0, rgbStr(base, lit * 1.18));
+        g.addColorStop(1, rgbStr(base, lit * 0.62));
+        this.poly(lower.map(([x, y]) => body([x, y, hw(x, y)])), g, true);
+      }
+      if (shaped) {
+        const upper = clipY(poly, shape.belt, true);
+        if (upper.length >= 3) this.poly(upper.map(([x, y]) => body([x, y, hw(x, y)])), shade(norm([0, (W * 0.17) / cabinH, 1]), base), true);
+      }
     };
-    for (const poly of shape.bodies) prism(poly, -W / 2, W / 2, acc, !shape.bike);
+    for (const poly of shape.bodies) prism(poly, hwAt, acc, !shape.bike);
 
-    // near-side details: sills, window glass with a pillar, wheel arches
-    const side = W / 2 + 0.005;
+    // near-side details: shoulder crease, sills, window glass with a pillar, wheel arches
     for (const poly of shape.bodies) {
-      const sill = clipY(poly, shape.height * 0.18, false);
-      if (sill.length >= 3) this.poly(sill.map(([x, y]) => body([x, y, side])), rgbStr(acc, 0.32));
+      if (shaped) {
+        const crease = clipY(clipY(poly, shape.belt - 0.005, false), shape.belt - 0.06, true);
+        if (crease.length >= 3) this.poly(onSide(crease, 0.004), rgbStr(acc, 1.45));
+      }
+      const sill = clipY(poly, shape.height * 0.16, false);
+      if (sill.length >= 3) this.poly(onSide(sill, 0.004), rgbStr(acc, 0.28));
     }
     if (shape.windows.length) {
-      this.poly(shape.windows.map(([x, y]) => body([x, y, side + 0.002])), "rgb(17,21,31)");
+      const ctx = this.ctx;
+      const win = onSide(shape.windows, 0.006);
+      this.poly(win, "rgb(24,29,42)");
+      // a soft reflection streak across the glass
       const xs = shape.windows.map((p) => p[0]);
-      const pm = (Math.min(...xs) + Math.max(...xs)) / 2;
-      this.poly([body([pm - 0.05, shape.belt, side + 0.004]), body([pm + 0.05, shape.belt, side + 0.004]), body([pm + 0.05, shape.height, side + 0.004]), body([pm - 0.05, shape.height, side + 0.004])], rgbStr(acc, 0.6));
+      const wx0 = Math.min(...xs);
+      const wx1 = Math.max(...xs);
+      ctx.save();
+      ctx.beginPath();
+      win.forEach((v, i) => {
+        const [px, py] = this.p(v);
+        if (i) ctx.lineTo(px, py);
+        else ctx.moveTo(px, py);
+      });
+      ctx.clip();
+      const sx = wx0 + (wx1 - wx0) * 0.55;
+      const at = (x: number, y: number) => body([x, y, hwAt(x, y) + 0.007]);
+      this.poly([at(sx, shape.belt), at(sx + 0.32, shape.belt), at(sx + 0.62, shape.height), at(sx + 0.3, shape.height)], "rgba(190,205,235,0.10)");
+      this.poly([at(sx + 0.42, shape.belt), at(sx + 0.5, shape.belt), at(sx + 0.8, shape.height), at(sx + 0.72, shape.height)], "rgba(190,205,235,0.07)");
+      ctx.restore();
+      const pm = (wx0 + wx1) / 2;
+      this.poly([at(pm - 0.05, shape.belt), at(pm + 0.05, shape.belt), at(pm + 0.05, shape.height), at(pm - 0.05, shape.height)], rgbStr(acc, 0.5));
     }
-    if (!shape.bike && c.cfg.ui.silhouette !== "formula") {
+    if (shaped) {
+      // lamps as shapes on the corners: headlight at the nose, taillight at the tail
+      const ly = Math.min(shape.height * 0.5, 0.68);
+      const lamp = (x0: number, x1: number, fill: string) =>
+        this.poly([[x0, ly - 0.07], [x1, ly - 0.07], [x1, ly + 0.06], [x0, ly + 0.06]].map(([x, y]) => body([x, y, hwAt(x, y) + 0.006])), fill);
+      lamp(shape.len - 0.42, shape.len - 0.08, "rgb(235,232,220)");
+      lamp(0.06, 0.36, rgbStr([230, 30, 30], 0.75 + 0.5 * this.braking[lane]));
       for (const w of shape.wheels) {
         const arch: V[] = [];
-        for (let i = 0; i <= 10; i++) {
-          const a = (i / 10) * Math.PI;
-          arch.push(body([w.x + Math.cos(a) * w.r * 1.18, w.r + Math.sin(a) * w.r * 1.18, side + 0.006]));
+        for (let i = 0; i <= 12; i++) {
+          const a = (i / 12) * Math.PI;
+          const x = w.x + Math.cos(a) * w.r * 1.18;
+          const y = w.r + Math.sin(a) * w.r * 1.18;
+          arch.push(body([x, y, hwAt(x, y) + 0.008]));
         }
         this.poly(arch, "rgb(8,8,11)");
       }
     }
     // wings and spoilers, dark
-    for (const poly of shape.wings) prism(poly, -W / 2 + 0.05, W / 2 - 0.05, [26, 26, 32], false);
+    for (const poly of shape.wings) prism(poly, () => W / 2 - 0.05, [26, 26, 32], false);
     // rider on a bike
     if (shape.bike) {
       this.solid(box(shape.len * 0.4, shape.len * 0.58, 0.85, 1.32, -0.2, 0.2, [24, 24, 30]), body);
@@ -739,10 +799,19 @@ export class DragScene25D {
     if (!shape.bike) {
       const ctx = this.ctx;
       for (const s of wheelSolids(1)) this.solid(s, flat);
+      // rims: a dark metal disc with a lighter lip
+      for (const w of shape.wheels) {
+        const ring = (r: number) => Array.from({ length: 16 }, (_, i): V => {
+          const a = (i / 16) * Math.PI * 2;
+          return flat([w.x + Math.cos(a) * r, w.r + Math.sin(a) * r, shape.wheelZ[1] + 0.004]);
+        });
+        this.poly(ring(w.r * 0.72), "rgb(92,92,102)");
+        this.poly(ring(w.r * 0.64), "rgb(40,40,47)");
+      }
       // spokes strobe at speed (the wagon-wheel effect): fade them into a blurred rim
       const spokeA = Math.max(0, 1 - c.speedKmh / 35);
       if (c.speedKmh > 8) {
-        ctx.strokeStyle = c.cfg.ui.accent;
+        ctx.strokeStyle = "rgb(150,150,162)";
         ctx.globalAlpha = Math.min(0.55, (c.speedKmh - 8) / 60);
         ctx.lineWidth = Math.max(1.5, 0.12 * this.k);
         for (const w of shape.wheels) {
@@ -759,7 +828,7 @@ export class DragScene25D {
         ctx.globalAlpha = 1;
       }
       ctx.globalAlpha = spokeA;
-      ctx.strokeStyle = c.cfg.ui.accent;
+      ctx.strokeStyle = "rgb(170,170,182)";
       ctx.lineWidth = Math.max(1, 0.05 * this.k);
       ctx.beginPath();
       for (const w of shape.wheels) {
