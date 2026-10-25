@@ -92,6 +92,17 @@ function wheel(cx: number, cy: number, r: number, z0: number, z1: number, spin: 
   return { faces, color, center: [cx, cy, (z0 + z1) / 2] };
 }
 
+/** A rectangular cross-section across the car at `x`: y0..y1 tall, ±hw wide. */
+const sec = (x: number, y0: number, y1: number, hw: number): V[] => [[x, y0, -hw], [x, y0, hw], [x, y1, hw], [x, y1, -hw]];
+
+/** A solid lofted between two quads (corresponding corners in the same order): nose cones, pods, limbs. */
+function loft(a: V[], b: V[], color: [number, number, number], flat = false): Solid {
+  const faces: V[][] = [a, b];
+  for (let i = 0; i < 4; i++) faces.push([a[i], a[(i + 1) % 4], b[(i + 1) % 4], b[i]]);
+  const center = [...a, ...b].reduce<V>((s, v) => [s[0] + v[0] / 8, s[1] + v[1] / 8, s[2] + v[2] / 8], [0, 0, 0]);
+  return { faces, color, flat, center };
+}
+
 /** Per-silhouette paint details. */
 const LIVERY: Record<string, { stripes?: boolean; darkRoof?: boolean; roundel?: boolean }> = {
   muscle: { stripes: true },
@@ -305,6 +316,86 @@ export class DragScene25D {
       this.roundels.set(num, (r = c));
     }
     return r;
+  }
+
+  /** Draws solids back to front (by centre depth): for models built from separate parts. */
+  private assembly(parts: Solid[], xf: (v: V) => V) {
+    parts
+      .map((s) => ({ s, d: this.depth(xf(s.center)) }))
+      .sort((a, b) => b.d - a.d)
+      .forEach(({ s }) => this.solid(s, xf));
+  }
+
+  /**
+   * A modern single-seater, built part by part rather than from the side profile: nose cone,
+   * front and rear wings, tub, sidepods, airbox, halo, driver, suspension and exposed wheels.
+   */
+  private formulaCar(c: SceneCar, lane: "me" | "opp", body: (v: V) => V, flat: (v: V) => V, acc: [number, number, number], spin: number, time: number) {
+    const dark: [number, number, number] = [22, 22, 27];
+    const carbon: [number, number, number] = [34, 34, 40];
+    const tyre: [number, number, number] = [16, 16, 19];
+    const white: [number, number, number] = [228, 228, 232];
+    const accDark = acc.map((v) => v * 0.7) as [number, number, number];
+    const FW = { x: 4.12, r: 0.3, z: [0.6, 0.9] as const };
+    const RW = { x: 0.78, r: 0.34, z: [0.58, 0.96] as const };
+    const parts: Solid[] = [
+      // nose cone and tub
+      loft(sec(4.75, 0.2, 0.3, 0.07), sec(3.5, 0.18, 0.52, 0.3), acc),
+      loft(sec(3.5, 0.15, 0.52, 0.3), sec(2.0, 0.12, 0.6, 0.38), acc),
+      // front wing: main plane, flap, endplates
+      box(4.45, 4.9, 0.07, 0.12, -1.0, 1.0, carbon),
+      box(4.4, 4.6, 0.12, 0.2, -0.98, 0.98, accDark),
+      box(4.4, 4.92, 0.06, 0.32, 0.96, 1.0, carbon),
+      box(4.4, 4.92, 0.06, 0.32, -1.0, -0.96, carbon),
+      // sidepods, tapering towards the rear
+      loft(sec(2.75, 0.12, 0.5, 0.72), sec(1.15, 0.12, 0.34, 0.5), acc),
+      // engine cover and airbox rising behind the driver
+      loft(sec(2.25, 0.5, 0.98, 0.2), sec(0.75, 0.3, 0.55, 0.14), accDark),
+      box(2.12, 2.3, 0.86, 1.04, -0.12, 0.12, dark),
+      // floor and diffuser
+      box(0.35, 3.6, 0.04, 0.12, -0.82, 0.82, carbon),
+      loft(sec(0.75, 0.06, 0.16, 0.5), sec(0.1, 0.06, 0.34, 0.5), carbon),
+      // rear wing on a central pillar
+      box(0.04, 0.5, 0.86, 0.98, -0.52, 0.52, carbon),
+      box(0.12, 0.42, 1.02, 1.09, -0.52, 0.52, accDark),
+      box(0.0, 0.55, 0.42, 1.12, 0.52, 0.56, acc),
+      box(0.0, 0.55, 0.42, 1.12, -0.56, -0.52, acc),
+      box(0.25, 0.33, 0.3, 0.88, -0.03, 0.03, dark),
+      // driver: helmet in the cockpit, halo over it
+      box(2.42, 2.72, 0.6, 0.86, -0.14, 0.14, white),
+      box(2.62, 2.73, 0.66, 0.76, -0.12, 0.12, [18, 22, 30], true),
+      box(2.45, 2.95, 0.88, 0.92, 0.2, 0.24, dark),
+      box(2.45, 2.95, 0.88, 0.92, -0.24, -0.2, dark),
+      box(2.92, 2.98, 0.55, 0.92, -0.03, 0.03, dark),
+      box(2.4, 2.48, 0.86, 0.92, -0.24, 0.24, dark),
+      // wishbones out to the wheels
+      box(FW.x - 0.25, FW.x + 0.05, 0.3, 0.33, 0.28, FW.z[0], dark),
+      box(FW.x - 0.25, FW.x + 0.05, 0.3, 0.33, -FW.z[0], -0.28, dark),
+      box(RW.x - 0.2, RW.x + 0.15, 0.32, 0.35, 0.3, RW.z[0], dark),
+      box(RW.x - 0.2, RW.x + 0.15, 0.32, 0.35, -RW.z[0], -0.3, dark),
+    ];
+    const wheels: Solid[] = [];
+    for (const w of [FW, RW]) {
+      wheels.push(wheel(w.x, w.r, w.r, -w.z[1], -w.z[0], spin * (0.33 / w.r), tyre));
+      wheels.push(wheel(w.x, w.r, w.r, w.z[0], w.z[1], spin * (0.33 / w.r), tyre));
+    }
+    // far wheels, then the car, then near wheels with their rims
+    this.assembly(wheels.filter((s) => s.center[2] < 0), flat);
+    this.assembly(parts, body);
+    this.assembly(wheels.filter((s) => s.center[2] > 0), flat);
+    for (const w of [FW, RW]) {
+      const ring = (r: number) => Array.from({ length: 16 }, (_, i): V => {
+        const a = (i / 16) * Math.PI * 2;
+        return flat([w.x + Math.cos(a) * r, w.r + Math.sin(a) * r, w.z[1] + 0.004]);
+      });
+      this.poly(ring(w.r * 0.7), "rgb(70,70,80)");
+      this.poly(ring(w.r * 0.58), "rgb(32,32,38)");
+      this.poly(ring(w.r * 0.18), rgbStr(acc, 0.9));
+    }
+    // rain light blinking on the crash structure, flames from the single exhaust
+    const blink = Math.sin(time * 18) > 0 ? 1 : 0.35;
+    this.sprite(this.glow("rgba(255,40,30,1)"), body([0.05, 0.42, 0]), 0.9, 0.5 + 0.4 * blink * (0.5 + this.braking[lane]), true);
+    if (c.flame > 0.02) this.sprite(this.glow("rgba(120,170,255,1)"), flat([0.25, 0.58, 0]), 0.6 + 0.9 * c.flame, Math.min(1, c.flame), true);
   }
 
   /** A sponsor board for the far wall: dark, one accent bar, plain lettering. */
@@ -719,6 +810,11 @@ export class DragScene25D {
     this.poly([flat([-0.15, 0, -halfW - 0.1]), flat([shape.len + 0.15, 0, -halfW - 0.1]), flat([shape.len + 0.35, 0, halfW + 0.35]), flat([0.05, 0, halfW + 0.35])], "rgba(0,0,0,0.55)");
     this.sprite(this.glow(`rgba(${acc.join(",")},1)`), flat([shape.len / 2, 0, 0]), shape.len * 1.1, 0.26, true);
     this.poly([flat([shape.len, 0.01, -0.6]), flat([shape.len + 10, 0.01, -1.6]), flat([shape.len + 10, 0.01, 1.6]), flat([shape.len, 0.01, 0.6])], "rgba(255,250,235,0.05)");
+
+    if (c.cfg.ui.silhouette === "formula") {
+      this.formulaCar(c, lane, body, flat, acc, spin, time);
+      return;
+    }
 
     const tyre: [number, number, number] = [14, 14, 17];
     const wheelSolids = (side: 1 | -1) =>
