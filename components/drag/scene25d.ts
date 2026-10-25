@@ -92,7 +92,29 @@ function wheel(cx: number, cy: number, r: number, z0: number, z1: number, spin: 
   return { faces, color, center: [cx, cy, (z0 + z1) / 2] };
 }
 
+/** Per-silhouette paint details. */
+const LIVERY: Record<string, { stripes?: boolean; darkRoof?: boolean; roundel?: boolean }> = {
+  muscle: { stripes: true },
+  supercar: { darkRoof: true },
+  rally: { roundel: true, darkRoof: true },
+  gtcar: { roundel: true, stripes: true },
+  sport: { darkRoof: true },
+};
+
 type XY = [number, number];
+
+/** Where a horizontal line at `y` first meets the polygon from the rear (smallest x), if it does. */
+function rearXAt(poly: XY[], y: number): number | null {
+  let best: number | null = null;
+  for (let i = 0; i < poly.length; i++) {
+    const [ax, ay] = poly[i];
+    const [bx, by] = poly[(i + 1) % poly.length];
+    if ((ay - y) * (by - y) > 0 || ay === by) continue;
+    const x = ax + ((y - ay) / (by - ay)) * (bx - ax);
+    if (best === null || x < best) best = x;
+  }
+  return best;
+}
 
 /** The silhouette path syntax (absolute M / L / Q / Z) as polygons, curves sampled; open subpaths dropped. */
 function pathPolys(d: string): XY[][] {
@@ -224,6 +246,7 @@ export class DragScene25D {
   private timing: { canvas: Canvas; ctx: CanvasRenderingContext2D; key: string } | null = null;
   private crowd: Canvas | null = null;
   private readonly ads = new Map<string, Canvas>();
+  private readonly roundels = new Map<string, Canvas>();
   private puffs: Puff[] = [];
   private lastTime = 0;
   private prevSpeed = { me: 0, opp: 0 };
@@ -263,6 +286,25 @@ export class DragScene25D {
       this.boards.set(label, (b = c));
     }
     return b;
+  }
+
+  /** A race number on a white disc. */
+  private roundel(num: string) {
+    let r = this.roundels.get(num);
+    if (!r) {
+      const [c, x] = makeCanvas(96, 96);
+      x.fillStyle = "#f4f4f5";
+      x.beginPath();
+      x.arc(48, 48, 46, 0, Math.PI * 2);
+      x.fill();
+      x.fillStyle = "#111";
+      x.font = "800 52px system-ui, sans-serif";
+      x.textAlign = "center";
+      x.textBaseline = "middle";
+      x.fillText(num, 48, 52);
+      this.roundels.set(num, (r = c));
+    }
+    return r;
   }
 
   /** A sponsor board for the far wall: dark, one accent bar, plain lettering. */
@@ -700,8 +742,9 @@ export class DragScene25D {
     const onSide = (poly: XY[], out = 0) => poly.map(([x, y]) => body([x, y, hwAt(x, y) + out]));
 
     // a profile extruded across the car: the edge strips (roof, bonnet, screens, tail) back to front
-    const prism = (poly: XY[], hw: (x: number, y: number) => number, base: [number, number, number], glassy: boolean) => {
-      const strips: { pts: V[]; n: V; glass: boolean; d: number }[] = [];
+    const livery = LIVERY[c.cfg.ui.silhouette] ?? {};
+    const prism = (poly: XY[], hw: (x: number, y: number) => number, base: [number, number, number], glassy: boolean, paint = false) => {
+      const strips: { pts: V[]; n: V; glass: boolean; d: number; a: XY; b: XY }[] = [];
       for (let i = 0; i < poly.length; i++) {
         const [ax, ay] = poly[i];
         const [bx, by] = poly[(i + 1) % poly.length];
@@ -713,10 +756,21 @@ export class DragScene25D {
         if (dot(n, VIEW) >= 0 || n[1] < -0.2) continue;
         const glass = glassy && ay > shape.belt + 0.02 && by > shape.belt + 0.02 && Math.abs(by - ay) > 0.35 * Math.abs(bx - ax);
         const mid: V = [(pts[0][0] + pts[2][0]) / 2, (pts[0][1] + pts[2][1]) / 2, (pts[0][2] + pts[2][2]) / 2];
-        strips.push({ pts, n, glass, d: this.depth(mid) });
+        strips.push({ pts, n, glass, d: this.depth(mid), a: [ax, ay], b: [bx, by] });
       }
       strips.sort((p, q) => q.d - p.d);
-      for (const st of strips) this.poly(st.pts, st.glass ? rgbStr([30, 38, 54], 0.55 + 0.7 * Math.max(0, dot(st.n, LIGHT))) : shade(st.n, base), true);
+      for (const st of strips) {
+        const roof = paint && livery.darkRoof && st.a[1] > shape.belt + 0.05 && st.b[1] > shape.belt + 0.05;
+        this.poly(st.pts, st.glass ? rgbStr([30, 38, 54], 0.55 + 0.7 * Math.max(0, dot(st.n, LIGHT))) : shade(st.n, roof ? [24, 24, 29] : base), true);
+      }
+      // twin stripes over the bonnet, roof and boot, after all the panels so none paints over them
+      for (const st of strips) {
+        if (paint && livery.stripes && !st.glass && st.n[1] > 0.3) {
+          for (const [z0, z1] of [[0.1, 0.3], [-0.3, -0.1]]) {
+            this.poly([body([st.a[0], st.a[1] + 0.002, z0]), body([st.b[0], st.b[1] + 0.002, z0]), body([st.b[0], st.b[1] + 0.002, z1]), body([st.a[0], st.a[1] + 0.002, z1])], shade(st.n, [236, 236, 240]));
+          }
+        }
+      }
       // the near side face: lit from above, darker towards the sills
       const lower = shaped ? clipY(poly, shape.belt, false) : poly;
       if (lower.length >= 3) {
@@ -735,7 +789,7 @@ export class DragScene25D {
         if (upper.length >= 3) this.poly(upper.map(([x, y]) => body([x, y, hw(x, y)])), shade(norm([0, (W * 0.17) / cabinH, 1]), base), true);
       }
     };
-    for (const poly of shape.bodies) prism(poly, hwAt, acc, !shape.bike);
+    for (const poly of shape.bodies) prism(poly, hwAt, acc, !shape.bike, shaped);
 
     // near-side details: shoulder crease, sills, window glass with a pillar, wheel arches
     for (const poly of shape.bodies) {
@@ -786,6 +840,50 @@ export class DragScene25D {
           arch.push(body([x, y, hwAt(x, y) + 0.008]));
         }
         this.poly(arch, "rgb(8,8,11)");
+      }
+    }
+    if (shaped) {
+      const main = shape.bodies.reduce((a, b) => (Math.abs(area(b)) > Math.abs(area(a)) ? b : a));
+      // the tail, which faces the camera: dark diffuser, taillights, exhaust tips
+      const onRear = (y: number, z: number, out = 0.006): V | null => {
+        const x = rearXAt(main, y);
+        return x === null ? null : body([x - out, y, z]);
+      };
+      const rearQuad = (y0: number, y1: number, za: number, zb: number, fill: string) => {
+        const q = [onRear(y0, za), onRear(y0, zb), onRear(y1, zb), onRear(y1, za)];
+        if (q.every((v) => v !== null)) this.poly(q as V[], fill);
+      };
+      const tailHw = (y: number) => hwAt(rearXAt(main, y) ?? 0, y);
+      rearQuad(0.1, 0.27, -tailHw(0.2) + 0.06, tailHw(0.2) - 0.06, "rgb(12,12,15)");
+      const ly = Math.min(shape.height * 0.5, 0.68);
+      const th = tailHw(ly);
+      const red = rgbStr([235, 32, 28], 0.8 + 0.45 * this.braking[lane]);
+      rearQuad(ly - 0.06, ly + 0.05, th - 0.48, th - 0.04, red);
+      rearQuad(ly - 0.06, ly + 0.05, -th + 0.04, -th + 0.48, red);
+      if (livery.darkRoof) rearQuad(ly - 0.015, ly + 0.01, -th + 0.48, th - 0.48, red);
+      for (const ez of [-0.42, 0.42]) {
+        const x = (rearXAt(main, 0.22) ?? 0) - 0.03;
+        const ring = (r: number) => Array.from({ length: 10 }, (_, i): V => {
+          const a = (i / 10) * Math.PI * 2;
+          return body([x, 0.22 + Math.sin(a) * r, ez + Math.cos(a) * r]);
+        });
+        this.poly(ring(0.06), "rgb(120,120,130)");
+        this.poly(ring(0.04), "rgb(6,6,8)");
+      }
+      // door mirror at the base of the screen
+      if (shape.windows.length) {
+        const mx = Math.max(...shape.windows.map((p) => p[0])) - 0.08;
+        const mz = hwAt(mx, shape.belt + 0.08);
+        this.solid(box(mx - 0.12, mx, shape.belt + 0.05, shape.belt + 0.16, mz - 0.02, mz + 0.15, acc), body);
+      }
+      // race number on the door
+      if (livery.roundel && shape.wheels.length >= 2) {
+        const xs = shape.wheels.map((w) => w.x);
+        const xm = (Math.min(...xs) + Math.max(...xs)) / 2;
+        const ym = shape.belt * 0.52;
+        const zz = hwAt(xm, ym) + 0.008;
+        const num = String((c.cfg.id.split("").reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) % 997, 7) % 98) + 1);
+        this.image(this.roundel(num), 96, 96, body([xm - 0.24, ym + 0.24, zz]), body([xm + 0.24, ym + 0.24, zz]), body([xm - 0.24, ym - 0.24, zz]));
       }
     }
     // wings and spoilers, dark
