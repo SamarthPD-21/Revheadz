@@ -264,15 +264,35 @@ export class DragScene25D {
     return b;
   }
 
+  /**
+   * The grandstand front: rows of seating with a sparse, soft crowd. Low contrast and no
+   * pixel-sized detail, so it doesn't shimmer when scaled down and scrolled.
+   */
   private crowdTex() {
     if (!this.crowd) {
-      const [c, x] = makeCanvas(256, 64);
-      x.fillStyle = "#15141c";
-      x.fillRect(0, 0, 256, 64);
-      for (let i = 0; i < 520; i++) {
-        x.fillStyle = `hsla(${Math.floor(Math.random() * 360)},38%,${42 + Math.random() * 25}%,0.9)`;
-        x.fillRect(Math.random() * 256, 4 + Math.random() * 56, 2.5, 3.5);
+      // one tier = 12 m of seating, drawn at a realistic scale (~40 px per metre) so heads are
+      // big enough not to shimmer, and softened slightly for clean downscaling
+      const [c, x] = makeCanvas(512, 40);
+      x.fillStyle = "#17161e";
+      x.fillRect(0, 0, 512, 40);
+      x.fillStyle = "#1e1d27";
+      x.fillRect(0, 30, 512, 10); // the seat row
+      x.filter = "blur(0.8px)";
+      let seed = 11;
+      const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      for (let px = 6; px < 506; px += 9 + rand() * 14) {
+        if (rand() < 0.22) continue; // empty seats
+        const hue = Math.floor(rand() * 360);
+        x.fillStyle = `hsl(${hue},16%,${30 + rand() * 12}%)`;
+        x.beginPath();
+        x.ellipse(px, 26, 6, 8, 0, 0, Math.PI * 2); // shoulders
+        x.fill();
+        x.fillStyle = `hsl(${20 + rand() * 20},20%,${28 + rand() * 18}%)`;
+        x.beginPath();
+        x.arc(px, 13, 4.5, 0, Math.PI * 2); // head
+        x.fill();
       }
+      x.filter = "none";
       this.crowd = c;
     }
     return this.crowd;
@@ -456,7 +476,7 @@ export class DragScene25D {
         const y1 = 0.9 + t * 0.9;
         add([xa + 6, y1 / 2, z1 - 1.1], () => {
           this.solid(box(xa, xb, 0, y1, z1 - 2.2, z1, [21, 20, 28]), id);
-          this.image(this.crowdTex(), 256, 64, [xa, y1, z1 + 0.01], [xb, y1, z1 + 0.01], [xa, y1 - 0.85, z1 + 0.01]);
+          this.image(this.crowdTex(), 512, 40, [xa, y1 + 0.05, z1 + 0.01], [xb, y1 + 0.05, z1 + 0.01], [xa, y1 - 0.85, z1 + 0.01]);
         });
       }
     }
