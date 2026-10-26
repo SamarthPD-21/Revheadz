@@ -18,8 +18,14 @@ export function angleFor(value: number, max: number): number {
 }
 
 export interface DialOptions {
+  /** Scale start (default 0). */
+  min?: number;
   max: number;
   value: number;
+  /** Where the lit arc starts (default: the scale start). A centre-zero gauge lights from 0. */
+  arcFrom?: number;
+  /** Label text for a major tick (default: the value / labelDivisor, rounded; 0 unlabelled). */
+  label?: (v: number) => string | null;
   majorStep: number;
   labelDivisor: number;
   minorPerMajor: number;
@@ -43,6 +49,9 @@ export function drawDial(ctx: CanvasRenderingContext2D, cx: number, cy: number, 
   ctx.strokeStyle = COLORS.ring;
   ctx.stroke();
 
+  const lo = o.min ?? 0;
+  const at = (v: number) => angleFor(v - lo, o.max - lo);
+
   // track + lit progress arc
   const arcR = r * 0.9;
   const arcW = r * 0.055;
@@ -52,12 +61,13 @@ export function drawDial(ctx: CanvasRenderingContext2D, cx: number, cy: number, 
   ctx.beginPath();
   ctx.arc(cx, cy, arcR, START_ANGLE, START_ANGLE + SWEEP);
   ctx.stroke();
-  if (o.value > 0) {
+  const from = o.arcFrom ?? lo;
+  if (Math.abs(o.value - from) > (o.max - lo) * 0.002) {
     ctx.strokeStyle = o.accent;
     ctx.shadowColor = o.accent;
     ctx.shadowBlur = r * 0.12;
     ctx.beginPath();
-    ctx.arc(cx, cy, arcR, START_ANGLE, angleFor(o.value, o.max));
+    ctx.arc(cx, cy, arcR, at(Math.min(from, o.value)), at(Math.max(from, o.value)));
     ctx.stroke();
     ctx.shadowBlur = 0;
   }
@@ -70,7 +80,7 @@ export function drawDial(ctx: CanvasRenderingContext2D, cx: number, cy: number, 
     ctx.shadowBlur = r * 0.15 * (o.redPulse ?? 0);
     ctx.lineWidth = r * 0.04;
     ctx.beginPath();
-    ctx.arc(cx, cy, r * 0.8, angleFor(o.redFrom, o.max), angleFor(o.max, o.max));
+    ctx.arc(cx, cy, r * 0.8, at(o.redFrom), at(o.max));
     ctx.stroke();
     ctx.globalAlpha = 1;
     ctx.shadowBlur = 0;
@@ -80,9 +90,11 @@ export function drawDial(ctx: CanvasRenderingContext2D, cx: number, cy: number, 
   ctx.font = `600 ${Math.round(r * 0.12)}px ui-sans-serif, system-ui, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  for (let v = 0; v <= o.max + 1e-6; v += minorStep) {
+  const ticks = Math.round((o.max - lo) / minorStep);
+  for (let i = 0; i <= ticks; i++) {
+    const v = lo + i * minorStep;
     const major = Math.abs(v / o.majorStep - Math.round(v / o.majorStep)) < 1e-6;
-    const a = angleFor(v, o.max);
+    const a = at(v);
     const inRed = o.redFrom !== undefined && v >= o.redFrom;
     const inner = r * (major ? 0.7 : 0.75);
     const outer = r * 0.79;
@@ -92,9 +104,10 @@ export function drawDial(ctx: CanvasRenderingContext2D, cx: number, cy: number, 
     ctx.moveTo(cx + Math.cos(a) * inner, cy + Math.sin(a) * inner);
     ctx.lineTo(cx + Math.cos(a) * outer, cy + Math.sin(a) * outer);
     ctx.stroke();
-    if (major && v > 0) {
+    const text = major ? (o.label ? o.label(v) : v > 0 ? String(Math.round(v / o.labelDivisor)) : null) : null;
+    if (text !== null) {
       ctx.fillStyle = inRed ? COLORS.red : COLORS.label;
-      ctx.fillText(String(Math.round(v / o.labelDivisor)), cx + Math.cos(a) * r * 0.57, cy + Math.sin(a) * r * 0.57);
+      ctx.fillText(text, cx + Math.cos(a) * r * 0.57, cy + Math.sin(a) * r * 0.57);
     }
   }
   ctx.restore();
