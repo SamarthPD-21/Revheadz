@@ -47,8 +47,9 @@ export class RunTimer {
   startX: number | null = null;
   results: Record<string, SplitResult> = {};
   topKmh = 0;
+  /** When the current (or last) run started, s. */
+  startT = 0;
 
-  private startT = 0;
   private stillFor = 0;
   private prev: { t: number; x: number; kmh: number } | null = null;
   private crossed: Record<number, number> = {};
