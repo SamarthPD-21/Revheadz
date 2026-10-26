@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useEngineState } from "../hooks/useEngineState";
 import { trackEvent } from "../lib/analytics";
 import { AudioEngine } from "../lib/audio/AudioEngine";
 import { InputManager } from "../lib/input/InputManager";
@@ -231,6 +232,7 @@ export default function Simulator({ vehicle, prev, next, maxKmh, garage }: Props
   }, [rig, vehicle.id]);
 
   const { sim, input, press, setSound } = rig;
+  const { ignition } = useEngineState(sim.store);
   const canSwitch = Boolean(vehicle.ui.recorded && vehicle.audioGenerated);
   // client-only component, so document is available; iOS Safari has no element fullscreen
   const canFullscreen = Boolean(document.fullscreenEnabled);
@@ -243,7 +245,10 @@ export default function Simulator({ vehicle, prev, next, maxKmh, garage }: Props
 
   return (
     <main ref={mainRef} className="drive" style={{ "--accent": accent } as React.CSSProperties}>
-      <div className="drive-backdrop pointer-events-none fixed inset-0 -z-10" />
+      {/* the strip fills the screen; everything else floats over it */}
+      <section className="drive-stage" aria-label="Drag strip">
+        <TrackView sim={sim} vehicle={vehicle} subscribe={rig.subscribe} maxKmh={maxKmh} brake={() => input.brakeLevel()} />
+      </section>
       <div className="limiter-vignette pointer-events-none fixed inset-0 z-50" />
       <header className="drive-header flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1 sm:gap-2">
@@ -263,6 +268,7 @@ export default function Simulator({ vehicle, prev, next, maxKmh, garage }: Props
           </Link>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
+          <IgnitionButton store={sim.store} onPress={press} pending={pending} subscribe={rig.subscribe} compact />
           {canSwitch && (
             <div className="segmented" role="group" aria-label="Sound source">
               {(["recorded", "generated"] as const).map((set) => (
@@ -304,40 +310,40 @@ export default function Simulator({ vehicle, prev, next, maxKmh, garage }: Props
             />
           </div>
           {canFullscreen && (
-          <button type="button" className={iconBtn} onClick={toggleFullscreen} aria-pressed={fullscreen} aria-label="Fullscreen (F)" title="Fullscreen (F)">
+          <button type="button" className={`drive-fs ${iconBtn}`} onClick={toggleFullscreen} aria-pressed={fullscreen} aria-label="Fullscreen (F)" title="Fullscreen (F)">
             <FullscreenIcon exit={fullscreen} />
           </button>
           )}
         </div>
       </header>
 
-      <section className="drive-gauges min-h-0" aria-label="Proving ground">
-        <TrackView sim={sim} vehicle={vehicle} subscribe={rig.subscribe} maxKmh={maxKmh} brake={() => input.brakeLevel()} />
-      </section>
-
-      <div className="drive-left flex min-h-0 flex-col gap-2">
-        <div className="min-h-0 flex-1">
-          <BrakePad input={input} />
+      {ignition === "off" && (
+        <div className="drive-start">
+          {!everStarted && (
+            <p className="rounded-lg border border-yellow-500/20 bg-yellow-500/10 px-3 py-1.5 text-[11px] text-yellow-200" role="note">
+              Turn your volume down first. Engines are loud.
+            </p>
+          )}
+          <IgnitionButton store={sim.store} onPress={press} pending={pending} subscribe={rig.subscribe} />
         </div>
-        <ShiftButtons onUp={rig.shiftUp} onDown={rig.shiftDown} onNeutral={rig.neutral} subscribe={rig.subscribe} gear={rig.gear} />
-      </div>
+      )}
+      <p className="drive-status" aria-live="polite">
+        {loadState === "loading" ? "Loading sounds…" : loadState === "error" ? "Using synthesized sound" : ""}
+      </p>
 
-      <div className="drive-center flex min-w-0 flex-col items-center justify-center gap-2 text-center">
-        {!everStarted && (
-          <p className="drive-warning max-w-48 rounded-lg border border-yellow-500/20 bg-yellow-500/10 px-3 py-1.5 text-[11px] text-yellow-200" role="note">
-            Turn your volume down first. Engines are loud.
-          </p>
-        )}
-        <IgnitionButton store={sim.store} onPress={press} pending={pending} subscribe={rig.subscribe} />
-        <p className="h-4 text-[11px] text-zinc-400" aria-live="polite">
-          {loadState === "loading" ? "Loading sounds…" : loadState === "error" ? "Using synthesized sound" : ""}
-        </p>
-        <KeyLegend input={input} />
+      {/* touch: shifts and brake under the left thumb, gas under the right */}
+      <div className="drive-touch">
+        <div className="drive-touch-left">
+          <ShiftButtons onUp={rig.shiftUp} onDown={rig.shiftDown} onNeutral={rig.neutral} subscribe={rig.subscribe} gear={rig.gear} />
+          <div className="drive-touch-brake">
+            <BrakePad input={input} />
+          </div>
+        </div>
+        <div className="drive-touch-gas">
+          <ThrottleControl input={input} accent={accent} />
+        </div>
       </div>
-
-      <div className="drive-right min-h-0">
-        <ThrottleControl input={input} accent={accent} />
-      </div>
+      <KeyLegend input={input} />
     </main>
   );
 }

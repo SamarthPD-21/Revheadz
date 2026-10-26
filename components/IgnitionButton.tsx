@@ -14,16 +14,36 @@ interface Props {
   pending: boolean;
   /** Simulation events, so the button reacts to the I key as well as taps. */
   subscribe: (fn: SimListener) => () => void;
+  /** A small power button for the toolbar instead of the big push-button. */
+  compact?: boolean;
 }
 
 /** Push-button start, like a modern car. */
-export function IgnitionButton({ store, onPress, pending, subscribe }: Props) {
+export function IgnitionButton({ store, onPress, pending, subscribe, compact = false }: Props) {
   const { ignition } = useEngineState(store);
   const ref = useRef<HTMLButtonElement>(null);
   useEffect(() => subscribe((e) => (e.type === "start" || e.type === "stop") && flash(ref.current, 200)), [subscribe]);
   const running = ignition === "running";
   const busy = pending || ignition === "cranking";
   const label = running ? "Stop engine" : busy ? "Starting engine" : "Start engine";
+  if (compact) {
+    return (
+      <button
+        ref={ref}
+        type="button"
+        {...pressHandlers(onPress)}
+        aria-label={`${label} (I)`}
+        aria-pressed={running}
+        title={`${label} (I)`}
+        data-on={running ? "1" : busy ? "busy" : "0"}
+        className="ignition ignition-mini grid h-9 w-9 shrink-0 touch-none select-none place-items-center rounded-full border transition active:scale-90"
+      >
+        <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden>
+          <path d="M10 2.5v6.5M6 5.2a6 6 0 108 0" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+        </svg>
+      </button>
+    );
+  }
   return (
     <button
       ref={ref}

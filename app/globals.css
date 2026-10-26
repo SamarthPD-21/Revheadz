@@ -32,81 +32,80 @@ body {
 }
 
 /* ---- Drive screen layout ------------------------------------------------
-   Default (portrait phones, desktop): header / gauges / controls.
-   Short landscape (phones on their side): brake+shift on the left, gauges and
-   ignition in the middle, throttle on the right, so nothing needs scrolling. */
+   The strip fills the screen. The toolbar runs along the top, the timing panels sit
+   under it, the gauges in the bottom-right corner. Touch screens get see-through pads:
+   shifts and brake under the left thumb, gas under the right. Keyboards get one line
+   of key hints instead. */
 .drive {
   /* every finger is a control: no pinch-zoom, scrolling or text selection while driving */
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
-  display: grid;
+  position: relative;
   width: 100%;
-  max-width: 76rem;
-  margin: 0 auto;
   height: 100dvh;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  grid-template-columns: minmax(0, 1fr) auto 6rem;
-  grid-template-rows: auto minmax(0, 1fr) minmax(8rem, 34dvh);
-  grid-template-areas:
-    "header header header"
-    "gauges gauges gauges"
-    "left center right";
+  overflow: hidden;
+  background: #07060d;
+  --edge: max(0.75rem, env(safe-area-inset-left));
+  --hud-top: 3.6rem;
 }
-.drive-header { grid-area: header; }
-.drive-gauges { grid-area: gauges; }
-.drive-left { grid-area: left; }
-.drive-center { grid-area: center; }
-.drive-right { grid-area: right; }
-
-@media (min-width: 640px) {
-  .drive { gap: 0.75rem; padding: 1rem; }
+.drive-stage { position: absolute; inset: 0; }
+.drive-header {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 20;
+  padding: 0.6rem var(--edge) 1.4rem;
+  background: linear-gradient(to bottom, rgba(7, 6, 13, 0.82), rgba(7, 6, 13, 0));
 }
-
-/* Wide screens: keep the pedals pedal-sized, with the start button and key hints between them. */
-@media (min-width: 1024px) and (min-height: 521px) {
-  .drive { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
-  .drive-left { width: 100%; max-width: 24rem; }
-  .drive-right { justify-self: end; width: 6rem; }
-  .drive-center { flex-direction: row !important; gap: 2rem !important; }
+.drive-start {
+  position: absolute; left: 50%; top: 32%; z-index: 15; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 0.6rem; text-align: center;
 }
+@media (min-width: 640px) { .drive { --hud-top: 4.25rem; } }
+/* phones: the full-screen button gives way to the car's name (the sound switch stays) */
+@media (max-width: 639px) {
+  .drive-fs { display: none !important; }
+  .drive-header .segmented > button { padding: 0.3rem 0.5rem; }
+}
+.drive-status { position: absolute; left: 50%; top: calc(var(--hud-top) + 0.2rem); transform: translateX(-50%); font-size: 11px; color: #a1a1aa; pointer-events: none; }
 
-/* Portrait phones: big tachometer on top, speedometer + gear below, ignition above the controls. */
-@media (max-width: 639px) and (orientation: portrait) {
-  .drive {
-    grid-template-columns: minmax(0, 1fr) 5.5rem;
-    grid-template-rows: auto minmax(0, 1fr) auto minmax(7rem, 26dvh);
-    grid-template-areas:
-      "header header"
-      "gauges gauges"
-      "center center"
-      "left right";
+/* key hints: one line in the bottom-left corner */
+.drive-keys {
+  position: absolute; left: var(--edge); bottom: 0.75rem; z-index: 10; max-width: calc(100% - 30rem);
+  display: none; align-items: center; gap: 0.75rem; font-size: 11px; color: #71717a;
+}
+.drive-keys dl { display: flex; flex-wrap: wrap; gap: 0.35rem 0.85rem; }
+.drive-keys dl > div { display: flex; align-items: center; gap: 0.35rem; }
+.drive-keys .keycap { min-width: 1.6rem; background: rgba(10, 10, 14, 0.6); }
+.drive-keys-more { color: #52525b; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
+.drive-keys-more:hover { color: #d4d4d8; }
+@media (pointer: fine) { .drive-keys { display: flex; } }
+
+/* touch pads */
+.drive-touch { display: none; }
+@media (pointer: coarse) {
+  .drive-touch {
+    position: absolute; left: var(--edge); right: var(--edge); bottom: max(0.75rem, env(safe-area-inset-bottom)); z-index: 10;
+    display: flex; align-items: flex-end; justify-content: space-between; pointer-events: none;
   }
-  .cluster {
-    grid-template-columns: minmax(0, 1fr) 4rem !important;
-    grid-template-rows: minmax(0, 1.5fr) minmax(0, 1fr);
-  }
-  .gauge-tach { grid-column: 1 / -1; grid-row: 1; }
-  .gauge-speedo { grid-column: 1; grid-row: 2; }
-  .gauge-telemetry { grid-column: 2; grid-row: 2; }
-  .drive-center { max-width: none !important; flex-direction: row !important; flex-wrap: wrap; justify-content: center; }
-  .drive-keys { display: none !important; }
+  .drive-touch > * { pointer-events: auto; }
+  .drive-touch-left { display: flex; flex-direction: column; gap: 0.4rem; width: 10.5rem; }
+  .drive-touch-left .ctl { padding-top: 0.55rem; padding-bottom: 0.55rem; background: rgba(24, 24, 30, 0.55); }
+  .drive-touch-brake { height: 4.75rem; }
+  .drive-touch-gas { width: 4.5rem; height: 9.75rem; }
+  .drive-touch .pedal { background: rgba(24, 24, 30, 0.45); }
+  .drive-touch .brake-pad { background: rgba(127, 29, 29, 0.3); }
+  .drive .track-cluster { right: calc(var(--edge) + 5.25rem); }
 }
-
+/* portrait phones: the pads take the bottom, so the gauges go above them */
+@media (pointer: coarse) and (orientation: portrait) {
+  .drive .track-cluster { right: var(--edge); bottom: 11rem; }
+}
 @media (orientation: landscape) and (max-height: 520px) {
-  .drive {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 2.2fr) 5.5rem;
-    grid-template-rows: auto minmax(0, 1fr) auto;
-    grid-template-areas:
-      "header header header"
-      "left gauges right"
-      "left center right";
-  }
-  .drive-keys, .drive-warning { display: none !important; }
-  .ignition { width: 4.5rem !important; }
-  .drive-center { flex-direction: row !important; }
+  .drive { --hud-top: 3.5rem; }
+  .drive-header { padding-top: 0.4rem; }
+  .drive-touch-brake { height: 4rem; }
+  .drive-touch-gas { height: 8.25rem; }
+  .drive-start .ignition { width: 4.5rem; }
 }
 
 /* Start button breathes softly until the engine is started (no layout-affecting scale). */
@@ -148,6 +147,9 @@ body {
   box-shadow: 0 0 18px 4px color-mix(in srgb, var(--accent) 40%, transparent), 0 0 36px 10px color-mix(in srgb, var(--accent) 16%, transparent);
 }
 .ignition[data-flash="1"] { transform: scale(0.93); }
+.ignition-mini { border-color: rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.05); color: #fb923c; }
+.ignition-mini:hover { border-color: rgba(255, 255, 255, 0.25); }
+.ignition-mini[data-on="1"] { border-color: rgba(239, 68, 68, 0.6); background: #dc2626; color: #fff; box-shadow: 0 0 16px -4px rgba(239, 68, 68, 0.8); }
 @media (prefers-reduced-motion: reduce) {
   .ctl, .brake-pad, .keycap, .pedal { transition: none; }
 }
@@ -206,11 +208,6 @@ body {
 }
 
 /* ---- Drive screen chrome ------------------------------------------------------- */
-.drive-backdrop {
-  background:
-    radial-gradient(ellipse 80% 55% at 50% -5%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%),
-    radial-gradient(ellipse 120% 80% at 50% 120%, rgba(0, 0, 0, 0.6), transparent 60%);
-}
 /* Red edge glow that pulses each time the rev limiter cuts in. */
 .limiter-vignette {
   opacity: 0;
