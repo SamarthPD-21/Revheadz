@@ -5,7 +5,12 @@ import type { Simulation } from "../lib/sim/Simulation";
 import { DISTANCE_SPLITS, RunTimer, SPEED_SPLITS, type SplitResult } from "../lib/track/runTimer";
 import type { VehicleConfig } from "../lib/vehicles/types";
 import type { SceneCar } from "./drag/scene";
+import { FrameBudget } from "./drag/frameBudget";
 import { DragScene25D } from "./drag/scene25d";
+import { ShiftLights } from "./ShiftLights";
+import { Speedometer } from "./Speedometer";
+import { Tachometer } from "./Tachometer";
+import { Telemetry } from "./Telemetry";
 
 type Bests = Record<string, SplitResult> & { top?: { ms: 0; kmh: number } };
 
@@ -42,12 +47,20 @@ interface Panel {
  * The proving ground: your car on an endless test road, drawn with the drag strip's 2.5D scene,
  * and every launch from a standstill timed like a road test. Best times are kept per car.
  */
-export function TrackView({ sim, vehicle, subscribe }: { sim: Simulation; vehicle: VehicleConfig; subscribe: Simulation["subscribe"] }) {
+interface Props {
+  sim: Simulation;
+  vehicle: VehicleConfig;
+  subscribe: Simulation["subscribe"];
+  maxKmh: number;
+  /** Current brake pedal, 0-1 (from the input, not the sim). */
+  brake: () => number;
+}
+
+export function TrackView({ sim, vehicle, subscribe, maxKmh, brake }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const hudRef = useRef<{ speed: HTMLSpanElement | null; gear: HTMLSpanElement | null }>({ speed: null, gear: null });
   const [panel, setPanel] = useState<Panel>({ results: {}, top: 0, running: false, armed: true, fresh: [] });
   const [bests, setBests] = useState<Bests>({});
-  // phones show the headline splits; the rest on request
+  // the headline splits by default; the rest on request
   const [all, setAll] = useState(false);
 
   useEffect(() => {
@@ -64,9 +77,7 @@ export function TrackView({ sim, vehicle, subscribe }: { sim: Simulation; vehicl
     let flame = 0;
     let raf = 0;
     let last = performance.now();
-    let maxDpr = window.matchMedia("(pointer: coarse)").matches ? 1.25 : 1.5;
-    let frames = 0;
-    let since = performance.now();
+    const budget = new FrameBudget();
     let wasRunning = false;
     let wasArmed = true;
     let fresh: string[] = [];
@@ -118,21 +129,10 @@ export function TrackView({ sim, vehicle, subscribe }: { sim: Simulation; vehicl
           });
         }
       }
-      // HUD numbers straight to the DOM (no React work per frame)
-      const h = hudRef.current;
-      if (h.speed) h.speed.textContent = String(Math.round(s.speedKmh));
-      if (h.gear) h.gear.textContent = s.gear === 0 ? "N" : String(s.gear);
-
       const w = canvas.clientWidth;
       const ht = canvas.clientHeight;
       if (w > 10 && ht > 10) {
-        frames++;
-        if (now - since > 1000) {
-          if (frames / ((now - since) / 1000) < 45 && maxDpr > 0.75) maxDpr = Math.max(0.75, maxDpr - 0.25);
-          frames = 0;
-          since = now;
-        }
-        const dpr = Math.min(maxDpr, window.devicePixelRatio || 1);
+        const dpr = budget.tick(now);
         if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(ht * dpr)) {
           canvas.width = Math.round(w * dpr);
           canvas.height = Math.round(ht * dpr);
@@ -183,17 +183,25 @@ export function TrackView({ sim, vehicle, subscribe }: { sim: Simulation; vehicl
   return (
     <div className="track-view">
       <canvas ref={canvasRef} className="track-canvas" aria-label="Proving ground" />
-      <div className="track-hud" aria-hidden>
-        <span className="track-speed" ref={(el) => void (hudRef.current.speed = el)}>
-          0
-        </span>
-        <span className="track-unit">km/h</span>
-        <span className="track-gear" ref={(el) => void (hudRef.current.gear = el)}>
-          N
-        </span>
+      <div className="track-lights">
+        <ShiftLights state={sim.state} redlineRpm={vehicle.engine.redlineRpm} />
+      </div>
+      {/* the gauge cluster along the bottom: rev counter, pedal and boost bars, speedometer */}
+      <div className="track-cluster">
+        <div className="track-gauge">
+          <Tachometer state={sim.state} redlineRpm={vehicle.engine.redlineRpm} limiterRpm={vehicle.engine.limiterRpm} accent={vehicle.ui.accent} subscribe={subscribe} />
+        </div>
+        <div className="track-bars">
+          <Telemetry state={sim.state} brake={brake} turbo={Boolean(vehicle.turbo)} accent={vehicle.ui.accent} />
+        </div>
+        <div className="track-gauge">
+          <Speedometer state={sim.state} accent={vehicle.ui.accent} maxKmh={maxKmh} />
+        </div>
       </div>
       <div className="track-panel" data-all={all ? "1" : undefined}>
-        <p className="track-status">{panel.running ? "Timing" : panel.armed ? "Launch to start a timed run" : "Come to a stop to time a run"}</p>
+        <p className="track-status" data-on={panel.running ? "1" : undefined}>
+          {panel.running ? "Timing" : panel.armed ? "Launch to time a run" : "Stop to time a run"}
+        </p>
         <table>
           <thead>
             <tr>

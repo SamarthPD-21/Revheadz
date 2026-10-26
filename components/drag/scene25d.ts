@@ -784,7 +784,8 @@ export class DragScene25D {
     const sh = f.shake * f.shake;
     const t = f.time;
     this.cx = w / 2 + (Math.sin(t * 47) + Math.sin(t * 31.7) * 0.6) * 3 * sh;
-    this.cy = h * (portrait ? 0.6 : 0.52) + (Math.sin(t * 39.3) + Math.sin(t * 57.1) * 0.5) * 2.2 * sh;
+    // (on the proving ground the gauge cluster sits along the bottom, so the car rides higher)
+    this.cy = h * (proving ? (portrait ? 0.42 : 0.4) : portrait ? 0.6 : 0.52) + (Math.sin(t * 39.3) + Math.sin(t * 57.1) * 0.5) * 2.2 * sh;
     this.cam = [this.camX, 0, 0];
     const x0 = this.camX - (portrait ? 40 : 55);
     const x1 = this.camX + (portrait ? 55 : 75);

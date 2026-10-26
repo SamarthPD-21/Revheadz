@@ -706,30 +706,38 @@ button.menu-option:hover { background: #17171d; }
 .drag-race .drag-hud-tree-hidden { transform: translate(30px, -50%); }
 
 /* ---- Playground: proving ground ------------------------------------------- */
-.track-view { position: relative; height: 100%; min-height: 12rem; overflow: hidden; border-radius: 10px; border: 1px solid #222228; background: #0b0a10; }
+.track-view { position: relative; height: 100%; min-height: 14rem; overflow: hidden; border-radius: 10px; border: 1px solid #1c1c22; background: #0b0a10; }
 .track-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.track-hud { position: absolute; left: 0.9rem; bottom: 0.7rem; display: flex; align-items: baseline; gap: 0.4rem; pointer-events: none; }
-.track-speed { font-family: var(--font-display); font-size: clamp(2rem, 6vw, 3.4rem); font-weight: 700; line-height: 1; color: #fafafa; font-variant-numeric: tabular-nums; }
-.track-unit { font-size: 0.75rem; color: #a1a1aa; }
-.track-gear { margin-left: 0.6rem; display: grid; place-items: center; min-width: 2.2rem; height: 2.2rem; border-radius: 6px; border: 2px solid var(--accent); font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; color: #fafafa; }
-.track-panel { position: absolute; top: 0.6rem; right: 0.6rem; padding: 0.55rem 0.7rem; border-radius: 8px; background: rgba(11, 11, 15, 0.82); border: 1px solid #222228; font-size: 0.75rem; color: #d4d4d8; }
-.track-status { margin-bottom: 0.35rem; font-size: 0.7rem; color: #a1a1aa; }
+.track-lights { position: absolute; top: 0.7rem; left: 50%; width: min(22rem, 40%); height: 1.1rem; transform: translateX(-50%); pointer-events: none; }
+/* a soft fade behind the cluster so the dials read over the road */
+.track-cluster {
+  --gauge: clamp(7.5rem, min(17vw, 30vh), 12.5rem);
+  position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: flex-end; justify-content: center; gap: clamp(0.5rem, 2vw, 1.5rem);
+  padding: 2.5rem 1rem 0.6rem; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(8, 8, 12, 0), rgba(8, 8, 12, 0.78) 55%);
+}
+.track-gauge { position: relative; width: var(--gauge); height: var(--gauge); flex: none; }
+.track-bars { position: relative; width: 3.2rem; height: calc(var(--gauge) * 0.62); flex: none; }
+.track-panel {
+  position: absolute; top: 0.6rem; right: 0.6rem; padding: 0.45rem 0.6rem; border-radius: 8px;
+  background: rgba(10, 10, 14, 0.62); border: 1px solid rgba(255, 255, 255, 0.06); font-size: 0.72rem; color: #d4d4d8;
+}
+.track-status { margin-bottom: 0.25rem; font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: #71717a; }
+.track-status[data-on="1"] { color: #a3e635; }
 .track-panel table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
-.track-panel th, .track-panel td { padding: 0.08rem 0.45rem; text-align: right; white-space: nowrap; }
-.track-panel thead th { font-size: 0.65rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #71717a; }
+.track-panel th, .track-panel td { padding: 0.06rem 0.4rem; text-align: right; white-space: nowrap; }
+.track-panel thead th { font-size: 0.6rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #52525b; }
 .track-panel tbody th { text-align: left; font-weight: 400; color: #a1a1aa; }
 .track-panel td { font-family: var(--font-mono); }
-.track-panel td small { font-size: 0.65rem; color: #71717a; }
+.track-panel td small { font-size: 0.62rem; color: #71717a; }
 .track-panel .track-best { color: #71717a; }
 .track-panel tr[data-pb="1"] td:first-of-type { color: #a3e635; }
+.track-panel:not([data-all="1"]) tbody tr:not([data-key="1"]) { display: none; }
+.track-more { margin-top: 0.25rem; font-size: 0.66rem; color: #71717a; text-decoration: underline; text-underline-offset: 2px; }
+.track-more:hover { color: #d4d4d8; }
 @media (max-width: 639px) {
-  .track-panel { top: 0.4rem; right: 0.4rem; padding: 0.4rem 0.5rem; font-size: 0.68rem; }
-  .track-panel th, .track-panel td { padding: 0.05rem 0.3rem; }
-}
-.view-switch { position: absolute; left: 0.6rem; top: 0.6rem; z-index: 2; }
-.track-more { display: none; margin-top: 0.3rem; font-size: 0.68rem; color: #a1a1aa; text-decoration: underline; text-underline-offset: 2px; }
-@media (max-width: 639px) {
-  .track-panel:not([data-all="1"]) tbody tr:not([data-key="1"]) { display: none; }
+  .track-cluster { --gauge: 6.6rem; padding-bottom: 0.4rem; gap: 0.4rem; }
+  .track-bars { width: 2.4rem; }
+  .track-panel { top: 0.4rem; right: 0.4rem; padding: 0.35rem 0.45rem; font-size: 0.66rem; }
   .track-panel thead { display: none; }
-  .track-more { display: block; }
 }

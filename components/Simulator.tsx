@@ -10,13 +10,8 @@ import { Simulation } from "../lib/sim/Simulation";
 import type { SimListener } from "../lib/sim/types";
 import type { VehicleConfig } from "../lib/vehicles/types";
 import { BrakePad } from "./BrakePad";
-import { GearIndicator } from "./GearIndicator";
-import { ShiftLights } from "./ShiftLights";
-import { Telemetry } from "./Telemetry";
 import { IgnitionButton } from "./IgnitionButton";
 import { ShiftButtons } from "./ShiftButtons";
-import { Speedometer } from "./Speedometer";
-import { Tachometer } from "./Tachometer";
 import { ThrottleControl } from "./ThrottleControl";
 import { TrackView } from "./TrackView";
 import { pressHandlers } from "./press";
@@ -146,22 +141,6 @@ export default function Simulator({ vehicle, prev, next, maxKmh, garage }: Props
   const [soundSet, setSoundSet] = useState<SoundSet>("recorded");
   const [muted, setMuted] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
-  // the proving ground (your car on a test road, timed) or the full gauge cluster
-  const [view, setView] = useState<"track" | "gauges">(() => {
-    try {
-      return localStorage.getItem("revheadz:drive-view") === "gauges" ? "gauges" : "track";
-    } catch {
-      return "track";
-    }
-  });
-  const pickView = (v: "track" | "gauges") => {
-    setView(v);
-    try {
-      localStorage.setItem("revheadz:drive-view", v);
-    } catch {
-      /* private mode */
-    }
-  };
   const volumeRef = useRef(0.8);
   const mainRef = useRef<HTMLElement>(null);
   const router = useRouter();
@@ -332,31 +311,9 @@ export default function Simulator({ vehicle, prev, next, maxKmh, garage }: Props
         </div>
       </header>
 
-      {view === "track" ? (
-        <section className="drive-gauges relative min-h-0" aria-label="Proving ground">
-          <TrackView sim={sim} vehicle={vehicle} subscribe={rig.subscribe} />
-          <ViewSwitch view={view} onPick={pickView} />
-        </section>
-      ) : (
-      <section className="drive-gauges relative grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-2" aria-label="Gauges">
-        <ViewSwitch view={view} onPick={pickView} />
-        <div className="mx-auto h-4 w-full max-w-md sm:h-5">
-          <ShiftLights state={sim.state} redlineRpm={vehicle.engine.redlineRpm} />
-        </div>
-        <div className="cluster grid min-h-0 grid-cols-[minmax(0,1fr)_3.5rem_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_5rem_minmax(0,1fr)] sm:gap-6">
-          <div className="gauge-tach relative h-full min-h-0 min-w-0">
-            <Tachometer state={sim.state} redlineRpm={vehicle.engine.redlineRpm} limiterRpm={vehicle.engine.limiterRpm} accent={accent} subscribe={rig.subscribe} />
-          </div>
-          <div className="gauge-telemetry relative h-full max-h-56 min-h-24">
-            <Telemetry state={sim.state} brake={() => input.brakeLevel()} turbo={Boolean(vehicle.turbo)} accent={accent} />
-          </div>
-          <div className="gauge-speedo relative h-full min-h-0 min-w-0">
-            <Speedometer state={sim.state} accent={accent} maxKmh={maxKmh} />
-          </div>
-        </div>
-        <GearIndicator store={sim.store} />
+      <section className="drive-gauges min-h-0" aria-label="Proving ground">
+        <TrackView sim={sim} vehicle={vehicle} subscribe={rig.subscribe} maxKmh={maxKmh} brake={() => input.brakeLevel()} />
       </section>
-      )}
 
       <div className="drive-left flex min-h-0 flex-col gap-2">
         <div className="min-h-0 flex-1">
@@ -382,19 +339,6 @@ export default function Simulator({ vehicle, prev, next, maxKmh, garage }: Props
         <ThrottleControl input={input} accent={accent} />
       </div>
     </main>
-  );
-}
-
-/** Track or gauges, tucked into the corner of the view so the header keeps room for the car's name. */
-function ViewSwitch({ view, onPick }: { view: "track" | "gauges"; onPick: (v: "track" | "gauges") => void }) {
-  return (
-    <div className="segmented view-switch" role="group" aria-label="View">
-      {(["track", "gauges"] as const).map((v) => (
-        <button key={v} type="button" aria-pressed={view === v} onClick={() => onPick(v)}>
-          {v === "track" ? "Track" : "Gauges"}
-        </button>
-      ))}
-    </div>
   );
 }
 
