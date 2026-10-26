@@ -9,6 +9,7 @@ import {
   proceduralStart,
   proceduralStop,
 } from "./proceduralOneShots";
+import { blowerWhine, type BlowerWhine } from "./blowerWhine";
 import { exhaustPops } from "./exhaustPops";
 import { SampleLayer } from "./SampleLayer";
 import { shuffleLoop } from "./loopShuffle";
@@ -52,6 +53,7 @@ export class AudioEngine {
   private pendingStart: number | null = null;
   private lastCrackle = 0;
   private turbo: { whistle: OscillatorNode; whistle2: OscillatorNode; whistleGain: GainNode; hiss: AudioBufferSourceNode; hissFilter: BiquadFilterNode; hissGain: GainNode } | null = null;
+  private blower: BlowerWhine | null = null;
   private volume = 0.8;
   private disposed = false;
   private wasRunning = false;
@@ -158,7 +160,9 @@ export class AudioEngine {
     this.offBus.connect(this.loopsBus);
     this.loopsBus.connect(this.lowpass);
     this.idleBus.connect(this.lowpass);
-    if (this.cfg.turbo) this.buildTurbo(ctx);
+    const kind = this.cfg.turbo?.kind ?? "turbo";
+    if (this.cfg.turbo && kind !== "turbo") this.blower = blowerWhine(ctx, kind, this.compressor!);
+    else if (this.cfg.turbo) this.buildTurbo(ctx);
   }
 
   /**
@@ -324,7 +328,8 @@ export class AudioEngine {
       this.lastCrackle = now;
       this.oneShots?.play("crackle", { gain: 0.55 });
     }
-    else if (e.type === "blowoff") this.oneShots?.play("blowoff", { index: this.cfg.turbo?.release === "flutter" ? 1 : 0 });
+    // only a turbo vents: a supercharger's bypass valve just recirculates the air, silently
+    else if (e.type === "blowoff" && this.turbo) this.oneShots?.play("blowoff", { index: this.cfg.turbo?.release === "flutter" ? 1 : 0 });
     else if (e.type === "start" && !this.oneShots) this.pendingStart = performance.now(); // still loading: play it when ready
     else {
       if (e.type === "stop") this.pendingStart = null;
@@ -351,6 +356,7 @@ export class AudioEngine {
     ramp(this.lowpass.frequency, Math.min(21000, 3500 * (1 + 5 * s.throttle)), ctx, 0.03);
 
     this.updateTurbo(ctx, s);
+    this.blower?.update(s, this.cfg.engine.redlineRpm);
     const sampleLayersReady = this.onLayer && this.offLayer && this.idleSource;
     if (sampleLayersReady) {
       const [offW, onW] = equalPower(load);
@@ -404,6 +410,8 @@ export class AudioEngine {
       }
       this.turbo = null;
     }
+    this.blower?.stop();
+    this.blower = null;
     this.onLayer = this.offLayer = null;
     this.idleSource = this.idleSourceGain = this.idleRef = null;
     this.synth = null;

@@ -33,6 +33,11 @@ export interface GearboxConfig {
 }
 
 export interface TurboConfig {
+  /**
+   * What makes the boost (default "turbo"). A turbo whistles with boost and vents when you lift;
+   * a supercharger is driven by the crank, so it whines in step with the revs and never vents.
+   */
+  kind?: "turbo" | "twin-screw" | "centrifugal";
   /** RPM where boost starts building. */
   spoolRpm: number;
   /** Seconds for boost to build/decay (lag). */
