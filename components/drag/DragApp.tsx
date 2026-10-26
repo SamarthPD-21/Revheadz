@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { trackEvent } from "../../lib/analytics";
 import { AudioEngine } from "../../lib/audio/AudioEngine";
+import { decodeChallenge, shareRun, verifyChallenge, type VerifiedChallenge } from "../../lib/drag/challenge";
 import { CPU_LEVELS } from "../../lib/drag/cpu";
 import { hostRoom, joinRoom, normaliseCode, randomCode, type Message, type Player, type Room } from "../../lib/drag/net";
 import { CLASSES, classOf, type DragClass } from "../../lib/drag/classes";
@@ -16,7 +17,8 @@ import { Silhouette } from "../Silhouette";
 import { RaceView, type Opponent, type RaceOutcome } from "./RaceView";
 import { Sfx } from "./sfx";
 
-type Mode = "cpu" | "online";
+/** cpu: against the computer; online: a friend in a room; ghost: a friend's shared run. */
+type Mode = "cpu" | "online" | "ghost";
 type CpuLevel = keyof typeof CPU_LEVELS;
 type Phase = "menu" | "hosting" | "joining" | "lobby" | "race" | "results";
 
@@ -74,6 +76,10 @@ export function DragApp() {
   const [copied, setCopied] = useState(false);
   const [assist, setAssist] = useState(false);
   const [sfx] = useState(() => new Sfx());
+  const [challenge, setChallenge] = useState<VerifiedChallenge | null>(null);
+  // my last finished run, so it can be shared as a challenge
+  const [lastRun, setLastRun] = useState<{ log: DriveLog; carId: string } | null>(null);
+  const [shared, setShared] = useState(false);
 
   const roomRef = useRef<Room | null>(null);
   const cancelRef = useRef<(() => void) | null>(null);
@@ -92,7 +98,8 @@ export function DragApp() {
   // heads-up classes: the CPU always brings a car from your class
   const myClass = classOf(carId);
   const cpuCar = myClass.cars.includes(cpuCarId) && (cpuCarId !== carId || myClass.cars.length === 1) ? cpuCarId : rivalIn(myClass, carId);
-  const oppCfg = mode === "cpu" ? getVehicle(cpuCar)! : opponent ? getVehicle(opponent.carId) ?? null : null;
+  const oppCfg =
+    mode === "cpu" ? getVehicle(cpuCar)! : mode === "ghost" ? (challenge ? getVehicle(challenge.carId)! : null) : opponent ? getVehicle(opponent.carId) ?? null : null;
   const classMismatch = mode === "online" && Boolean(opponent) && classOf(opponent!.carId).id !== myClass.id;
 
   // remembered name and car; a ?room= link joins straight away
@@ -107,6 +114,27 @@ export function DragApp() {
     setAssist(a === null ? window.matchMedia("(pointer: coarse)").matches : a === "1");
     const room = new URLSearchParams(window.location.search).get("room");
     if (room) setJoinCode(normaliseCode(room));
+    // a #c= link is a friend's run to beat: straight to the lobby, in their class
+    const code = new URLSearchParams(window.location.hash.slice(1)).get("c");
+    if (code) {
+      const c = decodeChallenge(code);
+      if (typeof c === "string") {
+        setError(
+          c === "version"
+            ? "That challenge was recorded on an older version of the physics, so it can't be replayed exactly. Ask for a fresh link."
+            : c === "car"
+              ? "That challenge is for a car that isn't in the garage any more."
+              : "That challenge link is broken. Ask your friend to share it again.",
+        );
+      } else {
+        const v = verifyChallenge(c);
+        setChallenge(v);
+        setMode("ghost");
+        setCarId(carIdFromStore(store.get("revheadz:drag-car"), c.carId));
+        setPhase("lobby");
+        trackEvent("drag_challenge_open", { car: c.carId });
+      }
+    }
   }, []);
 
   // keep the engine-sound object for my car; the warm sim idles it between races
@@ -209,6 +237,9 @@ export function DragApp() {
     setRace(null);
     setScore({ me: 0, them: 0 });
     setPhase("menu");
+    setMode("cpu");
+    setChallenge(null);
+    if (window.location.hash) history.replaceState(null, "", window.location.pathname + window.location.search);
     if (msg) setError(msg);
   };
 
@@ -291,9 +322,9 @@ export function DragApp() {
     startWarmEngine(myCfg);
     ensureOppAudio(oppCfg);
     sfx.unlock();
-    if (mode === "cpu") {
+    if (mode === "cpu" || mode === "ghost") {
       raceCounter.current += 1;
-      beginRace(performance.now() + LEAD_MS, raceCounter.current, getVehicle(cpuCar)!);
+      beginRace(performance.now() + LEAD_MS, raceCounter.current, oppCfg!);
       return;
     }
     const next = !meReady;
@@ -320,12 +351,32 @@ export function DragApp() {
     setScore((s) => ({ me: s.me + (outcome === "win" ? 1 : 0), them: s.them + (outcome === "lose" ? 1 : 0) }));
     setMeReady(false);
     setOppReady(false);
+    setLastRun({ log: o.myLog, carId });
+    setShared(false);
     setPhase("results");
     trackEvent("drag_race", { mode, outcome, reaction: Math.round(o.myResult.reactionMs ?? -1) });
   };
 
-  const opponentView: Opponent = mode === "cpu" ? { kind: "cpu", skill: CPU_LEVELS[cpuLevel] } : { kind: "remote", events: remoteEvents, log: remoteLog };
-  const oppName = mode === "cpu" ? `CPU (${cpuLevel})` : opponent?.name ?? "Opponent";
+  const opponentView: Opponent =
+    mode === "cpu"
+      ? { kind: "cpu", skill: CPU_LEVELS[cpuLevel] }
+      : mode === "ghost" && challenge
+        ? { kind: "remote", events: { current: challenge.log.events }, log: { current: challenge.log } }
+        : { kind: "remote", events: remoteEvents, log: remoteLog };
+  const oppName = mode === "cpu" ? `CPU (${cpuLevel})` : mode === "ghost" ? `${challenge?.name ?? "Ghost"}'s run` : opponent?.name ?? "Opponent";
+  const shareMyRun = async () => {
+    if (!lastRun) return;
+    const { url, text } = shareRun(window.location.origin, me.name, lastRun.carId, lastRun.log);
+    trackEvent("drag_challenge_share", { car: lastRun.carId });
+    try {
+      if (navigator.share && window.matchMedia("(pointer: coarse)").matches) await navigator.share({ title: "Revheadz drag challenge", text, url });
+      else await navigator.clipboard.writeText(`${text} ${url}`);
+      setShared(true);
+    } catch {
+      /* cancelled */
+    }
+  };
+  const canShare = phase === "results" && lastRun && result && !result.mine.redLight && !result.mine.dnf;
   const shareUrl = typeof window !== "undefined" && code ? `${window.location.origin}/drag?room=${code}` : "";
 
   if (phase === "race" && race && oppCfg && raceAudio) {
@@ -333,7 +384,7 @@ export function DragApp() {
       <RaceView
         key={race.id}
         me={{ name: me.name, cfg: myCfg, offsetMs: race.myOffset, assist }}
-        opp={{ name: oppName, cfg: oppCfg, offsetMs: race.oppOffset, assist: mode === "cpu" ? true : (opponent?.assist ?? false) }}
+        opp={{ name: oppName, cfg: oppCfg, offsetMs: race.oppOffset, assist: mode === "cpu" ? true : mode === "ghost" ? (challenge?.log.assist ?? false) : (opponent?.assist ?? false) }}
         startAt={race.startAt}
         opponent={opponentView}
         audio={raceAudio}
@@ -447,7 +498,7 @@ export function DragApp() {
             )}
             <ClassBar
               value={myClass.id}
-              locked={mode === "online" && Boolean(opponent)}
+              locked={(mode === "online" && Boolean(opponent)) || mode === "ghost"}
               onChange={(c) => {
                 if (c.id === myClass.id) return;
                 setCarId(c.cars[0]);
@@ -482,7 +533,9 @@ export function DragApp() {
                   ready={mode === "online" && oppReady}
                   onChange={mode === "cpu" ? setCpuCarId : undefined}
                   footer={
-                    mode === "cpu" ? (
+                    mode === "ghost" && challenge ? (
+                      <GhostNote challenge={challenge} />
+                    ) : mode === "cpu" ? (
                       <CpuControls
                         level={cpuLevel}
                         onLevel={setCpuLevel}
@@ -502,9 +555,28 @@ export function DragApp() {
               </p>
             )}
             <button type="button" className={`drag-cta drag-cta-big w-full ${meReady ? "drag-cta-ghost" : ""}`} onClick={ready} disabled={mode === "online" && (!oppCfg || classMismatch)}>
-              <b>{mode === "cpu" ? (phase === "results" ? "Race again" : "Go to the line") : meReady ? "Ready. Waiting for them" : phase === "results" ? "Rematch" : "Ready"}</b>
+              <b>
+                {mode === "ghost"
+                  ? phase === "results"
+                    ? "Try again"
+                    : `Race ${challenge?.name ?? "their"}'s run`
+                  : mode === "cpu"
+                    ? phase === "results"
+                      ? "Race again"
+                      : "Go to the line"
+                    : meReady
+                      ? "Ready. Waiting for them"
+                      : phase === "results"
+                        ? "Rematch"
+                        : "Ready"}
+              </b>
               <span>{mode === "online" ? `Room ${code}. The tree starts when you're both ready.` : "Engines start here, so check your volume."}</span>
             </button>
+            {canShare && (
+              <button type="button" className="btn w-full" onClick={() => void shareMyRun()}>
+                {shared ? "Link copied. Send it to a friend" : "Challenge a friend to beat this run"}
+              </button>
+            )}
             <ControlsPanel
               assist={assist}
               onChange={(a) => {
@@ -894,6 +966,24 @@ function Breakdown({ mine, theirs, myCfg, oppCfg, oppName, outcome }: { mine: Ru
       </ul>
       <p className="breakdown-verdict">{verdict}</p>
       <p className="breakdown-note">− is time you gained on {oppName}, + is time you gave away. They add up to the margin.</p>
+    </div>
+  );
+}
+
+/** The stored car if it's in the challenge's class, otherwise the challenger's own car. */
+function carIdFromStore(stored: string | null, challengeCar: string): string {
+  return stored && getVehicle(stored) && classOf(stored).id === classOf(challengeCar).id ? stored : challengeCar;
+}
+
+function GhostNote({ challenge }: { challenge: VerifiedChallenge }) {
+  const r = challenge.result;
+  return (
+    <div className="bay-cpu">
+      <p className="bay-note">
+        {r.redLight
+          ? "Their run was a red light: just don't jump the green."
+          : `Their run: ${fmt(r.elapsedMs)} s at ${Math.round(r.trapKmh)} km/h, reaction ${fmt(r.reactionMs)}. You race their exact inputs, replayed.`}
+      </p>
     </div>
   );
 }
