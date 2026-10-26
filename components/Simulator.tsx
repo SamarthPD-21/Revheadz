@@ -18,6 +18,7 @@ import { ShiftButtons } from "./ShiftButtons";
 import { Speedometer } from "./Speedometer";
 import { Tachometer } from "./Tachometer";
 import { ThrottleControl } from "./ThrottleControl";
+import { TrackView } from "./TrackView";
 import { pressHandlers } from "./press";
 import { KeyLegend } from "./KeyLegend";
 import { LogoMark } from "./Logo";
@@ -145,6 +146,22 @@ export default function Simulator({ vehicle, prev, next, maxKmh, garage }: Props
   const [soundSet, setSoundSet] = useState<SoundSet>("recorded");
   const [muted, setMuted] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  // the proving ground (your car on a test road, timed) or the full gauge cluster
+  const [view, setView] = useState<"track" | "gauges">(() => {
+    try {
+      return localStorage.getItem("revheadz:drive-view") === "gauges" ? "gauges" : "track";
+    } catch {
+      return "track";
+    }
+  });
+  const pickView = (v: "track" | "gauges") => {
+    setView(v);
+    try {
+      localStorage.setItem("revheadz:drive-view", v);
+    } catch {
+      /* private mode */
+    }
+  };
   const volumeRef = useRef(0.8);
   const mainRef = useRef<HTMLElement>(null);
   const router = useRouter();
@@ -315,7 +332,14 @@ export default function Simulator({ vehicle, prev, next, maxKmh, garage }: Props
         </div>
       </header>
 
-      <section className="drive-gauges grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-2" aria-label="Gauges">
+      {view === "track" ? (
+        <section className="drive-gauges relative min-h-0" aria-label="Proving ground">
+          <TrackView sim={sim} vehicle={vehicle} subscribe={rig.subscribe} />
+          <ViewSwitch view={view} onPick={pickView} />
+        </section>
+      ) : (
+      <section className="drive-gauges relative grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-2" aria-label="Gauges">
+        <ViewSwitch view={view} onPick={pickView} />
         <div className="mx-auto h-4 w-full max-w-md sm:h-5">
           <ShiftLights state={sim.state} redlineRpm={vehicle.engine.redlineRpm} />
         </div>
@@ -332,6 +356,7 @@ export default function Simulator({ vehicle, prev, next, maxKmh, garage }: Props
         </div>
         <GearIndicator store={sim.store} />
       </section>
+      )}
 
       <div className="drive-left flex min-h-0 flex-col gap-2">
         <div className="min-h-0 flex-1">
@@ -357,6 +382,19 @@ export default function Simulator({ vehicle, prev, next, maxKmh, garage }: Props
         <ThrottleControl input={input} accent={accent} />
       </div>
     </main>
+  );
+}
+
+/** Track or gauges, tucked into the corner of the view so the header keeps room for the car's name. */
+function ViewSwitch({ view, onPick }: { view: "track" | "gauges"; onPick: (v: "track" | "gauges") => void }) {
+  return (
+    <div className="segmented view-switch" role="group" aria-label="View">
+      {(["track", "gauges"] as const).map((v) => (
+        <button key={v} type="button" aria-pressed={view === v} onClick={() => onPick(v)}>
+          {v === "track" ? "Track" : "Gauges"}
+        </button>
+      ))}
+    </div>
   );
 }
 

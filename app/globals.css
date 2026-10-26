@@ -704,3 +704,32 @@ button.menu-option:hover { background: #17171d; }
 /* 2.5D: the cars sit on the left, so the tree panel goes to the right */
 .drag-race .drag-hud-tree { left: auto; right: 16px; }
 .drag-race .drag-hud-tree-hidden { transform: translate(30px, -50%); }
+
+/* ---- Playground: proving ground ------------------------------------------- */
+.track-view { position: relative; height: 100%; min-height: 12rem; overflow: hidden; border-radius: 10px; border: 1px solid #222228; background: #0b0a10; }
+.track-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.track-hud { position: absolute; left: 0.9rem; bottom: 0.7rem; display: flex; align-items: baseline; gap: 0.4rem; pointer-events: none; }
+.track-speed { font-family: var(--font-display); font-size: clamp(2rem, 6vw, 3.4rem); font-weight: 700; line-height: 1; color: #fafafa; font-variant-numeric: tabular-nums; }
+.track-unit { font-size: 0.75rem; color: #a1a1aa; }
+.track-gear { margin-left: 0.6rem; display: grid; place-items: center; min-width: 2.2rem; height: 2.2rem; border-radius: 6px; border: 2px solid var(--accent); font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; color: #fafafa; }
+.track-panel { position: absolute; top: 0.6rem; right: 0.6rem; padding: 0.55rem 0.7rem; border-radius: 8px; background: rgba(11, 11, 15, 0.82); border: 1px solid #222228; font-size: 0.75rem; color: #d4d4d8; }
+.track-status { margin-bottom: 0.35rem; font-size: 0.7rem; color: #a1a1aa; }
+.track-panel table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.track-panel th, .track-panel td { padding: 0.08rem 0.45rem; text-align: right; white-space: nowrap; }
+.track-panel thead th { font-size: 0.65rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #71717a; }
+.track-panel tbody th { text-align: left; font-weight: 400; color: #a1a1aa; }
+.track-panel td { font-family: var(--font-mono); }
+.track-panel td small { font-size: 0.65rem; color: #71717a; }
+.track-panel .track-best { color: #71717a; }
+.track-panel tr[data-pb="1"] td:first-of-type { color: #a3e635; }
+@media (max-width: 639px) {
+  .track-panel { top: 0.4rem; right: 0.4rem; padding: 0.4rem 0.5rem; font-size: 0.68rem; }
+  .track-panel th, .track-panel td { padding: 0.05rem 0.3rem; }
+}
+.view-switch { position: absolute; left: 0.6rem; top: 0.6rem; z-index: 2; }
+.track-more { display: none; margin-top: 0.3rem; font-size: 0.68rem; color: #a1a1aa; text-decoration: underline; text-underline-offset: 2px; }
+@media (max-width: 639px) {
+  .track-panel:not([data-all="1"]) tbody tr:not([data-key="1"]) { display: none; }
+  .track-panel thead { display: none; }
+  .track-more { display: block; }
+}
