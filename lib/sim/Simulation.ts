@@ -2,6 +2,7 @@ import type { VehicleConfig } from "../vehicles/types";
 import { Engine } from "./Engine";
 import { Gearbox } from "./Gearbox";
 import { LowFreqStore } from "./LowFreqStore";
+import { pexp } from "./portableMath";
 import type { SimEvent, SimInput, SimListener, SimState } from "./types";
 
 /** Fixed simulation step: identical behaviour on 60 Hz phones and 144 Hz monitors. */
@@ -198,11 +199,11 @@ export class Simulation {
 
     // brake pressure builds over ~0.15 s and releases over ~0.08 s
     const brakeTarget = clamp(this.input.brake, 0, 1);
-    this.brake += (brakeTarget - this.brake) * (1 - Math.exp(-dt / (brakeTarget > this.brake ? 0.15 : 0.08)));
+    this.brake += (brakeTarget - this.brake) * (1 - pexp(-dt / (brakeTarget > this.brake ? 0.15 : 0.08)));
 
     // 1. smooth raw input
     const target = s.ignition === "running" ? clamp(this.input.throttle, 0, 1) : 0;
-    s.throttle += (target - s.throttle) * (1 - Math.exp(-dt / THROTTLE_TAU));
+    s.throttle += (target - s.throttle) * (1 - pexp(-dt / THROTTLE_TAU));
 
     // ignition sequence
     if (s.ignition === "cranking") {
@@ -311,7 +312,7 @@ export class Simulation {
     if (turbo) {
       const spool = clamp((rpm - turbo.spoolRpm) / (eng.redlineRpm * 0.45), 0, 1);
       const target = running ? spool * effThrottle : 0;
-      s.boost += (target - s.boost) * (1 - Math.exp(-dt / turbo.lagS));
+      s.boost += (target - s.boost) * (1 - pexp(-dt / turbo.lagS));
     }
     const torqueScale = turbo ? 0.65 + 0.45 * s.boost : 1;
 
@@ -345,7 +346,7 @@ export class Simulation {
     const rising = clamp((rpm - this.engine.rpm) / dt / 3000, 0, 1);
     // the downshift blip is audible: it drives the on-load layer like a real throttle stab
     const loadTarget = inCut ? this.blip * 0.9 : fuelCut ? 0.08 : effThrottle > 0.02 ? s.throttle * (0.4 + 0.6 * rising) : 0;
-    s.load += (loadTarget - s.load) * (1 - Math.exp(-dt / LOAD_TAU));
+    s.load += (loadTarget - s.load) * (1 - pexp(-dt / LOAD_TAU));
 
     this.engine.rpm = rpm;
     s.rpm = rpm;
