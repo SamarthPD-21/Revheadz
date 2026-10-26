@@ -26,6 +26,8 @@ export interface Player {
 export type Message =
   | { type: "hello"; player: Player }
   | { type: "ready"; ready: boolean }
+  /** The sender moved to this class: races are within a class, so the other player follows. */
+  | { type: "class"; classId: string }
   | { type: "ping"; t0: number }
   | { type: "pong"; t0: number; t1: number }
   /** Host -> guest: the tree starts at `atHost` on the host's clock. */

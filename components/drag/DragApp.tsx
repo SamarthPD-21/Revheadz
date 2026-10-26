@@ -223,6 +223,7 @@ export function DragApp() {
     send({ type: "hello", player: me });
     store.set("revheadz:drag-name", me.name);
     store.set("revheadz:drag-car", me.carId);
+    store.set(`revheadz:drag-car:${classOf(me.carId).id}`, me.carId);
     store.set("revheadz:drag-assist", me.assist ? "1" : "0");
   }, [me]);
 
@@ -243,6 +244,14 @@ export function DragApp() {
     if (msg) setError(msg);
   };
 
+  // move to a class: the car I last drove in it, else its first car; not ready any more
+  const enterClass = (c: DragClass) => {
+    const stored = store.get(`revheadz:drag-car:${c.id}`);
+    setCarId(stored && c.cars.includes(stored) ? stored : c.cars[0]);
+    setMeReady(false);
+    send({ type: "ready", ready: false });
+  };
+
   const beginRace = (startAt: number, id: number, oppCar: VehicleConfig) => {
     void oppCar; // heads-up: no head starts
     const [mine, theirs] = [0, 0];
@@ -253,15 +262,23 @@ export function DragApp() {
     setPhase("race");
   };
 
-  const latest = useRef({ beginRace, meReady, oppReady, phase, opponent });
+  const latest = useRef({ beginRace, meReady, oppReady, phase, opponent, myClass, enterClass });
   useEffect(() => {
-    latest.current = { beginRace, meReady, oppReady, phase, opponent };
+    latest.current = { beginRace, meReady, oppReady, phase, opponent, myClass, enterClass };
   });
 
   const onMessage = (m: Message) => {
     const l = latest.current;
-    if (m.type === "hello") setOpponent(m.player);
-    else if (m.type === "ready") setOppReady(m.ready);
+    if (m.type === "hello") {
+      // joining a room: the guest starts in the host's class, so the two of you can race straight away
+      const theirs = getVehicle(m.player.carId) ? classOf(m.player.carId) : null;
+      if (!l.opponent && roomRef.current && !roomRef.current.isHost && theirs && theirs.id !== l.myClass.id) l.enterClass(theirs);
+      setOpponent(m.player);
+    } else if (m.type === "class") {
+      // they changed class: follow them into it
+      const c = CLASSES.find((k) => k.id === m.classId);
+      if (c && c.id !== l.myClass.id) l.enterClass(c);
+    } else if (m.type === "ready") setOppReady(m.ready);
     else if (m.type === "start") {
       const room = roomRef.current;
       const opp = l.opponent && getVehicle(l.opponent.carId);
@@ -498,12 +515,12 @@ export function DragApp() {
             )}
             <ClassBar
               value={myClass.id}
-              locked={(mode === "online" && Boolean(opponent)) || mode === "ghost"}
+              locked={mode === "ghost"}
               onChange={(c) => {
+                // in a room the class is shared: tapping one moves you both (and re-syncs a mismatch)
+                if (mode === "online") send({ type: "class", classId: c.id });
                 if (c.id === myClass.id) return;
-                setCarId(c.cars[0]);
-                setMeReady(false);
-                send({ type: "ready", ready: false });
+                enterClass(c);
               }}
             />
             <div className="bays">
@@ -551,7 +568,7 @@ export function DragApp() {
             {oppCfg && <HeadsUpLine me={myCfg} opp={oppCfg} oppName={oppName} />}
             {classMismatch && opponent && (
               <p role="alert" className="notice">
-                {opponent.name} picked a {classOf(opponent.carId).name} car. Races are within a class: pick a {classOf(opponent.carId).name} car, or ask them to pick a {myClass.name} one.
+                {opponent.name} is in {classOf(opponent.carId).name}, you&apos;re in {myClass.name}. Races are within a class: tap a class above and you&apos;ll both move to it.
               </p>
             )}
             <button type="button" className={`drag-cta drag-cta-big w-full ${meReady ? "drag-cta-ghost" : ""}`} onClick={ready} disabled={mode === "online" && (!oppCfg || classMismatch)}>
