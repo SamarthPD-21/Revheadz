@@ -303,7 +303,7 @@ export class DragScene25D {
 
   /**
    * "strip": the drag strip with its stands, tree and finish gantry.
-   * "proving": an endless test road through open country, with timing lines for one car.
+   * "proving": an endless drag strip for one car, with timing lines from wherever it launched.
    */
   constructor(
     private readonly ctx: CanvasRenderingContext2D,
@@ -784,8 +784,8 @@ export class DragScene25D {
     const sh = f.shake * f.shake;
     const t = f.time;
     this.cx = w / 2 + (Math.sin(t * 47) + Math.sin(t * 31.7) * 0.6) * 3 * sh;
-    // (on the proving ground the gauge cluster sits along the bottom, so the car rides higher)
-    this.cy = h * (proving ? (portrait ? 0.42 : 0.4) : portrait ? 0.6 : 0.52) + (Math.sin(t * 39.3) + Math.sin(t * 57.1) * 0.5) * 2.2 * sh;
+    // (on the endless strip the gauges sit in the bottom corner, so the car rides a little higher)
+    this.cy = h * (proving ? (portrait ? 0.44 : 0.47) : portrait ? 0.6 : 0.52) + (Math.sin(t * 39.3) + Math.sin(t * 57.1) * 0.5) * 2.2 * sh;
     this.cam = [this.camX, 0, 0];
     const x0 = this.camX - (portrait ? 40 : 55);
     const x1 = this.camX + (portrait ? 55 : 75);
@@ -841,7 +841,7 @@ export class DragScene25D {
     const id = (v: V) => v;
     const wallC: [number, number, number] = [58, 57, 64];
     const ADS: [string, string][] = proving
-      ? [["REVHEADZ PROVING GROUND", "#f97316"], ["TEST TRACK", "#a3a3ad"], ["0–100  ·  1/4 MILE  ·  1 KM", "#65a30d"]]
+      ? [["REVHEADZ", "#f97316"], ["TEST AND TUNE", "#a3a3ad"], ["0–100  ·  1/4 MILE  ·  1 KM", "#65a30d"]]
       : [["REVHEADZ", "#f97316"], ["QUARTER MILE", "#a3a3ad"], ["STAGE  ·  LAUNCH  ·  SHIFT", "#65a30d"]];
     for (let k = Math.floor(x0 / 12); k < Math.ceil(x1 / 12); k++) {
       const xa = k * 12;
@@ -859,11 +859,7 @@ export class DragScene25D {
       });
       // near wall (low, in front of everything else)
       add([xa + 6, 0.5, WALL_Z], () => this.solid(box(xa, xb, 0, 0.9, WALL_Z, WALL_Z + 0.35, wallC), id));
-      // grandstand tiers behind the far wall, crowd on the front faces (open country on the proving ground)
-      if (proving) {
-        this.trees(k, add);
-        continue;
-      }
+      // grandstand tiers behind the far wall, crowd on the front faces
       for (let t = 0; t < 4; t++) {
         const z1 = -8.6 - t * 2.2;
         const y1 = 1.2 + t * 0.9;
@@ -999,15 +995,28 @@ export class DragScene25D {
     }
   }
 
-  /** The proving ground's road: asphalt with seams every 100 m, grass verges, and the run's timing lines. */
+  /**
+   * The endless strip: two lanes of asphalt with no finish line. The run's start line and the
+   * rubber it lays down go wherever you launched; its timing lines follow on from there.
+   */
   private provingGround(info: ProvingInfo | undefined, G: (xa: number, xb: number, za: number, zb: number, fill: string) => void, x0: number, x1: number) {
-    G(x0, x1, -60, -WALL_Z - 0.35, "#0d130f");
-    G(x0, x1, WALL_Z + 0.35, 60, "#0d130f");
-    G(x0, x1, -WALL_Z, WALL_Z, "#18171d");
+    G(x0, x1, -WALL_Z, WALL_Z, "#16151b");
     for (let k = Math.ceil(x0 / 100); k * 100 < x1; k++) G(k * 100 - 0.04, k * 100 + 0.04, -WALL_Z, WALL_Z, "#121116");
-    if (info?.startX === null || !info) return;
-    const s = info.startX;
-    if (s > x0 - 1 && s < x1 + 1) G(s - 0.1, s + 0.1, -WALL_Z, WALL_Z, "rgba(244,244,245,0.55)");
+    const s = info?.startX ?? null;
+    if (s !== null) {
+      for (let k = 0; k < 16; k++) {
+        const xa = s + k * 8 - 2;
+        if (xa + 8 < x0 || xa > x1) continue;
+        const a = 0.55 * Math.pow(1 - k / 16, 1.6);
+        for (const tz of [-0.78, 0.78]) G(xa, xa + 8, LANE_Z.me + tz - 0.24, LANE_Z.me + tz + 0.24, `rgba(4,4,6,${a})`);
+        G(xa, xa + 8, LANE_Z.me - 0.55, LANE_Z.me + 0.55, `rgba(4,4,6,${a * 0.3})`);
+      }
+    }
+    G(x0, x1, -0.06, 0.06, "#b08a24");
+    G(x0, x1, LINE_Z - 0.05, LINE_Z + 0.05, "#a9a9b3");
+    G(x0, x1, -LINE_Z - 0.05, -LINE_Z + 0.05, "#a9a9b3");
+    if (s === null || !info) return;
+    if (s > x0 - 1 && s < x1 + 1) G(s - 0.15, s + 0.15, -WALL_Z, WALL_Z, "#f4f4f5");
     for (const g of info.gates) {
       const m = s + g.m;
       if (m < x0 - 1 || m > x1 + 1) continue;
@@ -1015,28 +1024,6 @@ export class DragScene25D {
         const za = -WALL_Z + (k * 2 * WALL_Z) / 14;
         G(m - 0.18, m + 0.18, za, za + (2 * WALL_Z) / 14, k % 2 ? "rgba(244,244,245,0.8)" : "rgba(11,11,15,0.8)");
       }
-    }
-  }
-
-  /** A few low-poly trees in the infield beyond the far wall, placed the same way every time for a stretch. */
-  private trees(k: number, add: (center: V, draw: () => void) => void) {
-    let seed = (k * 2654435761) >>> 0;
-    const rand = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
-    const id = (v: V) => v;
-    const count = 1 + Math.floor(rand() * 3);
-    for (let i = 0; i < count; i++) {
-      const x = k * 12 + rand() * 12;
-      const z = -9 - rand() * 18;
-      const h = 4 + rand() * 4;
-      const r = 1.2 + rand() * 1.1;
-      const leaf: [number, number, number] = [26 + rand() * 10, 46 + rand() * 16, 32 + rand() * 8];
-      add([x, h / 2, z], () => {
-        this.solid(box(x - 0.15, x + 0.15, 0, h * 0.35, z - 0.15, z + 0.15, [46, 36, 30]), id);
-        // two stacked cones of foliage, lofted between horizontal squares
-        const sq = (y: number, rr: number): V[] => [[x - rr, y, z - rr], [x + rr, y, z - rr], [x + rr, y, z + rr], [x - rr, y, z + rr]];
-        this.solid(loft(sq(h * 0.3, r), sq(h * 0.85, r * 0.2), leaf), id);
-        this.solid(loft(sq(h * 0.6, r * 0.75), sq(h * 1.1, 0.04), leaf), id);
-      });
     }
   }
 
