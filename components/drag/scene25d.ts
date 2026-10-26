@@ -18,6 +18,10 @@ type V = [number, number, number];
 type Canvas = HTMLCanvasElement;
 
 const LANE_Z = { me: 2, opp: -2 }; // + is the near side
+/** The most the body moves up or down over either axle as it squats and dives, m. */
+const TRAVEL = 0.04;
+/** Room between a tyre and its wheel arch: the suspension travel plus a visible gap, m. */
+const ARCH_GAP = TRAVEL + 0.035;
 const WALL_Z = 6.3;
 const LINE_Z = 4.1;
 
@@ -79,8 +83,7 @@ function box(x0: number, x1: number, y0: number, y1: number, z0: number, z1: num
 }
 
 /** A wheel: an n-sided cylinder along z, rotated by `spin`. */
-function wheel(cx: number, cy: number, r: number, z0: number, z1: number, spin: number, color: [number, number, number]): Solid {
-  const n = 10;
+function wheel(cx: number, cy: number, r: number, z0: number, z1: number, spin: number, color: [number, number, number], n = 10): Solid {
   const ring = (z: number) => Array.from({ length: n }, (_, i): V => {
     const a = spin + (i * Math.PI * 2) / n;
     return [cx + Math.cos(a) * r, cy + Math.sin(a) * r, z];
@@ -1072,14 +1075,19 @@ export class DragScene25D {
     this.dSpin = Math.max(-3, Math.min(3, spin - this.prevSpin[lane]));
     this.prevSpin[lane] = spin;
     const acc = hexRgb(c.cfg.ui.accent);
-    const pitch = this.pitch[lane] * 0.035; // rear squats under power, nose dives on the brakes
-    const axle = shape.len * 0.2;
+    // Rear squats under power, nose dives on the brakes: the body pitches about the middle of the
+    // wheelbase, never further than the suspension's travel at either axle. The wheels stay on the
+    // road, so the arches leave them room for it.
+    const wxs = shape.wheels.map((w) => w.x);
+    const pivot = wxs.length ? (Math.min(...wxs) + Math.max(...wxs)) / 2 : shape.len / 2;
+    const halfBase = wxs.length >= 2 ? (Math.max(...wxs) - Math.min(...wxs)) / 2 : shape.len / 2;
+    const pitch = this.pitch[lane] * Math.min(0.035, Math.asin(Math.min(1, TRAVEL / halfBase)));
     const xf = (pitchable: boolean) => (v: V): V => {
       let [x, y] = v;
       if (pitchable && pitch) {
-        const dx = x - axle;
+        const dx = x - pivot;
         const dy = y - 0.33;
-        x = axle + dx * Math.cos(pitch) - dy * Math.sin(pitch);
+        x = pivot + dx * Math.cos(pitch) - dy * Math.sin(pitch);
         y = 0.33 + dx * Math.sin(pitch) + dy * Math.cos(pitch);
       }
       return [rear + x, y, z + v[2]];
@@ -1105,7 +1113,7 @@ export class DragScene25D {
 
     const tyre: [number, number, number] = [14, 14, 17];
     const wheelSolids = (side: 1 | -1) =>
-      shape.wheels.map((w) => wheel(w.x, w.r, w.r, side > 0 ? shape.wheelZ[0] : -shape.wheelZ[1], side > 0 ? shape.wheelZ[1] : -shape.wheelZ[0], spin, tyre));
+      shape.wheels.map((w) => wheel(w.x, w.r, w.r, side > 0 ? shape.wheelZ[0] : -shape.wheelZ[1], side > 0 ? shape.wheelZ[1] : -shape.wheelZ[0], spin, tyre, 16));
     // far wheels first (behind the body)
     if (!shape.bike) for (const s of wheelSolids(-1)) this.solid(s, flat);
     else for (const s of wheelSolids(1)) this.solid(s, flat);
@@ -1214,15 +1222,17 @@ export class DragScene25D {
         this.poly([[x0, ly - 0.07], [x1, ly - 0.07], [x1, ly + 0.06], [x0, ly + 0.06]].map(([x, y]) => body([x, y, hwAt(x, y) + 0.006])), fill);
       lamp(shape.len - 0.42, shape.len - 0.08, "rgb(235,232,220)");
       lamp(0.06, 0.36, rgbStr([230, 30, 30], 0.75 + 0.5 * this.braking[lane]));
+      // wheel wells: dark openings in the body side with room for the tyre to move in
       for (const w of shape.wheels) {
+        const ra = w.r + ARCH_GAP;
         const arch: V[] = [];
-        for (let i = 0; i <= 12; i++) {
-          const a = (i / 12) * Math.PI;
-          const x = w.x + Math.cos(a) * w.r * 1.18;
-          const y = w.r + Math.sin(a) * w.r * 1.18;
-          arch.push(body([x, y, hwAt(x, y) + 0.008]));
+        for (let i = 0; i <= 16; i++) {
+          const a = -0.12 + ((Math.PI + 0.24) * i) / 16;
+          const x = w.x + Math.cos(a) * ra;
+          const y = w.r + Math.sin(a) * ra;
+          arch.push(body([x, Math.max(0.02, y), hwAt(x, y) + 0.008]));
         }
-        this.poly(arch, "rgb(8,8,11)");
+        this.poly(arch, "rgb(7,7,10)");
       }
     }
     if (shaped) {
@@ -1276,12 +1286,13 @@ export class DragScene25D {
     if (!shape.bike) {
       for (const s of wheelSolids(1)) this.solid(s, flat);
       for (const w of shape.wheels) this.rim(flat, w.x, w.r, shape.wheelZ[1] + 0.004, w.r, spin, acc);
-      // flared fenders: a lip in body colour standing out from the arch over the top of each tyre
+      // flared fenders: a lip in body colour around the top of each wheel well, flush with the
+      // tyre's outer face (any further out and, seen from above, it would hang over the tyre)
+      const lipZ = shape.wheelZ[1] + 0.015;
       for (const w of shape.wheels) {
         const N = 14;
-        const ro = w.r * 1.36;
-        const ri = w.r * 1.14;
-        const out = 0.1;
+        const ri = w.r + ARCH_GAP;
+        const ro = ri + 0.09;
         const base = (a: number): V => {
           const x = w.x + Math.cos(a) * ro;
           const y = w.r + Math.sin(a) * ro;
@@ -1290,7 +1301,7 @@ export class DragScene25D {
         const lip = (a: number, rr: number): V => {
           const x = w.x + Math.cos(a) * rr;
           const y = w.r + Math.sin(a) * rr;
-          return body([x, y, hwAt(w.x, w.r + ro) + out]);
+          return body([x, y, Math.max(lipZ, hwAt(x, y) + 0.01)]);
         };
         const angles = Array.from({ length: N + 1 }, (_, k) => -0.12 + ((Math.PI + 0.24) * k) / N);
         // the rounded top of the flare, lit by how it faces up
