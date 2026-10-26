@@ -7,12 +7,17 @@
 **Start it. Rev it. Shift it.** A free engine sound simulator that runs entirely in your browser.
 
 Pick one of 35 real machines, from the Toyota Supra and Ferrari F40 to a Formula 1 V10 and a Ducati Panigale, press
-the start button, and drive it with your keyboard or thumbs. The sound follows every throttle input, gear change,
-limiter bounce and overrun pop in real time. 34 of the engines are built from recordings of that exact machine, and
-you can switch any of them to the engine-model sound to compare. No install, no account, no server.
+the start button, and drive it down an endless drag strip with your keyboard or thumbs. The sound follows every
+throttle input, gear change, limiter bounce and overrun pop in real time, and every run from a standstill is timed.
+34 of the engines are built from recordings of that exact machine, and you can switch any of them to the engine-model
+sound to compare. When you're ready, race a friend or the CPU over the quarter mile. No install, no account, no server.
 
 <p align="center">
-  <img src="docs/screenshots/drive.jpg" alt="Drive screen: tachometer at 7,000 rpm in 2nd gear, speedometer, shift lights and controls" width="100%">
+  <img src="docs/screenshots/drive.jpg" alt="Drive screen: a Supra on the endless strip, with the shift log, timing panel and gauges" width="100%">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/drag.jpg" alt="Drag race: two cars launching off the line in tyre smoke, the tree on green" width="100%">
 </p>
 
 <p align="center">
@@ -40,22 +45,36 @@ you can switch any of them to the engine-model sound to compare. No install, no 
   stop, and overrun crackle when you coast at high revs
 - **Rev limiter, backfire pops and turbo blow-off**, which only fire when you actually coast, never on a gear change
 - **Smooth sound**: loops are pitched together and crossfade at constant loudness, so revving doesn't click or warble
-- **Race-car dashboard**: canvas gauges, shift lights, throttle, brake and boost bars, a tachometer that bounces off
-  the rev limiter, and an RPM readout down to the single rev
-- **Works on phones, with multitouch**: hold the throttle with one thumb while you shift or brake with the other, in
-  portrait or landscape
+- **An endless drag strip to drive on**: the drive screen is the strip itself, edge to edge, in the same 2.5D night
+  scene as the drag race, with your car's tyre smoke, exhaust flames and pops. Gauges sit in the corner: a
+  tachometer that bounces off the rev limiter, speedometer, throttle, brake and boost bars, and shift lights that
+  flash at the car's shift point
+- **Timed runs**: every launch from a standstill is timed like a road test, with 0–100, 0–200, 100–200 and 0–300
+  km/h, 60 ft, 1/8 and 1/4 mile, 1/2 mile and 1 km (with the speed at each line) and top speed. The timing lines
+  appear on the road where you launched, and personal bests are kept per car
+- **Shift log**: a running time slip of every shift and split in the run, with each upshift rated Perfect, Great,
+  Good, Late or Early against the shift light, just like in a drag race (switch it off from the timing panel)
+- **Works on phones, with multitouch**: see-through pads over the strip, so you hold the gas with one thumb while you
+  shift or brake with the other, in portrait or landscape. On a keyboard, one quiet line of key hints instead
 - **Installable**: add it to your home screen and it opens full-screen like an app, with its own icon
 - **Playground** with search (`/`), filters, sorting, favourites, "Jump back in" for recently driven machines, a
   **Hear it** rev preview on every card and a "Surprise me" button
 - **Quick vehicle switcher** in the drive screen (`V`): search the whole garage without leaving the cockpit
-- **Drag Racing (PvP)**: heads-up drag racing against a friend online (4-letter room code) or the CPU (three
-  skill levels). Cars race in seven classes (Street, Muscle, Grand Touring, Supercar, Track, Hyper, Formula), and within
-  a class each car's engine is trimmed so every car runs the same perfect quarter mile (performance parity), so
-  reaction time and shifting decide it, not the car. A side-on night strip with a following camera, tyre smoke,
-  exhaust flames and a cool-down where the car brakes and downshifts after the line; shift-light strip,
-  reaction and shift ratings, tree beeps, the other car's engine beside you, and a printed time slip with a "why you
-  won/lost" breakdown. Pro controls (`S`+`W` to stage on the two-step, let go of `S` on the green, `E`/`Q` to shift)
-  or one-button Simple controls
+- **Drag racing**: heads-up quarter-mile racing against a friend online (4-letter room code) or the CPU (Easy, Club
+  or Pro). Cars race in seven classes (Street, Muscle, Grand Touring, Supercar, Track, Hyper, Formula), and within a
+  class each car's engine is trimmed so every car runs the same perfect quarter mile (performance parity), so
+  reaction time and shifting decide it, not the car
+  - A 2.5D night strip with grandstands, a full Christmas tree (stage bulbs, four ambers, green), tyre smoke off the
+    line, exhaust flames and a cool-down where the cars brake and downshift after the finish
+  - Low-poly models built for each kind of machine: cars with fenders and spinning alloy rims, open-wheel Formula 1
+    cars, and bikes with their riders
+  - Shift-light strip, launch and shift ratings, tree beeps, the other car's engine beside you, and a printed time
+    slip with a "why you won/lost" breakdown
+  - Pro controls (`S`+`W` to stage on the two-step, let go of `S` on the green, `E`/`Q` to shift) or one-button
+    Simple controls
+- **Challenge links**: after a run, share a link and your friend races your exact run as a ghost. The whole run fits in
+  the URL, and nothing in it is trusted: the time is worked out by replaying your inputs, so editing the link can't
+  fake a faster time
 - **Free to host**: a static site you can put on Vercel, Netlify or Cloudflare Pages
 
 ## Quick start
@@ -72,7 +91,7 @@ npm run dev          # http://localhost:3000
 | Command | What it does |
 |---|---|
 | `npm run dev` | Development server with hot reload |
-| `npm test` | Unit tests (simulation, gearbox, shifting, audio maths, configs, input) |
+| `npm test` | Unit tests (simulation, gearbox, shifting, audio maths, configs, input, drag racing, timing) |
 | `npm run build` | Runs the tests, then exports the static site to `out/` |
 | `npm run lint` | ESLint |
 | `npm run sounds` | Regenerates the procedurally generated sounds (needs `ffmpeg`) |
@@ -81,10 +100,10 @@ npm run dev          # http://localhost:3000
 
 | Keyboard | Touch | Action |
 |---|---|---|
-| `I` | **ENGINE START / STOP** button | Start or stop the engine |
-| `W` / `↑` (hold) | **GAS** slider, right side | Throttle |
-| `S` / `↓` (hold) | **BRAKE** pad, left side | Brake |
-| `E` / `Q` | **+** / **−** paddles | Shift up / down |
+| `I` | **ENGINE START** button, then the ⏻ button in the toolbar | Start or stop the engine |
+| `W` / `↑` (hold) | **GAS** pad, right thumb | Throttle |
+| `S` / `↓` (hold) | **BRAKE** pad, left thumb | Brake |
+| `E` / `Q` | **⌃** / **⌄** buttons above the brake | Shift up / down |
 | `N` | **N** button | Neutral |
 | `Space` | | Quick throttle blip |
 | `M` | 🔈 button | Mute / unmute |
@@ -92,6 +111,9 @@ npm run dev          # http://localhost:3000
 | `[` / `]` | ‹ / › in the header | Previous / next vehicle |
 | `V` | Vehicle name in the header | Switch vehicle (searchable list) |
 | `/` | | Search the Playground |
+
+In a drag race, Simple controls put everything on one button (`Space`, or tap): launch on the green, then shift on
+every shift light. Pro controls stage with `S`+`W`, launch by letting go of `S`, and shift with `E`/`Q`.
 
 > Turn your volume down before the first start. Engines are loud.
 > On an iPhone, make sure the silent switch is off.
@@ -153,7 +175,13 @@ flowchart LR
 - **One owner of state.** Only the simulation changes engine state; audio and UI just read it. Because it steps at
   a fixed 120 Hz, a 60 Hz phone and a 144 Hz monitor behave the same.
 - **React stays out of the hot path.** RPM and speed are drawn straight onto canvases every frame. React only
-  re-renders when the gear or ignition changes (`useSyncExternalStore`).
+  re-renders when the gear or ignition changes (`useSyncExternalStore`), or when a split or shift lands in the log.
+- **One scene, two layouts.** The drag race and the drive screen share a 2.5D canvas renderer
+  (`components/drag/scene25d.ts`): an isometric camera, models lofted from cross-sections and lit per face, and a
+  painter's sort. It is built to hold 60 fps: if a device falls behind for two seconds running, the canvas drops its
+  resolution a step until it keeps up.
+- **Splits to the millisecond.** The page samples the car once a frame, and every split, and the moment the revs
+  reach the shift light, is interpolated between samples, so timing doesn't depend on the frame rate.
 - **Sample blending.** Each vehicle has looping recordings at several RPMs, for on-load (accelerating) and overrun.
   Each frame the two loops nearest the current RPM are crossfaded, pitched to match, and blended by engine load. Every
   loop starts at the same instant and is pitched by the same `rpm / sampleRpm` rule, so all loops stay in step.
@@ -177,6 +205,10 @@ flowchart LR
   tree on their own clock). Each car's shift light sits at its fastest shift point, found by searching its physics,
   and the drag rev limiter sits there too, so every millisecond late on a shift costs time. Players connect peer to
   peer over WebRTC (PeerJS; its public broker only introduces them).
+- **The same result in every browser.** `Math.exp` can differ in the last bit between JavaScript engines, which would
+  let a replayed run drift. The physics uses its own exponential (`lib/sim/portableMath.ts`), built only from basic
+  arithmetic, which every engine rounds the same way. A test bans the built-in maths functions from the physics and
+  pins the replayed times of fixed drive logs, so a change that moves them has to bump the replay version.
 - **Browser rules respected.** Audio starts only from the ignition tap, as autoplay policy requires. It pauses when
   the tab is hidden and fully stops when you leave the page.
 
@@ -220,11 +252,14 @@ Source recordings are cached in `.sound-cache/`, which is not committed.
 
 ```
 app/                     Pages: home (/), playground (/playground), drive (/drive/[vehicleId]), drag racing (/drag), credits
-components/              React UI: Simulator, gauges, shift lights, controls, garage cards
+components/              React UI: Simulator, TrackView (the endless strip), gauges, shift lights, controls, garage cards
+  drag/                  Drag racing UI and the shared 2.5D scene renderer
 hooks/                   useEngineState: the slow-changing state React subscribes to
 lib/
   sim/                   Engine, Gearbox, Simulation: pure TypeScript, no React
-  drag/                  Drag racing: deterministic runs, classes and parity trims, CPU driver, peer-to-peer rooms
+  drag/                  Drag racing: deterministic runs, classes and parity trims, CPU driver, peer-to-peer rooms,
+                         challenge links, launch and shift ratings
+  track/                 Run timer (splits and top speed) and the shift log
   audio/                 AudioEngine, SampleLayer, loop shuffling, card previews, SynthEngine (AudioWorklet), OneShots, blend maths
   assets/                Sound fetching, decoding and caching
   input/                 Keyboard and touch → throttle, brake and commands
@@ -282,5 +317,3 @@ Web Audio API with AudioWorklet · Canvas 2D · [Vitest](https://vitest.dev) · 
 - Generated sounds and code: Revheadz.
 
 The in-app **Credits** page lists every recording used.
-
-Built from the MVP plan in `Engine Sound Simulator MVP — Detailed Plan.pdf`.
