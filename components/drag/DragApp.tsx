@@ -80,6 +80,8 @@ export function DragApp() {
   // my last finished run, so it can be shared as a challenge
   const [lastRun, setLastRun] = useState<{ log: DriveLog; carId: string } | null>(null);
   const [shared, setShared] = useState(false);
+  // setting a run to send as a challenge (a CPU race whose result you share)
+  const [setting, setSetting] = useState(false);
 
   const roomRef = useRef<Room | null>(null);
   const cancelRef = useRef<(() => void) | null>(null);
@@ -240,6 +242,7 @@ export function DragApp() {
     setPhase("menu");
     setMode("cpu");
     setChallenge(null);
+    setSetting(false);
     if (window.location.hash) history.replaceState(null, "", window.location.pathname + window.location.search);
     if (msg) setError(msg);
   };
@@ -331,7 +334,12 @@ export function DragApp() {
   const practice = () => {
     setMode("cpu");
     setError(null);
+    setSetting(false);
     setPhase("lobby");
+  };
+  const setChallengeRun = () => {
+    practice();
+    setSetting(true);
   };
 
   // Ready: warms the engine (this tap unlocks audio). The host starts the race when both are ready.
@@ -401,7 +409,7 @@ export function DragApp() {
       <RaceView
         key={race.id}
         me={{ name: me.name, cfg: myCfg, offsetMs: race.myOffset, assist }}
-        opp={{ name: oppName, cfg: oppCfg, offsetMs: race.oppOffset, assist: mode === "cpu" ? true : mode === "ghost" ? (challenge?.log.assist ?? false) : (opponent?.assist ?? false) }}
+        opp={{ name: oppName, cfg: oppCfg, offsetMs: race.oppOffset, assist: mode === "cpu" ? true : mode === "ghost" ? (challenge?.log.assist ?? false) : (opponent?.assist ?? false), ghost: mode === "ghost" }}
         startAt={race.startAt}
         opponent={opponentView}
         audio={raceAudio}
@@ -458,6 +466,10 @@ export function DragApp() {
                 <b>Race the CPU</b>
                 <span>Pick a class, pick a car, go.</span>
               </button>
+              <button type="button" className="menu-option" onClick={setChallengeRun}>
+                <b>Send a challenge</b>
+                <span>Set a run and send the link. Your friend races your exact run as a ghost, and the slip shows who won.</span>
+              </button>
               <button type="button" className="menu-option" onClick={() => void create()}>
                 <b>Create a room</b>
                 <span>You get a four-letter code to send a friend.</span>
@@ -510,6 +522,9 @@ export function DragApp() {
 
         {(phase === "lobby" || phase === "results") && (
           <section className="mt-8 space-y-5">
+            {setting && phase === "lobby" && (
+              <p className="notice notice-info">Set your best run against the CPU. When you cross the line you&apos;ll get a link to send: your friend races that exact run.</p>
+            )}
             {phase === "results" && result && race && oppCfg && (
               <TimeSlip result={result} meName={me.name} oppName={oppName} myCfg={myCfg} oppCfg={oppCfg} offsets={[race.myOffset, race.oppOffset]} />
             )}
@@ -571,6 +586,13 @@ export function DragApp() {
                 {opponent.name} is in {classOf(opponent.carId).name}, you&apos;re in {myClass.name}. Races are within a class: tap a class above and you&apos;ll both move to it.
               </p>
             )}
+            {canShare && (setting || mode === "ghost") && (
+              // setting a challenge or answering one: sending the run is the point, so it leads
+              <button type="button" className="drag-cta drag-cta-big drag-cta-share w-full" onClick={() => void shareMyRun()}>
+                <b>{shared ? "Link copied" : mode === "ghost" ? `Send your run back to ${challenge?.name ?? "them"}` : "Send this run as a challenge"}</b>
+                <span>{shared ? "Paste it to a friend: they race your exact run as a ghost." : "Copies a link. Your friend races your exact run as a ghost, and sees who won."}</span>
+              </button>
+            )}
             <button type="button" className={`drag-cta drag-cta-big w-full ${meReady ? "drag-cta-ghost" : ""}`} onClick={ready} disabled={mode === "online" && (!oppCfg || classMismatch)}>
               <b>
                 {mode === "ghost"
@@ -589,7 +611,7 @@ export function DragApp() {
               </b>
               <span>{mode === "online" ? `Room ${code}. The tree starts when you're both ready.` : "Engines start here, so check your volume."}</span>
             </button>
-            {canShare && (
+            {canShare && !(setting || mode === "ghost") && (
               <button type="button" className="btn w-full" onClick={() => void shareMyRun()}>
                 {shared ? "Link copied. Send it to a friend" : "Challenge a friend to beat this run"}
               </button>

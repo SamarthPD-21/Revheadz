@@ -408,6 +408,10 @@ a.mode-card:hover .mode-go { transform: translateX(3px); border-color: #a1a1aa; 
 .btn-quiet { height: 2rem; padding: 0 0.75rem; border-radius: 6px; border: 1px solid #2a2a31; color: #d4d4d8; font-size: 0.8rem; font-weight: 500; transition: border-color 120ms, color 120ms; }
 .btn-quiet:hover { border-color: #52525b; color: #fff; }
 .notice { border-radius: 8px; border: 1px solid #5c4413; background: #1c160a; padding: 0.75rem 1rem; text-align: center; font-size: 0.875rem; color: #fde68a; }
+.notice-info { border-color: #1e3a5f; background: #0b1524; color: #bfdbfe; }
+/* sending your run: a cold ghost blue, so it reads apart from the orange race button */
+.drag-cta-share { background: #2563eb; color: #fff; }
+.drag-cta-share:hover { background: #3b82f6; }
 
 /* drag menu: name, then three ways to race */
 .menu { margin-top: 2rem; display: grid; gap: 1.25rem; max-width: 34rem; }
