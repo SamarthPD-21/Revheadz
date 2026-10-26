@@ -46,9 +46,10 @@ sound to compare. When you're ready, race a friend or the CPU over the quarter m
 - **Rev limiter, backfire pops and turbo blow-off**, which only fire when you actually coast, never on a gear change
 - **Smooth sound**: loops are pitched together and crossfade at constant loudness, so revving doesn't click or warble
 - **An endless drag strip to drive on**: the drive screen is the strip itself, edge to edge, in the same 2.5D night
-  scene as the drag race, with your car's tyre smoke, exhaust flames and pops. Gauges sit in the corner: a
-  tachometer that bounces off the rev limiter, speedometer, throttle, brake and boost bars, and shift lights that
-  flash at the car's shift point
+  scene as the drag race, with your car's tyre smoke, exhaust flames and pops. Three gauges sit in the corner: a
+  tachometer that bounces off the rev limiter, a speedometer, and a boost gauge that reads manifold pressure like the
+  real thing (vacuum with the throttle shut, boost as the turbo or supercharger builds; a vacuum gauge on cars
+  without one). Shift lights over them flash at the car's shift point
 - **Timed runs**: every launch from a standstill is timed like a road test, with 0–100, 0–200, 100–200 and 0–300
   km/h, 60 ft, 1/8 and 1/4 mile, 1/2 mile and 1 km (with the speed at each line) and top speed. The timing lines
   appear on the road where you launched, and personal bests are kept per car
