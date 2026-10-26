@@ -9,8 +9,8 @@
 Pick one of 35 real machines, from the Toyota Supra and Ferrari F40 to a Formula 1 V10 and a Ducati Panigale, press
 the start button, and drive it down an endless drag strip with your keyboard or thumbs. The sound follows every
 throttle input, gear change, limiter bounce and overrun pop in real time, and every run from a standstill is timed.
-34 of the engines are built from recordings of that exact machine, and you can switch any of them to the engine-model
-sound to compare. When you're ready, race a friend or the CPU over the quarter mile. No install, no account, no server.
+Every engine is built from recordings of that exact machine, and you can switch any of them to the engine-model sound
+to compare. When you're ready, race a friend or the CPU over the quarter mile. No install, no account, no server.
 
 <p align="center">
   <img src="docs/screenshots/drive.jpg" alt="Drive screen: a Supra on the endless strip, with the shift log, timing panel and gauges" width="100%">
@@ -31,13 +31,16 @@ sound to compare. When you're ready, race a friend or the CPU over the quarter m
 - **35 real machines from 23 makes**: JDM icons (Supra, Skyline GT-R, RX-7, S2000, WRX STI), supercars and
   hypercars (F40, LFA, Carrera GT, Aventador SVJ, Zonda, Chiron), American muscle, European sports cars, two
   Formula 1 cars, Le Mans' Mazda 787B, a WRC rally car and four bikes
-- **Real engine recordings** for 34 of them (professional Sonniss recordings and YouTube dyno pulls, cold starts and
+- **Real engine recordings** for all of them (professional Sonniss recordings and YouTube dyno pulls, cold starts and
   onboards), turned into RPM-mapped loops by a custom audio pipeline, with a **Real / Model** switch in the drive
   screen to hear the engine-model version instead
 - **No audible looping**: short recorded loops are re-spliced in the browser into seconds of non-repeating sound
   (cycle-aligned random splicing), and every YouTube clip was screened for voices with a speech recogniser
 - **Live turbo sound**: a whistle and intake hiss that follow boost, plus blow-off "pssh" or compressor-surge
   "flutter" when you lift
+- **Supercharger whine**: the Hellcat's twin-screw blower and the Ninja H2's centrifugal one are driven by the crank,
+  so their whine is locked to the revs: it climbs with every rev, drops on every upshift and keeps singing, softer,
+  when you lift, with no blow-off
 - **Physics-based engine and gearbox**: inertia, torque curve, turbo lag, clutch slip at pull-away, drag and braking
 - **Realistic shifting**: torque cut, a rev-matching blip on downshifts, and clutch engagement, heard through the
   engine note itself
@@ -137,7 +140,7 @@ every shift light. Pro controls stage with `S`+`W`, launch by letting go of `S`,
 | Porsche Carrera GT | 2004 | Naturally aspirated V10 | 6-speed manual | 8,400 | 🎙️ Real (YouTube) |
 | Lamborghini Aventador SVJ | 2019 | Naturally aspirated V12 | 7-speed dual-clutch / auto | 8,500 | 🎙️ Real (YouTube) |
 | Pagani Zonda F | 2005 | Naturally aspirated V12 | 6-speed manual | 7,500 | 🎙️ Real (YouTube) |
-| Bugatti Chiron | 2016 | 8.0 L quad-turbo W16, 1,500 hp | 7-speed dual-clutch / auto | 6,700 | 🔧 Engine model |
+| Bugatti Chiron | 2016 | 8.0 L quad-turbo W16, 1,500 hp | 7-speed dual-clutch / auto | 6,700 | 🎙️ Real (YouTube) |
 | Ferrari 458 Italia Straight Pipes | 2013 | 4.5 L F136 flat-plane V8, straight pipes | 6-speed sequential | 8,800 | 🎙️ Real (Sonniss) |
 | Audi R8 V10 Plus | 2016 | Naturally aspirated V10 | 7-speed dual-clutch / auto | 8,500 | 🎙️ Real (YouTube) |
 | Chevrolet Corvette Z06 | 2023 | 5.5 LT6 flat-plane V8 | 8-speed dual-clutch / auto | 8,500 | 🎙️ Real (YouTube) |
@@ -216,7 +219,7 @@ flowchart LR
 ### Where the sounds come from
 
 **Real recordings.** Ten engines come from free, royalty-free [Sonniss #GameAudioGDC](https://sonniss.com/gameaudiogdc)
-bundles (Pole Position Production, Dramatic Cat and Game Audio Factory). The other 24 recorded engines come from
+bundles (Pole Position Production, Dramatic Cat and Game Audio Factory). The other 25 engines come from
 YouTube videos (dyno pulls, cold starts, pure-sound and onboard clips), credited to each channel on the Credits page.
 `scripts/build-real-sounds.mjs` turns raw recordings into game-ready loops, using `scripts/real-sounds.json` (Sonniss
 vehicles) and one manifest per vehicle in `scripts/real-sounds.d/<id>.json`. A source is either a direct `url` or a
@@ -237,8 +240,7 @@ vehicles) and one manifest per vehicle in `scripts/real-sounds.d/<id>.json`. A s
 
 **Engine model.** `scripts/generate-sounds.mjs` is a physical engine model. It uses real firing orders and crank angles,
 per-bank exhaust pipes with reflections, muffler resonances, intake roar, valvetrain noise, turbo whistle and overrun
-crackle. The Bugatti Chiron uses it (no usable recording exists), and every recorded vehicle also gets an engine-model
-set (in `sounds/gen/`) for the **Real / Model** switch. A vehicle can borrow another's voice with `"voice": "<id>"`.
+crackle. Every vehicle gets an engine-model set (in `sounds/gen/`) for the **Real / Model** switch. A vehicle can borrow another's voice with `"voice": "<id>"`.
 
 ```bash
 node scripts/build-real-sounds.mjs muscle_v8      # rebuild one vehicle (needs ffmpeg and yt-dlp; downloads sources once)
