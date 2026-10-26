@@ -29,7 +29,7 @@ describe("exhaust pops", () => {
         expect(Math.abs(d[d.length - 1])).toBeLessThan(1e-3); // faded out, no click at the end
       }
     }
-  });
+  }, 20000); // synthesises every car in the garage: slow when the machine is busy
 
   it("is the same every time for the same car", () => {
     const a = exhaustPops(fakeCtx(), { cylinders: 8, bike: false }, 42).crackles[2].getChannelData(0);
