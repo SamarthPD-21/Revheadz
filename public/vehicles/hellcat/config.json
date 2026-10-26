@@ -36,6 +36,7 @@
     "brakeDecel": 10
   },
   "turbo": {
+    "kind": "twin-screw",
     "spoolRpm": 1200,
     "lagS": 0.05
   },

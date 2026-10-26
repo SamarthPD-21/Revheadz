@@ -34,6 +34,7 @@
     "brakeDecel": 10
   },
   "turbo": {
+    "kind": "centrifugal",
     "spoolRpm": 2500,
     "lagS": 0.06
   },
