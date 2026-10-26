@@ -89,6 +89,13 @@ export function cueRpm(cfg: VehicleConfig): number {
   return best;
 }
 
+const parityOf = (cfg: VehicleConfig) => PARITY.cars[cfg.id as keyof typeof PARITY.cars] as { cue: number; trim: number } | undefined;
+
+/** Where this car's shift light comes on in a race (its class-parity cue, else its own optimum). */
+export function shiftLightRpm(cfg: VehicleConfig): number {
+  return parityOf(cfg)?.cue ?? cueRpm(cfg);
+}
+
 /** Green to finish with a 0 ms launch and every shift the instant the revs reach `cue`. */
 export function perfectRun(cfg: VehicleConfig, cue: number, torqueScale = 1): number {
   const run = new DragRun(cfg, TREE_MS, { cue, assist: true, torqueScale });
@@ -153,8 +160,8 @@ export class DragRun {
     opts: { cue?: number; assist?: boolean; torqueScale?: number } = {},
   ) {
     // class parity: each car's shift light and engine trim come from lib/drag/parity.json
-    const p = PARITY.cars[cfg.id as keyof typeof PARITY.cars] as { cue: number; trim: number } | undefined;
-    this.cue = opts.cue ?? p?.cue ?? cueRpm(cfg);
+    const p = parityOf(cfg);
+    this.cue = opts.cue ?? shiftLightRpm(cfg);
     const trim = opts.torqueScale ?? (opts.cue === undefined ? (p?.trim ?? 1) : 1);
     this.assist = opts.assist ?? true;
     // Drag ECU: the rev limiter sits at the shift light, so every millisecond late on a shift is
@@ -400,7 +407,7 @@ const dialCache = new Map<string, number>();
 export function dialIn(cfg: VehicleConfig): number {
   const hit = dialCache.get(cfg.id);
   if (hit !== undefined) return hit;
-  const p = PARITY.cars[cfg.id as keyof typeof PARITY.cars] as { cue: number; trim: number } | undefined;
+  const p = parityOf(cfg);
   const ms = p ? perfectRun(cfg, p.cue, p.trim) : perfectRun(cfg, cueRpm(cfg));
   dialCache.set(cfg.id, ms);
   return ms;

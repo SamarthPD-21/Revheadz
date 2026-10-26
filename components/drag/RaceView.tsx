@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { AudioEngine } from "../../lib/audio/AudioEngine";
 import { driveWithCpu, type CpuSkill } from "../../lib/drag/cpu";
+import { rateLaunch, rateShift, type Tone } from "../../lib/drag/rating";
 import { decide, DragRun, QUARTER_MILE_M, STAGE_MS, TREE_MS, type DriveKey, type DriveLog, type RunResult } from "../../lib/drag/race";
 import type { SimListener, SimState } from "../../lib/sim/types";
 import type { VehicleConfig } from "../../lib/vehicles/types";
@@ -49,7 +50,7 @@ interface Props {
 }
 
 type Action = "gas" | "brake" | "up" | "down";
-type Popup = { id: number; title: string; sub: string; tone: "great" | "good" | "bad" | "red"; at: number };
+type Popup = { id: number; title: string; sub: string; tone: Tone; at: number };
 
 const ROLL_IN_M = 7;
 const STAGE_TOTAL = (offset: number) => STAGE_MS + TREE_MS + offset;
@@ -57,21 +58,6 @@ const smooth = (x: number) => {
   const c = Math.min(1, Math.max(0, x));
   return c * c * (3 - 2 * c);
 };
-
-function rateLaunch(ms: number): Pick<Popup, "title" | "tone"> {
-  if (ms < 0) return { title: "Red light", tone: "red" };
-  if (ms < 60) return { title: "Perfect launch", tone: "great" };
-  if (ms < 150) return { title: "Great launch", tone: "great" };
-  if (ms < 250) return { title: "Good launch", tone: "good" };
-  return { title: "Slow launch", tone: "bad" };
-}
-function rateShift(ms: number): Pick<Popup, "title" | "tone"> {
-  if (ms < 0) return { title: "Early shift", tone: "bad" };
-  if (ms < 80) return { title: "Perfect shift", tone: "great" };
-  if (ms < 160) return { title: "Great shift", tone: "great" };
-  if (ms < 260) return { title: "Good shift", tone: "good" };
-  return { title: "Late shift", tone: "bad" };
-}
 
 /** Tree state for one lane at `t` ms since that lane's green. */
 function treeLights(t: number, launchMs: number | null, stageT: number, win: boolean) {
