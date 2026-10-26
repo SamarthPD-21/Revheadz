@@ -12,6 +12,8 @@ export interface SceneCar {
   /** Finish time to show on the timing tower, s. */
   et: number | null;
   trapKmh: number | null;
+  /** A recorded run rather than a live driver: drawn see-through, like a ghost. */
+  ghost?: boolean;
   /** Lane tree. */
   lights: { stage: boolean; ambers: boolean[]; green: boolean; red: boolean; win: boolean };
 }

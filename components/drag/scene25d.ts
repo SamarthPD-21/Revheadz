@@ -289,6 +289,8 @@ export class DragScene25D {
   private puffs: Puff[] = [];
   private readonly smokeTexes: Canvas[] = [];
   private lastTime = 0;
+  /** An offscreen layer a ghost car is drawn into, then laid over the scene see-through. */
+  private ghostLayer: [Canvas, CanvasRenderingContext2D] | null = null;
   private prevSpeed = { me: 0, opp: 0 };
   private braking = { me: 0, opp: 0 };
   /** Body pitch per lane, -1 (full dive) to 1 (full squat), and how fast it's moving. */
@@ -314,7 +316,8 @@ export class DragScene25D {
    * "proving": an endless drag strip for one car, with timing lines from wherever it launched.
    */
   constructor(
-    private readonly ctx: CanvasRenderingContext2D,
+    // (swapped for a moment while a ghost car draws onto its own layer)
+    private ctx: CanvasRenderingContext2D,
     private readonly layout: "strip" | "proving" = "strip",
   ) {}
 
@@ -974,7 +977,7 @@ export class DragScene25D {
       if (c.flame > 0.3 && Math.random() < c.flame * 0.6) {
         for (const [tx, ty, tz] of exhaustTips(c.cfg)) spawn("exhaust", rear + tx - 0.2, ty, z + tz, 0.14, 0.7 + Math.random() * 0.5, -1 - Math.random(), (Math.random() - 0.5) * 0.5);
       }
-      add([rear + len / 2, 0.6, z], () => this.car(c, lane, rear, f.time));
+      add([rear + len / 2, 0.6, z], () => (c.ghost ? this.ghostCar(c, lane, rear, f.time) : this.car(c, lane, rear, f.time)));
     }
     for (const p of this.puffs) {
       add([p.x, p.y, p.z], () => this.puff(p));
@@ -1088,6 +1091,67 @@ export class DragScene25D {
     }
   }
 
+  /**
+   * A replayed run, drawn as a ghost: the car is rendered on its own layer first, so it
+   * fades as one solid shape (drawn straight onto the scene see-through, its own panels would
+   * show through each other), then tinted a cold blue and laid over the strip.
+   */
+  private ghostCar(c: SceneCar, lane: "me" | "opp", rear: number, time: number) {
+    const main = this.ctx;
+    const { width, height } = main.canvas;
+    if (!this.ghostLayer || this.ghostLayer[0].width !== width || this.ghostLayer[0].height !== height) this.ghostLayer = makeCanvas(width, height);
+    const [layer, g] = this.ghostLayer;
+    // only the patch of screen the car can cover (with its shadow and glow) is cleared, tinted and
+    // copied: doing the whole canvas every frame cost 10 fps at 1440p
+    const shape = carShape(c.cfg);
+    const z = LANE_Z[lane];
+    const m = main.getTransform();
+    let x0 = Infinity;
+    let y0 = Infinity;
+    let x1 = -Infinity;
+    let y1 = -Infinity;
+    for (const x of [rear - 1.5, rear + shape.len + 1.5]) {
+      for (const y of [0, shape.height + 1.5]) {
+        for (const zz of [z - shape.width / 2 - 1, z + shape.width / 2 + 1]) {
+          const [px, py] = this.p([x, y, zz]);
+          x0 = Math.min(x0, px);
+          x1 = Math.max(x1, px);
+          y0 = Math.min(y0, py);
+          y1 = Math.max(y1, py);
+        }
+      }
+    }
+    const bx = Math.max(0, Math.floor(x0 * m.a + m.e));
+    const by = Math.max(0, Math.floor(y0 * m.d + m.f));
+    const bw = Math.min(width, Math.ceil(x1 * m.a + m.e)) - bx;
+    const bh = Math.min(height, Math.ceil(y1 * m.d + m.f)) - by;
+    if (bw <= 0 || bh <= 0) return;
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(bx, by, bw, bh);
+    g.save();
+    g.beginPath();
+    g.rect(bx, by, bw, bh);
+    g.clip();
+    g.setTransform(m);
+    this.ctx = g;
+    try {
+      this.car(c, lane, rear, time);
+    } finally {
+      this.ctx = main;
+      g.restore();
+    }
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.globalCompositeOperation = "source-atop";
+    g.fillStyle = "rgba(150,190,255,0.35)";
+    g.fillRect(bx, by, bw, bh);
+    g.globalCompositeOperation = "source-over";
+    main.save();
+    main.setTransform(1, 0, 0, 1, 0, 0);
+    main.globalAlpha = 0.55;
+    main.drawImage(layer as CanvasImageSource, bx, by, bw, bh, bx, by, bw, bh);
+    main.restore();
+  }
+
   private car(c: SceneCar, lane: "me" | "opp", rear: number, time: number) {
     const z = LANE_Z[lane];
     const shape = carShape(c.cfg);
@@ -1121,7 +1185,8 @@ export class DragScene25D {
     const halfW = Math.max(W, shape.bike ? 0.5 : W) / 2;
     this.poly([flat([-0.15, 0, -halfW - 0.1]), flat([shape.len + 0.15, 0, -halfW - 0.1]), flat([shape.len + 0.35, 0, halfW + 0.35]), flat([0.05, 0, halfW + 0.35])], "rgba(0,0,0,0.55)");
     this.sprite(this.glow(`rgba(${acc.join(",")},1)`), flat([shape.len / 2, 0, 0]), shape.len * 1.1, 0.26, true);
-    this.poly([flat([shape.len, 0.01, -0.6]), flat([shape.len + 10, 0.01, -1.6]), flat([shape.len + 10, 0.01, 1.6]), flat([shape.len, 0.01, 0.6])], "rgba(255,250,235,0.05)");
+    // (a ghost has no beam: there's no driver behind its lights)
+    if (!c.ghost) this.poly([flat([shape.len, 0.01, -0.6]), flat([shape.len + 10, 0.01, -1.6]), flat([shape.len + 10, 0.01, 1.6]), flat([shape.len, 0.01, 0.6])], "rgba(255,250,235,0.05)");
 
     if (c.cfg.ui.silhouette === "formula") {
       this.formulaCar(c, lane, body, flat, acc, spin, time);

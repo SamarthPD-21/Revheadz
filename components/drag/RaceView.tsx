@@ -21,6 +21,8 @@ export interface Lane {
   offsetMs: number;
   /** Simple controls (gas held for you). */
   assist: boolean;
+  /** A shared run replayed, not a live driver: the car is drawn as a ghost. */
+  ghost?: boolean;
 }
 
 export type Opponent =
@@ -368,6 +370,7 @@ export function RaceView({ me, opp, startAt, opponent, audio, oppAudio, sfx, onI
         et: r.result && !r.result.dnf && !r.result.redLight ? r.result.etMs / 1000 : null,
         trapKmh: r.result && !r.result.dnf && !r.result.redLight ? r.result.trapKmh : null,
         lights: treeLights(now - green, r.launchMs, stagedT(lane.offsetMs), win),
+        ghost: lane.ghost,
       });
       // (a zero-size canvas mid-layout has nothing to draw; a drawing error must never stop the race)
       if (w > 10 && h > 10) {
