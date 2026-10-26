@@ -29,6 +29,13 @@ describe("ShiftLog", () => {
     expect([e.rating, e.note]).toEqual(["Early", "1000 rpm short"]);
   });
 
+  it("counts revs a whisker under the light as on it", () => {
+    const log = new ShiftLog(7000);
+    log.start(0, 1);
+    log.sample(0.5, 6990, 1);
+    expect(log.shift(0.5, 2)).toMatchObject({ rating: "Perfect", note: "+0 ms" });
+  });
+
   it("calls a long wait on the limiter late, and starts each gear afresh", () => {
     const log = new ShiftLog(7000);
     log.start(0, 1);

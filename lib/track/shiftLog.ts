@@ -21,6 +21,8 @@ export interface LogEntry {
 
 /** A shift this long after the light was missed altogether (the drag race shifts for you by then). */
 const MISSED_MS = 900;
+/** Revs this close under the light count as on it (a frame's sampling can miss the last few rpm). */
+const SLACK = 0.005;
 
 export class ShiftLog {
   entries: LogEntry[] = [];
@@ -56,6 +58,7 @@ export class ShiftLog {
     const from = this.gear;
     const entry: LogEntry = { ms: this.ms(t), what: `${from || "N"}→${to || "N"}` };
     if (to > from && from > 0) {
+      if (this.cueAt === null && this.peak >= this.cue * (1 - SLACK)) this.cueAt = t;
       if (this.cueAt === null) {
         entry.rating = "Early";
         entry.note = `${Math.round((this.cue - this.peak) / 10) * 10} rpm short`;
