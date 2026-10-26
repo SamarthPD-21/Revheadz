@@ -10,10 +10,10 @@ import type { VehicleConfig } from "../lib/vehicles/types";
 import type { SceneCar } from "./drag/scene";
 import { FrameBudget } from "./drag/frameBudget";
 import { DragScene25D } from "./drag/scene25d";
+import { BoostGauge } from "./BoostGauge";
 import { ShiftLights } from "./ShiftLights";
 import { Speedometer } from "./Speedometer";
 import { Tachometer } from "./Tachometer";
-import { Telemetry } from "./Telemetry";
 
 type Bests = Record<string, SplitResult> & { top?: { ms: 0; kmh: number } };
 
@@ -67,11 +67,9 @@ interface Props {
   vehicle: VehicleConfig;
   subscribe: Simulation["subscribe"];
   maxKmh: number;
-  /** Current brake pedal, 0-1 (from the input, not the sim). */
-  brake: () => number;
 }
 
-export function TrackView({ sim, vehicle, subscribe, maxKmh, brake }: Props) {
+export function TrackView({ sim, vehicle, subscribe, maxKmh }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [panel, setPanel] = useState<Panel>({ results: {}, top: 0, running: false, armed: true, fresh: [] });
   const [bests, setBests] = useState<Bests>({});
@@ -273,7 +271,7 @@ export function TrackView({ sim, vehicle, subscribe, maxKmh, brake }: Props) {
         ))}
       </div>
 
-      {/* the gauge cluster in the bottom corner: shift lights over the rev counter, pedal and boost bars, speedometer */}
+      {/* the gauge cluster in the bottom corner: shift lights over the rev counter, a smaller boost gauge and the speedometer */}
       <div className="track-cluster">
         <div className="track-lights">
           <ShiftLights state={sim.state} redlineRpm={vehicle.engine.redlineRpm} shiftRpm={cue} />
@@ -282,8 +280,8 @@ export function TrackView({ sim, vehicle, subscribe, maxKmh, brake }: Props) {
           <div className="track-gauge">
             <Tachometer state={sim.state} redlineRpm={vehicle.engine.redlineRpm} limiterRpm={vehicle.engine.limiterRpm} accent={vehicle.ui.accent} subscribe={subscribe} />
           </div>
-          <div className="track-bars">
-            <Telemetry state={sim.state} brake={brake} turbo={Boolean(vehicle.turbo)} accent={vehicle.ui.accent} />
+          <div className="track-gauge track-boost">
+            <BoostGauge state={sim.state} redlineRpm={vehicle.engine.redlineRpm} turbo={Boolean(vehicle.turbo)} accent={vehicle.ui.accent} />
           </div>
           <div className="track-gauge">
             <Speedometer state={sim.state} accent={vehicle.ui.accent} maxKmh={maxKmh} />

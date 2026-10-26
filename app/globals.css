@@ -718,7 +718,8 @@ button.menu-option:hover { background: #17171d; }
 .track-lights { height: 0.9rem; margin: 0 8%; }
 .track-dials { display: flex; align-items: flex-end; gap: clamp(0.3rem, 1vw, 0.75rem); }
 .track-gauge { position: relative; width: var(--gauge); height: var(--gauge); flex: none; }
-.track-bars { position: relative; width: 2.8rem; height: calc(var(--gauge) * 0.62); flex: none; }
+/* the boost gauge sits between the two big dials, smaller and raised a little, like a centre-console pod */
+.track-gauge.track-boost { width: calc(var(--gauge) * 0.74); height: calc(var(--gauge) * 0.74); margin: 0 calc(var(--gauge) * -0.07) calc(var(--gauge) * 0.26); }
 
 .track-panel, .track-slip {
   position: absolute; top: var(--hud-top, 3.6rem); z-index: 5; border-radius: 8px;
@@ -770,7 +771,6 @@ button.menu-option:hover { background: #17171d; }
 }
 @media (max-width: 639px) {
   .track-cluster { --gauge: 6.4rem; }
-  .track-bars { width: 2.6rem; }
   .track-pops { top: 30%; }
 }
 @media (orientation: landscape) and (max-height: 520px) {

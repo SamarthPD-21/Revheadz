@@ -247,7 +247,7 @@ export default function Simulator({ vehicle, prev, next, maxKmh, garage }: Props
     <main ref={mainRef} className="drive" style={{ "--accent": accent } as React.CSSProperties}>
       {/* the strip fills the screen; everything else floats over it */}
       <section className="drive-stage" aria-label="Drag strip">
-        <TrackView sim={sim} vehicle={vehicle} subscribe={rig.subscribe} maxKmh={maxKmh} brake={() => input.brakeLevel()} />
+        <TrackView sim={sim} vehicle={vehicle} subscribe={rig.subscribe} maxKmh={maxKmh} />
       </section>
       <div className="limiter-vignette pointer-events-none fixed inset-0 z-50" />
       <header className="drive-header flex items-center justify-between gap-2">

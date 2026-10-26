@@ -52,13 +52,6 @@ export class InputManager {
     this.touchBrake = on;
   }
 
-  /** Current brake level (for the telemetry display). */
-  brakeLevel(): number {
-    if (this.touchBrake) return 1;
-    for (const k of BRAKE_KEYS) if (this.keys.has(k)) return 1;
-    return 0;
-  }
-
   blip(now = performance.now()): void {
     this.blipUntil = now + BLIP_MS;
   }
