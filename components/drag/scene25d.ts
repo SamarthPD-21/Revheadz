@@ -19,9 +19,12 @@ type Canvas = HTMLCanvasElement;
 
 const LANE_Z = { me: 2, opp: -2 }; // + is the near side
 /** The most the body moves up or down over either axle as it squats and dives, m. */
-const TRAVEL = 0.04;
+const TRAVEL = 0.06;
 /** Room between a tyre and its wheel arch: the suspension travel plus a visible gap, m. */
-const ARCH_GAP = TRAVEL + 0.035;
+const ARCH_GAP = TRAVEL + 0.03;
+/** Body pitch on its springs: natural frequency (rad/s) and damping ratio (under 1 rocks back). */
+const SPRING_W = 15;
+const SPRING_ZETA = 0.32;
 const WALL_Z = 6.3;
 const LINE_Z = 4.1;
 
@@ -288,7 +291,9 @@ export class DragScene25D {
   private lastTime = 0;
   private prevSpeed = { me: 0, opp: 0 };
   private braking = { me: 0, opp: 0 };
+  /** Body pitch per lane, -1 (full dive) to 1 (full squat), and how fast it's moving. */
   private pitch = { me: 0, opp: 0 };
+  private pitchVel = { me: 0, opp: 0 };
   /** Wheel angle last frame per lane, and how far the wheels turned this frame (rad). */
   private prevSpin = { me: 0, opp: 0 };
   private dSpin = 0;
@@ -924,16 +929,32 @@ export class DragScene25D {
     // cars and their smoke
     for (const lane of f.opp ? (["opp", "me"] as const) : (["me"] as const)) {
       const c = lane === "me" ? f.me : f.opp!;
-      // acceleration from frame-to-frame speed is noisy (uneven frames, gear changes): smooth it
-      // over ~0.25 s before it moves the body, or the cars twitch
+      // acceleration from frame-to-frame speed is noisy (uneven frames): take the edge off it, then
+      // let the springs do the rest
       if (dt > 0) {
         const raw = Math.max(-15, Math.min(15, (c.speedKmh - this.prevSpeed[lane]) / 3.6 / dt));
-        this.accel[lane] += (raw - this.accel[lane]) * Math.min(1, dt / 0.25);
+        this.accel[lane] += (raw - this.accel[lane]) * Math.min(1, dt / 0.07);
       }
       this.prevSpeed[lane] = c.speedKmh;
       const a = this.accel[lane];
       this.braking[lane] += ((a < -2 ? 1 : 0) - this.braking[lane]) * Math.min(1, dt * 4);
-      this.pitch[lane] += (Math.max(-1, Math.min(1, a / 12)) - this.pitch[lane]) * Math.min(1, dt * 4);
+      // The body on its springs: it squats as the power comes in, rocks forward when the drive cuts
+      // for a shift, dives on the brakes, and bounces once as it settles. The bump stops hold it
+      // within the suspension's travel, so it never reaches the tyres.
+      const target = Math.max(-1, Math.min(1, a / 8));
+      let p = this.pitch[lane];
+      let v = this.pitchVel[lane];
+      for (let n = Math.ceil(dt / 0.008), i = 0; i < n; i++) {
+        const h = dt / n;
+        v += (SPRING_W * SPRING_W * (target - p) - 2 * SPRING_ZETA * SPRING_W * v) * h;
+        p += v * h;
+        if (Math.abs(p) > 1) {
+          p = Math.sign(p);
+          v = 0;
+        }
+      }
+      this.pitch[lane] = p;
+      this.pitchVel[lane] = v;
       const nose = c.distM - c.rollBackM;
       const len = carShape(c.cfg).len;
       const rear = nose - len;
@@ -1081,7 +1102,7 @@ export class DragScene25D {
     const wxs = shape.wheels.map((w) => w.x);
     const pivot = wxs.length ? (Math.min(...wxs) + Math.max(...wxs)) / 2 : shape.len / 2;
     const halfBase = wxs.length >= 2 ? (Math.max(...wxs) - Math.min(...wxs)) / 2 : shape.len / 2;
-    const pitch = this.pitch[lane] * Math.min(0.035, Math.asin(Math.min(1, TRAVEL / halfBase)));
+    const pitch = this.pitch[lane] * Math.min(0.05, Math.asin(Math.min(1, TRAVEL / halfBase)));
     const xf = (pitchable: boolean) => (v: V): V => {
       let [x, y] = v;
       if (pitchable && pitch) {
