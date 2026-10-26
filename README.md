@@ -76,9 +76,12 @@ to compare. When you're ready, race a friend or the CPU over the quarter mile. N
     slip with a "why you won/lost" breakdown
   - Pro controls (`S`+`W` to stage on the two-step, let go of `S` on the green, `E`/`Q` to shift) or one-button
     Simple controls
-- **Challenge links**: after a run, share a link and your friend races your exact run as a ghost. The whole run fits in
-  the URL, and nothing in it is trusted: the time is worked out by replaying your inputs, so editing the link can't
-  fake a faster time
+- **Ghost challenges**: pick **Send a challenge**, set a run and send the link. Your friend races your exact run as a
+  see-through ghost car beside them, the time slip shows who won, and they can send their run straight back. The
+  whole run fits in the URL, and nothing in it is trusted: the time is worked out by replaying your inputs, so
+  editing the link can't fake a faster time
+- **Online rooms**: create a room and send the 4-letter code. The class is shared, so either player can pick it and
+  you both move to it
 - **Free to host**: a static site you can put on Vercel, Netlify or Cloudflare Pages
 
 ## Quick start
