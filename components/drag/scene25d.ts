@@ -622,7 +622,11 @@ export class DragScene25D {
       x.fillStyle = "#8b8a96";
       x.font = "600 24px system-ui, sans-serif";
       x.textBaseline = "middle";
-      for (let i = 0; i < 3; i++) x.fillText(label, 40 + i * 340, 21);
+      // as many repeats as fit with room around them: short names three times, long ones once
+      const tw = x.measureText(label).width;
+      const n = Math.max(1, Math.min(3, Math.floor(1024 / (tw + 200))));
+      x.textAlign = "center";
+      for (let i = 0; i < n; i++) x.fillText(label, ((i + 0.5) * 1024) / n, 21);
       this.ads.set(label, (a = c));
     }
     return a;
@@ -841,7 +845,7 @@ export class DragScene25D {
     const id = (v: V) => v;
     const wallC: [number, number, number] = [58, 57, 64];
     const ADS: [string, string][] = proving
-      ? [["REVHEADZ", "#f97316"], ["TEST AND TUNE", "#a3a3ad"], ["0–100  ·  1/4 MILE  ·  1 KM", "#65a30d"]]
+      ? [["REVHEADZ", "#f97316"], ["TEST AND TUNE", "#a3a3ad"], ["QUARTER MILE", "#65a30d"]]
       : [["REVHEADZ", "#f97316"], ["QUARTER MILE", "#a3a3ad"], ["STAGE  ·  LAUNCH  ·  SHIFT", "#65a30d"]];
     for (let k = Math.floor(x0 / 12); k < Math.ceil(x1 / 12); k++) {
       const xa = k * 12;
