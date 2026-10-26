@@ -48,105 +48,230 @@
     "powerHp": 1479,
     "make": "Bugatti",
     "year": "2016",
-    "recorded": false
+    "recorded": true
   },
   "audio": {
     "mode": "samples",
     "onLoad": [
       {
-        "file": "on_1020.ogg",
-        "rpm": 1019.997
-      },
-      {
         "file": "on_1291.ogg",
-        "rpm": 1291.35
+        "rpm": 1291.225
       },
       {
-        "file": "on_1635.ogg",
-        "rpm": 1634.878
+        "file": "on_1630.ogg",
+        "rpm": 1630
       },
       {
-        "file": "on_2070.ogg",
-        "rpm": 2069.81
+        "file": "on_2001.ogg",
+        "rpm": 2000.818
       },
       {
-        "file": "on_2620.ogg",
-        "rpm": 2620.426
+        "file": "on_2336.ogg",
+        "rpm": 2335.794
       },
       {
-        "file": "on_3318.ogg",
-        "rpm": 3317.522
+        "file": "on_3076.ogg",
+        "rpm": 3076.047
       },
       {
-        "file": "on_4200.ogg",
-        "rpm": 4200.079
+        "file": "on_3950.ogg",
+        "rpm": 3949.658
       },
       {
-        "file": "on_5317.ogg",
-        "rpm": 5317.433
+        "file": "on_4158.ogg",
+        "rpm": 4158.266
       },
       {
-        "file": "on_6732.ogg",
-        "rpm": 6732
+        "file": "on_4804.ogg",
+        "rpm": 4803.587
+      },
+      {
+        "file": "on_5354.ogg",
+        "rpm": 5354.356
+      },
+      {
+        "file": "on_6042.ogg",
+        "rpm": 6042.442
+      },
+      {
+        "file": "on_6279.ogg",
+        "rpm": 6278.853
+      },
+      {
+        "file": "on_6750.ogg",
+        "rpm": 6750
       }
     ],
     "offLoad": [
       {
-        "file": "off_1147.ogg",
-        "rpm": 1147.496
+        "file": "off_1291.ogg",
+        "rpm": 1291.225
       },
       {
-        "file": "off_1473.ogg",
-        "rpm": 1473.189
+        "file": "off_1630.ogg",
+        "rpm": 1630
       },
       {
-        "file": "off_1891.ogg",
-        "rpm": 1891.298
+        "file": "off_2001.ogg",
+        "rpm": 2000.818
       },
       {
-        "file": "off_2428.ogg",
-        "rpm": 2428.091
+        "file": "off_2336.ogg",
+        "rpm": 2335.794
       },
       {
-        "file": "off_3117.ogg",
-        "rpm": 3117.23
+        "file": "off_3076.ogg",
+        "rpm": 3076.047
       },
       {
-        "file": "off_4002.ogg",
-        "rpm": 4001.966
+        "file": "off_3950.ogg",
+        "rpm": 3949.658
       },
       {
-        "file": "off_5138.ogg",
-        "rpm": 5137.816
+        "file": "off_4158.ogg",
+        "rpm": 4158.266
       },
       {
-        "file": "off_6596.ogg",
-        "rpm": 6596.011
+        "file": "off_4804.ogg",
+        "rpm": 4803.587
+      },
+      {
+        "file": "off_5354.ogg",
+        "rpm": 5354.356
+      },
+      {
+        "file": "off_6042.ogg",
+        "rpm": 6042.442
+      },
+      {
+        "file": "off_6279.ogg",
+        "rpm": 6278.853
+      },
+      {
+        "file": "off_6750.ogg",
+        "rpm": 6750
       }
     ],
     "idle": {
       "file": "idle_850.ogg",
-      "rpm": 849.997
+      "rpm": 850
     },
     "oneShots": {
       "start": "start.ogg",
-      "stop": "stop.ogg",
+      "stop": "gen/stop.ogg",
       "shift": [
-        "shift_1.ogg",
-        "shift_2.ogg"
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
       ],
       "backfire": [
-        "pop_1.ogg",
-        "pop_2.ogg",
-        "pop_3.ogg"
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
       ],
       "blowoff": [
-        "bov_1.ogg",
-        "bov_2.ogg"
+        "gen/bov_1.ogg",
+        "gen/bov_2.ogg"
       ]
     },
     "masterGainDb": 0
   },
   "credits": [],
-  "voice": "twin_turbo_v6"
+  "voice": "twin_turbo_v6",
+  "audioGenerated": {
+    "mode": "samples",
+    "onLoad": [
+      {
+        "file": "gen/on_1020.ogg",
+        "rpm": 1019.997
+      },
+      {
+        "file": "gen/on_1291.ogg",
+        "rpm": 1291.35
+      },
+      {
+        "file": "gen/on_1635.ogg",
+        "rpm": 1634.878
+      },
+      {
+        "file": "gen/on_2070.ogg",
+        "rpm": 2069.81
+      },
+      {
+        "file": "gen/on_2620.ogg",
+        "rpm": 2620.426
+      },
+      {
+        "file": "gen/on_3318.ogg",
+        "rpm": 3317.522
+      },
+      {
+        "file": "gen/on_4200.ogg",
+        "rpm": 4200.079
+      },
+      {
+        "file": "gen/on_5317.ogg",
+        "rpm": 5317.433
+      },
+      {
+        "file": "gen/on_6732.ogg",
+        "rpm": 6732
+      }
+    ],
+    "offLoad": [
+      {
+        "file": "gen/off_1147.ogg",
+        "rpm": 1147.496
+      },
+      {
+        "file": "gen/off_1473.ogg",
+        "rpm": 1473.189
+      },
+      {
+        "file": "gen/off_1891.ogg",
+        "rpm": 1891.298
+      },
+      {
+        "file": "gen/off_2428.ogg",
+        "rpm": 2428.091
+      },
+      {
+        "file": "gen/off_3117.ogg",
+        "rpm": 3117.23
+      },
+      {
+        "file": "gen/off_4002.ogg",
+        "rpm": 4001.966
+      },
+      {
+        "file": "gen/off_5138.ogg",
+        "rpm": 5137.816
+      },
+      {
+        "file": "gen/off_6596.ogg",
+        "rpm": 6596.011
+      }
+    ],
+    "idle": {
+      "file": "gen/idle_850.ogg",
+      "rpm": 849.997
+    },
+    "oneShots": {
+      "start": "gen/start.ogg",
+      "stop": "gen/stop.ogg",
+      "shift": [
+        "gen/shift_1.ogg",
+        "gen/shift_2.ogg"
+      ],
+      "backfire": [
+        "gen/pop_1.ogg",
+        "gen/pop_2.ogg",
+        "gen/pop_3.ogg"
+      ],
+      "blowoff": [
+        "gen/bov_1.ogg",
+        "gen/bov_2.ogg"
+      ]
+    },
+    "masterGainDb": 0
+  }
 }

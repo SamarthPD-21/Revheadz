@@ -1,0 +1,155 @@
+{
+  "bugatti_chiron": {
+    "pitchRange": [
+      4,
+      130
+    ],
+    "offLoadLowpassHz": 1500,
+    "loopLengthBias": 0.04,
+    "sources": {
+      "parked": {
+        "title": "Bugatti Chiron - SOUND - Start Up & LOUD Revs!",
+        "author": "Supercars of Austria",
+        "youtube": "R0NeAlTQCWs",
+        "cacheName": "yt_bugatti_chiron_R0NeAlTQCWs.flac",
+        "pitchRange": [
+          8,
+          16
+        ]
+      },
+      "dynoLow": {
+        "title": "World's First BUGATTI CHIRON on a DYNO!",
+        "author": "The Hamilton Collection",
+        "youtube": "kZgyuct6nwo",
+        "cacheName": "yt_bugatti_chiron_kZgyuct6nwo.flac",
+        "pitchRange": [
+          12,
+          30
+        ]
+      },
+      "dyno": {
+        "title": "World's First BUGATTI CHIRON on a DYNO!",
+        "author": "The Hamilton Collection",
+        "youtube": "kZgyuct6nwo",
+        "cacheName": "yt_bugatti_chiron_kZgyuct6nwo.flac",
+        "pitchRange": [
+          22,
+          60
+        ]
+      }
+    },
+    "loops": [
+      {
+        "kind": "idle",
+        "source": "parked",
+        "t": [
+          28,
+          38
+        ],
+        "flatten": false,
+        "rpm": 850
+      },
+      {
+        "kind": "on",
+        "source": "parked",
+        "t": [
+          10,
+          18
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dynoLow",
+        "t": [
+          276.92,
+          277.76
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dynoLow",
+        "t": [
+          278.08,
+          278.78
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "t": [
+          279.34,
+          280.13
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "t": [
+          280.45,
+          280.78
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "t": [
+          280.5,
+          281.24
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "t": [
+          281.24,
+          281.94
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "t": [
+          281.66,
+          282.77
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "t": [
+          282.45,
+          283.19
+        ]
+      },
+      {
+        "kind": "on",
+        "source": "dyno",
+        "t": [
+          282.73,
+          283.47
+        ]
+      },
+      {
+        "kind": "on",
+        "shiftFrom": 1950,
+        "rpm": 1630
+      },
+      {
+        "kind": "on",
+        "shiftFrom": 6400,
+        "rpm": 6750
+      }
+    ],
+    "oneShots": {
+      "start": {
+        "source": "parked",
+        "t": [
+          99.8,
+          104.2
+        ],
+        "fadeIn": 0.02,
+        "fadeOut": 0.8
+      }
+    }
+  }
+}

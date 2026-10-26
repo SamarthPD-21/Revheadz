@@ -357,6 +357,27 @@
     "license": "CC0 1.0"
   },
   {
+    "vehicle": "Bugatti Chiron",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "Supercars of Austria",
+    "source": "Bugatti Chiron - SOUND - Start Up & LOUD Revs! (https://www.youtube.com/watch?v=R0NeAlTQCWs)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Bugatti Chiron",
+    "files": "Engine loops (idle, on-load, overrun), start sound",
+    "author": "The Hamilton Collection",
+    "source": "World's First BUGATTI CHIRON on a DYNO! (https://www.youtube.com/watch?v=kZgyuct6nwo)",
+    "license": "YouTube video audio, personal use"
+  },
+  {
+    "vehicle": "Bugatti Chiron",
+    "files": "Generated one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz (generated)",
+    "source": "scripts/generate-sounds.mjs",
+    "license": "CC0 1.0"
+  },
+  {
     "vehicle": "Chevrolet Corvette Z06",
     "files": "Engine loops (idle, on-load, overrun), start sound",
     "author": "8600RPMs",
@@ -892,13 +913,6 @@
     "vehicle": "Porsche Carrera GT",
     "files": "Generated one-shots: stop, shift, backfire, blow-off",
     "author": "Revheadz (generated)",
-    "source": "scripts/generate-sounds.mjs",
-    "license": "CC0 1.0"
-  },
-  {
-    "vehicle": "Bugatti Chiron",
-    "files": "All loops and one-shots (sounds/*.ogg, *.mp3)",
-    "author": "Revheadz (original, generated with scripts/generate-sounds.mjs)",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   }
