@@ -264,6 +264,15 @@ interface Item {
   draw: () => void;
 }
 
+/** The proving ground's timing lines: where the current run started, and its split distances. */
+export interface ProvingInfo {
+  startX: number | null;
+  gates: { m: number; label: string }[];
+}
+
+/** A frame for either layout: the strip always has an opponent, the proving ground never does. */
+export type FrameIn = Omit<SceneFrame, "opp"> & { opp: SceneCar | null; proving?: ProvingInfo };
+
 export class DragScene25D {
   private readonly glows = new Map<string, Canvas>();
   private readonly boards = new Map<string, Canvas>();
@@ -292,7 +301,14 @@ export class DragScene25D {
   private k = 1;
   private cam: V = [0, 0, 0];
 
-  constructor(private readonly ctx: CanvasRenderingContext2D) {}
+  /**
+   * "strip": the drag strip with its stands, tree and finish gantry.
+   * "proving": an endless test road through open country, with timing lines for one car.
+   */
+  constructor(
+    private readonly ctx: CanvasRenderingContext2D,
+    private readonly layout: "strip" | "proving" = "strip",
+  ) {}
 
   private glow(color: string) {
     let g = this.glows.get(color);
@@ -745,7 +761,7 @@ export class DragScene25D {
 
   // ---------------------------------------------------------------- frame
 
-  draw(f: SceneFrame, w: number, h: number) {
+  draw(f: FrameIn, w: number, h: number) {
     const ctx = this.ctx;
     const dt = Math.min(0.05, Math.max(0, f.time - this.lastTime));
     this.lastTime = f.time;
@@ -754,10 +770,12 @@ export class DragScene25D {
 
     // follow your car (it sits a little below and left of centre so you see the strip ahead)
     const myX = me.distM - me.rollBackM;
-    const launched = me.distM > 0.05;
+    const proving = this.layout === "proving";
+    const launched = proving || me.distM > 0.05;
     // The camera is locked to the car; only the framing offset eases. (Chasing the car with a
     // lag made the gap between them wobble with every uneven frame: that was the jitter.)
-    const leadTarget = launched ? (portrait ? 3 : 6) : 1 - myX;
+    // (the proving ground keeps the car nearer the middle: on a phone it would sit half off-screen)
+    const leadTarget = proving ? (portrait ? -1.5 : 5) : launched ? (portrait ? 3 : 6) : 1 - myX;
     this.lead += (leadTarget - this.lead) * Math.min(1, dt * 2.5);
     this.camX = myX + this.lead;
     this.zoom += (1 - Math.min(0.25, me.speedKmh / 900) - this.zoom) * Math.min(1, dt * 2);
@@ -782,32 +800,35 @@ export class DragScene25D {
     const G = (xa: number, xb: number, za: number, zb: number, fill: string, y = 0) =>
       this.poly([[xa, y, za], [xb, y, za], [xb, y, zb], [xa, y, zb]], fill);
     G(x0, x1, -60, 60, "#0b0a10");
-    // concrete launch pad for the first 100 m, as at real strips, then asphalt
-    const PAD = 100;
-    if (x1 > PAD) G(Math.max(x0, PAD), x1, -WALL_Z, WALL_Z, "#16151b");
-    if (x0 < PAD) {
-      G(Math.max(x0, -12), Math.min(PAD, x1), -WALL_Z, WALL_Z, "#222128");
-      for (let k = Math.ceil(Math.max(x0, -12) / 5); k * 5 < Math.min(PAD, x1); k++) G(k * 5 - 0.03, k * 5 + 0.03, -WALL_Z, WALL_Z, "#19181e");
-    }
-    // laid rubber: the two tyre tracks in each lane, heavy off the line and fading out
-    for (const lz of [LANE_Z.me, LANE_Z.opp]) {
-      for (let k = 0; k < 16; k++) {
-        const xa = k * 8 - 2;
-        if (xa + 8 < x0 || xa > x1) continue;
-        const a = 0.55 * Math.pow(1 - k / 16, 1.6);
-        for (const tz of [-0.78, 0.78]) G(xa, xa + 8, lz + tz - 0.24, lz + tz + 0.24, `rgba(4,4,6,${a})`);
-        G(xa, xa + 8, lz - 0.55, lz + 0.55, `rgba(4,4,6,${a * 0.3})`);
+    if (proving) this.provingGround(f.proving, G, x0, x1);
+    else {
+      // concrete launch pad for the first 100 m, as at real strips, then asphalt
+      const PAD = 100;
+      if (x1 > PAD) G(Math.max(x0, PAD), x1, -WALL_Z, WALL_Z, "#16151b");
+      if (x0 < PAD) {
+        G(Math.max(x0, -12), Math.min(PAD, x1), -WALL_Z, WALL_Z, "#222128");
+        for (let k = Math.ceil(Math.max(x0, -12) / 5); k * 5 < Math.min(PAD, x1); k++) G(k * 5 - 0.03, k * 5 + 0.03, -WALL_Z, WALL_Z, "#19181e");
       }
-    }
-    G(x0, x1, -0.06, 0.06, "#b08a24");
-    G(x0, x1, LINE_Z - 0.05, LINE_Z + 0.05, "#a9a9b3");
-    G(x0, x1, -LINE_Z - 0.05, -LINE_Z + 0.05, "#a9a9b3");
-    G(-0.15, 0.15, -WALL_Z, WALL_Z, "#f4f4f5");
-    for (let k = 0; k < 14; k++) {
-      const za = -WALL_Z + (k * 2 * WALL_Z) / 14;
-      const zb = za + (2 * WALL_Z) / 14;
-      G(QUARTER_MILE_M - 0.5, QUARTER_MILE_M, za, zb, k % 2 ? "#f4f4f5" : "#0b0b0f");
-      G(QUARTER_MILE_M, QUARTER_MILE_M + 0.5, za, zb, k % 2 ? "#0b0b0f" : "#f4f4f5");
+      // laid rubber: the two tyre tracks in each lane, heavy off the line and fading out
+      for (const lz of [LANE_Z.me, LANE_Z.opp]) {
+        for (let k = 0; k < 16; k++) {
+          const xa = k * 8 - 2;
+          if (xa + 8 < x0 || xa > x1) continue;
+          const a = 0.55 * Math.pow(1 - k / 16, 1.6);
+          for (const tz of [-0.78, 0.78]) G(xa, xa + 8, lz + tz - 0.24, lz + tz + 0.24, `rgba(4,4,6,${a})`);
+          G(xa, xa + 8, lz - 0.55, lz + 0.55, `rgba(4,4,6,${a * 0.3})`);
+        }
+      }
+      G(x0, x1, -0.06, 0.06, "#b08a24");
+      G(x0, x1, LINE_Z - 0.05, LINE_Z + 0.05, "#a9a9b3");
+      G(x0, x1, -LINE_Z - 0.05, -LINE_Z + 0.05, "#a9a9b3");
+      G(-0.15, 0.15, -WALL_Z, WALL_Z, "#f4f4f5");
+      for (let k = 0; k < 14; k++) {
+        const za = -WALL_Z + (k * 2 * WALL_Z) / 14;
+        const zb = za + (2 * WALL_Z) / 14;
+        G(QUARTER_MILE_M - 0.5, QUARTER_MILE_M, za, zb, k % 2 ? "#f4f4f5" : "#0b0b0f");
+        G(QUARTER_MILE_M, QUARTER_MILE_M + 0.5, za, zb, k % 2 ? "#0b0b0f" : "#f4f4f5");
+      }
     }
     // warm pools of light from the towers
     const pool = this.glow("rgba(255,226,180,1)");
@@ -818,7 +839,9 @@ export class DragScene25D {
     const add = (center: V, draw: () => void) => items.push({ depth: this.depth(center), draw });
     const id = (v: V) => v;
     const wallC: [number, number, number] = [58, 57, 64];
-    const ADS: [string, string][] = [["REVHEADZ", "#f97316"], ["QUARTER MILE", "#a3a3ad"], ["STAGE  ·  LAUNCH  ·  SHIFT", "#65a30d"]];
+    const ADS: [string, string][] = proving
+      ? [["REVHEADZ PROVING GROUND", "#f97316"], ["TEST TRACK", "#a3a3ad"], ["0–100  ·  1/4 MILE  ·  1 KM", "#65a30d"]]
+      : [["REVHEADZ", "#f97316"], ["QUARTER MILE", "#a3a3ad"], ["STAGE  ·  LAUNCH  ·  SHIFT", "#65a30d"]];
     for (let k = Math.floor(x0 / 12); k < Math.ceil(x1 / 12); k++) {
       const xa = k * 12;
       const xb = xa + 12;
@@ -835,7 +858,11 @@ export class DragScene25D {
       });
       // near wall (low, in front of everything else)
       add([xa + 6, 0.5, WALL_Z], () => this.solid(box(xa, xb, 0, 0.9, WALL_Z, WALL_Z + 0.35, wallC), id));
-      // grandstand tiers behind the far wall, crowd on the front faces
+      // grandstand tiers behind the far wall, crowd on the front faces (open country on the proving ground)
+      if (proving) {
+        this.trees(k, add);
+        continue;
+      }
       for (let t = 0; t < 4; t++) {
         const z1 = -8.6 - t * 2.2;
         const y1 = 1.2 + t * 0.9;
@@ -846,12 +873,23 @@ export class DragScene25D {
       }
     }
     // distance boards on the far wall
-    for (const [m, label] of [[SIXTY_FT_M, "60 FT"], [100.584, "330 FT"], [EIGHTH_MILE_M, "1/8 MILE"], [304.8, "1000 FT"]] as [number, string][]) {
+    for (const [m, label] of proving ? [] :  [[SIXTY_FT_M, "60 FT"], [100.584, "330 FT"], [EIGHTH_MILE_M, "1/8 MILE"], [304.8, "1000 FT"]] as [number, string][]) {
       if (m < x0 || m > x1) continue;
       add([m, 2, -WALL_Z - 0.2], () => {
         this.solid(box(m - 0.06, m + 0.06, 1.1, 1.6, -WALL_Z - 0.25, -WALL_Z - 0.15, [40, 40, 48]), id);
         this.image(this.board(label), 256, 96, [m - 1.3, 2.6, -WALL_Z - 0.1], [m + 1.3, 2.6, -WALL_Z - 0.1], [m - 1.3, 1.6, -WALL_Z - 0.1]);
       });
+    }
+    // a sign at each timing line
+    if (proving && f.proving?.startX !== null && f.proving) {
+      for (const g of f.proving.gates) {
+        const m = f.proving.startX! + g.m;
+        if (m < x0 - 3 || m > x1 + 3) continue;
+        add([m, 2, -WALL_Z - 0.2], () => {
+          this.solid(box(m - 0.06, m + 0.06, 1.1, 1.6, -WALL_Z - 0.25, -WALL_Z - 0.15, [40, 40, 48]), id);
+          this.image(this.board(g.label), 256, 96, [m - 1.3, 2.6, -WALL_Z - 0.1], [m + 1.3, 2.6, -WALL_Z - 0.1], [m - 1.3, 1.6, -WALL_Z - 0.1]);
+        });
+      }
     }
     // light towers on the far side
     const lamp = this.glow("rgba(255,244,214,1)");
@@ -864,20 +902,24 @@ export class DragScene25D {
       });
     }
     // finish gantry with the timing board
-    if (QUARTER_MILE_M > x0 - 10 && QUARTER_MILE_M < x1 + 10) {
+    if (!proving && f.opp && QUARTER_MILE_M > x0 - 10 && QUARTER_MILE_M < x1 + 10) {
+      const opp = f.opp;
       const gx = QUARTER_MILE_M + 6;
       add([gx, 3, -WALL_Z - 1], () => {
         this.solid(box(gx - 0.2, gx + 0.2, 0, 3.6, -WALL_Z - 1.2, -WALL_Z - 0.8, [40, 39, 48]), id);
         this.solid(box(gx - 3.4, gx + 3.4, 3.6, 6.4, -WALL_Z - 1.2, -WALL_Z - 0.9, [10, 10, 14]), id);
-        this.image(this.timingBoard(f.me, f.opp), 512, 200, [gx - 3.3, 6.3, -WALL_Z - 0.89], [gx + 3.3, 6.3, -WALL_Z - 0.89], [gx - 3.3, 3.7, -WALL_Z - 0.89]);
+        this.image(this.timingBoard(f.me, opp), 512, 200, [gx - 3.3, 6.3, -WALL_Z - 0.89], [gx + 3.3, 6.3, -WALL_Z - 0.89], [gx - 3.3, 3.7, -WALL_Z - 0.89]);
       });
     }
     // the tree, on the centre line just past the start, lights facing the cars
-    add([5, 2, 0], () => this.tree(f));
+    if (!proving && f.opp) {
+      const strip = f as SceneFrame;
+      add([5, 2, 0], () => this.tree(strip));
+    }
 
     // cars and their smoke
-    for (const lane of ["opp", "me"] as const) {
-      const c = f[lane];
+    for (const lane of f.opp ? (["opp", "me"] as const) : (["me"] as const)) {
+      const c = lane === "me" ? f.me : f.opp!;
       // acceleration from frame-to-frame speed is noisy (uneven frames, gear changes): smooth it
       // over ~0.25 s before it moves the body, or the cars twitch
       if (dt > 0) {
@@ -895,8 +937,9 @@ export class DragScene25D {
       const spawn = (kind: Puff["kind"], x: number, y: number, pz: number, r: number, max: number, vx: number, vz: number) =>
         this.puffs.push({ kind, x, y, z: pz, r, life: 0, max, vx, vz, rot: Math.random() * Math.PI * 2, spin: (Math.random() - 0.5) * 1.2, tex: Math.floor(Math.random() * 3) });
       // tyre smoke off the line, heaviest in the first few metres
-      if (c.distM > 0.05 && c.distM < 24) {
-        const n = Math.random() < 1 - c.distM / 24 ? 2 : 1;
+      const run = proving ? (f.proving?.startX !== null && f.proving ? c.distM - f.proving.startX! : 99) : c.distM;
+      if (run > 0.05 && run < 24 && c.speedKmh > 1) {
+        const n = Math.random() < 1 - run / 24 ? 2 : 1;
         const wheelZ = c.cfg.type === "bike" ? [0] : [-0.8, 0.8];
         for (let i = 0; i < n; i++) {
           spawn("tyre", rear + 0.4, 0.25, z + wheelZ[Math.floor(Math.random() * wheelZ.length)], 0.4, 1.4 + Math.random() * 1.2, -2 - Math.random() * 2.5, (Math.random() - 0.5) * 1.6);
@@ -952,6 +995,47 @@ export class DragScene25D {
         ctx.lineTo(sx - ux * len, sy - uy * len);
       }
       ctx.stroke();
+    }
+  }
+
+  /** The proving ground's road: asphalt with seams every 100 m, grass verges, and the run's timing lines. */
+  private provingGround(info: ProvingInfo | undefined, G: (xa: number, xb: number, za: number, zb: number, fill: string) => void, x0: number, x1: number) {
+    G(x0, x1, -60, -WALL_Z - 0.35, "#0d130f");
+    G(x0, x1, WALL_Z + 0.35, 60, "#0d130f");
+    G(x0, x1, -WALL_Z, WALL_Z, "#18171d");
+    for (let k = Math.ceil(x0 / 100); k * 100 < x1; k++) G(k * 100 - 0.04, k * 100 + 0.04, -WALL_Z, WALL_Z, "#121116");
+    if (info?.startX === null || !info) return;
+    const s = info.startX;
+    if (s > x0 - 1 && s < x1 + 1) G(s - 0.1, s + 0.1, -WALL_Z, WALL_Z, "rgba(244,244,245,0.55)");
+    for (const g of info.gates) {
+      const m = s + g.m;
+      if (m < x0 - 1 || m > x1 + 1) continue;
+      for (let k = 0; k < 14; k++) {
+        const za = -WALL_Z + (k * 2 * WALL_Z) / 14;
+        G(m - 0.18, m + 0.18, za, za + (2 * WALL_Z) / 14, k % 2 ? "rgba(244,244,245,0.8)" : "rgba(11,11,15,0.8)");
+      }
+    }
+  }
+
+  /** A few low-poly trees in the infield beyond the far wall, placed the same way every time for a stretch. */
+  private trees(k: number, add: (center: V, draw: () => void) => void) {
+    let seed = (k * 2654435761) >>> 0;
+    const rand = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+    const id = (v: V) => v;
+    const count = 1 + Math.floor(rand() * 3);
+    for (let i = 0; i < count; i++) {
+      const x = k * 12 + rand() * 12;
+      const z = -9 - rand() * 18;
+      const h = 4 + rand() * 4;
+      const r = 1.2 + rand() * 1.1;
+      const leaf: [number, number, number] = [26 + rand() * 10, 46 + rand() * 16, 32 + rand() * 8];
+      add([x, h / 2, z], () => {
+        this.solid(box(x - 0.15, x + 0.15, 0, h * 0.35, z - 0.15, z + 0.15, [46, 36, 30]), id);
+        // two stacked cones of foliage, lofted between horizontal squares
+        const sq = (y: number, rr: number): V[] => [[x - rr, y, z - rr], [x + rr, y, z - rr], [x + rr, y, z + rr], [x - rr, y, z + rr]];
+        this.solid(loft(sq(h * 0.3, r), sq(h * 0.85, r * 0.2), leaf), id);
+        this.solid(loft(sq(h * 0.6, r * 0.75), sq(h * 1.1, 0.04), leaf), id);
+      });
     }
   }
 
