@@ -15,19 +15,20 @@
     "crackle": 0.7
   },
   "gearbox": {
-    "type": "dct",
+    "type": "amt",
+    "unit": "Graziano 7-speed ISR single-clutch automated manual",
     "ratios": [
-      3.91,
-      2.44,
+      3.909,
+      2.438,
       1.81,
-      1.46,
-      1.19,
-      0.97,
-      0.84
+      1.458,
+      1.185,
+      0.967,
+      0.844
     ],
-    "finalDrive": 2.87,
-    "wheelRadiusM": 0.36,
-    "shiftTimeMs": 150
+    "finalDrive": 2.867,
+    "wheelRadiusM": 0.345,
+    "shiftTimeMs": 50
   },
   "dynamics": {
     "massKg": 1750,

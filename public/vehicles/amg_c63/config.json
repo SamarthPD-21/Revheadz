@@ -15,19 +15,21 @@
     "crackle": 0.5
   },
   "gearbox": {
-    "type": "dct",
+    "type": "auto",
+    "unit": "Mercedes 722.9 AMG SPEEDSHIFT PLUS 7G-TRONIC",
     "ratios": [
-      4.38,
-      2.86,
-      1.92,
-      1.37,
-      1,
+      4.377,
+      2.859,
+      1.921,
+      1.368,
+      1.0,
       0.82,
-      0.73
+      0.728
     ],
-    "finalDrive": 3.06,
-    "wheelRadiusM": 0.34,
-    "shiftTimeMs": 150
+    "finalDrive": 2.82,
+    "wheelRadiusM": 0.308,
+    "shiftTimeMs": 180,
+    "stallRpm": 2500
   },
   "dynamics": {
     "massKg": 1730,

@@ -16,6 +16,7 @@
   },
   "gearbox": {
     "type": "dct",
+    "unit": "Tremec TR-9080 8-speed dual-clutch",
     "ratios": [
       2.91,
       1.76,
@@ -27,7 +28,7 @@
       0.33
     ],
     "finalDrive": 5.56,
-    "wheelRadiusM": 0.36,
+    "wheelRadiusM": 0.342,
     "shiftTimeMs": 100
   },
   "dynamics": {

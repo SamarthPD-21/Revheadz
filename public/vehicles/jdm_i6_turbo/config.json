@@ -16,16 +16,17 @@
   },
   "gearbox": {
     "type": "manual",
+    "unit": "Toyota R154 5-speed manual",
     "ratios": [
       3.251,
       1.955,
       1.31,
-      1,
+      1.0,
       0.753
     ],
-    "finalDrive": 4.1,
-    "wheelRadiusM": 0.32,
-    "shiftTimeMs": 280
+    "finalDrive": 3.727,
+    "wheelRadiusM": 0.306,
+    "shiftTimeMs": 300
   },
   "dynamics": {
     "massKg": 1470,

@@ -16,17 +16,18 @@
   },
   "gearbox": {
     "type": "dct",
+    "unit": "Nissan GR6 6-speed dual-clutch transaxle",
     "ratios": [
-      4.06,
-      2.3,
-      1.59,
-      1.25,
-      1,
-      0.8
+      4.056,
+      2.301,
+      1.595,
+      1.248,
+      1.001,
+      0.796
     ],
-    "finalDrive": 4.25,
-    "wheelRadiusM": 0.35,
-    "shiftTimeMs": 110
+    "finalDrive": 3.7,
+    "wheelRadiusM": 0.343,
+    "shiftTimeMs": 150
   },
   "dynamics": {
     "massKg": 1740,

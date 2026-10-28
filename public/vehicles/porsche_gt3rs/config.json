@@ -16,18 +16,19 @@
   },
   "gearbox": {
     "type": "dct",
+    "unit": "Porsche 7-speed PDK",
     "ratios": [
       3.75,
-      2.38,
-      1.72,
-      1.34,
-      1.11,
-      0.96,
-      0.84
+      2.381,
+      1.7,
+      1.344,
+      1.114,
+      0.957,
+      0.844
     ],
-    "finalDrive": 3.97,
-    "wheelRadiusM": 0.35,
-    "shiftTimeMs": 80
+    "finalDrive": 4.188,
+    "wheelRadiusM": 0.353,
+    "shiftTimeMs": 100
   },
   "dynamics": {
     "massKg": 1430,

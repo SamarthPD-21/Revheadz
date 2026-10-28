@@ -9,9 +9,10 @@ import type { SimListener, SimState } from "../../lib/sim/types";
 import type { VehicleConfig } from "../../lib/vehicles/types";
 import { Silhouette } from "../Silhouette";
 import { Tachometer } from "../Tachometer";
-import type { SceneCar, SceneFrame } from "./scene";
+import type { SceneCar } from "./scene";
 import { FrameBudget } from "./frameBudget";
-import { DragScene25D } from "./scene25d";
+import { DragScene25D, type FrameIn } from "./scene25d";
+import { loadTrackTime } from "../../lib/ui/trackTime";
 import type { Sfx } from "./sfx";
 
 export interface Lane {
@@ -251,8 +252,9 @@ export function RaceView({ me, opp, startAt, opponent, audio, oppAudio, sfx, onI
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d", { alpha: false })!;
     const s2 = new DragScene25D(ctx);
+    s2.timeOfDay = loadTrackTime();
     const budget = new FrameBudget();
-    const draw = (f: SceneFrame, w: number, h: number) => {
+    const draw = (f: FrameIn, w: number, h: number) => {
       const dpr = budget.tick(performance.now());
       if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
         canvas.width = Math.round(w * dpr);
@@ -375,7 +377,12 @@ export function RaceView({ me, opp, startAt, opponent, audio, oppAudio, sfx, onI
       // (a zero-size canvas mid-layout has nothing to draw; a drawing error must never stop the race)
       if (w > 10 && h > 10) {
         try {
-          draw({ me: car(run, me, myGreen, 1, tone === "win"), opp: car(or, opp, oppGreen, 0, tone === "lose"), time: now / 1000, shake: race.shake }, w, h);
+          // the grandstands: restless through staging, on their feet at the green, and again at the finish
+          const sinceGreen = now - myGreen;
+          const sinceEnd = race.outcome ? now - race.outcome.at : -1;
+          const crowd =
+            sinceEnd >= 0 ? Math.max(0.35, 1 - sinceEnd / 3500) : sinceGreen >= 0 ? Math.max(0.4, 1 - sinceGreen / 2500) : sinceGreen > -TREE_MS ? 0.6 : 0.3;
+          draw({ me: car(run, me, myGreen, 1, tone === "win"), opp: car(or, opp, oppGreen, 0, tone === "lose"), time: now / 1000, shake: race.shake, crowd }, w, h);
         } catch (err) {
           console.error(err);
         }

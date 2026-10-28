@@ -16,18 +16,19 @@
   },
   "gearbox": {
     "type": "sequential",
+    "unit": "Williams 7-speed seamless-shift sequential",
     "ratios": [
-      2.9,
-      2.4,
-      2,
-      1.72,
-      1.5,
-      1.33,
-      1.2
+      20.84,
+      15.81,
+      12.74,
+      10.76,
+      9.36,
+      8.34,
+      7.52
     ],
-    "finalDrive": 6,
-    "wheelRadiusM": 0.33,
-    "shiftTimeMs": 40
+    "finalDrive": 1.0,
+    "wheelRadiusM": 0.32,
+    "shiftTimeMs": 10
   },
   "dynamics": {
     "massKg": 620,

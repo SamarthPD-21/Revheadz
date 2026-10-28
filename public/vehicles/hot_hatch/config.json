@@ -15,18 +15,19 @@
     "crackle": 0.85
   },
   "gearbox": {
-    "type": "dct",
+    "type": "manual",
+    "unit": "Getrag MMT6 6-speed manual",
     "ratios": [
-      3.36,
-      2.09,
-      1.47,
-      1.1,
-      0.87,
-      0.73
+      3.231,
+      1.952,
+      1.321,
+      1.029,
+      0.821,
+      0.686
     ],
-    "finalDrive": 4.45,
-    "wheelRadiusM": 0.32,
-    "shiftTimeMs": 150
+    "finalDrive": 4.063,
+    "wheelRadiusM": 0.314,
+    "shiftTimeMs": 300
   },
   "dynamics": {
     "massKg": 1400,

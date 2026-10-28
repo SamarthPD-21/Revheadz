@@ -16,17 +16,18 @@
   },
   "gearbox": {
     "type": "sequential",
+    "unit": "6-speed sequential (WRC)",
     "ratios": [
-      2.92,
-      2.12,
-      1.67,
-      1.38,
-      1.17,
-      1
+      12.68,
+      9.35,
+      7.4,
+      6.12,
+      5.28,
+      4.67
     ],
-    "finalDrive": 4.6,
-    "wheelRadiusM": 0.32,
-    "shiftTimeMs": 60
+    "finalDrive": 1.0,
+    "wheelRadiusM": 0.314,
+    "shiftTimeMs": 80
   },
   "dynamics": {
     "massKg": 1230,

@@ -158,7 +158,41 @@ body {
 /* Flat panels with hairline rules, small radii, one accent. No glows. */
 .display { font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.01em; line-height: 0.95; }
 .eyebrow { font-family: var(--font-display); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #a1a1aa; }
-.garage-backdrop { display: none; }
+/* Home: the strip, live and dimmed, behind the hero; it fades into the page and leaves the text side dark */
+.home-backdrop { position: absolute; inset: 0 0 auto 0; height: min(82vh, 760px); pointer-events: none; }
+.home-strip { width: 100%; height: 100%; display: block; opacity: 0.85; -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent); mask-image: linear-gradient(to bottom, #000 55%, transparent); }
+/* wide screens: slide the scene right so the staged cars sit beside the headline, not under it */
+@media (min-width: 1024px) {
+  .home-backdrop { overflow: hidden; }
+  .home-strip { width: 120%; margin-left: 24%; transform: translateY(-9%); }
+}
+/* phones: the scene sits behind the text, so it stays further back */
+@media (max-width: 1023px) {
+  .home-strip { opacity: 0.5; }
+}
+.home-backdrop::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(100deg, rgba(11, 11, 15, 0.92) 0%, rgba(11, 11, 15, 0.7) 38%, rgba(11, 11, 15, 0.1) 70%), linear-gradient(to bottom, rgba(11, 11, 15, 0.5), transparent 20%);
+}
+
+/* Playground and drag lobby: a pit garage, with strip lights in the ceiling and panelled walls */
+.garage-backdrop {
+  display: block;
+  background:
+    radial-gradient(ellipse 60% 70% at 22% -12%, rgba(255, 236, 210, 0.13), transparent 70%),
+    radial-gradient(ellipse 60% 70% at 78% -12%, rgba(255, 236, 210, 0.13), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 140px),
+    linear-gradient(to bottom, #17171d, #0b0b0f 85%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 50%, transparent);
+  mask-image: linear-gradient(to bottom, #000 50%, transparent);
+}
+.garage-backdrop::before, .garage-backdrop::after {
+  /* the two strip lights, with a soft bloom */
+  content: ""; position: absolute; top: 18px; height: 5px; width: 26%; border-radius: 9999px;
+  background: #fff5e6; box-shadow: 0 0 22px 6px rgba(255, 236, 210, 0.35), 0 0 70px 20px rgba(255, 220, 180, 0.12);
+}
+.garage-backdrop::before { left: 9%; }
+.garage-backdrop::after { right: 9%; }
 .stat-pill { display: inline-flex; align-items: baseline; gap: 0.35rem; color: #a1a1aa; }
 .stat-pill b { font-family: var(--font-mono); color: #fafafa; font-weight: 500; }
 .stat-pill + .stat-pill::before { content: "/"; margin-right: 0.35rem; color: #3f3f46; }

@@ -16,6 +16,7 @@
   },
   "gearbox": {
     "type": "manual",
+    "unit": "Honda AP1 6-speed manual",
     "ratios": [
       3.133,
       2.045,
@@ -24,9 +25,9 @@
       0.97,
       0.81
     ],
-    "finalDrive": 4.1,
-    "wheelRadiusM": 0.31,
-    "shiftTimeMs": 220
+    "finalDrive": 4.756,
+    "wheelRadiusM": 0.306,
+    "shiftTimeMs": 260
   },
   "dynamics": {
     "massKg": 1250,

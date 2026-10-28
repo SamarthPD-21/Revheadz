@@ -16,16 +16,17 @@
   },
   "gearbox": {
     "type": "manual",
+    "unit": "CIMA 6-speed manual transaxle",
     "ratios": [
-      3.05,
+      3.0,
       2.06,
       1.52,
-      1.21,
-      1,
-      0.84
+      1.19,
+      0.97,
+      0.76
     ],
-    "finalDrive": 3.45,
-    "wheelRadiusM": 0.34,
+    "finalDrive": 3.364,
+    "wheelRadiusM": 0.344,
     "shiftTimeMs": 300
   },
   "dynamics": {

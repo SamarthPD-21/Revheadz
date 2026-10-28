@@ -3,6 +3,8 @@ import { Logo } from "../components/Logo";
 import { Parade } from "../components/Parade";
 import { Silhouette } from "../components/Silhouette";
 import { CLASSES } from "../lib/drag/classes";
+import { StripBackdrop } from "../components/StripBackdrop";
+import { getVehicle } from "../lib/vehicles";
 import { garageList } from "../lib/vehicles/garage";
 
 const FEEDBACK_URL = process.env.NEXT_PUBLIC_FEEDBACK_URL;
@@ -22,8 +24,15 @@ export default function Home() {
     </span>
   );
 
+  // staged at the line behind the hero: a Supra and a Skyline, the old rivals
+  const staged = [getVehicle("supra_mk4")!, getVehicle("skyline_r34")!] as const;
+
   return (
-    <div className="mx-auto flex min-h-dvh max-w-6xl flex-col px-4 py-6 sm:py-8">
+    <div className="relative overflow-hidden">
+    <div className="home-backdrop" aria-hidden>
+      <StripBackdrop cars={[staged[0], staged[1]]} />
+    </div>
+    <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col px-4 py-6 sm:py-8">
       <header className="flex items-center justify-between">
         <Logo size="md" />
         <Link href="/credits" className="text-sm text-zinc-400 hover:text-zinc-100">
@@ -96,6 +105,7 @@ export default function Home() {
         )}
         <span className="text-xs text-zinc-600">Not affiliated with any manufacturer.</span>
       </footer>
+    </div>
     </div>
   );
 }

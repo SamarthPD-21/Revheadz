@@ -10,6 +10,7 @@ import type { VehicleConfig } from "../lib/vehicles/types";
 import type { SceneCar } from "./drag/scene";
 import { FrameBudget } from "./drag/frameBudget";
 import { DragScene25D } from "./drag/scene25d";
+import type { TimeOfDay } from "../lib/ui/trackTime";
 import { BoostGauge } from "./BoostGauge";
 import { ShiftLights } from "./ShiftLights";
 import { Speedometer } from "./Speedometer";
@@ -67,10 +68,16 @@ interface Props {
   vehicle: VehicleConfig;
   subscribe: Simulation["subscribe"];
   maxKmh: number;
+  timeOfDay: TimeOfDay;
 }
 
-export function TrackView({ sim, vehicle, subscribe, maxKmh }: Props) {
+export function TrackView({ sim, vehicle, subscribe, maxKmh, timeOfDay }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // read by the draw loop every frame, so switching the time of day doesn't restart the scene
+  const timeRef = useRef(timeOfDay);
+  useEffect(() => {
+    timeRef.current = timeOfDay;
+  }, [timeOfDay]);
   const [panel, setPanel] = useState<Panel>({ results: {}, top: 0, running: false, armed: true, fresh: [] });
   const [bests, setBests] = useState<Bests>({});
   // the headline splits by default; the rest on request
@@ -203,6 +210,7 @@ export function TrackView({ sim, vehicle, subscribe, maxKmh }: Props) {
           canvas.height = Math.round(ht * dpr);
         }
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        scene.timeOfDay = timeRef.current;
         try {
           scene.draw(
             {
@@ -211,6 +219,8 @@ export function TrackView({ sim, vehicle, subscribe, maxKmh }: Props) {
               time: now / 1000,
               shake: Math.min(0.5, flame * 0.4),
               proving: { startX: timer.startX, gates: GATES },
+              // the stands come alive for a launch, then settle as the run goes on
+              crowd: timer.running ? Math.max(0.15, 0.8 - (now / 1000 - timer.startT) / 4) : 0.15,
             },
             w,
             ht,

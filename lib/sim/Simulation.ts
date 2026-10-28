@@ -1,4 +1,4 @@
-import type { VehicleConfig } from "../vehicles/types";
+import type { GearboxType, VehicleConfig } from "../vehicles/types";
 import { Engine } from "./Engine";
 import { Gearbox } from "./Gearbox";
 import { LowFreqStore } from "./LowFreqStore";
@@ -32,12 +32,23 @@ const MAX_FRAME_S = 0.1;
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 const smoothstep = (x: number) => x * x * (3 - 2 * x);
 
-/** Timing of each gearbox type: torque-cut phase, then clutch engagement. */
+/**
+ * How each kind of gearbox changes gear: the torque-cut (or clutch handover) phase, then the
+ * engagement. `carry` is the share of drive that keeps reaching the wheels during the first phase:
+ * nothing through an open clutch or a dog-box cut; most of it through a dual-clutch handover or a
+ * torque converter's overlap. `selfShift`: the box changes down on its own when the revs sag
+ * (and an automatic kicks down when you floor it).
+ */
 const SHIFT_STYLE = {
-  manual: { cutScale: 1, engageS: 0.16, crack: false, pullDown: 0 },
-  dct: { cutScale: 1, engageS: 0.05, crack: true, pullDown: 1 },
-  sequential: { cutScale: 0.6, engageS: 0.035, crack: true, pullDown: 1 },
+  manual: { cutScale: 1, engageS: 0.16, crack: false, pullDown: 0, carry: 0, selfShift: false },
+  dct: { cutScale: 1, engageS: 0.05, crack: true, pullDown: 1, carry: 0.6, selfShift: true },
+  amt: { cutScale: 1, engageS: 0.07, crack: true, pullDown: 0.6, carry: 0, selfShift: true },
+  sequential: { cutScale: 0.6, engageS: 0.035, crack: true, pullDown: 1, carry: 0, selfShift: false },
+  auto: { cutScale: 1, engageS: 0.14, crack: false, pullDown: 1, carry: 0.45, selfShift: true },
 } as const;
+/** Torque converter: torque multiplication at stall, and the speed ratio where it couples (1:1). */
+const TC_STALL_GAIN = 2;
+const TC_COUPLING = 0.85;
 
 interface ShiftPlan {
   direction: "up" | "down";
@@ -98,6 +109,9 @@ export class Simulation {
   private blip = 0;
   /** 0-1 clutch engagement after a shift; scales drive torque. */
   private engageProgress = 1;
+  private readonly style: (typeof SHIFT_STYLE)[GearboxType];
+  /** Raw throttle input last step, to spot a stab to the floor (kickdown). */
+  private prevPedal = 0;
 
   constructor(
     private readonly cfg: VehicleConfig,
@@ -105,6 +119,7 @@ export class Simulation {
   ) {
     this.engine = new Engine(cfg.engine);
     this.gearbox = new Gearbox(cfg.gearbox);
+    this.style = SHIFT_STYLE[cfg.gearbox.type ?? "manual"];
   }
 
   subscribe(listener: SimListener): () => void {
@@ -163,7 +178,7 @@ export class Simulation {
       this.shift = null;
       s.shifting = false;
     } else {
-      const style = SHIFT_STYLE[this.cfg.gearbox.type ?? "manual"];
+      const style = this.style;
       const cut = this.gearbox.shiftTimeS * style.cutScale;
       this.shift = {
         direction,
@@ -217,6 +232,17 @@ export class Simulation {
     }
     const running = s.ignition === "running";
 
+    // Automated boxes change down on their own when the revs sag (rolling to a stop in 5th lands
+    // in 1st), and a torque-converter automatic kicks down a gear when you stab the throttle.
+    if (running && !this.shift && this.style.selfShift && s.gear > 1) {
+      const now = this.gearbox.rpmFromSpeed(this.speedKmh(), s.gear);
+      const below = this.gearbox.rpmFromSpeed(this.speedKmh(), s.gear - 1);
+      const sagging = now < eng.idleRpm * 1.1;
+      const kick = this.cfg.gearbox.type === "auto" && this.input.throttle > 0.9 && this.prevPedal < 0.5 && now < eng.redlineRpm * 0.5 && below < eng.redlineRpm * 0.85;
+      if (sagging || kick) this.changeGear(s.gear - 1, "down");
+    }
+    this.prevPedal = this.input.throttle;
+
     // fuel cut / limiter: hold the cut until the revs have dropped back (or time runs out)
     if (this.fuelCutTimer > 0) {
       this.fuelCutTimer -= dt;
@@ -233,6 +259,8 @@ export class Simulation {
     const locked = gear > 0 ? this.gearbox.rpmFromSpeed(this.speedKmh(), gear) : 0;
     let rpm: number;
     let clutchLocked = false;
+    // torque converter slipping: its torque multiplication, 1 when coupled
+    let converterGain = 1;
 
     if (s.ignition === "cranking") {
       rpm = this.freeRpm;
@@ -277,6 +305,24 @@ export class Simulation {
     } else if (gear === 0) {
       this.freeRpm += this.engine.freeRpmRate(this.freeRpm, effThrottle) * dt;
       rpm = this.freeRpm;
+    } else if (this.cfg.gearbox.type === "auto") {
+      // In gear through a torque converter. It lets the engine run up towards its stall speed
+      // against a slow-turning gearbox, multiplying torque as it slips, and couples (its lock-up
+      // clutch closes) once the gearbox catches up. A drag launch is a brake-torque launch: the
+      // converter holds the revs at stall at most.
+      const stall = this.cfg.gearbox.stallRpm ?? eng.idleRpm + 0.3 * (eng.redlineRpm - eng.idleRpm);
+      const launch = this.launchSlipRpm;
+      const want = launch !== null && effThrottle > 0.5 ? Math.min(launch, stall) : eng.idleRpm + effThrottle * (stall - eng.idleRpm);
+      if (locked >= want) {
+        clutchLocked = true;
+        this.freeRpm = locked;
+        rpm = locked;
+      } else {
+        this.freeRpm += (want - this.freeRpm) * Math.min(1, dt * 8);
+        rpm = this.freeRpm;
+        const ratio = rpm > 0 ? locked / rpm : 0;
+        if (ratio < TC_COUPLING) converterGain = 1 + (TC_STALL_GAIN - 1) * (1 - ratio / TC_COUPLING);
+      }
     } else {
       // In gear. Slip the clutch at crawling speed so the engine never stalls.
       const launch = this.launchSlipRpm;
@@ -319,9 +365,14 @@ export class Simulation {
     // 2. road speed
     let force = 0;
     const engaging = Boolean(this.shift && this.shift.cut <= 0);
+    if (gear > 0 && running && inCut && this.style.carry > 0 && this.shift?.direction === "up") {
+      // a dual-clutch handover or a converter's overlap: most of the drive keeps flowing mid-shift
+      const pedal = s.throttle * (fuelCut ? CUT_POWER : 1);
+      force += this.gearbox.wheelForce(this.engine.torque(rpm, pedal) * torqueScale, gear) * this.style.carry;
+    }
     if (gear > 0 && running && !inCut) {
       const clutch = engaging ? this.engageProgress : 1;
-      force += this.gearbox.wheelForce(this.engine.torque(rpm, effThrottle) * torqueScale, gear) * clutch;
+      force += this.gearbox.wheelForce(this.engine.torque(rpm, effThrottle) * torqueScale * converterGain, gear) * clutch;
       if (clutchLocked) {
         force -= this.gearbox.wheelForce(this.engine.brakingTorque(rpm), gear) * (1 - effThrottle);
       }
@@ -345,7 +396,8 @@ export class Simulation {
     // 3. load
     const rising = clamp((rpm - this.engine.rpm) / dt / 3000, 0, 1);
     // the downshift blip is audible: it drives the on-load layer like a real throttle stab
-    const loadTarget = inCut ? this.blip * 0.9 : fuelCut ? 0.08 : effThrottle > 0.02 ? s.throttle * (0.4 + 0.6 * rising) : 0;
+    // (through a handover the engine stays loaded, so it doesn't sound like a lift)
+    const loadTarget = inCut ? Math.max(this.blip * 0.9, this.style.carry * s.throttle) : fuelCut ? 0.08 : effThrottle > 0.02 ? s.throttle * (0.4 + 0.6 * rising) : 0;
     s.load += (loadTarget - s.load) * (1 - pexp(-dt / LOAD_TAU));
 
     this.engine.rpm = rpm;

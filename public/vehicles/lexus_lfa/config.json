@@ -15,7 +15,8 @@
     "crackle": 0.35
   },
   "gearbox": {
-    "type": "dct",
+    "type": "amt",
+    "unit": "Aisin 6-speed ASG single-clutch automated manual",
     "ratios": [
       3.231,
       2.188,
@@ -24,9 +25,9 @@
       0.97,
       0.795
     ],
-    "finalDrive": 4.56,
-    "wheelRadiusM": 0.34,
-    "shiftTimeMs": 150
+    "finalDrive": 4.302,
+    "wheelRadiusM": 0.335,
+    "shiftTimeMs": 200
   },
   "dynamics": {
     "massKg": 1480,

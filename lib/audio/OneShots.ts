@@ -47,6 +47,8 @@ export class OneShots {
     }
     if (opts?.gain !== undefined) gain.gain.value *= opts.gain;
     if (opts?.rate !== undefined) src.playbackRate.value *= opts.rate;
+    const offset = Math.max(0, opts?.offset ?? 0);
+    if (offset >= buffer.duration - 0.05) return;
     src.connect(gain).connect(this.destination);
     this.active.add(src);
     src.onended = () => {
@@ -54,8 +56,6 @@ export class OneShots {
       src.disconnect();
       gain.disconnect();
     };
-    const offset = Math.max(0, opts?.offset ?? 0);
-    if (offset >= buffer.duration - 0.05) return;
     src.start(0, offset);
   }
 

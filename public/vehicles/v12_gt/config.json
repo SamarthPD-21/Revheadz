@@ -15,19 +15,20 @@
     "crackle": 0.3
   },
   "gearbox": {
-    "type": "dct",
+    "type": "auto",
+    "unit": "ZF 6HP26 Touchtronic II 6-speed automatic",
     "ratios": [
-      3.08,
-      2.19,
-      1.63,
-      1.29,
-      1.03,
-      0.84,
-      0.69
+      4.171,
+      2.34,
+      1.521,
+      1.143,
+      0.867,
+      0.691
     ],
-    "finalDrive": 4.68,
-    "wheelRadiusM": 0.35,
-    "shiftTimeMs": 120
+    "finalDrive": 3.15,
+    "wheelRadiusM": 0.332,
+    "shiftTimeMs": 250,
+    "stallRpm": 2300
   },
   "dynamics": {
     "massKg": 1700,

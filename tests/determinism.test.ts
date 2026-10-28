@@ -31,12 +31,15 @@ describe("determinism", () => {
   // Finish times for fixed drive logs, to the last bit. Every browser and the server must get
   // exactly these, or PvP results and verified leaderboards could disagree. If a physics change
   // moves them on purpose, update them here and bump the replay version.
+  // one car per kind of gearbox: manual, torque-converter auto, sequential, bike quickshifter,
+  // dual-clutch and single-clutch automated manual
   const GOLDEN: [string, DriveLog["events"], number][] = [
-    ["supra_mk4", [[183.4, "launch"], [3153.7, "up"], [6204.7, "up"], [10667.7, "up"]], 13517.86599540484],
-    ["hellcat", [[183.4, "launch"], [1920.7, "up"], [3422.7, "up"], [6479.7, "up"], [9993.7, "up"]], 11202.890995249512],
-    ["ferrari_f2004", [[183.4, "launch"], [1942.7, "up"], [2696.7, "up"], [3635.7, "up"], [4859.7, "up"], [6654.7, "up"]], 7827.177023508869],
-    ["panigale_v4", [[183.4, "launch"], [2675.7, "up"], [3914.7, "up"], [5595.7, "up"], [7481.7, "up"]], 8930.48141356451],
-    ["bugatti_chiron", [[183.4, "launch"], [1931.7, "up"], [3066.7, "up"], [4818.7, "up"], [7305.7, "up"]], 9022.790501174304],
+    ["supra_mk4", [[183.4, "launch"], [3153.7, "up"], [6204.7, "up"], [10667.7, "up"]], 13702.653139899581],
+    ["hellcat", [[183.4, "launch"], [1920.7, "up"], [3422.7, "up"], [6479.7, "up"], [9993.7, "up"]], 11251.252501970072],
+    ["ferrari_f2004", [[183.4, "launch"], [1942.7, "up"], [2696.7, "up"], [3635.7, "up"], [4859.7, "up"], [6654.7, "up"]], 8284.894577653857],
+    ["panigale_v4", [[183.4, "launch"], [2675.7, "up"], [3914.7, "up"], [5595.7, "up"], [7481.7, "up"]], 8831.022795555875],
+    ["bugatti_chiron", [[183.4, "launch"], [1931.7, "up"], [3066.7, "up"], [4818.7, "up"], [7305.7, "up"]], 9065.63961042117],
+    ["lexus_lfa", [[183.4, "launch"], [2610.7, "up"], [4402.7, "up"], [6608.7, "up"], [9204.7, "up"]], 11116.706266336916],
   ];
   it("replays fixed drive logs to exactly the recorded finish times", () => {
     for (const [id, events, elapsed] of GOLDEN) expect(replay(loadConfig(id), { assist: true, events }).elapsedMs, id).toBe(elapsed);

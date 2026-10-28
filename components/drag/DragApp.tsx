@@ -7,6 +7,7 @@ import { AudioEngine } from "../../lib/audio/AudioEngine";
 import { decodeChallenge, shareRun, verifyChallenge, type VerifiedChallenge } from "../../lib/drag/challenge";
 import { CPU_LEVELS } from "../../lib/drag/cpu";
 import { hostRoom, joinRoom, normaliseCode, randomCode, type Message, type Player, type Room } from "../../lib/drag/net";
+import { loadTrackTime, saveTrackTime, type TimeOfDay } from "../../lib/ui/trackTime";
 import { CLASSES, classOf, type DragClass } from "../../lib/drag/classes";
 import { decide, dialIn, type DriveKey, type DriveLog, type RunResult } from "../../lib/drag/race";
 import { Simulation } from "../../lib/sim/Simulation";
@@ -82,6 +83,7 @@ export function DragApp() {
   const [shared, setShared] = useState(false);
   // setting a run to send as a challenge (a CPU race whose result you share)
   const [setting, setSetting] = useState(false);
+  const [trackTime, setTrackTime] = useState<TimeOfDay>("night");
 
   const roomRef = useRef<Room | null>(null);
   const cancelRef = useRef<(() => void) | null>(null);
@@ -112,6 +114,7 @@ export function DragApp() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore from storage
     setName(n || `Racer ${Math.floor(1000 + Math.random() * 9000)}`);
     if (c && getVehicle(c)) setCarId(c);
+    setTrackTime(loadTrackTime());
     const a = store.get("revheadz:drag-assist");
     setAssist(a === null ? window.matchMedia("(pointer: coarse)").matches : a === "1");
     const room = new URLSearchParams(window.location.search).get("room");
@@ -616,6 +619,25 @@ export function DragApp() {
                 {shared ? "Link copied. Send it to a friend" : "Challenge a friend to beat this run"}
               </button>
             )}
+            <div className="drag-panel">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Time of day</p>
+              <div className="segmented mt-3 w-fit" style={{ "--accent": "#f59e0b" } as React.CSSProperties} role="group" aria-label="Time of day">
+                {(["night", "dusk"] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    aria-pressed={trackTime === t}
+                    onClick={() => {
+                      setTrackTime(t);
+                      saveTrackTime(t);
+                    }}
+                  >
+                    {t === "night" ? "Night" : "Dusk"}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-zinc-500">{trackTime === "night" ? "Under the floodlights." : "Golden hour, the sun going down behind the stands."}</p>
+            </div>
             <ControlsPanel
               assist={assist}
               onChange={(a) => {

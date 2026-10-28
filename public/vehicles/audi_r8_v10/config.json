@@ -16,18 +16,19 @@
   },
   "gearbox": {
     "type": "dct",
+    "unit": "Audi 7-speed S tronic (0BZ) dual-clutch",
     "ratios": [
-      3.13,
-      2.59,
-      1.96,
-      1.57,
-      1.29,
-      1.09,
-      0.88
+      13.969,
+      9.287,
+      6.746,
+      5.08,
+      4.003,
+      3.171,
+      2.343
     ],
-    "finalDrive": 3.6,
-    "wheelRadiusM": 0.34,
-    "shiftTimeMs": 110
+    "finalDrive": 1.0,
+    "wheelRadiusM": 0.335,
+    "shiftTimeMs": 100
   },
   "dynamics": {
     "massKg": 1555,

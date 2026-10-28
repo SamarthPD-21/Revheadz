@@ -16,16 +16,17 @@
   },
   "gearbox": {
     "type": "manual",
+    "unit": "Ferrari 5-speed manual transaxle",
     "ratios": [
-      2.769,
-      1.684,
-      1.214,
-      0.952,
-      0.823
+      3.692,
+      2.285,
+      1.636,
+      1.284,
+      0.978
     ],
-    "finalDrive": 3.9,
-    "wheelRadiusM": 0.33,
-    "shiftTimeMs": 300
+    "finalDrive": 2.9,
+    "wheelRadiusM": 0.323,
+    "shiftTimeMs": 320
   },
   "dynamics": {
     "massKg": 1250,

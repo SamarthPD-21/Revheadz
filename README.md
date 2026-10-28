@@ -44,12 +44,19 @@ to compare. When you're ready, race a friend or the CPU over the quarter mile. N
 - **Physics-based engine and gearbox**: inertia, torque curve, turbo lag, clutch slip at pull-away, drag and braking
 - **Realistic shifting**: torque cut, a rev-matching blip on downshifts, and clutch engagement, heard through the
   engine note itself
+- **Each car's real gearbox**: the factory gear count, ratios, final drive, tyre size and gearbox type for every
+  machine, and each type behaves like the real thing. A torque-converter automatic (Hellcat, C63, DB9) slips and
+  multiplies torque pulling away, slurs its shifts and kicks down when you floor it; a dual-clutch (GT-R, PDK,
+  Chiron) keeps driving through each shift; a single-clutch automated manual (LFA, Aventador) cuts hard and bites
+  firmly; a manual cuts the drive completely while the clutch is open; race and bike boxes snap through with a
+  quickshifter. Automated boxes change down on their own as you slow
 - **Realistic deceleration**: engine braking that pulls harder in low gears, progressive brakes that ease off as you
   stop, and overrun crackle when you coast at high revs
 - **Rev limiter, backfire pops and turbo blow-off**, which only fire when you actually coast, never on a gear change
 - **Smooth sound**: loops are pitched together and crossfade at constant loudness, so revving doesn't click or warble
-- **An endless drag strip to drive on**: the drive screen is the strip itself, edge to edge, in the same 2.5D night
-  scene as the drag race, with your car's tyre smoke, exhaust flames and pops. Three gauges sit in the corner: a
+- **An endless drag strip to drive on**: the drive screen is the strip itself, edge to edge, in the same 2.5D
+  scene as the drag race, at night under the floodlights or at dusk with the sun going down (the moon/sun button
+  switches), with your car's tyre smoke, exhaust flames and pops. Three gauges sit in the corner: a
   tachometer that bounces off the rev limiter, a speedometer, and a boost gauge that reads manifold pressure like the
   real thing (vacuum with the throttle shut, boost as the turbo or supercharger builds; a vacuum gauge on cars
   without one). Shift lights over them flash at the car's shift point
@@ -131,38 +138,38 @@ every shift light. Pro controls stage with `S`+`W`, launch by letting go of `S`,
 |---|---|---|---|---|---|
 | Toyota Supra MK4 | 1998 | Twin-turbo straight-six | 6-speed manual | 6,800 | 🎙️ Real (YouTube) |
 | Nissan Skyline GT-R R34 | 1999 | Twin-turbo straight-six | 6-speed manual | 8,000 | 🎙️ Real (YouTube) |
-| Nissan GT-R R35 | 2012 | VR38DETT 3.8 L twin-turbo V6 | 6-speed dual-clutch / auto | 7,000 | 🎙️ Real (Sonniss) |
+| Nissan GT-R R35 | 2012 | VR38DETT 3.8 L twin-turbo V6 | 6-speed dual-clutch | 7,000 | 🎙️ Real (Sonniss) |
 | Mazda RX-7 FD3S | 1993 | Twin-turbo two-rotor Wankel | 5-speed manual | 8,000 | 🎙️ Real (YouTube) |
 | Honda S2000 AP1 | 2000 | Naturally aspirated inline-four | 6-speed manual | 8,800 | 🎙️ Real (YouTube) |
 | Subaru Impreza WRX STI | 2006 | Turbocharged flat-four | 6-speed manual | 7,000 | 🎙️ Real (YouTube) |
 | Toyota Chaser JZX100 Tourer V | 1998 | Turbocharged straight-six | 5-speed manual | 7,000 | 🎙️ Real (YouTube) |
 | Nissan 370Z | 2009 | Naturally aspirated V6 | 6-speed manual | 7,500 | 🎙️ Real (YouTube) |
 | Ferrari F40 | 1987 | Twin-turbo flat-plane V8 | 5-speed manual | 7,750 | 🎙️ Real (YouTube) |
-| Lexus LFA | 2011 | Naturally aspirated V10 | 6-speed dual-clutch / auto | 9,000 | 🎙️ Real (YouTube) |
-| Porsche 911 GT3 RS | 2019 | 4.0 L naturally aspirated flat-six, 9,000 rpm | 7-speed dual-clutch / auto | 8,800 | 🎙️ Real (YouTube) |
+| Lexus LFA | 2011 | Naturally aspirated V10 | 6-speed automated manual | 9,000 | 🎙️ Real (YouTube) |
+| Porsche 911 GT3 RS | 2019 | 4.0 L naturally aspirated flat-six, 9,000 rpm | 7-speed dual-clutch | 8,800 | 🎙️ Real (YouTube) |
 | Porsche Carrera GT | 2004 | Naturally aspirated V10 | 6-speed manual | 8,400 | 🎙️ Real (YouTube) |
-| Lamborghini Aventador SVJ | 2019 | Naturally aspirated V12 | 7-speed dual-clutch / auto | 8,500 | 🎙️ Real (YouTube) |
+| Lamborghini Aventador SVJ | 2019 | Naturally aspirated V12 | 7-speed automated manual | 8,500 | 🎙️ Real (YouTube) |
 | Pagani Zonda F | 2005 | Naturally aspirated V12 | 6-speed manual | 7,500 | 🎙️ Real (YouTube) |
-| Bugatti Chiron | 2016 | 8.0 L quad-turbo W16, 1,500 hp | 7-speed dual-clutch / auto | 6,700 | 🎙️ Real (YouTube) |
-| Ferrari 458 Italia Straight Pipes | 2013 | 4.5 L F136 flat-plane V8, straight pipes | 6-speed sequential | 8,800 | 🎙️ Real (Sonniss) |
-| Audi R8 V10 Plus | 2016 | Naturally aspirated V10 | 7-speed dual-clutch / auto | 8,500 | 🎙️ Real (YouTube) |
-| Chevrolet Corvette Z06 | 2023 | 5.5 LT6 flat-plane V8 | 8-speed dual-clutch / auto | 8,500 | 🎙️ Real (YouTube) |
+| Bugatti Chiron | 2016 | 8.0 L quad-turbo W16, 1,500 hp | 7-speed dual-clutch | 6,700 | 🎙️ Real (YouTube) |
+| Ferrari 458 Italia Straight Pipes | 2013 | 4.5 L F136 flat-plane V8, straight pipes | 7-speed dual-clutch | 8,800 | 🎙️ Real (Sonniss) |
+| Audi R8 V10 Plus | 2016 | Naturally aspirated V10 | 7-speed dual-clutch | 8,500 | 🎙️ Real (YouTube) |
+| Chevrolet Corvette Z06 | 2023 | 5.5 LT6 flat-plane V8 | 8-speed dual-clutch | 8,500 | 🎙️ Real (YouTube) |
 | Ford Mustang GT | 2018 | 5.0 Coyote V8 | 6-speed manual | 7,400 | 🎙️ Real (YouTube) |
-| Dodge Challenger SRT Hellcat | 2015 | Supercharged 6.2 HEMI V8 | 8-speed dual-clutch / auto | 6,200 | 🎙️ Real (YouTube) |
-| Plymouth Hemi 'Cuda | 1971 | 426 Hemi big-block V8 | 6-speed manual | 6,200 | 🎙️ Real (Sonniss) |
-| BMW M4 (F82) | 2014 | S55 3.0 L twin-turbo I6 | 7-speed dual-clutch / auto | 7,300 | 🎙️ Real (Sonniss) |
+| Dodge Challenger SRT Hellcat | 2015 | Supercharged 6.2 HEMI V8 | 8-speed automatic | 6,200 | 🎙️ Real (YouTube) |
+| Plymouth Hemi 'Cuda | 1971 | 426 Hemi big-block V8 | 4-speed manual | 6,200 | 🎙️ Real (Sonniss) |
+| BMW M4 (F82) | 2014 | S55 3.0 L twin-turbo I6 | 7-speed dual-clutch | 7,300 | 🎙️ Real (Sonniss) |
 | BMW M3 E46 | 2001 | 3.2 S54 inline-6 | 6-speed manual | 7,900 | 🎙️ Real (YouTube) |
-| Mercedes-AMG C63 | 2008-2014 | 6.2 M156 V8 | 7-speed dual-clutch / auto | 7,000 | 🎙️ Real (YouTube) |
-| Porsche 911 SC | 1981 | 3.0 L air-cooled flat-six | 7-speed dual-clutch / auto | 7,200 | 🎙️ Real (Sonniss) |
-| Aston Martin DB9 | 2017 | 5.9 L NA V12 | 7-speed dual-clutch / auto | 6,750 | 🎙️ Real (Sonniss) |
-| Ford Focus RS | 2016 | 2.3 L EcoBoost turbo I4 | 6-speed dual-clutch / auto | 6,800 | 🎙️ Real (Sonniss) |
+| Mercedes-AMG C63 | 2008-2014 | 6.2 M156 V8 | 7-speed automatic | 7,000 | 🎙️ Real (YouTube) |
+| Porsche 911 SC | 1981 | 3.0 L air-cooled flat-six | 5-speed manual | 7,200 | 🎙️ Real (Sonniss) |
+| Aston Martin DB9 | 2017 | 5.9 L NA V12 | 6-speed automatic | 6,750 | 🎙️ Real (Sonniss) |
+| Ford Focus RS | 2016 | 2.3 L EcoBoost turbo I4 | 6-speed manual | 6,800 | 🎙️ Real (Sonniss) |
 | Ferrari F2004 | 2004 | 3.0 L V10, 19,000 rpm | 7-speed sequential | 18,800 | 🎙️ Real (YouTube) |
 | Williams FW29 | 2007 | Toyota RVX-07 2.4 L V8, 19,000 rpm | 7-speed sequential | 18,500 | 🎙️ Real (Sonniss) |
 | Mazda 787B | 1991 | Four-rotor Wankel | 5-speed manual | 9,000 | 🎙️ Real (YouTube) |
 | Subaru Impreza WRC | 2006 | Turbocharged flat-four, anti-lag | 6-speed sequential | 7,500 | 🎙️ Real (YouTube) |
-| Ducati Panigale V4 R | 2019 | 1,000 cc V4, twin-pulse, 16,000 rpm | 6-speed quickshifter | 15,500 | 🎙️ Real (YouTube) |
-| Kawasaki Ninja H2 | 2015 | 998 cc supercharged inline-four | 6-speed quickshifter | 14,000 | 🎙️ Real (YouTube) |
-| BMW S1000RR | 2015 | 999 cc inline-four | 6-speed quickshifter | 13,500 | 🎙️ Real (Sonniss) |
+| Ducati Panigale V4 R | 2019 | 1,000 cc V4, twin-pulse, 16,000 rpm | 6-speed sequential (quickshifter) | 15,500 | 🎙️ Real (YouTube) |
+| Kawasaki Ninja H2 | 2015 | 998 cc supercharged inline-four | 6-speed sequential (quickshifter) | 14,000 | 🎙️ Real (YouTube) |
+| BMW S1000RR | 2015 | 999 cc inline-four | 6-speed sequential (quickshifter) | 13,500 | 🎙️ Real (Sonniss) |
 | Harley-Davidson Big Twin | 2016 | 45-degree air-cooled V-twin | 6-speed manual | 5,500 | 🎙️ Real (Sonniss) |
 
 Each engine's idle and redline match the machine it was recorded from. Vehicle names are used descriptively; the
@@ -198,7 +205,8 @@ flowchart LR
   matches (a WSOLA-style search) and crossfaded, ending on a splice back to its own start.
 - **Shifting in two phases.** First the drive cuts out. On an upshift the revs fall under engine braking; on a
   downshift an automatic blip matches revs, and you hear it. Then the clutch engages: revs blend onto the new gear
-  and torque returns. Manual, dual-clutch and sequential gearboxes each have their own timing.
+  and torque returns. Each kind of gearbox has its own timing, and the ones with a second clutch or a torque
+  converter keep some drive flowing through the first phase.
 - **Lift-offs are judged.** Backfires, blow-off and overrun crackle only happen once the throttle has stayed shut for
   a moment without a gear change, so lifting to shift never triggers them.
 - **Drag classes are balanced by maths.** Two typical drivers in identical cars finish about ±80 ms apart; a 100 ms

@@ -16,17 +16,18 @@
   },
   "gearbox": {
     "type": "manual",
+    "unit": "Getrag 420G 6-speed manual",
     "ratios": [
-      4.23,
-      2.53,
-      1.67,
-      1.23,
-      1,
-      0.83
+      4.227,
+      2.528,
+      1.669,
+      1.226,
+      1.0,
+      0.828
     ],
     "finalDrive": 3.62,
-    "wheelRadiusM": 0.33,
-    "shiftTimeMs": 250
+    "wheelRadiusM": 0.321,
+    "shiftTimeMs": 300
   },
   "dynamics": {
     "massKg": 1570,

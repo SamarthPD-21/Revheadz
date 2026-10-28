@@ -11,7 +11,7 @@ import { replay, type DriveKey, type DriveLog, type RunResult } from "./race";
  * Bump REPLAY_VERSION whenever a physics change moves replayed times (see the golden times in
  * tests/determinism.test.ts); older links then say so instead of replaying differently.
  */
-export const REPLAY_VERSION = 1;
+export const REPLAY_VERSION = 2;
 
 const KEYS: DriveKey[] = ["launch", "up", "down", "gas+", "gas-", "brake+", "brake-"];
 const MAX_EVENTS = 400;

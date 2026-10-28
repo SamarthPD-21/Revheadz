@@ -21,6 +21,7 @@ import { LogoMark } from "./Logo";
 import { flash } from "./useFrame";
 import { VehiclePicker, type PickerVehicle } from "./VehiclePicker";
 import { markDriven } from "../lib/garageStore";
+import { loadTrackTime, saveTrackTime, type TimeOfDay } from "../lib/ui/trackTime";
 
 export type SoundSet = "recorded" | "generated";
 
@@ -142,6 +143,8 @@ export default function Simulator({ vehicle, prev, next, maxKmh, garage }: Props
   const [soundSet, setSoundSet] = useState<SoundSet>("recorded");
   const [muted, setMuted] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  // client-only component: the remembered time of day can be read straight away
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>(() => loadTrackTime());
   const volumeRef = useRef(0.8);
   const mainRef = useRef<HTMLElement>(null);
   const router = useRouter();
@@ -247,7 +250,7 @@ export default function Simulator({ vehicle, prev, next, maxKmh, garage }: Props
     <main ref={mainRef} className="drive" style={{ "--accent": accent } as React.CSSProperties}>
       {/* the strip fills the screen; everything else floats over it */}
       <section className="drive-stage" aria-label="Drag strip">
-        <TrackView sim={sim} vehicle={vehicle} subscribe={rig.subscribe} maxKmh={maxKmh} />
+        <TrackView sim={sim} vehicle={vehicle} subscribe={rig.subscribe} maxKmh={maxKmh} timeOfDay={timeOfDay} />
       </section>
       <div className="limiter-vignette pointer-events-none fixed inset-0 z-50" />
       <header className="drive-header flex items-center justify-between gap-2">
@@ -269,6 +272,19 @@ export default function Simulator({ vehicle, prev, next, maxKmh, garage }: Props
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
           <IgnitionButton store={sim.store} onPress={press} pending={pending} subscribe={rig.subscribe} compact />
+          <button
+            type="button"
+            className={iconBtn}
+            onClick={() => {
+              const next = timeOfDay === "night" ? "dusk" : "night";
+              setTimeOfDay(next);
+              saveTrackTime(next);
+            }}
+            aria-label={timeOfDay === "night" ? "Switch the strip to dusk" : "Switch the strip to night"}
+            title={timeOfDay === "night" ? "Dusk" : "Night"}
+          >
+            <TimeIcon time={timeOfDay} />
+          </button>
           {canSwitch && (
             <div className="segmented" role="group" aria-label="Sound source">
               {(["recorded", "generated"] as const).map((set) => (
@@ -352,6 +368,19 @@ function Chevron({ dir }: { dir: "left" | "right" }) {
   return (
     <svg viewBox="0 0 16 16" className="h-4 w-4" aria-hidden>
       <path d={dir === "left" ? "M10 3L5 8l5 5" : "M6 3l5 5-5 5"} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** What the strip looks like now: a moon at night, a sun setting behind the horizon at dusk. */
+function TimeIcon({ time }: { time: TimeOfDay }) {
+  return (
+    <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden>
+      {time === "night" ? (
+        <path d="M15.5 12.5A6.5 6.5 0 017.5 4.5a6.5 6.5 0 108 8z" fill="currentColor" />
+      ) : (
+        <path d="M5 13a5 5 0 0110 0M2.5 13h15M10 4v2.2M4.3 6.3l1.5 1.5M15.7 6.3l-1.5 1.5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      )}
     </svg>
   );
 }

@@ -16,6 +16,7 @@
   },
   "gearbox": {
     "type": "sequential",
+    "unit": "Ducati 6-speed, DQS EVO up/down quickshifter",
     "ratios": [
       2.714,
       2.118,
@@ -24,9 +25,9 @@
       1.364,
       1.25
     ],
-    "finalDrive": 4.92,
-    "wheelRadiusM": 0.31,
-    "shiftTimeMs": 60
+    "finalDrive": 5.04,
+    "wheelRadiusM": 0.326,
+    "shiftTimeMs": 50
   },
   "dynamics": {
     "massKg": 255,

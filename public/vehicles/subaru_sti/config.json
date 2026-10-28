@@ -16,6 +16,7 @@
   },
   "gearbox": {
     "type": "manual",
+    "unit": "Subaru TY856 6-speed manual",
     "ratios": [
       3.636,
       2.375,
@@ -25,8 +26,8 @@
       0.756
     ],
     "finalDrive": 3.9,
-    "wheelRadiusM": 0.32,
-    "shiftTimeMs": 270
+    "wheelRadiusM": 0.308,
+    "shiftTimeMs": 300
   },
   "dynamics": {
     "massKg": 1500,

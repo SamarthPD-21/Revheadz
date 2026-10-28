@@ -16,17 +16,18 @@
   },
   "gearbox": {
     "type": "manual",
+    "unit": "Getrag 233 6-speed manual",
     "ratios": [
       3.827,
       2.36,
       1.685,
       1.312,
-      1,
+      1.0,
       0.793
     ],
     "finalDrive": 3.545,
-    "wheelRadiusM": 0.33,
-    "shiftTimeMs": 270
+    "wheelRadiusM": 0.317,
+    "shiftTimeMs": 300
   },
   "dynamics": {
     "massKg": 1560,

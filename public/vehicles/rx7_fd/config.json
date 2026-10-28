@@ -16,16 +16,17 @@
   },
   "gearbox": {
     "type": "manual",
+    "unit": "Mazda 5-speed manual",
     "ratios": [
       3.483,
       2.015,
       1.391,
-      1,
+      1.0,
       0.762
     ],
     "finalDrive": 4.1,
-    "wheelRadiusM": 0.31,
-    "shiftTimeMs": 260
+    "wheelRadiusM": 0.306,
+    "shiftTimeMs": 300
   },
   "dynamics": {
     "massKg": 1280,

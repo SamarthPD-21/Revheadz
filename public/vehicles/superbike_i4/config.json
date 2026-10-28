@@ -16,17 +16,18 @@
   },
   "gearbox": {
     "type": "sequential",
+    "unit": "BMW 6-speed dog gearbox, Shift Assistant Pro",
     "ratios": [
-      2.6,
-      2,
-      1.67,
-      1.44,
-      1.29,
-      1.17
+      2.647,
+      2.091,
+      1.727,
+      1.5,
+      1.36,
+      1.261
     ],
-    "finalDrive": 4.3,
-    "wheelRadiusM": 0.31,
-    "shiftTimeMs": 120
+    "finalDrive": 4.373,
+    "wheelRadiusM": 0.311,
+    "shiftTimeMs": 60
   },
   "dynamics": {
     "massKg": 250,

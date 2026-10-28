@@ -128,7 +128,10 @@ export class AudioEngine {
     if (this.disposed) return;
     if (!this.ctx) {
       const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      this.ctx = new Ctor({ latencyHint: "interactive" });
+      // A slightly bigger output buffer than "interactive" (~10 ms): on a busy machine the smallest
+      // buffer runs dry and the engine note chops up. The extra few ms can't be heard against the
+      // 20 ms parameter smoothing.
+      this.ctx = new Ctor({ latencyHint: "balanced" });
       this.buildGraph(this.ctx);
       void this.load(this.ctx);
     }

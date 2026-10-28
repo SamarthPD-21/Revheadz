@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decodeChallenge, encodeChallenge, quantise, shareRun, verifyChallenge, type Challenge } from "../lib/drag/challenge";
+import { decodeChallenge, encodeChallenge, quantise, REPLAY_VERSION, shareRun, verifyChallenge, type Challenge } from "../lib/drag/challenge";
 import { DragRun, replay, TREE_MS, type DriveLog } from "../lib/drag/race";
 import { loadConfig } from "./helpers";
 
@@ -45,9 +45,11 @@ describe("challenge links", () => {
   it("rejects junk, unknown cars, events that go back in time, and other versions", () => {
     const enc = (o: unknown) => btoa(JSON.stringify(o)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
     expect(decodeChallenge("not base64 at all!")).toBe("invalid");
-    expect(decodeChallenge(enc({ v: 1, n: "x", c: "no_such_car", a: 0, e: [] }))).toBe("car");
-    expect(decodeChallenge(enc({ v: 1, n: "x", c: "supra_mk4", a: 0, e: [1000, 0, -5, 1] }))).toBe("invalid");
-    expect(decodeChallenge(enc({ v: 1, n: "x", c: "supra_mk4", a: 0, e: [1000, 99] }))).toBe("invalid");
+    expect(decodeChallenge(enc({ v: REPLAY_VERSION, n: "x", c: "no_such_car", a: 0, e: [] }))).toBe("car");
+    expect(decodeChallenge(enc({ v: REPLAY_VERSION, n: "x", c: "supra_mk4", a: 0, e: [1000, 0, -5, 1] }))).toBe("invalid");
+    expect(decodeChallenge(enc({ v: REPLAY_VERSION, n: "x", c: "supra_mk4", a: 0, e: [1000, 99] }))).toBe("invalid");
     expect(decodeChallenge(enc({ v: 999, n: "x", c: "supra_mk4", a: 0, e: [] }))).toBe("version");
+    // a link from before the physics last changed can't replay exactly, so it says so
+    expect(decodeChallenge(enc({ v: REPLAY_VERSION - 1, n: "x", c: "supra_mk4", a: 0, e: [] }))).toBe("version");
   });
 });

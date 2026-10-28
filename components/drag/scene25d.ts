@@ -2,6 +2,7 @@ import { EIGHTH_MILE_M, QUARTER_MILE_M, SIXTY_FT_M } from "../../lib/drag/race";
 import type { VehicleConfig } from "../../lib/vehicles/types";
 import { BODIES } from "../Silhouette";
 import type { SceneCar, SceneFrame } from "./scene";
+import type { TimeOfDay } from "../../lib/ui/trackTime";
 
 /**
  * The drag strip in 2.5D, isometric-style (like Project Zomboid or a top-down action RPG):
@@ -276,14 +277,91 @@ export interface ProvingInfo {
   gates: { m: number; label: string }[];
 }
 
-/** A frame for either layout: the strip always has an opponent, the proving ground never does. */
-export type FrameIn = Omit<SceneFrame, "opp"> & { opp: SceneCar | null; proving?: ProvingInfo };
+/**
+ * A frame for either layout: the strip always has an opponent, the proving ground never does.
+ * `crowd` is how worked up the grandstands are, 0-1: they bounce, cheer and fire off camera
+ * flashes harder as it rises (a launch, a close finish).
+ */
+export type FrameIn = Omit<SceneFrame, "opp"> & { opp: SceneCar | null; proving?: ProvingInfo; crowd?: number };
+
+export type { TimeOfDay };
+
+type RGB = [number, number, number];
+/** Everything that changes with the time of day. */
+interface Env {
+  /** Sky, top of the screen to the skyline. */
+  sky: [string, string, string];
+  field: string;
+  asphalt: string;
+  pad: string;
+  seam: string;
+  wall: RGB;
+  stands: [RGB, RGB];
+  /** Distant buildings: their walls, and how bright their windows are. */
+  city: [RGB, RGB];
+  windows: number;
+  /** Light from the towers: the pool on the track, the visible beam, the lamp's own glare. */
+  pool: number;
+  beam: number;
+  lamp: number;
+  haze: string;
+  vignette: string;
+  /** Sky light spilling over the stands from beyond them, and how strong (the sky itself is off the top of the screen). */
+  skyGlow: [string, number];
+  /** A low sun's glare in the far corner, if there is one. */
+  sun: number;
+}
+
+const ENVS: Record<TimeOfDay, Env> = {
+  night: {
+    sky: ["#04040a", "#0a0913", "#1d1520"],
+    field: "#0b0a10",
+    asphalt: "#16151b",
+    pad: "#222128",
+    seam: "#19181e",
+    wall: [58, 57, 64],
+    stands: [[19, 18, 25], [23, 22, 30]],
+    city: [[14, 13, 20], [19, 17, 26]],
+    windows: 0.85,
+    pool: 0.11,
+    beam: 0.24,
+    lamp: 0.9,
+    haze: "rgba(255,236,200,1)",
+    vignette: "rgba(4,4,8,0.6)",
+    skyGlow: ["40,52,96", 0.32],
+    sun: 0,
+  },
+  // golden hour: a low sun behind the city, warm light on everything, the towers just coming on
+  dusk: {
+    sky: ["#2b1d4a", "#9a4a63", "#ffa25c"],
+    field: "#3a2f3a",
+    asphalt: "#4a4048",
+    pad: "#5a4e55",
+    seam: "#4f444b",
+    wall: [150, 124, 120],
+    stands: [[86, 66, 80], [100, 76, 90]],
+    city: [[70, 44, 70], [88, 54, 82]],
+    windows: 0.35,
+    pool: 0.03,
+    beam: 0.07,
+    lamp: 0.45,
+    haze: "rgba(255,200,150,1)",
+    vignette: "rgba(60,20,40,0.42)",
+    skyGlow: ["255,150,95", 0.38],
+    sun: 0.8,
+  },
+};
 
 export class DragScene25D {
   private readonly glows = new Map<string, Canvas>();
   private readonly boards = new Map<string, Canvas>();
   private timing: { canvas: Canvas; ctx: CanvasRenderingContext2D; key: string } | null = null;
-  private crowd: Canvas | null = null;
+  private readonly crowds = new Map<string, Canvas>();
+  private readonly cityTexes = new Map<string, Canvas>();
+  /** Camera flashes going off in the stands: where, and how long ago. */
+  private flashes: { x: number; tier: number; age: number }[] = [];
+  /** Time of day the strip is drawn at. */
+  timeOfDay: TimeOfDay = "night";
   private readonly ads = new Map<string, Canvas>();
   private readonly roundels = new Map<string, Canvas>();
   private puffs: Puff[] = [];
@@ -647,34 +725,81 @@ export class DragScene25D {
    * The grandstand front: rows of seating with a sparse, soft crowd. Low contrast and no
    * pixel-sized detail, so it doesn't shimmer when scaled down and scrolled.
    */
-  private crowdTex() {
-    if (!this.crowd) {
-      // one tier = 12 m of seating, drawn at a realistic scale (~40 px per metre) so heads are
-      // big enough not to shimmer, and softened slightly for clean downscaling
-      const [c, x] = makeCanvas(512, 40);
-      x.fillStyle = "#121118";
+  /**
+   * One tier of crowd, 12 m of seating at ~40 px per metre (so heads don't shimmer), softened
+   * slightly for clean downscaling. `pose` 0 sits; 1 and 2 have different people up on their
+   * feet with arms in the air, so switching between them reads as a crowd bouncing, not a loop.
+   */
+  private crowdTex(pose: number, lit: number) {
+    const key = `${pose}:${lit}`;
+    let c = this.crowds.get(key);
+    if (!c) {
+      const [cv, x] = makeCanvas(512, 40);
+      c = cv;
+      const l = (v: number) => Math.round(v * lit);
+      x.fillStyle = `rgb(${l(18)},${l(17)},${l(24)})`;
       x.fillRect(0, 0, 512, 40);
-      x.fillStyle = "#1a1922";
+      x.fillStyle = `rgb(${l(26)},${l(25)},${l(34)})`;
       x.fillRect(0, 30, 512, 10); // the seat row
       x.filter = "blur(0.8px)";
       let seed = 11;
       const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
       for (let px = 6; px < 506; px += 9 + rand() * 14) {
-        if (rand() < 0.3) continue; // empty seats
+        const empty = rand() < 0.3;
         const hue = Math.floor(rand() * 360);
-        x.fillStyle = `hsl(${hue},12%,${22 + rand() * 9}%)`;
+        const shirt = 22 + rand() * 9;
+        const skin = 20 + rand() * 20;
+        const face = 22 + rand() * 12;
+        const who = rand();
+        if (empty) continue;
+        // on its feet in this pose?
+        const up = pose > 0 && (pose === 1 ? who < 0.45 : who > 0.5);
+        const lift = up ? -5 : 0;
+        x.fillStyle = `hsl(${hue},14%,${shirt * lit}%)`;
         x.beginPath();
-        x.ellipse(px, 26, 6, 8, 0, 0, Math.PI * 2); // shoulders
+        x.ellipse(px, 26 + lift, 6, 8, 0, 0, Math.PI * 2); // shoulders
         x.fill();
-        x.fillStyle = `hsl(${20 + rand() * 20},16%,${22 + rand() * 12}%)`;
+        if (up) {
+          // arms up
+          x.strokeStyle = x.fillStyle;
+          x.lineWidth = 2.5;
+          x.beginPath();
+          x.moveTo(px - 4, 22 + lift);
+          x.lineTo(px - 7, 6 + lift);
+          x.moveTo(px + 4, 22 + lift);
+          x.lineTo(px + 7, 6 + lift);
+          x.stroke();
+        }
+        x.fillStyle = `hsl(${skin},16%,${face * lit}%)`;
         x.beginPath();
-        x.arc(px, 13, 4.5, 0, Math.PI * 2); // head
+        x.arc(px, 13 + lift, 4.5, 0, Math.PI * 2); // head
         x.fill();
       }
       x.filter = "none";
-      this.crowd = c;
+      this.crowds.set(key, c);
     }
-    return this.crowd;
+    return c;
+  }
+
+  /** A building's face of windows, some lit, for the distant skyline. */
+  private cityTex(seed0: number, glow: number) {
+    const key = `${seed0}:${glow}`;
+    let c = this.cityTexes.get(key);
+    if (!c) {
+      const [cv, x] = makeCanvas(64, 128);
+      c = cv;
+      let seed = seed0 * 7919 + 13;
+      const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      for (let r = 4; r < 124; r += 7) {
+        for (let q = 4; q < 60; q += 8) {
+          if (rand() < 0.62) continue;
+          x.fillStyle = `rgba(255,${200 + Math.floor(rand() * 40)},${130 + Math.floor(rand() * 60)},${(0.35 + rand() * 0.5) * glow})`;
+          x.fillRect(q, r, 4, 3);
+        }
+      }
+      this.cityTexes.set(key, c);
+    }
+    return c;
   }
 
   private timingBoard(me: SceneCar, opp: SceneCar) {
@@ -805,25 +930,30 @@ export class DragScene25D {
     const x0 = this.camX - (portrait ? 40 : 55);
     const x1 = this.camX + (portrait ? 55 : 75);
 
-    // night backdrop
-    const bg = ctx.createLinearGradient(0, 0, 0, h);
-    bg.addColorStop(0, "#07060d");
-    bg.addColorStop(1, "#0e0d14");
+    // the sky, down to the skyline (the ground covers the rest)
+    const env = ENVS[this.timeOfDay];
+    const crowd = Math.max(0, Math.min(1, f.crowd ?? 0.15));
+    const skyline = this.p([this.camX, 0, -21])[1];
+    const bg = ctx.createLinearGradient(0, 0, 0, Math.max(h * 0.2, skyline));
+    bg.addColorStop(0, env.sky[0]);
+    bg.addColorStop(0.55, env.sky[1]);
+    bg.addColorStop(1, env.sky[2]);
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, w, h);
 
     // ---- ground (flat, drawn first) ----
     const G = (xa: number, xb: number, za: number, zb: number, fill: string, y = 0) =>
       this.poly([[xa, y, za], [xb, y, za], [xb, y, zb], [xa, y, zb]], fill);
-    G(x0, x1, -60, 60, "#0b0a10");
-    if (proving) this.provingGround(f.proving, G, x0, x1);
+    // (the ground stops behind the stands, where the city and the sky take over)
+    G(x0, x1, -21, 60, env.field);
+    if (proving) this.provingGround(f.proving, G, x0, x1, env);
     else {
       // concrete launch pad for the first 100 m, as at real strips, then asphalt
       const PAD = 100;
-      if (x1 > PAD) G(Math.max(x0, PAD), x1, -WALL_Z, WALL_Z, "#16151b");
+      if (x1 > PAD) G(Math.max(x0, PAD), x1, -WALL_Z, WALL_Z, env.asphalt);
       if (x0 < PAD) {
-        G(Math.max(x0, -12), Math.min(PAD, x1), -WALL_Z, WALL_Z, "#222128");
-        for (let k = Math.ceil(Math.max(x0, -12) / 5); k * 5 < Math.min(PAD, x1); k++) G(k * 5 - 0.03, k * 5 + 0.03, -WALL_Z, WALL_Z, "#19181e");
+        G(Math.max(x0, -12), Math.min(PAD, x1), -WALL_Z, WALL_Z, env.pad);
+        for (let k = Math.ceil(Math.max(x0, -12) / 5); k * 5 < Math.min(PAD, x1); k++) G(k * 5 - 0.03, k * 5 + 0.03, -WALL_Z, WALL_Z, env.seam);
       }
       // laid rubber: the two tyre tracks in each lane, heavy off the line and fading out
       for (const lz of [LANE_Z.me, LANE_Z.opp]) {
@@ -848,13 +978,13 @@ export class DragScene25D {
     }
     // warm pools of light from the towers
     const pool = this.glow("rgba(255,226,180,1)");
-    for (let k = Math.floor((x0 - 10) / 34); k <= Math.ceil(x1 / 34); k++) this.sprite(pool, [k * 34 + 10, 0, -1.5], 22, 0.11, true);
+    for (let k = Math.floor((x0 - 10) / 34); k <= Math.ceil(x1 / 34); k++) this.sprite(pool, [k * 34 + 10, 0, -1.5], 22, env.pool, true);
 
     // ---- everything with height, sorted back to front ----
     const items: Item[] = [];
     const add = (center: V, draw: () => void) => items.push({ depth: this.depth(center), draw });
     const id = (v: V) => v;
-    const wallC: [number, number, number] = [58, 57, 64];
+    const wallC = env.wall;
     const ADS: [string, string][] = proving
       ? [["REVHEADZ", "#f97316"], ["TEST AND TUNE", "#a3a3ad"], ["QUARTER MILE", "#65a30d"]]
       : [["REVHEADZ", "#f97316"], ["QUARTER MILE", "#a3a3ad"], ["STAGE  ·  LAUNCH  ·  SHIFT", "#65a30d"]];
@@ -875,12 +1005,46 @@ export class DragScene25D {
       // near wall (low, in front of everything else)
       add([xa + 6, 0.5, WALL_Z], () => this.solid(box(xa, xb, 0, 0.9, WALL_Z, WALL_Z + 0.35, wallC), id));
       // grandstand tiers behind the far wall, crowd on the front faces
+      // (each block of each tier bounces on its own beat, faster as the crowd gets going)
       for (let t = 0; t < 4; t++) {
         const z1 = -8.6 - t * 2.2;
         const y1 = 1.2 + t * 0.9;
+        const beat = Math.floor(f.time * (0.6 + 4.4 * crowd) + (((k * 31 + t * 17) % 7) + 7) % 7 / 2.3);
+        const pose = crowd < 0.3 ? (beat % 6 === 0 ? 1 : 0) : beat % 3;
         add([xa + 6, y1 / 2, z1 - 1.1], () => {
-          this.solid(box(xa, xb, 0, y1, z1 - 2.2, z1, t % 2 ? [19, 18, 25] : [23, 22, 30]), id);
-          this.image(this.crowdTex(), 512, 40, [xa, y1 + 0.05, z1 + 0.01], [xb, y1 + 0.05, z1 + 0.01], [xa, y1 - 0.85, z1 + 0.01]);
+          this.solid(box(xa, xb, 0, y1, z1 - 2.2, z1, env.stands[t % 2]), id);
+          this.image(this.crowdTex(pose, this.timeOfDay === "dusk" ? 1.9 : 1), 512, 40, [xa, y1 + 0.05, z1 + 0.01], [xb, y1 + 0.05, z1 + 0.01], [xa, y1 - 0.85, z1 + 0.01]);
+        });
+      }
+    }
+    // camera flashes going off in the stands: a few a second, a storm at a launch or a close finish
+    const spawn = (0.4 + 30 * crowd * crowd) * dt;
+    for (let n = Math.floor(spawn + Math.random()); n > 0 && this.flashes.length < 40; n--) {
+      this.flashes.push({ x: x0 + 8 + Math.random() * (x1 - x0 - 16), tier: Math.floor(Math.random() * 4), age: 0 });
+    }
+    const flashSprite = this.glow("rgba(235,240,255,1)");
+    for (const fl of this.flashes) {
+      const z1 = -8.6 - fl.tier * 2.2;
+      const y1 = 1.2 + fl.tier * 0.9 - 0.35;
+      const a = 1 - fl.age / 0.14;
+      add([fl.x, y1, z1 + 0.05], () => this.sprite(flashSprite, [fl.x, y1, z1 + 0.05], 1.1, a, true));
+      fl.age += dt;
+    }
+    this.flashes = this.flashes.filter((fl) => fl.age < 0.14);
+    // the city beyond the track: blocks of buildings with lit windows, against the sky
+    for (let k = Math.floor((x0 - 30) / 26); k <= Math.ceil((x1 + 10) / 26); k++) {
+      let seed = (k * 2654435761) >>> 0;
+      const rand = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
+      for (let i = 0; i < 2; i++) {
+        const bx = k * 26 + rand() * 18;
+        const bw = 6 + rand() * 9;
+        const bz = -24 - rand() * 10;
+        const bh = 9 + rand() * 24;
+        const tex = Math.floor(rand() * 4);
+        const tone = env.city[i % 2];
+        add([bx + bw / 2, bh / 2, bz - 3], () => {
+          this.solid(box(bx, bx + bw, 0, bh, bz - 6, bz, tone), id);
+          this.image(this.cityTex(tex, env.windows), 64, 128, [bx, bh - 0.5, bz + 0.01], [bx + bw, bh - 0.5, bz + 0.01], [bx, 0.5, bz + 0.01]);
         });
       }
     }
@@ -903,14 +1067,30 @@ export class DragScene25D {
         });
       }
     }
-    // light towers on the far side
+    // light towers on the far side, throwing beams down onto the track with haze drifting in them
     const lamp = this.glow("rgba(255,244,214,1)");
+    const mote = this.glow(env.haze);
     for (let k = Math.floor((x0 - 10) / 34); k <= Math.ceil(x1 / 34); k++) {
       const x = k * 34 + 10;
       add([x, 6, -7.4], () => {
         this.solid(box(x - 0.15, x + 0.15, 0, 13, -7.55, -7.25, [40, 39, 48]), id);
         this.solid(box(x - 0.9, x + 0.9, 13, 13.5, -7.8, -7.0, [235, 230, 210], true), id);
-        this.sprite(lamp, [x, 13.2, -7.4], 6, 0.9, true);
+        this.sprite(lamp, [x, 13.2, -7.4], 6, env.lamp, true);
+      });
+      // the beam sits over the track, in front of the stands
+      add([x, 6, -1], () => {
+        const [lx, ly] = this.p([x, 13, -7.2]);
+        const [gx, gy] = this.p([x, 0, 0]);
+        const g = ctx.createLinearGradient(lx, ly, gx, gy);
+        g.addColorStop(0, env.haze.replace(",1)", `,${env.beam})`));
+        g.addColorStop(1, env.haze.replace(",1)", ",0)"));
+        this.poly([[x - 0.8, 13, -7.2], [x + 0.8, 13, -7.2], [x + 9, 0.02, 2], [x - 9, 0.02, 2]], g);
+        for (let i = 0; i < 4; i++) {
+          const ph = k * 1.7 + i * 2.3;
+          const my = 3 + ((f.time * 0.35 + ph) % 1) * 8;
+          const mx = x + Math.sin(f.time * 0.21 + ph) * (2 + my * 0.3);
+          this.sprite(mote, [mx, my, -3 + Math.sin(ph) * 2], 3.2, env.beam * 0.8);
+        }
       });
     }
     // finish gantry with the timing board
@@ -995,10 +1175,30 @@ export class DragScene25D {
     items.sort((a, b) => b.depth - a.depth);
     for (const it of items) it.draw();
 
+    // the sky beyond the stands, felt rather than seen: its light falls over the grandstands from
+    // the top of the screen, and at dusk a low sun glares in from the far corner
+    // (plain alpha blending: a "screen" or "lighter" fill over the whole canvas cost ~10 fps at 1440p)
+    const [glowRgb, glowA] = env.skyGlow;
+    const sg = ctx.createLinearGradient(0, 0, 0, h * 0.5);
+    sg.addColorStop(0, `rgba(${glowRgb},${glowA * 0.6})`);
+    sg.addColorStop(1, `rgba(${glowRgb},0)`);
+    ctx.fillStyle = sg;
+    ctx.fillRect(0, 0, w, h * 0.5);
+    if (env.sun > 0) {
+      const sx = w * 0.12;
+      const sy = -h * 0.08;
+      const sun = ctx.createRadialGradient(sx, sy, 0, sx, sy, Math.max(w, h) * 0.55);
+      sun.addColorStop(0, `rgba(255,214,150,${env.sun})`);
+      sun.addColorStop(0.35, `rgba(255,150,90,${env.sun * 0.35})`);
+      sun.addColorStop(1, "rgba(255,120,80,0)");
+      ctx.fillStyle = sun;
+      ctx.fillRect(0, 0, w * 0.75, h * 0.7);
+    }
+
     // vignette: pulls the eye to the cars and hides the hard edge of the world
     const vg = ctx.createRadialGradient(w / 2, h * 0.55, Math.min(w, h) * 0.35, w / 2, h * 0.55, Math.max(w, h) * 0.75);
     vg.addColorStop(0, "rgba(4,4,8,0)");
-    vg.addColorStop(1, "rgba(4,4,8,0.6)");
+    vg.addColorStop(1, env.vignette);
     ctx.fillStyle = vg;
     ctx.fillRect(0, 0, w, h);
 
@@ -1030,9 +1230,9 @@ export class DragScene25D {
    * The endless strip: two lanes of asphalt with no finish line. The run's start line and the
    * rubber it lays down go wherever you launched; its timing lines follow on from there.
    */
-  private provingGround(info: ProvingInfo | undefined, G: (xa: number, xb: number, za: number, zb: number, fill: string) => void, x0: number, x1: number) {
-    G(x0, x1, -WALL_Z, WALL_Z, "#16151b");
-    for (let k = Math.ceil(x0 / 100); k * 100 < x1; k++) G(k * 100 - 0.04, k * 100 + 0.04, -WALL_Z, WALL_Z, "#121116");
+  private provingGround(info: ProvingInfo | undefined, G: (xa: number, xb: number, za: number, zb: number, fill: string) => void, x0: number, x1: number, env: Env) {
+    G(x0, x1, -WALL_Z, WALL_Z, env.asphalt);
+    for (let k = Math.ceil(x0 / 100); k * 100 < x1; k++) G(k * 100 - 0.04, k * 100 + 0.04, -WALL_Z, WALL_Z, env.seam);
     const s = info?.startX ?? null;
     if (s !== null) {
       for (let k = 0; k < 16; k++) {

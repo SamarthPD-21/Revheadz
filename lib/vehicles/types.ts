@@ -18,18 +18,28 @@ export interface EngineConfig {
 }
 
 /**
- * manual: clutch in, lift, clutch out (slow, long engagement slip).
- * dct: dual-clutch, near-seamless; ignition-cut "crack" on loaded upshifts.
- * sequential: motorcycle with quickshifter (upshift) and auto-blipper (downshift).
+ * manual: H-pattern with a clutch pedal: clutch in, lift, clutch out (drive fully cut, long engagement slip).
+ * dct: dual-clutch: the next gear's clutch takes over as the last lets go, so drive keeps flowing
+ *   through the shift; ignition-cut "crack" on loaded upshifts.
+ * amt: single-clutch automated manual (Lamborghini ISR, Lexus ASG, BMW SMG): an actuator does
+ *   what your left foot would, fast but with a full cut and a firm bite as the clutch closes.
+ * sequential: dog-box race gearbox or a motorcycle with a quickshifter: a very short cut, no clutch.
+ * auto: torque-converter automatic: the converter slips and multiplies torque pulling away,
+ *   shifts are soft overlaps rather than cuts, and it kicks down when you floor it.
  */
-export type GearboxType = "manual" | "dct" | "sequential";
+export type GearboxType = "manual" | "dct" | "amt" | "sequential" | "auto";
 
 export interface GearboxConfig {
   type?: GearboxType;
+  /** The real unit, for the record (e.g. "ZF 8HP90", "Getrag V160"). */
+  unit?: string;
   ratios: number[];
+  /** Final drive. For a motorcycle: primary reduction x sprocket ratio, so ratio x finalDrive = crank / wheel revs. */
   finalDrive: number;
   wheelRadiusM: number;
   shiftTimeMs: number;
+  /** Torque-converter autos: the engine speed the converter lets the engine reach at full throttle against a held car. */
+  stallRpm?: number;
 }
 
 export interface TurboConfig {

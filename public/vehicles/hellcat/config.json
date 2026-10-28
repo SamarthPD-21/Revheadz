@@ -15,20 +15,22 @@
     "crackle": 0.35
   },
   "gearbox": {
-    "type": "dct",
+    "type": "auto",
+    "unit": "TorqueFlite 8HP90 8-speed automatic",
     "ratios": [
-      4.71,
-      3.14,
-      2.1,
-      1.67,
-      1.29,
-      1,
-      0.84,
-      0.67
+      4.714,
+      3.143,
+      2.106,
+      1.667,
+      1.285,
+      1.0,
+      0.839,
+      0.667
     ],
     "finalDrive": 2.62,
-    "wheelRadiusM": 0.36,
-    "shiftTimeMs": 160
+    "wheelRadiusM": 0.353,
+    "shiftTimeMs": 160,
+    "stallRpm": 2400
   },
   "dynamics": {
     "massKg": 2000,

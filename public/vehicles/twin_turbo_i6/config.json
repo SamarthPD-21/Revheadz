@@ -16,18 +16,19 @@
   },
   "gearbox": {
     "type": "dct",
+    "unit": "BMW 7-speed M DCT Drivelogic",
     "ratios": [
-      4.81,
-      2.59,
-      1.7,
-      1.28,
-      1,
-      0.84,
-      0.67
+      4.806,
+      2.593,
+      1.701,
+      1.277,
+      1.0,
+      0.844,
+      0.671
     ],
-    "finalDrive": 3.88,
-    "wheelRadiusM": 0.34,
-    "shiftTimeMs": 110
+    "finalDrive": 3.462,
+    "wheelRadiusM": 0.328,
+    "shiftTimeMs": 100
   },
   "dynamics": {
     "massKg": 1570,

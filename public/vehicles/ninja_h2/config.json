@@ -16,16 +16,17 @@
   },
   "gearbox": {
     "type": "sequential",
+    "unit": "Kawasaki 6-speed dog-ring gearbox, KQS quickshifter",
     "ratios": [
       3.188,
       2.526,
       2.045,
       1.727,
       1.524,
-      1.36
+      1.348
     ],
-    "finalDrive": 3.617,
-    "wheelRadiusM": 0.31,
+    "finalDrive": 3.791,
+    "wheelRadiusM": 0.316,
     "shiftTimeMs": 60
   },
   "dynamics": {

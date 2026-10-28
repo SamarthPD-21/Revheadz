@@ -15,18 +15,20 @@
     "crackle": 0.9
   },
   "gearbox": {
-    "type": "sequential",
+    "type": "dct",
+    "unit": "Getrag 7DCL750 7-speed dual-clutch",
     "ratios": [
       3.08,
-      2.19,
+      2.18,
       1.63,
       1.29,
       1.03,
-      0.84
+      0.84,
+      0.69
     ],
-    "finalDrive": 4.9,
-    "wheelRadiusM": 0.34,
-    "shiftTimeMs": 70
+    "finalDrive": 5.14,
+    "wheelRadiusM": 0.347,
+    "shiftTimeMs": 40
   },
   "dynamics": {
     "massKg": 1260,

@@ -398,7 +398,7 @@ describe("deceleration", () => {
     sim.subscribe((e) => events.push(e.type));
     sim.shiftUp();
     sim.input.throttle = 1;
-    run(sim, 2.5);
+    run(sim, 3.2); // on boost (the 1JZ's real first gear is long)
     sim.input.throttle = 0;
     run(sim, 0.1);
     sim.shiftUp();

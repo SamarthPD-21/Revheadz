@@ -16,17 +16,18 @@
   },
   "gearbox": {
     "type": "manual",
+    "unit": "Getrag V160 6-speed manual",
     "ratios": [
       3.827,
       2.36,
       1.685,
       1.312,
-      1,
+      1.0,
       0.793
     ],
-    "finalDrive": 3.266,
-    "wheelRadiusM": 0.33,
-    "shiftTimeMs": 280
+    "finalDrive": 3.133,
+    "wheelRadiusM": 0.308,
+    "shiftTimeMs": 300
   },
   "dynamics": {
     "massKg": 1570,
