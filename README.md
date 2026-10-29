@@ -95,8 +95,11 @@ to compare. When you're ready, race a friend or the CPU over the quarter mile. N
   pick a time: sunrise, golden hour, the stars), with clear, hazy, foggy or rainy weather, headlights and glowing
   road reflectors after dark, and four cameras: chase, far, bonnet and a cinematic roadside camera you drive past.
   Switch on the **autopilot** (`T`) and it drives for you, holding the speed you set and slowing for the bends it can
-  see coming; **auto gears** (`G`) just changes gear. The cars are the garage's own, built in 3D from the same profiles
-  as the strip, with the same engines, gearboxes and sound
+  see coming; **auto gears** (`G`) just changes gear. Press **`R` for free roam** and the whole map is yours: leave the
+  road and drive across meadows, up hillsides and through the shallows. Hills pull you back and push you on, grass and
+  dirt drag at the wheels, steep slopes slide you sideways and deep water stops you; dust and spray fly off the tyres.
+  Clouds drift overhead and glow at sunset, trees and grass sway in the wind and the lakes ripple. The cars are the
+  garage's own, built in 3D from the same profiles as the strip, with the same engines, gearboxes and sound
 - **Free to host**: a static site you can put on Vercel, Netlify or Cloudflare Pages
 
 ## Quick start
@@ -134,9 +137,11 @@ npm run dev          # http://localhost:3000
 | `V` | Vehicle name in the header | Switch vehicle (searchable list) |
 | `/` | | Search the Playground |
 
-In Cruise, `A` / `D` (or `←` / `→`) move across the road (it eases back into your lane when you let go), `C`
-changes camera, `T` toggles the autopilot (then `W` / `S` set its speed), `G` toggles auto gears and `H` hides the
-HUD. Drag the mouse to look round the car. On a touch screen the car keeps its lane by itself.
+In Cruise, `A` / `D` (or `←` / `→`) move across the road (it eases back into your lane when you let go), `R`
+switches free roam on and off (then `A` / `D` steer anywhere, and `R` again puts you back on the road), `C` changes
+camera, `T` toggles the autopilot (then `W` / `S` set its speed), `G` toggles auto gears and `H` hides the HUD. Drag
+the mouse to look round the car. On a touch screen the car keeps its lane by itself, and free roam adds steering
+arrows.
 
 In a drag race, Simple controls put everything on one button (`Space`, or tap): launch on the green, then shift on
 every shift light. Pro controls stage with `S`+`W`, launch by letting go of `S`, and shift with `E`/`Q`.
@@ -211,8 +216,11 @@ flowchart LR
   along it with an 8% grade limit, so it rides the hills like a real road. The ground (`lib/cruise/terrain.ts`) is
   fractal noise, flattened into a verge under the road and banked up or down to it. It is drawn as 160 m tiles that
   are built a few per frame around the camera, plus a coarse far layer out to the horizon. The simulation still
-  only knows speed along a straight line; the scene places the car on the road from it and adds the lane, body roll
-  and pitch. The resolution adapts to hold 60 fps.
+  only knows speed along a line (plus gravity on a slope); the scene places the car on the road from it and adds the
+  lane, body roll and pitch. In free roam it steers with a bicycle model whose grip runs out, and stands on the
+  ground through a probe (`lib/cruise/ground.ts`) that rebuilds the very triangles the ground is drawn with. Clouds,
+  rippling water, wind in the trees and grass, and the dust and spray are small shaders. The resolution adapts to
+  hold 60 fps.
 - **Splits to the millisecond.** The page samples the car once a frame, and every split, and the moment the revs
   reach the shift light, is interpolated between samples, so timing doesn't depend on the frame rate.
 - **Sample blending.** Each vehicle has looping recordings at several RPMs, for on-load (accelerating) and overrun.
