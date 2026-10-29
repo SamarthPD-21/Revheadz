@@ -96,7 +96,13 @@ to compare. When you're ready, race a friend or the CPU over the quarter mile. N
   road reflectors after dark, and five cameras: chase (it swings round as the car slides), far, bonnet, a high drone
   and a film camera by the road that you drive past. The car handles on a tyre model: grip that runs out, weight on
   each axle, power that can step a rear-drive car's tail out, and traction and stability control to catch it. On the
-  road a lane assist steers it; choose **Manual** or **Automatic** gears. Your world is remembered: come back and
+  road a lane assist steers it; choose **Manual** or **Automatic** gears. In Manual, a car with a clutch pedal
+  **stalls** like a real one: brake to a stop in gear, pull away in 3rd, or lug a tall gear below idle, and it dies
+  (`N`, then `I` to restart). Every car has its own **grip**: tyres (slicks and semi-slicks grip more, a muscle
+  car's less), how they cope off the tarmac (the rally car is best on dirt, slicks are hopeless) and downforce for
+  the racers; the HUD shows the surface and your grip on it. **Traction is real**: the tyres can only put down so much
+  of the engine's torque, set by the grip and the weight on the driven wheels (which shifts back under power and
+  uphill), so a rear-drive car spins its wheels and stalls its climb on a steep grassy hill that all-wheel drive walks up. Your world is remembered: come back and
   you're on the same road where you left it, with the map loaded from the browser, and a trip computer (distance,
   time on the move, average speed) carries on. **Back to road** (`B`) puts you on the nearest bit of road.
   Switch on the **autopilot** (`T`) and it drives for you, holding the speed you set and slowing for the bends it can
@@ -227,7 +233,9 @@ flowchart LR
   axle, tyre force that levels off at the grip of the surface, and a friction circle, so accelerating or braking
   leaves less grip for cornering. On the road the lane assist steers it by pure pursuit. It stands on the ground
   through a probe (`lib/cruise/ground.ts`) that rebuilds the very triangles the ground is drawn with. Built map
-  tiles are kept in IndexedDB (`lib/cruise/tileCache.ts`) and loaded back on the next visit. Clouds,
+  tiles are kept in IndexedDB (`lib/cruise/tileCache.ts`) and loaded back on the next visit. The simulation takes
+  two optional extras for the cruise, both off on the strip so drag races and replays are untouched: a traction limit
+  (drive past it becomes wheelspin, and the revs flare) and stalling. Clouds,
   rippling water, wind in the trees and grass, and the dust and spray are small shaders. The resolution adapts to
   hold 60 fps.
 - **Splits to the millisecond.** The page samples the car once a frame, and every split, and the moment the revs
