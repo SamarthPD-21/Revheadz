@@ -104,7 +104,9 @@ to compare. When you're ready, race a friend or the CPU over the quarter mile. N
   of the engine's torque, set by the grip and the weight on the driven wheels (which shifts back under power and
   uphill), so a rear-drive car spins its wheels and stalls its climb on a steep grassy hill that all-wheel drive walks up. Your world is remembered: come back and
   you're on the same road where you left it, with the map loaded from the browser, and a trip computer (distance,
-  time on the move, average speed) carries on. **Back to road** (`B`) puts you on the nearest bit of road.
+  time on the move, average speed) carries on. **Back to road** (`B`) puts you on the nearest bit of road. Pick a
+  **frame rate** (60, 90 by default, 120, or Max): on a screen that refreshes faster, frames are paced to hold it,
+  and the picture sharpens or softens to keep up (the panel shows the frames you're getting and your screen's rate).
   Switch on the **autopilot** (`T`) and it drives for you, holding the speed you set and slowing for the bends it can
   see coming; `G` switches between manual and automatic gears. Press **`R` for free roam** and the whole map is yours: leave the
   road and drive across meadows, up hillsides and through the shallows. Hills pull you back and push you on, grass and
@@ -237,7 +239,7 @@ flowchart LR
   two optional extras for the cruise, both off on the strip so drag races and replays are untouched: a traction limit
   (drive past it becomes wheelspin, and the revs flare) and stalling. Clouds,
   rippling water, wind in the trees and grass, and the dust and spray are small shaders. The resolution adapts to
-  hold 60 fps.
+  hold the chosen frame rate (`lib/cruise/frameGate.ts` paces the frames and measures the screen's refresh).
 - **Splits to the millisecond.** The page samples the car once a frame, and every split, and the moment the revs
   reach the shift light, is interpolated between samples, so timing doesn't depend on the frame rate.
 - **Sample blending.** Each vehicle has looping recordings at several RPMs, for on-load (accelerating) and overrun.
