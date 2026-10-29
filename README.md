@@ -93,9 +93,14 @@ to compare. When you're ready, race a friend or the CPU over the quarter mile. N
   The road and the land are grown from a seed as you drive: rolling hills, forest, meadow and dry gold country,
   lakes, and mountains that rise away from the road so it threads the valleys between them. The day goes by (or
   pick a time: sunrise, golden hour, the stars), with clear, hazy, foggy or rainy weather, headlights and glowing
-  road reflectors after dark, and four cameras: chase, far, bonnet and a cinematic roadside camera you drive past.
+  road reflectors after dark, and five cameras: chase (it swings round as the car slides), far, bonnet, a high drone
+  and a film camera by the road that you drive past. The car handles on a tyre model: grip that runs out, weight on
+  each axle, power that can step a rear-drive car's tail out, and traction and stability control to catch it. On the
+  road a lane assist steers it; choose **Manual** or **Automatic** gears. Your world is remembered: come back and
+  you're on the same road where you left it, with the map loaded from the browser, and a trip computer (distance,
+  time on the move, average speed) carries on. **Back to road** (`B`) puts you on the nearest bit of road.
   Switch on the **autopilot** (`T`) and it drives for you, holding the speed you set and slowing for the bends it can
-  see coming; **auto gears** (`G`) just changes gear. Press **`R` for free roam** and the whole map is yours: leave the
+  see coming; `G` switches between manual and automatic gears. Press **`R` for free roam** and the whole map is yours: leave the
   road and drive across meadows, up hillsides and through the shallows. Hills pull you back and push you on, grass and
   dirt drag at the wheels, steep slopes slide you sideways and deep water stops you; dust and spray fly off the tyres.
   Clouds drift overhead and glow at sunset, trees and grass sway in the wind and the lakes ripple. The cars are the
@@ -138,8 +143,9 @@ npm run dev          # http://localhost:3000
 | `/` | | Search the Playground |
 
 In Cruise, `A` / `D` (or `←` / `→`) move across the road (it eases back into your lane when you let go), `R`
-switches free roam on and off (then `A` / `D` steer anywhere, and `R` again puts you back on the road), `C` changes
-camera, `T` toggles the autopilot (then `W` / `S` set its speed), `G` toggles auto gears and `H` hides the HUD. Drag
+switches free roam on and off (then `A` / `D` steer anywhere, and `R` again hands back to the lane assist), `B` puts
+you back on the nearest road, `C` changes camera, `T` toggles the autopilot (then `W` / `S` set its speed), `G` switches
+manual and automatic gears and `H` hides the HUD. Drag
 the mouse to look round the car. On a touch screen the car keeps its lane by itself, and free roam adds steering
 arrows.
 
@@ -217,8 +223,11 @@ flowchart LR
   fractal noise, flattened into a verge under the road and banked up or down to it. It is drawn as 160 m tiles that
   are built a few per frame around the camera, plus a coarse far layer out to the horizon. The simulation still
   only knows speed along a line (plus gravity on a slope); the scene places the car on the road from it and adds the
-  lane, body roll and pitch. In free roam it steers with a bicycle model whose grip runs out, and stands on the
-  ground through a probe (`lib/cruise/ground.ts`) that rebuilds the very triangles the ground is drawn with. Clouds,
+  lane, body roll and pitch. It steers with a dynamic bicycle model (`lib/cruise/handling.ts`): slip angles at each
+  axle, tyre force that levels off at the grip of the surface, and a friction circle, so accelerating or braking
+  leaves less grip for cornering. On the road the lane assist steers it by pure pursuit. It stands on the ground
+  through a probe (`lib/cruise/ground.ts`) that rebuilds the very triangles the ground is drawn with. Built map
+  tiles are kept in IndexedDB (`lib/cruise/tileCache.ts`) and loaded back on the next visit. Clouds,
   rippling water, wind in the trees and grass, and the dust and spray are small shaders. The resolution adapts to
   hold 60 fps.
 - **Splits to the millisecond.** The page samples the car once a frame, and every split, and the moment the revs
