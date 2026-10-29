@@ -25,6 +25,8 @@ export interface Drive {
   throttle: number;
   /** Brake pedal, 0-1 (taillights, and grip). */
   brake: number;
+  /** 0-1: how hard the driven wheels are spinning (smoke, dust). */
+  wheelspin: number;
   /** -1 full left .. 1 full right; 0 lets the lane assist take it back to the lane. */
   steer: number;
   ignition: boolean;
@@ -87,6 +89,8 @@ export class CruiseScene {
   private chassis: Chassis;
   /** How hard the tyres are sliding, 0-1. */
   private slide = 0;
+  /** How hard the driven wheels are spinning, 0-1 (from the simulation). */
+  private spin = 0;
   private carY = 0;
   private tiltP = 0;
   private tiltR = 0;
@@ -335,6 +339,7 @@ export class CruiseScene {
 
     const v = drive.speedKmh / 3.6;
     this.distance += v * dt;
+    this.spin = drive.wheelspin;
     this.drive(drive, v, dt);
     const accel = dt > 0 ? (v - this.prevV) / dt : 0;
     this.accelSm = damp(this.accelSm, accel, 3, dt);
@@ -359,13 +364,41 @@ export class CruiseScene {
     else this.renderer.render(this.scene, this.camera);
   }
 
-  /** How much grip the surface under the car has. */
-  private grip(): number {
+  /** What's under the tyres, and its grip for an ordinary road tyre. */
+  private ground(): { name: string; mu: number; loose: boolean } {
     const f = this.footing;
-    if (!f) return 1;
-    if (f.depth > 0.05) return 0.35;
-    if (f.road) return this.atmo.light.wet > 0 ? 0.72 : 1;
-    return 0.62 - 0.12 * f.dry; // grass grips better than loose dry dirt
+    if (!f) return { name: "Tarmac", mu: 1, loose: false };
+    if (f.depth > 0.05) return { name: "Water", mu: 0.35, loose: true };
+    if (f.road) return this.atmo.light.wet > 0 ? { name: "Wet tarmac", mu: 0.72, loose: false } : { name: "Tarmac", mu: 1, loose: false };
+    const wet = this.atmo.light.wet > 0 ? 0.8 : 1;
+    // grass grips better than loose dry dirt and sand
+    return f.dry > 0.6 ? { name: "Dirt", mu: 0.55 * wet, loose: true } : { name: "Grass", mu: (0.64 - 0.1 * f.dry) * wet, loose: true };
+  }
+
+  /** Grip under this car's tyres: the surface's, times what its tyres make of it. */
+  private grip(): number {
+    const g = this.ground();
+    return g.mu * this.chassis.tyre * (g.loose ? this.chassis.offRoad : 1);
+  }
+
+  /**
+   * The most force the driven wheels can put down before they spin, N: grip times the weight on
+   * them. Weight moves onto the rear under power and up a hill (good for a rear-drive car); an
+   * all-wheel-drive car has all four. Downforce adds to it at speed.
+   */
+  get traction(): number {
+    const c = this.chassis;
+    const grade = Math.tan(this.tiltP);
+    const v = this.prevV;
+    const transfer = ((this.accelSm / G + grade) * c.cgHeight) / c.wheelbase; // share of the weight that moves back
+    const share = c.rearDrive < 1 ? 1 : THREE.MathUtils.clamp(1 - c.front + transfer, 0.25, 0.9);
+    const load = c.massKg * G / Math.sqrt(1 + grade * grade) + c.downforce * v * v;
+    return this.grip() * load * share;
+  }
+
+  /** The surface under the car and how its grip compares with a road car's on dry tarmac. */
+  get gripInfo(): { name: string; factor: number } {
+    return { name: this.ground().name, factor: this.grip() };
   }
 
   /**
@@ -472,23 +505,30 @@ export class CruiseScene {
   /** What the rear wheels throw up: dust off the road, spray in water, a mist on wet tarmac. */
   private kickUp(dt: number, v: number) {
     const f = this.footing;
-    let kind: "dust" | "spray" | "mist" | null = null;
-    if (f && f.depth > 0.05 && v > 1) kind = "spray";
-    else if (f && !f.road && v > 2) kind = "dust";
+    let kind: "dust" | "spray" | "mist" | "smoke" | null = null;
+    const spin = this.spin;
+    if (f && f.depth > 0.05 && (v > 1 || spin > 0.2)) kind = "spray";
+    else if (f && !f.road && (v > 2 || spin > 0.2)) kind = "dust";
+    else if (spin > 0.25 || this.slide > 0.45) kind = "smoke";
     else if (this.atmo.light.wet > 0 && v > 12) kind = "mist";
     if (!kind) {
       this.puffDue = 0;
       return;
     }
-    this.puffDue += (kind === "spray" ? 1.5 : kind === "dust" ? 0.9 : 0.35) * v * dt;
+    // spinning wheels throw it up even standing still
+    const rate = kind === "smoke" ? 26 * Math.max(spin, this.slide) : (kind === "spray" ? 1.5 : kind === "dust" ? 0.9 : 0.35) * Math.max(v, spin * 20);
+    this.puffDue += rate * dt;
     if (this.puffDue < 1) return;
     const color =
       kind === "dust"
         ? srgbColor(0.3, 0.24, 0.16).lerp(srgbColor(0.74, 0.64, 0.46), f?.dry ?? 0.5)
         : kind === "spray"
           ? srgbColor(0.86, 0.9, 0.95)
-          : srgbColor(0.72, 0.74, 0.78);
-    const [life, size, opacity, lift] = kind === "dust" ? [1.7, 0.7, 0.35 + 0.3 * (f?.dry ?? 0.5), 1.4] : kind === "spray" ? [0.9, 0.5, 0.6, 3] : [0.8, 0.9, 0.16, 0.6];
+          : kind === "smoke"
+            ? srgbColor(0.88, 0.88, 0.9)
+            : srgbColor(0.72, 0.74, 0.78);
+    const [life, size, opacity, lift] =
+      kind === "dust" ? [1.7, 0.7, 0.35 + 0.3 * (f?.dry ?? 0.5), 1.4] : kind === "spray" ? [0.9, 0.5, 0.6, 3] : kind === "smoke" ? [2.4, 0.9, 0.42, 0.9] : [0.8, 0.9, 0.16, 0.6];
     this.carRoot.updateMatrixWorld(true);
     const fwd = tmpV.set(1, 0, 0).transformDirection(this.carRoot.matrixWorld).clone();
     const at = new THREE.Vector3();
