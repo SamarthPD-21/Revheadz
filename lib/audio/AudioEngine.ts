@@ -323,7 +323,8 @@ export class AudioEngine {
 
   handleEvent(e: SimEvent): void {
     // Shifts are heard through the engine note itself (rpm drop, rev-match blip); no clunks or cracks.
-    if (e.type === "limiter" || e.type === "shift" || e.type === "shiftCrack") return;
+    // (a stall is heard as the stop that follows it)
+    if (e.type === "limiter" || e.type === "shift" || e.type === "shiftCrack" || e.type === "stall") return;
     if (e.type === "crackle") {
       // each crackle is a whole cluster of pops, so don't stack them on top of each other
       const now = performance.now();

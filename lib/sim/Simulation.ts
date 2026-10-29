@@ -82,6 +82,11 @@ export class Simulation {
    * part-throttle slip) until the wheels catch up. Off (null) for normal driving.
    */
   launchSlipRpm: number | null = null;
+  /**
+   * Driving with a clutch you work yourself (manual or sequential, shifting by hand): the
+   * engine dies if it's dragged below idle in gear. Off on the strip.
+   */
+  canStall = false;
   readonly store = new LowFreqStore();
 
   private readonly engine: Engine;
@@ -112,6 +117,9 @@ export class Simulation {
   private readonly style: (typeof SHIFT_STYLE)[GearboxType];
   /** Raw throttle input last step, to spot a stab to the floor (kickdown). */
   private prevPedal = 0;
+  /** How much faster the driven wheels turn than the road, as a fraction (wheelspin). */
+  private wheelSlip = 0;
+  private stallTimer = 0;
 
   constructor(
     private readonly cfg: VehicleConfig,
@@ -256,7 +264,9 @@ export class Simulation {
     const effThrottle = running && !inCut ? s.throttle * (fuelCut ? CUT_POWER : 1) : 0;
 
     const gear = s.gear;
-    const locked = gear > 0 ? this.gearbox.rpmFromSpeed(this.speedKmh(), gear) : 0;
+    // spinning wheels turn the gearbox faster than the road speed says
+    const wheelRpm = gear > 0 ? this.gearbox.rpmFromSpeed(this.speedKmh(), gear) : 0;
+    const locked = this.wheelSlip ? wheelRpm * (1 + this.wheelSlip) : wheelRpm;
     let rpm: number;
     let clutchLocked = false;
     // torque converter slipping: its torque multiplication, 1 when coupled
@@ -362,21 +372,35 @@ export class Simulation {
     }
     const torqueScale = turbo ? 0.65 + 0.45 * s.boost : 1;
 
-    // 2. road speed
+    // 2. road speed (drive: what the engine puts through the wheels; force: everything)
+    let drive = 0;
     let force = 0;
     const engaging = Boolean(this.shift && this.shift.cut <= 0);
     if (gear > 0 && running && inCut && this.style.carry > 0 && this.shift?.direction === "up") {
       // a dual-clutch handover or a converter's overlap: most of the drive keeps flowing mid-shift
       const pedal = s.throttle * (fuelCut ? CUT_POWER : 1);
-      force += this.gearbox.wheelForce(this.engine.torque(rpm, pedal) * torqueScale, gear) * this.style.carry;
+      drive += this.gearbox.wheelForce(this.engine.torque(rpm, pedal) * torqueScale, gear) * this.style.carry;
     }
     if (gear > 0 && running && !inCut) {
       const clutch = engaging ? this.engageProgress : 1;
-      force += this.gearbox.wheelForce(this.engine.torque(rpm, effThrottle) * torqueScale * converterGain, gear) * clutch;
+      drive += this.gearbox.wheelForce(this.engine.torque(rpm, effThrottle) * torqueScale * converterGain, gear) * clutch;
       if (clutchLocked) {
         force -= this.gearbox.wheelForce(this.engine.brakingTorque(rpm), gear) * (1 - effThrottle);
       }
     }
+    // the tyres can only put down so much: past that, the wheels spin and the revs flare
+    const traction = this.input.traction;
+    if (traction !== undefined) {
+      let slip = 0;
+      if (drive > traction) {
+        slip = Math.min(0.5, 0.05 + ((drive - traction) / Math.max(1, traction)) * 0.6);
+        drive = traction;
+      }
+      this.wheelSlip += (slip - this.wheelSlip) * Math.min(1, dt * 6);
+      if (this.wheelSlip < 1e-4) this.wheelSlip = 0;
+      s.wheelspin = this.wheelSlip / 0.5;
+    }
+    force += drive;
     const v = this.speedMs;
     if (v > 0) {
       force -= 0.5 * AIR_DENSITY * this.cfg.dynamics.cdA * v * v;
@@ -395,7 +419,28 @@ export class Simulation {
     if (prevSpeed === 0 && force < 0) this.speedMs = 0;
 
     // re-derive rpm from the updated speed when the clutch is locked
-    if (clutchLocked) rpm = clamp(this.gearbox.rpmFromSpeed(this.speedKmh(), gear), eng.idleRpm, eng.limiterRpm);
+    if (clutchLocked) {
+      const wheels = this.gearbox.rpmFromSpeed(this.speedKmh(), gear);
+      rpm = clamp(this.wheelSlip ? wheels * (1 + this.wheelSlip) : wheels, eng.idleRpm, eng.limiterRpm);
+    }
+
+    // stalling: with a clutch pedal and no one dipping it, the engine dies when the wheels drag
+    // it well below idle: braking to a stop in gear, pulling away in too high a gear, or
+    // lugging along in a tall gear off the throttle (1st and 2nd slip the clutch, like a driver)
+    if (this.canStall && running && gear > 0 && !this.shift && !this.style.selfShift) {
+      const dragged = this.gearbox.rpmFromSpeed(this.speedKmh(), gear) < eng.idleRpm * 0.7;
+      const bogging = dragged && (this.brake > 0.2 || gear >= 3 || (gear >= 2 && s.throttle < 0.05));
+      this.stallTimer = bogging ? this.stallTimer + dt : 0;
+      if (this.stallTimer > 0.5) {
+        this.stallTimer = 0;
+        s.ignition = "off";
+        this.pops.length = 0;
+        this.emit({ type: "stall" });
+        this.emit({ type: "stop" });
+        this.publish();
+        return;
+      }
+    } else this.stallTimer = 0;
 
     // 3. load
     const rising = clamp((rpm - this.engine.rpm) / dt / 3000, 0, 1);
