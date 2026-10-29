@@ -22,11 +22,15 @@ const DASH_PERIOD = 12;
 
 const SECTION = ROAD_SECTION;
 
-type TreeKind = "pine" | "broad" | "bush" | "rock";
+type TreeKind = "pine" | "broad" | "bush" | "rock" | "grass";
 
 /** Colours here are picked as sRGB; vertex and instance colours are linear. */
 const lin = (c: number) => Math.pow(c, 2.2);
-const KINDS: TreeKind[] = ["pine", "broad", "bush", "rock"];
+const KINDS: TreeKind[] = ["pine", "broad", "bush", "rock", "grass"];
+/** Grass grows only this close (in tiles): tufts are tiny, and there are a lot of them. */
+const GRASS_RING = 1.6;
+/** Instances per kind, at most. */
+const CAP: Record<TreeKind, number> = { pine: 26000, broad: 26000, bush: 26000, rock: 26000, grass: 30000 };
 
 interface Tile {
   mesh: THREE.Mesh;
@@ -93,6 +97,37 @@ function roadTexture(): THREE.CanvasTexture {
   return t;
 }
 
+/**
+ * A tiling ripple normal map for the water: a handful of sine swells whose wavelengths fit
+ * the tile exactly, so it repeats without a seam.
+ */
+function rippleNormals(): THREE.DataTexture {
+  const N = 256;
+  const rand = mulberry32(5);
+  const waves = Array.from({ length: 9 }, () => ({ kx: Math.round(1 + rand() * 7) * (rand() < 0.5 ? -1 : 1), kz: Math.round(1 + rand() * 7), a: 0.4 + rand(), ph: rand() * Math.PI * 2 }));
+  const h = (x: number, z: number) => waves.reduce((sum, w) => sum + w.a * Math.sin(((w.kx * x + w.kz * z) / N) * Math.PI * 2 + w.ph) / Math.hypot(w.kx, w.kz), 0);
+  const data = new Uint8Array(N * N * 4);
+  for (let z = 0; z < N; z++) {
+    for (let x = 0; x < N; x++) {
+      const dx = h(x + 1, z) - h(x - 1, z);
+      const dz = h(x, z + 1) - h(x, z - 1);
+      const l = Math.hypot(dx * 6, 1, dz * 6);
+      const k = (z * N + x) * 4;
+      data[k] = (((-dx * 6) / l) * 0.5 + 0.5) * 255;
+      data[k + 1] = (((-dz * 6) / l) * 0.5 + 0.5) * 255;
+      data[k + 2] = ((1 / l) * 0.5 + 0.5) * 255;
+      data[k + 3] = 255;
+    }
+  }
+  const t = new THREE.DataTexture(data, N, N, THREE.RGBAFormat);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.generateMipmaps = true;
+  t.minFilter = THREE.LinearMipmapLinearFilter;
+  t.magFilter = THREE.LinearFilter;
+  t.needsUpdate = true;
+  return t;
+}
+
 /** Low-poly plants and rocks, each one mesh with its colours baked in. */
 function plantGeometry(kind: TreeKind): THREE.BufferGeometry {
   const part = (g: THREE.BufferGeometry, color: [number, number, number], y: number, sx = 1, sy = 1, sz = 1, ox = 0, oz = 0) => {
@@ -121,6 +156,26 @@ function plantGeometry(kind: TreeKind): THREE.BufferGeometry {
       part(new THREE.IcosahedronGeometry(1.3, 0), [0.28, 0.45, 0.16], 4.3, 1, 0.9, 1, 0.7, 0.4),
       part(new THREE.IcosahedronGeometry(1.2, 0), [0.22, 0.37, 0.13], 3.9, 1, 0.9, 1, -0.6, -0.5),
     ];
+  } else if (kind === "grass") {
+    // three crossed blades, dark at the root and catching the light at the tips
+    parts = [0, 1, 2].map((k) => {
+      const a = (k / 3) * Math.PI + 0.3;
+      const g = new THREE.BufferGeometry();
+      const w = 0.09;
+      const c = Math.cos(a) * w;
+      const sz = Math.sin(a) * w;
+      const lean = 0.12 * (k - 1);
+      g.setAttribute("position", new THREE.Float32BufferAttribute([-c, 0, -sz, c, 0, sz, lean, 0.55 + 0.1 * k, lean * 0.5], 3));
+      g.setAttribute("color", new THREE.Float32BufferAttribute([0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 1.1, 1.1, 1.1].map(lin), 3));
+      return g;
+    });
+    const merged = mergeGeometries(parts)!;
+    merged.computeVertexNormals();
+    // blades are lit as if they faced up, so they read as part of the ground, not dark slivers
+    const nrm = merged.getAttribute("normal");
+    for (let i = 0; i < nrm.count; i++) nrm.setXYZ(i, 0, 1, 0);
+    parts.forEach((p) => p.dispose());
+    return merged;
   } else if (kind === "bush") {
     parts = [part(new THREE.IcosahedronGeometry(0.9, 0), [0.36, 0.4, 0.18], 0.45, 1.2, 0.7, 1), part(new THREE.IcosahedronGeometry(0.6, 0), [0.4, 0.43, 0.2], 0.55, 1, 0.8, 1, 0.6, 0.2)];
   } else {
@@ -153,6 +208,9 @@ export class World {
   private readonly tileIndex: Uint16Array;
   private readonly plants = {} as Record<TreeKind, THREE.InstancedMesh>;
   private plantsDirty = false;
+  /** Wind for every swaying plant: time, and how hard it's blowing. */
+  private readonly wind = { uTime: { value: 0 }, uWind: { value: 1 } };
+  private readonly ripples: THREE.DataTexture;
   private readonly far: THREE.Mesh;
   private readonly farCache = new Map<number, Ground>();
   private farCentre = "";
@@ -178,10 +236,12 @@ export class World {
     this.tileIndex = new Uint16Array(idx);
 
     for (const kind of KINDS) {
-      const m = new THREE.InstancedMesh(plantGeometry(kind), new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.92, envMapIntensity: 0.3 }), 26000);
+      const mat = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: kind !== "grass", roughness: 0.92, envMapIntensity: 0.3, side: kind === "grass" ? THREE.DoubleSide : THREE.FrontSide });
+      if (kind !== "rock") this.sway(mat, kind === "grass" ? 0 : 0.8, kind === "grass" ? 0.16 : 0.035);
+      const m = new THREE.InstancedMesh(plantGeometry(kind), mat, CAP[kind]);
       m.count = 0;
       m.frustumCulled = false;
-      m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(26000 * 3), 3);
+      m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(CAP[kind] * 3), 3);
       this.plants[kind] = m;
       this.group.add(m);
     }
@@ -203,12 +263,42 @@ export class World {
     this.far.frustumCulled = false;
     this.group.add(this.far);
 
+    this.ripples = rippleNormals();
+    this.ripples.repeat.set(400, 400); // one tile every 35 m
     this.water = new THREE.Mesh(
       new THREE.PlaneGeometry(14000, 14000).rotateX(-Math.PI / 2),
-      new THREE.MeshStandardMaterial({ color: 0x0d2a36, roughness: 0.06, metalness: 0.1, transparent: true, opacity: 0.9 }),
+      new THREE.MeshStandardMaterial({ color: 0x0d2a36, roughness: 0.07, metalness: 0.1, transparent: true, opacity: 0.9, normalMap: this.ripples, normalScale: new THREE.Vector2(0.35, 0.35) }),
     );
     this.water.position.y = WATER_Y;
     this.group.add(this.water);
+  }
+
+  /**
+   * Makes a plant material sway in the wind: everything above `from` metres bends back and forth,
+   * more the higher up, each plant on its own phase (from where it stands).
+   */
+  private sway(mat: THREE.MeshStandardMaterial, from: number, amount: number) {
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.uTime = this.wind.uTime;
+      shader.uniforms.uWind = this.wind.uWind;
+      shader.vertexShader = shader.vertexShader
+        .replace("#include <common>", "#include <common>\nuniform float uTime;\nuniform float uWind;")
+        .replace(
+          "#include <begin_vertex>",
+          `#include <begin_vertex>
+          float bend = max(0.0, position.y - ${from.toFixed(2)}) * ${amount.toFixed(3)} * uWind;
+          float phase = instanceMatrix[3].x * 0.13 + instanceMatrix[3].z * 0.09;
+          transformed.x += sin(uTime * 1.6 + phase) * bend + sin(uTime * 3.7 + phase * 2.0) * bend * 0.3;
+          transformed.z += cos(uTime * 1.3 + phase * 1.4) * bend * 0.7;`,
+        );
+    };
+  }
+
+  /** Moves the water's ripples and the plants in the wind. Gusty in the rain. */
+  animate(time: number, windy: number): void {
+    this.wind.uTime.value = time;
+    this.wind.uWind.value = 1 + windy * 1.6;
+    this.ripples.offset.set(time * 0.006, time * 0.0035);
   }
 
   /** A wet road shines; dry asphalt doesn't. The reflectors light up after dark. */
@@ -362,7 +452,7 @@ export class World {
     this.group.add(mesh);
 
     // plants: one chance every 8 m, jittered, kept or not by how green the ground is
-    const plants: Tile["plants"] = { pine: [], broad: [], bush: [], rock: [] };
+    const plants: Tile["plants"] = { pine: [], broad: [], bush: [], rock: [], grass: [] };
     const cells = TILE / 8;
     for (let j = 0; j < cells; j++) {
       for (let i = 0; i < cells; i++) {
@@ -385,6 +475,38 @@ export class World {
         plants[kind].push(x, g.y - 0.15, z, rand() * Math.PI * 2, scale, tint * (1 + autumn * 0.3), tint * (1 - autumn * 0.08), tint * (1 - autumn * 0.5));
       }
     }
+    // grass: a tuft every couple of metres where the ground is green, its height from the
+    // tile's own lattice (the same triangles as the mesh), its colour from the ground's
+    const gstep = 2.2;
+    const gcells = Math.floor(TILE / gstep);
+    const rand = mulberry32(hash2(ix, iz, this.land.seed + 99));
+    for (let j = 0; j < gcells; j++) {
+      for (let i = 0; i < gcells; i++) {
+        const lx = (i + rand()) * gstep;
+        const lz = (j + rand()) * gstep;
+        const keep = rand();
+        const fx = lx / step;
+        const fz = lz / step;
+        const ci = Math.min(RES - 1, Math.floor(fx));
+        const cj = Math.min(RES - 1, Math.floor(fz));
+        const u = fx - ci;
+        const v = fz - cj;
+        const H = (a: number, b: number) => hs[(cj + 1 + b) * B + (ci + 1 + a)];
+        const y = u + v <= 1 ? H(0, 0) + u * (H(1, 0) - H(0, 0)) + v * (H(0, 1) - H(0, 0)) : H(1, 1) + (1 - u) * (H(0, 1) - H(1, 1)) + (1 - v) * (H(1, 0) - H(1, 1));
+        const k = (cj * N + ci) * 3;
+        const r = cols[k], g = cols[k + 1], b = cols[k + 2];
+        // green enough (linear colour): grass; sand, rock, snow and the verge stay bare
+        const green = g / Math.max(1e-4, r) - 1;
+        if (green < 0.15 || keep > Math.min(0.75, green * 1.6) || y < WATER_Y + 0.8) continue;
+        const x = x0 + lx;
+        const z = z0 + lz;
+        this.dist.query(x, z, q);
+        if (q[0] < ROAD_HALF + 2) continue;
+        const toSrgb = (c: number) => Math.pow(c, 1 / 2.2);
+        const sc = 0.6 + rand() * 0.8;
+        plants.grass.push(x, y - 0.02, z, rand() * Math.PI * 2, sc, toSrgb(r) * 1.15, toSrgb(g) * 1.2, toSrgb(b) * 1.05);
+      }
+    }
     this.tiles.set(`${ix},${iz}`, { mesh, plants });
   }
 
@@ -401,10 +523,11 @@ export class World {
       let n = 0;
       for (const [key, tile] of this.tiles) {
         const [ix, iz] = key.split(",").map(Number);
-        if (Math.hypot(ix - this.camTile.x, iz - this.camTile.z) > TREE_RING + 0.5) continue;
+        const ring = Math.hypot(ix - this.camTile.x, iz - this.camTile.z);
+        if (ring > (kind === "grass" ? GRASS_RING : TREE_RING + 0.5)) continue;
         const list = tile.plants[kind];
         // the outer ring gets every other plant: far off, the fog and the count hide it
-        const stride = Math.hypot(ix - this.camTile.x, iz - this.camTile.z) > TREE_RING - 0.5 && kind !== "rock" ? 16 : 8;
+        const stride = ring > TREE_RING - 0.5 && kind !== "rock" && kind !== "grass" ? 16 : 8;
         for (let k = 0; k < list.length && n < cap; k += stride) {
           qn.setFromAxisAngle(up, list[k + 3]);
           p.set(list[k], list[k + 1], list[k + 2]);
@@ -557,5 +680,6 @@ export class World {
     this.roadMat.map?.dispose();
     for (const kind of KINDS) (this.plants[kind].material as THREE.Material).dispose();
     (this.water.material as THREE.Material).dispose();
+    this.ripples.dispose();
   }
 }
