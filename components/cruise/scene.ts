@@ -5,7 +5,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { mulberry32 } from "../../lib/cruise/noise";
 import { GroundProbe, type Footing } from "../../lib/cruise/ground";
-import { chassisOf, stepHandling, steerLock, type Chassis, type Motion } from "../../lib/cruise/handling";
+import { brakeLimit, chassisOf, stepHandling, steerLock, tractionLimit, type Aids, type Chassis, type Motion } from "../../lib/cruise/handling";
 import { LANE_OFFSET, ROAD_HALF, WATER_Y, rightOf, type RoadPoint } from "../../lib/cruise/road";
 import { Landscape } from "../../lib/cruise/terrain";
 import type { VehicleConfig } from "../../lib/vehicles/types";
@@ -25,8 +25,10 @@ export interface Drive {
   throttle: number;
   /** Brake pedal, 0-1 (taillights, and grip). */
   brake: number;
-  /** 0-1: how hard the driven wheels are spinning (smoke, dust). */
+  /** 0-1: how hard the driven wheels are spinning (smoke, dust, and less grip). */
   wheelspin: number;
+  /** The brakes have locked the wheels (no ABS): they slide, and barely steer. */
+  locked: boolean;
   /** -1 full left .. 1 full right; 0 lets the lane assist take it back to the lane. */
   steer: number;
   ignition: boolean;
@@ -86,6 +88,8 @@ export class CruiseScene {
   private fz = 0;
   private yaw = 0;
   private readonly motion: Motion = { vy: 0, r: 0, delta: 0 };
+  /** Driver aids in use; null: the car's own. */
+  aids: Aids | null = null;
   private chassis: Chassis;
   /** How hard the tyres are sliding, 0-1. */
   private slide = 0;
@@ -394,13 +398,27 @@ export class CruiseScene {
    * all-wheel-drive car has all four. Downforce adds to it at speed.
    */
   get traction(): number {
-    const c = this.chassis;
-    const grade = Math.tan(this.tiltP);
-    const v = this.prevV;
-    const transfer = ((this.accelSm / G + grade) * c.cgHeight) / c.wheelbase; // share of the weight that moves back
-    const share = c.rearDrive < 1 ? 1 : THREE.MathUtils.clamp(1 - c.front + transfer, 0.25, 0.9);
-    const load = c.massKg * G / Math.sqrt(1 + grade * grade) + c.downforce * v * v;
-    return this.grip() * load * share;
+    return tractionLimit(this.chassis, this.grip(), this.accelSm, Math.tan(this.tiltP), this.prevV);
+  }
+
+  /** The most braking force the tyres can take here before the wheels lock, N. */
+  get brakeGrip(): number {
+    return brakeLimit(this.chassis, this.grip(), this.prevV);
+  }
+
+  /** The force the tyres are taking out of the car's speed through bends and slides, N. */
+  get scrub(): number {
+    return this.motion.scrub ?? 0;
+  }
+
+  /** Stability control is braking a wheel to keep the car in line. */
+  get escActive(): boolean {
+    return Boolean(this.motion.esc);
+  }
+
+  /** The car's own driver aids (ABS, traction and stability control). */
+  get carAids(): Aids {
+    return this.chassis.aids;
   }
 
   /** The surface under the car and how its grip compares with a road car's on dry tarmac. */
@@ -414,7 +432,7 @@ export class CruiseScene {
    */
   private drive(drive: Drive, v: number, dt: number) {
     const steer = this.free ? drive.steer : this.laneAssist(drive.steer, v, dt);
-    this.slide = stepHandling(this.motion, this.chassis, { vx: v, steer, accel: this.accelSm, mu: this.grip() }, dt);
+    this.slide = stepHandling(this.motion, this.chassis, { vx: v, steer, accel: this.accelSm, mu: this.grip(), aids: this.aids ?? undefined, locked: drive.locked, wheelspin: drive.wheelspin }, dt);
     this.yaw += this.motion.r * dt;
     const c = Math.cos(this.yaw);
     const sn = Math.sin(this.yaw);

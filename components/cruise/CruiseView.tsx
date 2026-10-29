@@ -7,6 +7,8 @@ import { useEngineState } from "../../hooks/useEngineState";
 import { trackEvent } from "../../lib/analytics";
 import { AudioEngine } from "../../lib/audio/AudioEngine";
 import { SpeedHold, autoShift, safeSpeedKmh } from "../../lib/cruise/autopilot";
+import { chassisOf, type Aids } from "../../lib/cruise/handling";
+import { roadModel } from "../../lib/cruise/specs";
 import { InputManager } from "../../lib/input/InputManager";
 import { Simulation } from "../../lib/sim/Simulation";
 import type { SimListener } from "../../lib/sim/types";
@@ -53,10 +55,12 @@ interface Settings {
   free: boolean;
   /** Frames a second to aim for ("max": as fast as the screen refreshes). */
   fps: "60" | "90" | "120" | "max";
+  /** Driver aids: the ones the car was built with, all of them, or none. */
+  aids: "car" | "on" | "off";
 }
 
 const STORE_KEY = "revheadz:cruise";
-const DEFAULTS: Settings = { hour: 18.85, cycle: true, weather: "clear", camera: "chase", autopilot: false, gears: "auto", free: false, fps: "90" };
+const DEFAULTS: Settings = { hour: 18.85, cycle: true, weather: "clear", camera: "chase", autopilot: false, gears: "auto", free: false, fps: "90", aids: "car" };
 const WEATHERS: { id: Weather; label: string }[] = [
   { id: "clear", label: "Clear" },
   { id: "haze", label: "Haze" },
@@ -79,6 +83,14 @@ const FRAME_RATES: { id: Settings["fps"]; label: string }[] = [
   { id: "120", label: "120" },
   { id: "max", label: "Max" },
 ];
+const AIDS: { id: Settings["aids"]; label: string; title: string }[] = [
+  { id: "car", label: "As built", title: "The aids this car left the factory with" },
+  { id: "on", label: "All on", title: "ABS, traction control and stability control" },
+  { id: "off", label: "Off", title: "No ABS, no traction control, no stability control" },
+];
+const ALL_AIDS: Aids = { abs: true, tc: true, esc: true };
+const NO_AIDS: Aids = { abs: false, tc: false, esc: false };
+const aidList = (a: Aids) => [a.abs && "ABS", a.tc && "TC", a.esc && "ESC"].filter(Boolean).join(" · ") || "none";
 const STEER_LEFT = ["KeyA", "ArrowLeft"];
 const clampUnit = (v: number) => Math.max(-1, Math.min(1, v));
 const STEER_RIGHT = ["KeyD", "ArrowRight"];
@@ -151,6 +163,8 @@ const clock = (h: number) => {
 /** Sim, sound and controls for one vehicle; nothing runs until the effect wires it up. */
 function createRig(vehicle: VehicleConfig, onPending: (p: boolean) => void) {
   const sim = new Simulation(vehicle);
+  // on the open road it drives as the real car does: its engine, weight, aero and drivetrain
+  sim.model = roadModel(vehicle);
   const audio = new AudioEngine(vehicle);
   const ambience = new Ambience();
   let starting = false;
@@ -178,7 +192,8 @@ function createRig(vehicle: VehicleConfig, onPending: (p: boolean) => void) {
   const shiftDown = () => sim.shiftDown();
   const neutral = () => sim.neutral();
   const gear = () => sim.state.gear;
-  return { sim, audio, ambience, input, press, subscribe, shiftUp, shiftDown, neutral, gear };
+  const carAids = chassisOf(vehicle, 4.5).aids;
+  return { sim, audio, ambience, input, press, subscribe, shiftUp, shiftDown, neutral, gear, carAids };
 }
 
 /**
@@ -384,15 +399,23 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       // free roam: grass and dirt drag at the wheels, water much more, and deep water stops you dead
       if (scene.freeRoam !== s.free) scene.setFreeRoam(s.free);
       const under = scene.surface;
-      const drag = under.blocked ? 1 : under.depth > 0 ? 0.35 : under.offRoad ? 0.07 : 0;
+      const aids = s.aids === "car" ? scene.carAids : s.aids === "on" ? ALL_AIDS : NO_AIDS;
+      scene.aids = aids;
+      sim.input.tc = aids.tc;
+      sim.input.abs = aids.abs;
       sim.input.grade = scene.grade;
-      // what the tyres can put down here (grip, weight on the driven wheels, slope)
+      // what the tyres can put down here, and take on the brakes (grip, weight on the wheels, slope)
       sim.input.traction = scene.traction;
+      sim.input.brakeGrip = scene.brakeGrip;
       // with a clutch pedal and you on the gears, it can stall
       sim.canStall = s.gears === "manual" && !s.autopilot;
-      if (drag) sim.input.brake = Math.max(sim.input.brake, drag * Math.min(1, sim.state.speedKmh / 15 + (under.blocked ? 1 : 0)));
-      // tyres scrubbing sideways cost speed
-      if (under.slide > 0) sim.input.brake = Math.max(sim.input.brake, under.slide * 0.25);
+      // soft ground drags at the wheels (water much more, and deep water stops you dead), and the
+      // tyres take speed off through bends and slides
+      const soft = under.blocked ? 1.2 : under.depth > 0 ? 0.35 : under.offRoad ? 0.07 : 0;
+      const mass = sim.model?.massKg ?? vehicle.dynamics.massKg;
+      sim.input.resist = soft * 9.81 * mass * Math.min(1, sim.state.speedKmh / 15 + (under.blocked ? 1 : 0)) + scene.scrub;
+      // stability control cuts the power while it's catching the car
+      if (scene.escActive) sim.input.throttle *= 0.4;
       sim.advance(dt);
       if (sim.state.speedKmh > 1) tripS += dt;
       audio.update(sim.state);
@@ -400,7 +423,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       ambience.update(sim.state.speedKmh, s.weather === "rain");
       const keys = steerKeys.current;
       const steer = clampUnit((STEER_RIGHT.some((k) => keys.has(k)) ? 1 : 0) - (STEER_LEFT.some((k) => keys.has(k)) ? 1 : 0) + touchSteer.current);
-      scene.frame(dt, { speedKmh: sim.state.speedKmh, throttle: sim.input.throttle, brake: sim.input.brake, wheelspin: sim.state.wheelspin ?? 0, steer, ignition: running }, { hour: hourRef.current, weather: s.weather, camera: s.camera });
+      scene.frame(dt, { speedKmh: sim.state.speedKmh, throttle: sim.input.throttle, brake: sim.input.brake, wheelspin: sim.state.wheelspin ?? 0, locked: Boolean(sim.state.locked), steer, ignition: running }, { hour: hourRef.current, weather: s.weather, camera: s.camera });
       // grip readout: what's underfoot, how grippy it is for this car, and any wheelspin or slide
       const gripEl = gripRef.current;
       if (gripEl && now - lastGrip > 120) {
@@ -413,11 +436,15 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
           gripEl.dataset.text = text;
           gripEl.firstChild!.textContent = text;
         }
-        const warn = spin ? "Wheelspin" : slide ? "Sliding" : "";
+        const warn = sim.state.locked ? "Wheels locked" : spin ? "Wheelspin" : slide ? "Sliding" : "";
         if (gripEl.dataset.warn !== warn) {
           gripEl.dataset.warn = warn;
-          (gripEl.lastChild as HTMLElement).textContent = warn;
+          (gripEl.children[1] as HTMLElement).textContent = warn;
         }
+        // the dash lights: each one flickers on while its aid is working
+        const lights = gripEl.lastElementChild as HTMLElement;
+        const on = [sim.state.abs, aids.tc && (sim.state.wheelspin ?? 0) > 0.04, scene.escActive];
+        on.forEach((lit, i) => (lights.children[i] as HTMLElement).classList.toggle("lit", Boolean(lit)));
       }
       // the slow-moving numbers on screen: a few times a second is plenty
       if (now - lastUi > 400) {
@@ -628,6 +655,17 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
               </button>
             ))}
           </div>
+          <div className="cruise-row">
+            <span className="cruise-label">Driver aids</span>
+            <span className="cruise-hint" title="What this car came with">{vehicle.name}: {aidList(rig.carAids)}</span>
+          </div>
+          <div className="segmented" role="group" aria-label="Driver aids">
+            {AIDS.map((a) => (
+              <button key={a.id} type="button" aria-pressed={settings.aids === a.id} onClick={() => update({ aids: a.id })} title={a.title}>
+                {a.label}
+              </button>
+            ))}
+          </div>
           <div className="cruise-row cruise-toggles">
             <button type="button" className="track-toggle" aria-pressed={settings.autopilot} onClick={() => update({ autopilot: !settings.autopilot })}>
               Autopilot (T)
@@ -694,6 +732,11 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
         <p ref={gripRef} className="cruise-grip" aria-live="off">
           <span>Tarmac · grip ×1.00</span>
           <b />
+          <span className="cruise-lights" aria-hidden>
+            <i>ABS</i>
+            <i>TC</i>
+            <i>ESC</i>
+          </span>
         </p>
         <p className="cruise-trip" title="This trip: distance, time on the move and average speed">
           {(trip.m / 1000).toFixed(1)} km · {duration(trip.s)} · avg {trip.s > 5 ? Math.round((trip.m / trip.s) * 3.6) : 0} km/h · {settings.gears === "auto" ? "Auto" : "Manual"}
