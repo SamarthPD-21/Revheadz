@@ -10,6 +10,7 @@ import { Landscape } from "../../lib/cruise/terrain";
 import type { VehicleConfig } from "../../lib/vehicles/types";
 import { Atmosphere, type Weather } from "./atmosphere";
 import { buildCar, type CarModel } from "./carModel";
+import { Puffs } from "./particles";
 import { World } from "./world";
 
 export type CameraMode = "chase" | "far" | "hood" | "cinematic";
@@ -33,6 +34,7 @@ export interface Look {
 }
 
 const G = 9.81;
+const srgbColor = (r: number, g: number, b: number) => new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace);
 const tmpV = new THREE.Vector3();
 const damp = (current: number, target: number, rate: number, dt: number) => current + (target - current) * (1 - Math.exp(-rate * dt));
 
@@ -72,6 +74,8 @@ export class CruiseScene {
   private tiltP = 0;
   private tiltR = 0;
   private footing: Footing | null = null;
+  private readonly puffs = new Puffs(700);
+  private puffDue = 0;
   private blocked = false;
   /** Lateral offset from the centre line, + right, m. */
   private d = LANE_OFFSET;
@@ -131,6 +135,7 @@ export class CruiseScene {
     this.rain.frustumCulled = false;
     this.rain.visible = false;
     this.scene.add(this.rain);
+    this.scene.add(this.puffs.points);
 
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
@@ -286,7 +291,10 @@ export class CruiseScene {
     this.updateLights(drive);
     this.placeCamera(dt, look.camera, v, false);
     this.updateRain(look.weather === "rain", v, heading);
-    this.atmo.follow(this.camera.position, this.carRoot.position);
+    this.world.animate(this.time, look.weather === "rain" ? 1 : look.weather === "fog" ? 0.25 : 0);
+    this.kickUp(dt, v);
+    this.puffs.update(dt, 0.3 + 0.7 * (1 - this.atmo.light.night), this.size.h * this.renderer.getPixelRatio(), this.camera.fov);
+    this.atmo.follow(this.camera.position, this.carRoot.position, this.time);
     if (this.bloomOn) this.composer.render(dt);
     else this.renderer.render(this.scene, this.camera);
   }
@@ -382,6 +390,40 @@ export class CruiseScene {
     this.carRoot.rotation.set(this.tiltR + (bike ? this.roll : 0), -this.yaw, this.tiltP, "YZX");
     this.car.body.rotation.set(bike ? 0 : this.roll, 0, this.pitch);
     for (const w of this.car.wheels) w.node.rotation.set(0, w.front ? -this.steerAng : 0, -this.distance / w.r, "YZX");
+  }
+
+  /** What the rear wheels throw up: dust off the road, spray in water, a mist on wet tarmac. */
+  private kickUp(dt: number, v: number) {
+    const f = this.free ? this.footing : null;
+    let kind: "dust" | "spray" | "mist" | null = null;
+    if (f && f.depth > 0.05 && v > 1) kind = "spray";
+    else if (f && !f.road && v > 2) kind = "dust";
+    else if (this.atmo.light.wet > 0 && v > 12) kind = "mist";
+    if (!kind) {
+      this.puffDue = 0;
+      return;
+    }
+    this.puffDue += (kind === "spray" ? 1.5 : kind === "dust" ? 0.9 : 0.35) * v * dt;
+    if (this.puffDue < 1) return;
+    const color =
+      kind === "dust"
+        ? srgbColor(0.3, 0.24, 0.16).lerp(srgbColor(0.74, 0.64, 0.46), f?.dry ?? 0.5)
+        : kind === "spray"
+          ? srgbColor(0.86, 0.9, 0.95)
+          : srgbColor(0.72, 0.74, 0.78);
+    const [life, size, opacity, lift] = kind === "dust" ? [1.7, 0.7, 0.35 + 0.3 * (f?.dry ?? 0.5), 1.4] : kind === "spray" ? [0.9, 0.5, 0.6, 3] : [0.8, 0.9, 0.16, 0.6];
+    this.carRoot.updateMatrixWorld(true);
+    const fwd = tmpV.set(1, 0, 0).transformDirection(this.carRoot.matrixWorld).clone();
+    const at = new THREE.Vector3();
+    while (this.puffDue >= 1) {
+      this.puffDue -= 1;
+      for (const w of this.car.wheels) {
+        if (w.front) continue;
+        w.node.getWorldPosition(at);
+        const r = () => (this.rand() - 0.5) * 2;
+        this.puffs.emit(at.x + r() * 0.2, at.y - w.r * 0.6, at.z + r() * 0.2, -fwd.x * v * 0.12 + r(), lift * (0.6 + this.rand() * 0.6), -fwd.z * v * 0.12 + r(), life * (0.7 + this.rand() * 0.6), size, color, opacity);
+      }
+    }
   }
 
   private placeCar(dt: number) {
@@ -568,6 +610,7 @@ export class CruiseScene {
     this.atmo.dispose();
     this.rain.geometry.dispose();
     this.rain.material.dispose();
+    this.puffs.dispose();
     this.composer.dispose();
     this.renderer.dispose();
   }
