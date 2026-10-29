@@ -3,7 +3,7 @@ import { Engine } from "./Engine";
 import { Gearbox } from "./Gearbox";
 import { LowFreqStore } from "./LowFreqStore";
 import { pexp } from "./portableMath";
-import type { SimEvent, SimInput, SimListener, SimState } from "./types";
+import type { RoadModel, SimEvent, SimInput, SimListener, SimState } from "./types";
 
 /** Fixed simulation step: identical behaviour on 60 Hz phones and 144 Hz monitors. */
 export const STEP = 1 / 120;
@@ -87,6 +87,11 @@ export class Simulation {
    * engine dies if it's dragged below idle in gear. Off on the strip.
    */
   canStall = false;
+  /**
+   * The real car (Cruise): its own engine curve, weight, aero, drivetrain losses and the inertia
+   * of everything that spins. Unset on the strip, which keeps its own tuning.
+   */
+  model: RoadModel | null = null;
   readonly store = new LowFreqStore();
 
   private readonly engine: Engine;
@@ -335,9 +340,12 @@ export class Simulation {
       }
     } else {
       // In gear. Slip the clutch at crawling speed so the engine never stalls.
-      const launch = this.launchSlipRpm;
-      const desired = launch !== null && effThrottle > 0.5 ? launch : eng.idleRpm + effThrottle * 0.35 * (eng.redlineRpm - eng.idleRpm);
-      const lockRpm = launch !== null ? Math.max(eng.idleRpm * 1.15, desired) : Math.max(eng.idleRpm * 1.15, Math.min(desired, eng.idleRpm * 2.2));
+      // (on the road a driver pulling away hard holds the revs up where the engine pulls, and lets
+      // the clutch bite fully only once the car has caught up)
+      const roadLaunch = this.model && this.launchSlipRpm === null ? this.model.launchRpm : null;
+      const launch = this.launchSlipRpm ?? roadLaunch;
+      const desired = launch !== null && effThrottle > 0.5 ? eng.idleRpm + (launch - eng.idleRpm) * Math.min(1, (effThrottle - 0.5) * 2.5) : eng.idleRpm + effThrottle * 0.35 * (eng.redlineRpm - eng.idleRpm);
+      const lockRpm = launch !== null ? Math.max(eng.idleRpm * 1.15, Math.min(desired, launch)) : Math.max(eng.idleRpm * 1.15, Math.min(desired, eng.idleRpm * 2.2));
       if (locked >= lockRpm) {
         clutchLocked = true;
         this.freeRpm = locked;
@@ -371,6 +379,15 @@ export class Simulation {
       s.boost += (target - s.boost) * (1 - pexp(-dt / turbo.lagS));
     }
     const torqueScale = turbo ? 0.65 + 0.45 * s.boost : 1;
+    const model = this.model;
+    // the real curve is drawn at full boost; while the turbo is still spooling it gives less
+    let lag = 1;
+    if (model && turbo) {
+      const spool = clamp((rpm - turbo.spoolRpm) / (eng.redlineRpm * 0.45), 0, 1) * effThrottle;
+      if (spool > 0.02) lag = 0.7 + 0.3 * Math.min(1, s.boost / spool);
+    }
+    const torque = (at: number, pedal: number) => (model ? model.torque(at) * pedal * lag : this.engine.torque(at, pedal) * torqueScale);
+    const toWheels = (nm: number) => (model ? (nm * this.gearbox.totalRatio(gear) * model.efficiency) / this.cfg.gearbox.wheelRadiusM : this.gearbox.wheelForce(nm, gear));
 
     // 2. road speed (drive: what the engine puts through the wheels; force: everything)
     let drive = 0;
@@ -379,42 +396,74 @@ export class Simulation {
     if (gear > 0 && running && inCut && this.style.carry > 0 && this.shift?.direction === "up") {
       // a dual-clutch handover or a converter's overlap: most of the drive keeps flowing mid-shift
       const pedal = s.throttle * (fuelCut ? CUT_POWER : 1);
-      drive += this.gearbox.wheelForce(this.engine.torque(rpm, pedal) * torqueScale, gear) * this.style.carry;
+      drive += toWheels(torque(rpm, pedal)) * this.style.carry;
     }
     if (gear > 0 && running && !inCut) {
       const clutch = engaging ? this.engageProgress : 1;
-      drive += this.gearbox.wheelForce(this.engine.torque(rpm, effThrottle) * torqueScale * converterGain, gear) * clutch;
+      drive += toWheels(torque(rpm, effThrottle) * converterGain) * clutch;
       if (clutchLocked) {
-        force -= this.gearbox.wheelForce(this.engine.brakingTorque(rpm), gear) * (1 - effThrottle);
+        force -= toWheels(this.engine.brakingTorque(rpm)) * (1 - effThrottle);
       }
     }
     // the tyres can only put down so much: past that, the wheels spin and the revs flare
     const traction = this.input.traction;
     if (traction !== undefined) {
       let slip = 0;
-      if (drive > traction) {
-        slip = Math.min(0.5, 0.05 + ((drive - traction) / Math.max(1, traction)) * 0.6);
-        drive = traction;
+      // traction control trims the power to what the tyres hold, at the few percent of slip where
+      // they grip best; without it they spin up, and a spinning tyre grips less until it's eased off
+      const tc = this.input.tc !== false;
+      const limit = !tc && this.wheelSlip > 0.1 ? traction * 0.8 : traction;
+      if (drive > limit) {
+        const excess = (drive - limit) / Math.max(1, limit);
+        slip = tc ? Math.min(0.08, 0.03 + excess * 0.2) : Math.min(0.5, 0.05 + excess * 0.6);
+        drive = limit;
       }
       this.wheelSlip += (slip - this.wheelSlip) * Math.min(1, dt * 6);
       if (this.wheelSlip < 1e-4) this.wheelSlip = 0;
       s.wheelspin = this.wheelSlip / 0.5;
     }
+    // an electronic limiter eases the power off as the car reaches it
+    if (model?.topKmh) drive *= clamp((model.topKmh - this.speedKmh()) / 3, 0, 1);
     force += drive;
+    const mass = model ? model.massKg : this.cfg.dynamics.massKg;
     const v = this.speedMs;
+    s.locked = false;
+    s.abs = false;
     if (v > 0) {
-      force -= 0.5 * AIR_DENSITY * this.cfg.dynamics.cdA * v * v;
-      force -= ROLLING_RESISTANCE * this.cfg.dynamics.massKg * G;
+      force -= 0.5 * AIR_DENSITY * (model ? model.cdA : this.cfg.dynamics.cdA) * v * v;
+      force -= ROLLING_RESISTANCE * mass * G;
       // progressive braking that eases off in the last metre per second, so stops aren't abrupt
       const ease = 0.35 + 0.65 * Math.min(1, v / 1.5);
-      force -= this.brake * ease * this.cfg.dynamics.massKg * this.cfg.dynamics.brakeDecel;
+      let braking = this.brake * ease * mass * (model ? model.brakeDecel : this.cfg.dynamics.brakeDecel);
+      // past what the tyres can take, ABS holds them at the edge; without it the wheels lock and
+      // slide, which stops the car worse (and they can't steer)
+      const brakeGrip = this.input.brakeGrip;
+      if (brakeGrip !== undefined && braking > brakeGrip && v > 1) {
+        if (this.input.abs === false) {
+          braking = brakeGrip * 0.75;
+          s.locked = true;
+        } else {
+          braking = brakeGrip * 0.95;
+          s.abs = true;
+        }
+      }
+      force -= braking;
+      if (this.input.resist) force -= this.input.resist;
     }
     // gravity along a slope (only off the flat strip: the drag races never set it)
     const grade = this.input.grade;
     // sin(atan(grade)), written with sqrt: exact in every browser, like the rest of the physics
-    if (grade) force -= (this.cfg.dynamics.massKg * G * grade) / Math.sqrt(1 + grade * grade);
+    if (grade) force -= (mass * G * grade) / Math.sqrt(1 + grade * grade);
+    // everything that spins has to be spun up as well: the wheels always, the engine through the
+    // gears when the clutch is in (in 1st that's like a few hundred kg more to push)
+    let inertia = mass;
+    if (model) {
+      const r = this.cfg.gearbox.wheelRadiusM;
+      const n = clutchLocked ? this.gearbox.totalRatio(gear) : 0;
+      inertia += (model.wheelInertia + model.engineInertia * n * n * model.efficiency) / (r * r);
+    }
     const prevSpeed = this.speedMs;
-    this.speedMs = Math.max(0, this.speedMs + (force / this.cfg.dynamics.massKg) * dt);
+    this.speedMs = Math.max(0, this.speedMs + (force / inertia) * dt);
     // resistance can't push a stationary car backwards
     if (prevSpeed === 0 && force < 0) this.speedMs = 0;
 

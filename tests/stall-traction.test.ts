@@ -72,7 +72,7 @@ describe("stalling", () => {
 });
 
 describe("traction", () => {
-  it("past the tyres' grip the wheels spin, the revs flare and the car gains speed slower", () => {
+  it("past the tyres' grip the wheels spin, the revs flare and the car gains speed slower (no traction control)", () => {
     const free = started("hellcat", false).sim;
     const held = started("hellcat", false).sim;
     for (const sim of [free, held]) {
@@ -81,6 +81,7 @@ describe("traction", () => {
       sim.input.throttle = 1;
     }
     held.input.traction = 0.25 * 2000 * 9.81; // a rear-drive car on wet grass
+    held.input.tc = false;
     run(free, 2);
     run(held, 2);
     expect(held.state.speedKmh).toBeLessThan(free.state.speedKmh * 0.8);
@@ -93,7 +94,7 @@ describe("traction", () => {
     // a 19 degree slope of grass: what the cruise screen works out the tyres can put down
     const grade = 0.35;
     const cos = 1 / Math.sqrt(1 + grade * grade);
-    const climb = (id: string, grip: number, share: number) => {
+    const climb = (id: string, grip: number, share: number, tc: boolean) => {
       const cfg = loadConfig(id);
       const sim = new Simulation(cfg, seeded());
       sim.toggleIgnition();
@@ -103,6 +104,7 @@ describe("traction", () => {
       sim.input.throttle = 1;
       sim.input.grade = grade;
       sim.input.traction = grip * cfg.dynamics.massKg * 9.81 * cos * share;
+      sim.input.tc = tc;
       let top = 0;
       for (let t = 0; t < 8; t += 0.5) {
         run(sim, 0.5);
@@ -111,11 +113,29 @@ describe("traction", () => {
       return { end: sim.state.speedKmh, top, spin: sim.state.wheelspin ?? 0 };
     };
     // Hellcat: muscle-car tyres on grass, the rear's share of the weight (plus a little uphill)
-    const rwd = climb("hellcat", 0.6 * 0.92 * 0.85, 0.52);
-    // Skyline GT-R: all four wheels driving
-    const awd = climb("skyline_r34", 0.6 * 1.08 * 0.8, 1);
+    const rwd = climb("hellcat", 0.6 * 0.92 * 0.85, 0.52, false);
+    // Skyline GT-R: all four wheels driving (and a driver easing the throttle to keep them gripping)
+    const awd = climb("skyline_r34", 0.6 * 1.08 * 0.8, 1, true);
     expect(rwd.end).toBeLessThan(1);
     expect(rwd.spin).toBeGreaterThan(0.2);
     expect(awd.end).toBeGreaterThan(20);
+  });
+
+  it("traction control trims the power to the grip: barely any wheelspin, and quicker than spinning", () => {
+    const go = (tc: boolean) => {
+      const sim = started("hellcat", false).sim;
+      sim.shiftUp();
+      run(sim, 0.6);
+      sim.input.throttle = 1;
+      sim.input.traction = 0.25 * 2000 * 9.81;
+      sim.input.tc = tc;
+      run(sim, 2);
+      return sim.state;
+    };
+    const on = go(true);
+    const off = go(false);
+    expect(on.wheelspin ?? 0).toBeLessThan(0.2);
+    expect(off.wheelspin ?? 0).toBeGreaterThan(0.2);
+    expect(on.speedKmh).toBeGreaterThan(off.speedKmh);
   });
 });
