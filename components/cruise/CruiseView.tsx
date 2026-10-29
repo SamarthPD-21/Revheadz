@@ -22,7 +22,9 @@ import { Tachometer } from "../Tachometer";
 import { ThrottleControl } from "../ThrottleControl";
 import { VehiclePicker, type PickerVehicle } from "../VehiclePicker";
 import { Ambience } from "./ambience";
-import { CAMERA_MODES, CruiseScene, type CameraMode, type Weather } from "./scene";
+import { forgetRoad, loadTiles, saveTiles } from "../../lib/cruise/tileCache";
+import { CAMERA_MODES, CruiseScene, type CameraMode, type Place, type Weather } from "./scene";
+import { World, type TileData } from "./world";
 
 export interface Neighbour {
   id: string;
@@ -44,20 +46,21 @@ interface Settings {
   weather: Weather;
   camera: CameraMode;
   autopilot: boolean;
-  autoGears: boolean;
+  /** Who changes gear: you (E / Q), or the car. */
+  gears: "manual" | "auto";
   /** Off the road and anywhere on the map. */
   free: boolean;
 }
 
 const STORE_KEY = "revheadz:cruise";
-const DEFAULTS: Settings = { hour: 18.85, cycle: true, weather: "clear", camera: "chase", autopilot: false, autoGears: true, free: false };
+const DEFAULTS: Settings = { hour: 18.85, cycle: true, weather: "clear", camera: "chase", autopilot: false, gears: "auto", free: false };
 const WEATHERS: { id: Weather; label: string }[] = [
   { id: "clear", label: "Clear" },
   { id: "haze", label: "Haze" },
   { id: "fog", label: "Fog" },
   { id: "rain", label: "Rain" },
 ];
-const CAMERA_LABEL: Record<CameraMode, string> = { chase: "Chase", far: "Far", hood: "Bonnet", cinematic: "Cinematic" };
+const CAMERA_LABEL: Record<CameraMode, string> = { chase: "Chase", far: "Far", hood: "Bonnet", drone: "Drone", cinematic: "Film" };
 const MOMENTS = [
   { label: "Sunrise", hour: 6.5 },
   { label: "Day", hour: 12.5 },
@@ -71,10 +74,52 @@ const STEER_LEFT = ["KeyA", "ArrowLeft"];
 const clampUnit = (v: number) => Math.max(-1, Math.min(1, v));
 const STEER_RIGHT = ["KeyD", "ArrowRight"];
 
+/** The world you were in: its road, where you'd got to, and your trip so far. */
+interface SavedWorld {
+  seed: number;
+  place: Place;
+  tripM: number;
+  tripS: number;
+}
+const WORLD_KEY = "revheadz:cruise-world";
+
+function loadWorld(): SavedWorld | null {
+  try {
+    const raw = localStorage.getItem(WORLD_KEY);
+    return raw ? (JSON.parse(raw) as SavedWorld) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveWorld(w: SavedWorld | null) {
+  try {
+    if (w) localStorage.setItem(WORLD_KEY, JSON.stringify(w));
+    else localStorage.removeItem(WORLD_KEY);
+  } catch {
+    /* not kept, still drives */
+  }
+}
+
+/** 1:05:09 or 5:09. */
+const duration = (s: number) => {
+  const t = Math.floor(s);
+  const h = Math.floor(t / 3600);
+  const m = Math.floor((t % 3600) / 60);
+  const ss = String(t % 60).padStart(2, "0");
+  return h ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`;
+};
+
 function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (raw) return { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Settings>) };
+    if (raw) {
+      const saved = JSON.parse(raw) as Partial<Settings> & { autoGears?: boolean };
+      // the old on/off "auto gears" switch becomes the gearbox choice
+      if (!saved.gears && saved.autoGears !== undefined) saved.gears = saved.autoGears ? "auto" : "manual";
+      delete saved.autoGears;
+      return { ...DEFAULTS, ...saved };
+    }
   } catch {
     /* private mode or blocked storage: defaults */
   }
@@ -140,7 +185,8 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
   const settingsRef = useRef(settings);
   const [hourShown, setHourShown] = useState(settings.hour);
   const hourRef = useRef(settings.hour);
-  const [seed, setSeed] = useState(() => 1 + Math.floor(Math.random() * 9999));
+  // the road you were on last time, or a new one
+  const [seed, setSeed] = useState(() => loadWorld()?.seed ?? 1 + Math.floor(Math.random() * 9999));
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [pending, setPending] = useState(false);
@@ -150,7 +196,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
   const [muted, setMuted] = useState(false);
   const [setKmh, setSetKmh] = useState(100);
   const setKmhRef = useRef(100);
-  const [trip, setTrip] = useState(0);
+  const [trip, setTrip] = useState({ m: 0, s: 0 });
   const [rig] = useState(() => createRig(vehicle, setPending));
   const sceneRef = useRef<CruiseScene | null>(null);
   const steerKeys = useRef(new Set<string>());
@@ -188,7 +234,8 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       const s = settingsRef.current;
       if (e.code === "KeyC") update({ camera: CAMERA_MODES[(CAMERA_MODES.indexOf(s.camera) + 1) % CAMERA_MODES.length] });
       else if (e.code === "KeyT") update({ autopilot: !s.autopilot });
-      else if (e.code === "KeyG") update({ autoGears: !s.autoGears });
+      else if (e.code === "KeyG") update({ gears: s.gears === "auto" ? "manual" : "auto" });
+      else if (e.code === "KeyB") sceneRef.current?.resetToRoad();
       else if (e.code === "KeyR") update({ free: !s.free });
       else if (e.code === "KeyH") setHidden((h) => !h);
       else if (e.code === "KeyM") toggleMute();
@@ -262,14 +309,36 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
     let lastShift = 0;
     let lastUi = 0;
     const hold = new SpeedHold();
-    // let the loading screen paint before the (blocking) first build of the world
-    const warm = window.setTimeout(() => {
-      const s = settingsRef.current;
-      scene.warmUp({ hour: hourRef.current, weather: s.weather, camera: s.camera });
-      setLoading(false);
-      last = performance.now();
-      raf = requestAnimationFrame(tick);
-    }, 30);
+    // back where you left off, on the same road
+    const was = loadWorld();
+    let tripS = 0;
+    if (was && was.seed === seed) {
+      scene.restore(was.place);
+      scene.trip = was.tripM;
+      tripS = was.tripS;
+    }
+    const save = () => {
+      saveWorld({ seed, place: scene.placeNow, tripM: scene.trip, tripS });
+      void saveTiles(seed, scene.takeFreshTiles());
+    };
+    // load the map kept from earlier visits, then build the rest (behind the loading screen)
+    let cancelled = false;
+    let ready = false;
+    let warm = 0;
+    const start = scene.placeNow;
+    void loadTiles<TileData>(seed, World.keysAround(start.x, start.z)).then((tiles) => {
+      if (cancelled) return;
+      scene.primeTiles(tiles);
+      warm = window.setTimeout(() => {
+        const s = settingsRef.current;
+        scene.warmUp({ hour: hourRef.current, weather: s.weather, camera: s.camera });
+        ready = true;
+        setLoading(false);
+        last = performance.now();
+        raf = requestAnimationFrame(tick);
+      }, 30);
+    });
+    let lastSave = performance.now();
 
     const tick = (now: number) => {
       raf = requestAnimationFrame(tick);
@@ -289,26 +358,33 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
         sim.input.throttle = c.throttle;
         sim.input.brake = c.brake;
       }
-      if (s.autopilot || s.autoGears) lastShift = autoShift(sim, vehicle, sim.input.throttle, now / 1000, lastShift);
+      if (s.autopilot || s.gears === "auto") lastShift = autoShift(sim, vehicle, sim.input.throttle, now / 1000, lastShift);
       // free roam: grass and dirt drag at the wheels, water much more, and deep water stops you dead
       if (scene.freeRoam !== s.free) scene.setFreeRoam(s.free);
       const under = scene.surface;
       const drag = under.blocked ? 1 : under.depth > 0 ? 0.35 : under.offRoad ? 0.07 : 0;
       sim.input.grade = scene.grade;
       if (drag) sim.input.brake = Math.max(sim.input.brake, drag * Math.min(1, sim.state.speedKmh / 15 + (under.blocked ? 1 : 0)));
+      // tyres scrubbing sideways cost speed
+      if (under.slide > 0) sim.input.brake = Math.max(sim.input.brake, under.slide * 0.25);
       sim.advance(dt);
+      if (sim.state.speedKmh > 1) tripS += dt;
       audio.update(sim.state);
       if (s.cycle) hourRef.current = (hourRef.current + dt * HOURS_PER_S) % 24;
       ambience.update(sim.state.speedKmh, s.weather === "rain");
       const keys = steerKeys.current;
       const steer = clampUnit((STEER_RIGHT.some((k) => keys.has(k)) ? 1 : 0) - (STEER_LEFT.some((k) => keys.has(k)) ? 1 : 0) + touchSteer.current);
-      scene.frame(dt, { speedKmh: sim.state.speedKmh, brake: sim.input.brake, steer, ignition: running }, { hour: hourRef.current, weather: s.weather, camera: s.camera });
+      scene.frame(dt, { speedKmh: sim.state.speedKmh, throttle: sim.input.throttle, brake: sim.input.brake, steer, ignition: running }, { hour: hourRef.current, weather: s.weather, camera: s.camera });
       // the slow-moving numbers on screen: a few times a second is plenty
       if (now - lastUi > 400) {
         lastUi = now;
         setHourShown(hourRef.current);
-        setTrip(scene.trip);
+        setTrip({ m: scene.trip, s: tripS });
         setSetKmh(Math.round(setKmhRef.current));
+      }
+      if (now - lastSave > 4000) {
+        lastSave = now;
+        save();
       }
     };
 
@@ -328,8 +404,15 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
     window.addEventListener("pointermove", pm);
     window.addEventListener("pointerup", pu);
 
+    const onHide = () => document.hidden && save();
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", save);
     return () => {
+      cancelled = true;
       clearTimeout(warm);
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", save);
+      if (ready) save(); // (not before the world was even built: that would save the start)
       cancelAnimationFrame(raf);
       ro.disconnect();
       canvas.removeEventListener("pointerdown", pd);
@@ -401,6 +484,9 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
           <IgnitionButton store={sim.store} onPress={press} pending={pending} subscribe={subscribe} compact />
+          <button type="button" className={iconBtn} onClick={() => sceneRef.current?.resetToRoad()} aria-label="Back to the road (B)" title="Back to the road (B)">
+            <RoadIcon />
+          </button>
           <button type="button" className={iconBtn} onClick={() => setPanel((p) => !p)} aria-expanded={panel} aria-label="Time, weather and camera" title="Time, weather and camera">
             <SunIcon />
           </button>
@@ -460,12 +546,20 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
               </button>
             ))}
           </div>
+          <div className="cruise-row">
+            <span className="cruise-label">Gearbox</span>
+            <span className="cruise-hint">G</span>
+          </div>
+          <div className="segmented" role="group" aria-label="Gearbox">
+            {(["manual", "auto"] as const).map((g) => (
+              <button key={g} type="button" aria-pressed={settings.gears === g} onClick={() => update({ gears: g })} title={g === "manual" ? "You shift, with E and Q" : "The car shifts for you"}>
+                {g === "manual" ? "Manual" : "Automatic"}
+              </button>
+            ))}
+          </div>
           <div className="cruise-row cruise-toggles">
             <button type="button" className="track-toggle" aria-pressed={settings.autopilot} onClick={() => update({ autopilot: !settings.autopilot })}>
               Autopilot (T)
-            </button>
-            <button type="button" className="track-toggle" aria-pressed={settings.autoGears} onClick={() => update({ autoGears: !settings.autoGears })}>
-              Auto gears (G)
             </button>
             <button type="button" className="track-toggle" aria-pressed={settings.free} onClick={() => update({ free: !settings.free })}>
               Free roam (R)
@@ -478,6 +572,8 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
               className="chip"
               onClick={() => {
                 setLoading(true);
+                void forgetRoad(seed);
+                saveWorld(null);
                 setSeed(1 + Math.floor(Math.random() * 9999));
               }}
             >
@@ -495,8 +591,8 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       )}
 
       {settings.free && (
-        <button type="button" className="cruise-free cruise-fade" onClick={() => update({ free: false })} title="Back to the road (R)">
-          Free roam <span>R · back to the road</span>
+        <button type="button" className="cruise-free cruise-fade" onClick={() => update({ free: false })} title="Lane assist back on (R)">
+          Free roam <span>R · lane assist · B · back to road</span>
         </button>
       )}
 
@@ -521,7 +617,9 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
             <Speedometer state={sim.state} accent={accent} maxKmh={maxKmh} />
           </div>
         </div>
-        <p className="cruise-trip">{(trip / 1000).toFixed(1)} km</p>
+        <p className="cruise-trip" title="This trip: distance, time on the move and average speed">
+          {(trip.m / 1000).toFixed(1)} km · {duration(trip.s)} · avg {trip.s > 5 ? Math.round((trip.m / trip.s) * 3.6) : 0} km/h · {settings.gears === "auto" ? "Auto" : "Manual"}
+        </p>
       </div>
 
       <dl className="drive-keys cruise-keys cruise-fade">
@@ -529,6 +627,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
           ["W / S", "Gas / brake"],
           ["A / D", "Steer"],
           ["R", "Free roam"],
+          ["B", "Back to road"],
           ["E / Q", "Shift"],
           ["C", "Camera"],
           ["T", "Autopilot"],
@@ -575,6 +674,14 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
         </div>
       </div>
     </main>
+  );
+}
+
+function RoadIcon() {
+  return (
+    <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden>
+      <path d="M7 3L4 17M13 3l3 14M10 4v2.5M10 9v2.5M10 14v2.5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
   );
 }
 
