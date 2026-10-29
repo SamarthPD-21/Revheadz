@@ -124,6 +124,11 @@ export class CruiseScene {
   /** Bloom only earns its cost at night and in the wet (lamps, reflectors); by day it's skipped. */
   private bloomOn = false;
   private frameMs = 16;
+  /**
+   * The frame time the resolution is tuned to hold, ms: the frame-rate target, or the screen's
+   * own refresh if that's slower (nothing draws faster than the screen refreshes).
+   */
+  targetMs = 1000 / 60;
   private dpr = 1;
   private size = { w: 1, h: 1 };
   private camMode: CameraMode = "chase";
@@ -316,14 +321,16 @@ export class CruiseScene {
   frame(dt: number, drive: Drive, look: Look): void {
     dt = Math.min(dt, 0.1);
     this.time += dt;
-    // adaptive resolution: frames are capped at the screen's rate, so "room to spare" can't be
+    // adaptive resolution, held to the target frame rate: frames are capped (at the screen's rate
+    // or the chosen frame rate), so "room to spare" can't be
     // seen directly. Step down when frames are missed; after a few steady seconds try a step
     // up, but not back to a level that missed recently (that ceiling relaxes over time).
     this.frameMs = this.frameMs * 0.9 + dt * 1000 * 0.1;
-    this.steady = this.frameMs < 18 ? this.steady + dt : 0;
+    const target = this.targetMs;
+    this.steady = this.frameMs < target * 1.08 ? this.steady + dt : 0;
     this.ceiling = Math.min(1, this.ceiling + dt * 0.004);
     let next = this.quality;
-    if (this.frameMs > 21 && this.time - this.qualityAt > 0.5) {
+    if (this.frameMs > target * 1.25 && this.time - this.qualityAt > 0.5) {
       this.ceiling = this.quality - 0.05;
       next = Math.max(0.5, this.quality - 0.1);
     } else if (this.steady > 3 && this.quality < this.ceiling) {
@@ -333,7 +340,7 @@ export class CruiseScene {
     if (next !== this.quality) {
       this.quality = next;
       this.qualityAt = this.time;
-      this.frameMs = 16.7;
+      this.frameMs = target;
       this.applySize();
     }
 

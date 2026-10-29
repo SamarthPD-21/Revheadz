@@ -22,6 +22,7 @@ import { Tachometer } from "../Tachometer";
 import { ThrottleControl } from "../ThrottleControl";
 import { VehiclePicker, type PickerVehicle } from "../VehiclePicker";
 import { Ambience } from "./ambience";
+import { FrameGate } from "../../lib/cruise/frameGate";
 import { forgetRoad, loadTiles, saveTiles } from "../../lib/cruise/tileCache";
 import { CAMERA_MODES, CruiseScene, type CameraMode, type Place, type Weather } from "./scene";
 import { World, type TileData } from "./world";
@@ -50,10 +51,12 @@ interface Settings {
   gears: "manual" | "auto";
   /** Off the road and anywhere on the map. */
   free: boolean;
+  /** Frames a second to aim for ("max": as fast as the screen refreshes). */
+  fps: "60" | "90" | "120" | "max";
 }
 
 const STORE_KEY = "revheadz:cruise";
-const DEFAULTS: Settings = { hour: 18.85, cycle: true, weather: "clear", camera: "chase", autopilot: false, gears: "auto", free: false };
+const DEFAULTS: Settings = { hour: 18.85, cycle: true, weather: "clear", camera: "chase", autopilot: false, gears: "auto", free: false, fps: "90" };
 const WEATHERS: { id: Weather; label: string }[] = [
   { id: "clear", label: "Clear" },
   { id: "haze", label: "Haze" },
@@ -70,6 +73,12 @@ const MOMENTS = [
 ];
 /** Game hours per real second when the day is going by (a day in 24 minutes). */
 const HOURS_PER_S = 1 / 60;
+const FRAME_RATES: { id: Settings["fps"]; label: string }[] = [
+  { id: "60", label: "60" },
+  { id: "90", label: "90" },
+  { id: "120", label: "120" },
+  { id: "max", label: "Max" },
+];
 const STEER_LEFT = ["KeyA", "ArrowLeft"];
 const clampUnit = (v: number) => Math.max(-1, Math.min(1, v));
 const STEER_RIGHT = ["KeyD", "ArrowRight"];
@@ -197,6 +206,8 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
   const [setKmh, setSetKmh] = useState(100);
   const setKmhRef = useRef(100);
   const [trip, setTrip] = useState({ m: 0, s: 0 });
+  /** Frames drawn a second, and how fast the screen refreshes. */
+  const [fps, setFps] = useState({ now: 0, screen: 60 });
   const [rig] = useState(() => createRig(vehicle, setPending));
   const sceneRef = useRef<CruiseScene | null>(null);
   const steerKeys = useRef(new Set<string>());
@@ -341,13 +352,21 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       }, 30);
     });
     let lastSave = performance.now();
+    const gate = new FrameGate();
+    let frames = 0;
+    let fpsAt = performance.now();
     let lastGrip = 0;
 
     const tick = (now: number) => {
       raf = requestAnimationFrame(tick);
+      const s = settingsRef.current;
+      // the chosen frame rate: on a screen faster than it, some refreshes are skipped
+      const cap = s.fps === "max" ? 0 : Number(s.fps);
+      if (!gate.tick(now, cap)) return;
+      scene.targetMs = gate.targetMs(cap);
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
-      const s = settingsRef.current;
+      frames++;
       input.apply(sim.input, now);
       const running = sim.state.ignition === "running";
       if (s.autopilot && running) {
@@ -406,6 +425,9 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
         setHourShown(hourRef.current);
         setTrip({ m: scene.trip, s: tripS });
         setSetKmh(Math.round(setKmhRef.current));
+        setFps({ now: Math.round((frames * 1000) / Math.max(1, now - fpsAt)), screen: Math.round(1000 / gate.screenMs) });
+        frames = 0;
+        fpsAt = now;
       }
       if (now - lastSave > 4000) {
         lastSave = now;
@@ -573,6 +595,25 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
             {CAMERA_MODES.map((c) => (
               <button key={c} type="button" aria-pressed={settings.camera === c} onClick={() => update({ camera: c })}>
                 {CAMERA_LABEL[c]}
+              </button>
+            ))}
+          </div>
+          <div className="cruise-row">
+            <span className="cruise-label">Frame rate</span>
+            <span className="cruise-hint" title="Frames drawn a second right now, and how fast your screen refreshes">
+              {fps.now} fps · screen {fps.screen} Hz
+            </span>
+          </div>
+          <div className="segmented" role="group" aria-label="Frame rate">
+            {FRAME_RATES.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                aria-pressed={settings.fps === f.id}
+                onClick={() => update({ fps: f.id })}
+                title={f.id === "max" ? "As fast as your screen refreshes" : `Aim for ${f.label} frames a second (the picture sharpens or softens to hold it)`}
+              >
+                {f.label}
               </button>
             ))}
           </div>
