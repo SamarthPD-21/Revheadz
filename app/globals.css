@@ -883,3 +883,16 @@ button.menu-option:hover { background: #17171d; }
 }
 @keyframes cruise-dash { to { background-position: center 18px, 0 0; } }
 @media (prefers-reduced-motion: reduce) { .cruise-mini-road { animation: none; } }
+/* free roam: a pill to say so (and take you back), and steering arrows on touch screens */
+.cruise-free {
+  position: absolute; left: var(--edge); top: calc(var(--hud-top) + 0.4rem); z-index: 10;
+  padding: 0.3rem 0.8rem; border-radius: 9999px; background: rgba(5, 6, 10, 0.55); border: 1px solid rgba(163, 230, 53, 0.35);
+  font-size: 0.75rem; color: #d9f99d; white-space: nowrap;
+}
+.cruise-free span { margin-left: 0.5rem; color: #71717a; font-size: 0.66rem; }
+.cruise-free:hover span { color: #d4d4d8; }
+.cruise-steer { display: none; }
+@media (pointer: coarse) {
+  .cruise-steer { display: flex; gap: 0.5rem; align-self: flex-end; margin-bottom: 0.2rem; }
+  .cruise-steer .ctl { width: 4.2rem; height: 4.2rem; display: grid; place-items: center; background: rgba(24, 24, 30, 0.55); border-radius: 14px; touch-action: none; }
+}

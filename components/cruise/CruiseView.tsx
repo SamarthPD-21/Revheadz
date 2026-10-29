@@ -45,10 +45,12 @@ interface Settings {
   camera: CameraMode;
   autopilot: boolean;
   autoGears: boolean;
+  /** Off the road and anywhere on the map. */
+  free: boolean;
 }
 
 const STORE_KEY = "revheadz:cruise";
-const DEFAULTS: Settings = { hour: 18.85, cycle: true, weather: "clear", camera: "chase", autopilot: false, autoGears: true };
+const DEFAULTS: Settings = { hour: 18.85, cycle: true, weather: "clear", camera: "chase", autopilot: false, autoGears: true, free: false };
 const WEATHERS: { id: Weather; label: string }[] = [
   { id: "clear", label: "Clear" },
   { id: "haze", label: "Haze" },
@@ -66,6 +68,7 @@ const MOMENTS = [
 /** Game hours per real second when the day is going by (a day in 24 minutes). */
 const HOURS_PER_S = 1 / 60;
 const STEER_LEFT = ["KeyA", "ArrowLeft"];
+const clampUnit = (v: number) => Math.max(-1, Math.min(1, v));
 const STEER_RIGHT = ["KeyD", "ArrowRight"];
 
 function loadSettings(): Settings {
@@ -151,6 +154,8 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
   const [rig] = useState(() => createRig(vehicle, setPending));
   const sceneRef = useRef<CruiseScene | null>(null);
   const steerKeys = useRef(new Set<string>());
+  /** Touch steering in free roam: -1, 0 or 1 from the on-screen arrows. */
+  const touchSteer = useRef(0);
 
   const update = (patch: Partial<Settings>) => {
     const next = { ...settingsRef.current, ...patch };
@@ -184,6 +189,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       if (e.code === "KeyC") update({ camera: CAMERA_MODES[(CAMERA_MODES.indexOf(s.camera) + 1) % CAMERA_MODES.length] });
       else if (e.code === "KeyT") update({ autopilot: !s.autopilot });
       else if (e.code === "KeyG") update({ autoGears: !s.autoGears });
+      else if (e.code === "KeyR") update({ free: !s.free });
       else if (e.code === "KeyH") setHidden((h) => !h);
       else if (e.code === "KeyM") toggleMute();
       else if (e.code === "KeyF") toggleFullscreen();
@@ -284,12 +290,18 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
         sim.input.brake = c.brake;
       }
       if (s.autopilot || s.autoGears) lastShift = autoShift(sim, vehicle, sim.input.throttle, now / 1000, lastShift);
+      // free roam: grass and dirt drag at the wheels, water much more, and deep water stops you dead
+      if (scene.freeRoam !== s.free) scene.setFreeRoam(s.free);
+      const under = scene.surface;
+      const drag = under.blocked ? 1 : under.depth > 0 ? 0.35 : under.offRoad ? 0.07 : 0;
+      sim.input.grade = scene.grade;
+      if (drag) sim.input.brake = Math.max(sim.input.brake, drag * Math.min(1, sim.state.speedKmh / 15 + (under.blocked ? 1 : 0)));
       sim.advance(dt);
       audio.update(sim.state);
       if (s.cycle) hourRef.current = (hourRef.current + dt * HOURS_PER_S) % 24;
       ambience.update(sim.state.speedKmh, s.weather === "rain");
       const keys = steerKeys.current;
-      const steer = (STEER_RIGHT.some((k) => keys.has(k)) ? 1 : 0) - (STEER_LEFT.some((k) => keys.has(k)) ? 1 : 0);
+      const steer = clampUnit((STEER_RIGHT.some((k) => keys.has(k)) ? 1 : 0) - (STEER_LEFT.some((k) => keys.has(k)) ? 1 : 0) + touchSteer.current);
       scene.frame(dt, { speedKmh: sim.state.speedKmh, brake: sim.input.brake, steer, ignition: running }, { hour: hourRef.current, weather: s.weather, camera: s.camera });
       // the slow-moving numbers on screen: a few times a second is plenty
       if (now - lastUi > 400) {
@@ -455,6 +467,9 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
             <button type="button" className="track-toggle" aria-pressed={settings.autoGears} onClick={() => update({ autoGears: !settings.autoGears })}>
               Auto gears (G)
             </button>
+            <button type="button" className="track-toggle" aria-pressed={settings.free} onClick={() => update({ free: !settings.free })}>
+              Free roam (R)
+            </button>
           </div>
           <div className="cruise-row">
             <span className="cruise-label">Road #{seed}</span>
@@ -477,6 +492,12 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
           <IgnitionButton store={sim.store} onPress={press} pending={pending} subscribe={subscribe} />
           <p className="text-xs text-zinc-300">Start it up and take it for a drive</p>
         </div>
+      )}
+
+      {settings.free && (
+        <button type="button" className="cruise-free cruise-fade" onClick={() => update({ free: false })} title="Back to the road (R)">
+          Free roam <span>R · back to the road</span>
+        </button>
       )}
 
       {settings.autopilot && ignition === "running" && (
@@ -507,6 +528,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
         {[
           ["W / S", "Gas / brake"],
           ["A / D", "Steer"],
+          ["R", "Free roam"],
           ["E / Q", "Shift"],
           ["C", "Camera"],
           ["T", "Autopilot"],
@@ -526,6 +548,28 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
             <BrakePad input={input} />
           </div>
         </div>
+        {settings.free && (
+          <div className="cruise-steer" role="group" aria-label="Steer">
+            {([-1, 1] as const).map((dir) => (
+              <button
+                key={dir}
+                type="button"
+                className="ctl"
+                aria-label={dir < 0 ? "Steer left" : "Steer right"}
+                onPointerDown={(e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  touchSteer.current = dir;
+                }}
+                onPointerUp={() => (touchSteer.current = 0)}
+                onPointerCancel={() => (touchSteer.current = 0)}
+              >
+                <svg viewBox="0 0 16 16" className="h-5 w-5" aria-hidden>
+                  <path d={dir < 0 ? "M10 3L5 8l5 5" : "M6 3l5 5-5 5"} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            ))}
+          </div>
+        )}
         <div className="drive-touch-gas">
           <ThrottleControl input={input} accent={accent} />
         </div>
