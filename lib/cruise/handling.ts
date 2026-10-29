@@ -129,17 +129,30 @@ export interface Controls {
   locked?: boolean;
   /** The driven wheels are spinning, 0-1. */
   wheelspin?: number;
+  /** The lane assist is steering: it can turn the wheel quicker than a smooth pair of hands. */
+  assisted?: boolean;
 }
 
 /** How far the wheel can be turned at a speed: lots when parking, a little at speed (like a real rack's feel). */
 export const steerLock = (vx: number) => Math.min(0.55, Math.max(0.055, 0.55 / (1 + Math.max(0, vx) / 6)));
 
-/** Cornering stiffness per unit of load, 1/rad: how quickly a tyre builds force as it slips. */
-const STIFFNESS = 24;
-/** Shape of the tyre curve past its peak: a sliding tyre keeps ~80% of its peak grip. */
-const SHAPE = 1.4;
-/** B·α at the peak of that curve. */
-const PEAK_BA = Math.tan(Math.PI / (2 * SHAPE));
+/**
+ * Each axle's tyres: cornering stiffness per unit of load (1/rad: how quickly force builds as
+ * they slip) and the shape of the curve past its peak. A road car is set up to understeer:
+ * the rears are stiffer and give up their grip gently (a sliding rear keeps ~90% of its peak),
+ * so at the limit the nose runs wide before the tail steps out, and a slide comes back without
+ * snapping the other way. The fronts keep ~80% once they slide.
+ */
+const FRONT = { stiffness: 20, shape: 1.42 };
+const REAR = { stiffness: 30, shape: 1.25 };
+type Tyre = typeof FRONT;
+/**
+ * The steering a bend needs beyond its geometry, rad per m/s² of cornering: that's the
+ * understeer the tyres give (for the lane assist, which steers to a line like a driver would).
+ */
+export const UNDERSTEER = (1 / FRONT.stiffness - 1 / REAR.stiffness) / G;
+/** B·α at the peak of a tyre's curve: its best slip angle, in units of 1/B. */
+const peakBA = (t: Tyre) => Math.tan(Math.PI / (2 * t.shape));
 
 /**
  * A tyre's sideways force at a slip angle (the "magic formula"): it rises steeply, peaks at
@@ -147,10 +160,10 @@ const PEAK_BA = Math.tan(Math.PI / (2 * SHAPE));
  * and a car pushed past it slides with less grip than it had: understeer if it's the front,
  * a spin starting if it's the rear.
  */
-export function tyreForce(alpha: number, load: number, peak: number): number {
+export function tyreForce(alpha: number, load: number, peak: number, t: Tyre = FRONT): number {
   if (peak < 1) return 0;
-  const B = (STIFFNESS * load) / (SHAPE * peak);
-  return -peak * Math.sin(SHAPE * Math.atan(B * alpha));
+  const B = (t.stiffness * load) / (t.shape * peak);
+  return -peak * Math.sin(t.shape * Math.atan(B * alpha));
 }
 
 /**
@@ -183,10 +196,16 @@ export function stepHandling(m: Motion, c: Chassis, u: Controls, dt: number): nu
   const lock = steerLock(vx);
   let target = u.steer * lock;
   const released = u.steer === 0 && vx > 4;
-  if (released) target = Math.max(-0.55, Math.min(0.55, Math.atan2(m.vy + a * m.r, v0)));
-  const out = Math.max(0.5, lock * 5);
+  // (back to the middle in an ordinary bend; it only winds on opposite lock in a real slide, and
+  // then most of the way, since one that follows the slide exactly overshoots as the tail comes back)
+  if (released) {
+    const sliding = Math.min(1, Math.max(0, (Math.abs(Math.atan2(m.vy, v0)) - 0.05) / 0.1));
+    target = Math.max(-0.4, Math.min(0.4, Math.atan2(m.vy + a * m.r, v0) * 0.7 * sliding));
+  }
+  // a smooth hand: about 0.4 s to full lock, a little quicker back
+  const out = u.assisted ? Math.max(0.5, lock * 5) : Math.max(0.25, lock * 2.5);
   // (a free wheel spins round on its own, quicker than any hand)
-  const rate = released ? 3 : Math.abs(target) < Math.abs(m.delta) || Math.sign(target) !== Math.sign(m.delta) ? out * 1.8 : out;
+  const rate = released ? 1.6 : Math.abs(target) < Math.abs(m.delta) || Math.sign(target) !== Math.sign(m.delta) ? out * 1.6 : out;
   m.delta += Math.max(-rate * dt, Math.min(rate * dt, target - m.delta));
 
   // weight on each axle: shifted by braking and power, pressed down by any wings
@@ -210,7 +229,7 @@ export function stepHandling(m: Motion, c: Chassis, u: Controls, dt: number): nu
   // at the limit rather than spin, so the front gives up a little first
   const lockLoss = u.locked ? 0.3 : 1;
   const maxF = grip * 0.97 * fzF * Math.sqrt(1 - pushF * pushF) * lockLoss;
-  const balanceR = c.bike ? 1.1 : 1.03;
+  const balanceR = c.bike ? 1.1 : 1.06;
 
   let sliding = 0;
   let scrub = 0;
@@ -225,8 +244,8 @@ export function stepHandling(m: Motion, c: Chassis, u: Controls, dt: number): nu
     const tcEase = aids.tc ? 1 - Math.min(1, Math.max(0, (Math.abs(aR) - 0.05) / 0.08)) : 1;
     const pr = pushR0 * tcEase;
     const maxR = grip * balanceR * fzR * Math.sqrt(1 - pr * pr) * lockLoss;
-    const fF = tyreForce(aF, fzF, maxF);
-    const fR = tyreForce(aR, fzR, maxR);
+    const fF = tyreForce(aF, fzF, maxF, FRONT);
+    const fR = tyreForce(aR, fzR, maxR, REAR);
     const cosD = Math.cos(m.delta);
     m.vy += ((fF * cosD + fR) / mass - vx * m.r) * h;
     m.r += ((a * fF * cosD - b * fR) / Iz) * h;
@@ -237,7 +256,8 @@ export function stepHandling(m: Motion, c: Chassis, u: Controls, dt: number): nu
     // asked (that's just grip running out), only one rotating more than the wheel asks, by
     // braking a wheel or two, which costs speed
     if ((aids.esc || c.bike) && vx > 4) {
-      const asked = Math.max(-grip * G / v, Math.min(grip * G / v, (vx * Math.tan(m.delta)) / L));
+      // (what the driver asks for: their hands on the wheel, not the wheel self-centring in a slide)
+      const asked = Math.max(-grip * G / v, Math.min(grip * G / v, (vx * Math.tan(u.steer * lock)) / L));
       const over = Math.sign(m.r) !== Math.sign(asked) ? Math.abs(m.r - asked) : Math.abs(m.r) - Math.abs(asked);
       if (over > 0.04) {
         const k = Math.min(1, (over - 0.04) / 0.15);
@@ -254,8 +274,8 @@ export function stepHandling(m: Motion, c: Chassis, u: Controls, dt: number): nu
     if (Math.abs(m.r) > rLimit) m.r = Math.sign(m.r) * rLimit;
     scrub += lost / steps;
     // how far the tyres are towards (or past) the slip angle where they grip best
-    const peakF = (PEAK_BA * SHAPE * Math.max(1, maxF)) / (STIFFNESS * fzF);
-    const peakR = (PEAK_BA * SHAPE * Math.max(1, maxR)) / (STIFFNESS * fzR);
+    const peakF = (peakBA(FRONT) * FRONT.shape * Math.max(1, maxF)) / (FRONT.stiffness * fzF);
+    const peakR = (peakBA(REAR) * REAR.shape * Math.max(1, maxR)) / (REAR.stiffness * fzR);
     // (a front tyre pushed wide squeals more than it smokes; the rear sliding is what smokes)
     sliding = Math.max((Math.abs(aF) / peakF) * 0.6, Math.abs(aR) / peakR);
   }

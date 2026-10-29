@@ -130,9 +130,31 @@ describe("cruise handling", () => {
       vx += (accel - (m.scrub ?? 0) / supra.massKg) / 60;
       if (t < 0.7) slip = Math.max(slip, Math.abs(Math.atan2(m.vy, vx)));
     }
-    expect(slip).toBeGreaterThan(0.08); // it did slide
+    expect(slip).toBeGreaterThan(0.06); // it did slide
     expect(Math.abs(Math.atan2(m.vy, vx))).toBeLessThan(0.01);
     expect(Math.abs(m.r)).toBeLessThan(0.02);
+  });
+
+  it("at motorway speed a hard turn and a let-go doesn't throw it the other way", () => {
+    for (const mu of [1, 0.72]) {
+      for (const aids of [supra.aids, ON]) {
+        const m: Motion = { vy: 0, r: 0, delta: 0 };
+        let vx = 45;
+        let slip = 0;
+        let back = 0;
+        for (let t = 0; t < 4; t += 1 / 60) {
+          const turning = t < 1.2;
+          stepHandling(m, supra, { vx, steer: turning ? 1 : 0, accel: turning ? 1 : 0, mu, aids }, 1 / 60);
+          vx += ((turning ? 1 : 0) - (m.scrub ?? 0) / supra.massKg) / 60;
+          slip = Math.max(slip, Math.abs(Math.atan2(m.vy, vx)));
+          // turning right: any yaw to the left after letting go is the car swinging back
+          if (!turning) back = Math.min(back, m.r);
+        }
+        expect(slip).toBeLessThan(0.1); // a few degrees of slip at the limit, not a slide
+        expect(back).toBeGreaterThan(-0.15);
+        expect(Math.abs(m.r)).toBeLessThan(0.01);
+      }
+    }
   });
 
   it("with the wheels locked it hardly turns", () => {
