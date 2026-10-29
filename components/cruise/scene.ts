@@ -5,7 +5,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { mulberry32 } from "../../lib/cruise/noise";
 import { GroundProbe, type Footing } from "../../lib/cruise/ground";
-import { brakeLimit, chassisOf, stepHandling, steerLock, tractionLimit, type Aids, type Chassis, type Motion } from "../../lib/cruise/handling";
+import { UNDERSTEER, brakeLimit, chassisOf, stepHandling, steerLock, tractionLimit, type Aids, type Chassis, type Motion } from "../../lib/cruise/handling";
 import { LANE_OFFSET, ROAD_HALF, WATER_Y, rightOf, type RoadPoint } from "../../lib/cruise/road";
 import { Landscape } from "../../lib/cruise/terrain";
 import type { VehicleConfig } from "../../lib/vehicles/types";
@@ -432,7 +432,7 @@ export class CruiseScene {
    */
   private drive(drive: Drive, v: number, dt: number) {
     const steer = this.free ? drive.steer : this.laneAssist(drive.steer, v, dt);
-    this.slide = stepHandling(this.motion, this.chassis, { vx: v, steer, accel: this.accelSm, mu: this.grip(), aids: this.aids ?? undefined, locked: drive.locked, wheelspin: drive.wheelspin }, dt);
+    this.slide = stepHandling(this.motion, this.chassis, { vx: v, steer, accel: this.accelSm, mu: this.grip(), aids: this.aids ?? undefined, locked: drive.locked, wheelspin: drive.wheelspin, assisted: !this.free }, dt);
     this.yaw += this.motion.r * dt;
     const c = Math.cos(this.yaw);
     const sn = Math.sin(this.yaw);
@@ -480,7 +480,9 @@ export class CruiseScene {
     const side = -dx * sn + dz * c;
     const alpha = Math.atan2(side, ahead);
     // pure pursuit, less the yaw we already have (damps any sway)
-    const delta = Math.atan2(2 * this.chassis.wheelbase * Math.sin(alpha), Math.max(4, Math.hypot(dx, dz))) - this.motion.r * 0.04;
+    // the arc to that point, plus the extra lock the car's understeer needs to hold it
+    const curv = (2 * Math.sin(alpha)) / Math.max(4, Math.hypot(dx, dz));
+    const delta = Math.atan(this.chassis.wheelbase * curv) + UNDERSTEER * v * v * curv - this.motion.r * 0.04;
     return THREE.MathUtils.clamp(delta / steerLock(v), -1, 1);
   }
 
@@ -667,9 +669,11 @@ export class CruiseScene {
     // chase, far and drone follow the way the car is travelling (its heading plus any slide),
     // turning a moment after it does, so a bend or a slide shows the car a little from the side
     const v2 = Math.max(v, 3);
-    const travel = this.yaw + Math.atan2(this.motion.vy, v2) * 0.7;
+    const travel = this.yaw + Math.atan2(this.motion.vy, v2) * 0.5;
+    // brisk round town, floatier at speed so a quick correction doesn't jerk the picture
+    const follow = mode === "drone" ? 2 : THREE.MathUtils.lerp(4.5, 2.4, THREE.MathUtils.clamp((v - 15) / 30, 0, 1));
     if (snap) this.camYaw = travel;
-    else this.camYaw += wrapAngle(travel - this.camYaw) * (1 - Math.exp(-(mode === "drone" ? 2 : 4.5) * dt));
+    else this.camYaw += wrapAngle(travel - this.camYaw) * (1 - Math.exp(-follow * dt));
     const settle = this.time - this.orbit.at > 2.5;
     if (settle) {
       this.orbit.yaw = damp(this.orbit.yaw, 0, 2, dt || 1);
