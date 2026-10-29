@@ -1,0 +1,213 @@
+import * as THREE from "three";
+import { Sky } from "three/examples/jsm/objects/Sky.js";
+import { mulberry32, smoothstep } from "../../lib/cruise/noise";
+
+export type Weather = "clear" | "haze" | "fog" | "rain";
+
+const lerpC = (a: THREE.Color, b: THREE.Color, t: number) => a.clone().lerp(b, Math.min(1, Math.max(0, t)));
+/** A colour picked as sRGB (three.js works in linear light). */
+const srgb = (r: number, g: number, b: number) => new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace);
+
+const NIGHT_FOG = srgb(0.018, 0.028, 0.06);
+const DUSK_FOG = srgb(0.78, 0.5, 0.38);
+const DAY_FOG = srgb(0.66, 0.76, 0.88);
+const GREY = srgb(0.52, 0.55, 0.6);
+
+/** What the time of day and weather do to the light, worked out once per change. */
+export interface Light {
+  /** Sun height above the horizon, degrees. */
+  elevation: number;
+  /** 0 by day, 1 in full night. */
+  night: number;
+  fog: THREE.Color;
+  /** How wet the road is, 0-1. */
+  wet: number;
+}
+
+/**
+ * Sky, sun, moon, stars, fog and the ambient light, all driven by the hour (0-24) and the
+ * weather. The sky is the physical (Preetham) model, so sunrise and sunset colour
+ * themselves; a starry dome fades in over it after dark. The car's paint reflects a
+ * pre-filtered copy of the sky, refreshed whenever the light has changed enough to see.
+ */
+export class Atmosphere {
+  readonly group = new THREE.Group();
+  readonly sun = new THREE.DirectionalLight(0xffffff, 3);
+  readonly moon = new THREE.DirectionalLight(0x9fb4ff, 0.2);
+  readonly hemi = new THREE.HemisphereLight(0xbfd6ff, 0x3a3020, 1);
+  private readonly sky = new Sky();
+  private readonly night: THREE.Mesh<THREE.SphereGeometry, THREE.ShaderMaterial>;
+  private readonly stars: THREE.Points<THREE.BufferGeometry, THREE.PointsMaterial>;
+  private readonly moonDisc: THREE.Mesh<THREE.CircleGeometry, THREE.MeshBasicMaterial>;
+  private readonly pmrem: THREE.PMREMGenerator;
+  private readonly envScene = new THREE.Scene();
+  private envTarget: THREE.WebGLRenderTarget | null = null;
+  private envKey = "";
+  readonly light: Light = { elevation: 30, night: 0, fog: DAY_FOG.clone(), wet: 0 };
+  private readonly sunDir = new THREE.Vector3();
+
+  constructor(private readonly renderer: THREE.WebGLRenderer) {
+    this.sky.scale.setScalar(4500);
+    const u = this.sky.material.uniforms;
+    u.mieDirectionalG.value = 0.8;
+    this.group.add(this.sky);
+
+    // the night: a deep blue dome with a glow along the horizon, fading in over the sky
+    this.night = new THREE.Mesh(
+      new THREE.SphereGeometry(4300, 32, 16),
+      new THREE.ShaderMaterial({
+        side: THREE.BackSide,
+        transparent: true,
+        depthWrite: false,
+        fog: false,
+        uniforms: { opacity: { value: 0 }, horizon: { value: new THREE.Color(0.05, 0.07, 0.14) } },
+        vertexShader: "varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
+        fragmentShader:
+          "uniform float opacity; uniform vec3 horizon; varying vec3 vDir; void main(){ float h = max(vDir.y, 0.0); vec3 top = vec3(0.004,0.008,0.024); vec3 c = mix(horizon, top, pow(h, 0.45)); gl_FragColor = vec4(c, opacity); }",
+      }),
+    );
+    this.night.renderOrder = -1;
+    this.group.add(this.night);
+
+    const rand = mulberry32(42);
+    const n = 2600;
+    const pos = new Float32Array(n * 3);
+    const col = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      // uniform over the upper sky, a few dipping to the horizon
+      const y = Math.pow(rand(), 0.8) * 0.98 + 0.02;
+      const a = rand() * Math.PI * 2;
+      const r = Math.sqrt(1 - y * y);
+      pos.set([Math.cos(a) * r * 4000, y * 4000, Math.sin(a) * r * 4000], i * 3);
+      const b = 0.35 + Math.pow(rand(), 3) * 0.9;
+      const warm = rand();
+      col.set([b * (0.85 + warm * 0.15), b * 0.9, b * (1 - warm * 0.15)], i * 3);
+    }
+    const sg = new THREE.BufferGeometry();
+    sg.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    sg.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+    this.stars = new THREE.Points(sg, new THREE.PointsMaterial({ size: 1.6, sizeAttenuation: false, vertexColors: true, transparent: true, opacity: 0, depthWrite: false, fog: false }));
+    this.group.add(this.stars);
+
+    this.moonDisc = new THREE.Mesh(new THREE.CircleGeometry(60, 32), new THREE.MeshBasicMaterial({ color: 0xe8ecff, transparent: true, opacity: 0, fog: false, depthWrite: false }));
+    this.group.add(this.moonDisc);
+
+    this.sun.castShadow = true;
+    this.sun.shadow.mapSize.set(1024, 1024);
+    const cam = this.sun.shadow.camera;
+    // only the car casts, and only onto the road around it
+    cam.left = -9;
+    cam.right = 9;
+    cam.top = 9;
+    cam.bottom = -9;
+    cam.near = 1;
+    cam.far = 120;
+    this.sun.shadow.bias = -0.0004;
+    this.sun.shadow.normalBias = 0.03;
+    this.sun.shadow.radius = 2;
+
+    this.pmrem = new THREE.PMREMGenerator(renderer);
+    this.envScene.add(new Sky());
+  }
+
+  /** Sets the hour and weather; returns true when the scene's reflections were refreshed. */
+  set(hour: number, weather: Weather, scene: THREE.Scene): void {
+    // the sun: up at 6:00, highest at 12:45, down at 19:30; under the horizon all night
+    const dayFrac = (hour - 6) / 13.5;
+    const nightFrac = (((hour - 19.5) % 24) + 24) % 24 / 10.5;
+    const elevation = dayFrac >= 0 && dayFrac <= 1 ? 55 * Math.sin(dayFrac * Math.PI) : -20 * Math.sin(nightFrac * Math.PI);
+    const azimuth = 100 + ((hour - 6) / 13.5) * 160;
+    const phi = THREE.MathUtils.degToRad(90 - elevation);
+    const theta = THREE.MathUtils.degToRad(azimuth);
+    this.sunDir.setFromSphericalCoords(1, phi, theta);
+
+    const cloudy = weather === "rain" ? 1 : weather === "fog" ? 0.7 : weather === "haze" ? 0.35 : 0;
+    const u = this.sky.material.uniforms;
+    u.sunPosition.value.copy(this.sunDir);
+    u.turbidity.value = 2.5 + cloudy * 12;
+    u.rayleigh.value = 1.2 + cloudy * 1.5 + (1 - smoothstep(0, 18, elevation)) * 1.2;
+    u.mieCoefficient.value = 0.004 + cloudy * 0.02;
+
+    const day = smoothstep(-4, 8, elevation);
+    const night = 1 - smoothstep(-9, -1, elevation);
+    const golden = smoothstep(-3, 2, elevation) * (1 - smoothstep(6, 20, elevation));
+
+    // sunlight: warm and low at the ends of the day, white and strong at noon, dimmed by cloud
+    this.sun.position.copy(this.sunDir).multiplyScalar(60);
+    this.sun.color.setRGB(1, 0.6 + 0.38 * smoothstep(2, 25, elevation), 0.38 + 0.56 * smoothstep(2, 30, elevation), THREE.SRGBColorSpace);
+    this.sun.intensity = 2.9 * day * (1 - cloudy * 0.7);
+    this.sun.castShadow = day > 0.05 && cloudy < 0.9;
+    this.moon.position.copy(this.sunDir).multiplyScalar(-60).setY(Math.abs(this.sunDir.y) * 60 + 20);
+    this.moon.intensity = 0.32 * night;
+
+    const skyDay = srgb(0.62, 0.76, 1);
+    const skyNight = srgb(0.1, 0.14, 0.3);
+    this.hemi.color.copy(lerpC(skyNight, skyDay, day)).lerp(srgb(1, 0.7, 0.5), golden * 0.4);
+    this.hemi.groundColor.setRGB(0.22 * day + 0.03, 0.18 * day + 0.03, 0.12 * day + 0.04, THREE.SRGBColorSpace);
+    this.hemi.intensity = (0.22 + 0.75 * day) * (1 + cloudy * 0.3);
+
+    // fog follows the horizon: blue by day, amber at sunset, near black at night, grey in bad weather
+    let fog = lerpC(DUSK_FOG, DAY_FOG, smoothstep(2, 22, elevation));
+    fog = lerpC(fog, NIGHT_FOG, night);
+    fog = lerpC(fog, GREY.clone().multiplyScalar(0.12 + 0.88 * day), cloudy * 0.85);
+    const density = { clear: 0.00028, haze: 0.0007, fog: 0.0045, rain: 0.0022 }[weather];
+    // the same fog object, changed in place (a new one would make every material re-check its shader)
+    if (scene.fog instanceof THREE.FogExp2) {
+      scene.fog.color.copy(fog);
+      scene.fog.density = density;
+    } else scene.fog = new THREE.FogExp2(fog, density);
+
+    this.night.material.uniforms.opacity.value = night * 0.97;
+    (this.night.material.uniforms.horizon.value as THREE.Color).copy(fog).lerp(new THREE.Color(0.05, 0.07, 0.14), 0.5);
+    this.stars.material.opacity = night * (1 - cloudy);
+    this.moonDisc.material.opacity = night * (1 - cloudy * 0.8);
+    this.moonDisc.position.copy(this.moon.position).normalize().multiplyScalar(3900);
+    this.moonDisc.lookAt(0, 0, 0);
+
+    this.renderer.toneMappingExposure = 0.55 + night * 0.35 + cloudy * 0.15;
+    Object.assign(this.light, { elevation, night, fog, wet: weather === "rain" ? 1 : 0 });
+
+    // reflections: re-filter the sky when the light has moved on enough to notice
+    const key = `${Math.round(elevation * 0.5)}|${weather}`;
+    if (key !== this.envKey) {
+      this.envKey = key;
+      const envSky = this.envScene.children[0] as Sky;
+      envSky.scale.setScalar(1000);
+      const eu = envSky.material.uniforms;
+      for (const k of ["sunPosition", "turbidity", "rayleigh", "mieCoefficient", "mieDirectionalG"]) {
+        const v = u[k].value;
+        if (v instanceof THREE.Vector3) eu[k].value.copy(v);
+        else eu[k].value = v;
+      }
+      this.envScene.background = night > 0.5 ? new THREE.Color(0.01, 0.015, 0.035) : null;
+      const next = this.pmrem.fromScene(this.envScene, 0, 1, 2000);
+      this.envTarget?.dispose();
+      this.envTarget = next;
+      scene.environment = next.texture;
+      scene.environmentIntensity = 0.2 + 0.45 * day;
+    }
+  }
+
+  /** Keeps the sky and its lights centred on the camera (and the sun's shadow on the car). */
+  follow(camera: THREE.Vector3, focus: THREE.Vector3): void {
+    this.group.position.copy(camera);
+    this.sun.target.position.copy(focus);
+    this.sun.position.copy(this.sunDir).multiplyScalar(60).add(focus);
+    this.sun.target.updateMatrixWorld();
+    this.moon.target.position.copy(focus);
+    this.moon.target.updateMatrixWorld();
+  }
+
+  dispose(): void {
+    this.envTarget?.dispose();
+    this.pmrem.dispose();
+    this.sky.geometry.dispose();
+    this.sky.material.dispose();
+    this.night.geometry.dispose();
+    this.night.material.dispose();
+    this.stars.geometry.dispose();
+    this.stars.material.dispose();
+    this.moonDisc.geometry.dispose();
+    this.moonDisc.material.dispose();
+  }
+}
