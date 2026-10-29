@@ -814,3 +814,72 @@ button.menu-option:hover { background: #17171d; }
 @media (orientation: landscape) and (max-height: 520px) {
   .track-cluster { --gauge: 5.6rem; bottom: 0.5rem; }
 }
+
+/* ---- Cruise: the endless road in 3D --------------------------------------- */
+.cruise { background: #05060a; }
+.cruise-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+.cruise-canvas:active { cursor: grabbing; }
+.cruise-overlay {
+  position: absolute; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 50% 60%, #141824, #05060a 70%); text-align: center; padding: 1rem;
+}
+.cruise-loading { font-size: 0.8rem; letter-spacing: 0.24em; text-transform: uppercase; color: #a1a1aa; animation: cruise-pulse 1.4s ease-in-out infinite; }
+@keyframes cruise-pulse { 50% { opacity: 0.4; } }
+/* the HUD steps aside when nothing has moved for a while; H hides it all */
+.cruise-fade { transition: opacity 600ms ease; }
+.cruise[data-idle="1"] .cruise-fade { opacity: 0; pointer-events: none; }
+.cruise[data-idle="1"] .cruise-cluster { opacity: 0.55; }
+.cruise-cluster { transition: opacity 600ms ease; }
+.cruise[data-hidden="1"] .cruise-fade, .cruise[data-hidden="1"] .cruise-cluster, .cruise[data-hidden="1"] .cruise-panel { opacity: 0; pointer-events: none; }
+.cruise .drive-header { background: linear-gradient(to bottom, rgba(5, 6, 10, 0.55), rgba(5, 6, 10, 0)); }
+.cruise .track-cluster::before { background: radial-gradient(ellipse at 70% 70%, rgba(5, 6, 10, 0.6), rgba(5, 6, 10, 0) 70%); }
+.cruise-trip { align-self: flex-end; margin-right: 0.4rem; font-family: var(--font-mono); font-size: 0.68rem; color: #a1a1aa; text-shadow: 0 1px 4px #000; }
+.cruise-start { top: 40%; }
+.cruise-start p { text-shadow: 0 1px 6px #000; }
+.cruise-pilot {
+  position: absolute; left: 50%; top: calc(var(--hud-top) + 0.4rem); z-index: 10; transform: translateX(-50%);
+  padding: 0.3rem 0.8rem; border-radius: 9999px; background: rgba(5, 6, 10, 0.55); border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.75rem; color: #e4e4e7; white-space: nowrap;
+}
+.cruise-pilot span { margin-left: 0.5rem; color: #71717a; font-size: 0.66rem; }
+.cruise-panel {
+  position: absolute; right: var(--edge); top: var(--hud-top); z-index: 25; width: min(21rem, calc(100vw - 1.5rem));
+  display: flex; flex-direction: column; gap: 0.5rem; padding: 0.8rem; border-radius: 12px;
+  background: rgba(10, 11, 16, 0.78); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px);
+  font-size: 0.75rem; color: #d4d4d8;
+}
+.cruise-panel input[type="range"] { width: 100%; }
+.cruise-panel .segmented { display: flex; }
+.cruise-panel .segmented > button { flex: 1; }
+.cruise-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.15rem; }
+.cruise-label { font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: #71717a; }
+.cruise-clock { font-family: var(--font-mono); font-size: 0.95rem; color: #fafafa; margin-right: auto; }
+.cruise-hint { font-family: var(--font-mono); font-size: 0.62rem; color: #52525b; }
+.cruise-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.cruise-chips .chip { padding: 0.2rem 0.55rem; font-size: 0.68rem; }
+.cruise-toggles { justify-content: flex-start; gap: 1rem; padding: 0.2rem 0; }
+.cruise-keys { max-width: calc(100% - 32rem); }
+@media (pointer: coarse) { .cruise-canvas { cursor: default; } }
+/* the cruise garage: a dusk sky over a far ridge */
+.cruise-backdrop {
+  background:
+    linear-gradient(to bottom, rgba(5, 6, 10, 0) 55%, #07060d 100%),
+    radial-gradient(ellipse 60% 40% at 70% 78%, rgba(255, 170, 90, 0.28), rgba(255, 170, 90, 0) 70%),
+    linear-gradient(to bottom, #0b1024 0%, #2a2347 45%, #6b3f4a 72%, #07060d 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
+  mask-image: linear-gradient(to bottom, #000 70%, transparent);
+}
+/* the Cruise card on the home page: a road running away into a sunset */
+.cruise-mini { position: relative; height: 5.5rem; overflow: hidden; border-radius: 10px; background: linear-gradient(to bottom, #1b1838 0%, #5b3550 55%, #c56a45 100%); }
+.cruise-mini-sun { position: absolute; left: 50%; bottom: 34%; width: 3.2rem; height: 3.2rem; margin-left: -1.6rem; border-radius: 9999px; background: radial-gradient(circle, #ffd59a 0%, #ff9d5c 45%, rgba(255, 140, 80, 0) 70%); }
+.cruise-mini-hills { position: absolute; inset: auto 0 0 0; height: 46%; background: #1c2a24; clip-path: polygon(0 40%, 14% 18%, 30% 44%, 46% 12%, 62% 40%, 78% 16%, 100% 38%, 100% 100%, 0 100%); }
+.cruise-mini-road {
+  position: absolute; left: 50%; bottom: 0; width: 62%; height: 50%; transform: translateX(-50%);
+  clip-path: polygon(47% 0, 53% 0, 100% 100%, 0 100%);
+  background:
+    repeating-linear-gradient(to bottom, rgba(240, 236, 220, 0.9) 0 7px, transparent 7px 18px) center / 3px 100% no-repeat,
+    linear-gradient(to bottom, #2a2a30, #18181c);
+  animation: cruise-dash 0.9s linear infinite;
+}
+@keyframes cruise-dash { to { background-position: center 18px, 0 0; } }
+@media (prefers-reduced-motion: reduce) { .cruise-mini-road { animation: none; } }
