@@ -58,7 +58,8 @@ const haystack = (v: GarageVehicle) =>
     .join(" ")
     .toLowerCase();
 
-export function GarageGrid({ vehicles }: { vehicles: GarageVehicle[] }) {
+/** `base` is where a card goes: the playground's drive screen, or another mode's. */
+export function GarageGrid({ vehicles, base = "/drive" }: { vehicles: GarageVehicle[]; base?: string }) {
   const [chosenFilter, setFilter] = useState<Filter>("all");
   const [sort, setSort] = useState<Sort>("featured");
   const [query, setQuery] = useState("");
@@ -128,7 +129,7 @@ export function GarageGrid({ vehicles }: { vehicles: GarageVehicle[] }) {
             {recent.map((v) => (
               <li key={v.id} className="shrink-0">
                 <Link
-                  href={`/drive/${v.id}`}
+                  href={`${base}/${v.id}`}
                   onClick={() => trackEvent("vehicle_picked", { vehicle: v.id, via: "recent" })}
                   className="recent-pill"
                   style={{ "--accent": v.accent } as React.CSSProperties}
@@ -271,7 +272,7 @@ export function GarageGrid({ vehicles }: { vehicles: GarageVehicle[] }) {
                   </div>
                   <h2 className="text-lg font-semibold text-white">
                     <Link
-                      href={`/drive/${v.id}`}
+                      href={`${base}/${v.id}`}
                       onClick={() => {
                         stopPreview();
                         trackEvent("vehicle_picked", { vehicle: v.id });

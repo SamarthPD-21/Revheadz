@@ -17,7 +17,18 @@ export interface PickerVehicle {
  * The drive screen's title: shows the current vehicle and opens a searchable list of the
  * whole garage (V key, or click). Arrow keys move, Enter drives, Esc closes.
  */
-export function VehiclePicker({ current, vehicles, eyebrow }: { current: PickerVehicle; vehicles: PickerVehicle[]; eyebrow: string }) {
+export function VehiclePicker({
+  current,
+  vehicles,
+  eyebrow,
+  base = "/drive",
+}: {
+  current: PickerVehicle;
+  vehicles: PickerVehicle[];
+  eyebrow: string;
+  /** Where a pick goes: the same screen with the other vehicle. */
+  base?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
@@ -40,7 +51,7 @@ export function VehiclePicker({ current, vehicles, eyebrow }: { current: PickerV
     close();
     if (v.id === current.id) return;
     trackEvent("vehicle_picked", { vehicle: v.id, via: "picker" });
-    router.push(`/drive/${v.id}`);
+    router.push(`${base}/${v.id}`);
   };
   const show = () => {
     setActive(Math.max(0, vehicles.findIndex((v) => v.id === current.id)));
