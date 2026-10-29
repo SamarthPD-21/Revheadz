@@ -1,12 +1,13 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { hash2, mulberry32 } from "../../lib/cruise/noise";
-import { ROAD_HALF, STEP, WATER_Y, bankOf, rightOf, type RoadPoint } from "../../lib/cruise/road";
+import { ROAD_HALF, ROAD_SECTION, STEP, WATER_Y, bankOf, rightOf, type RoadPoint } from "../../lib/cruise/road";
+import { GRID_M } from "../../lib/cruise/ground";
 import { Landscape, RoadDistance, WILD_M, type Ground } from "../../lib/cruise/terrain";
 
 /** Near ground comes in square tiles this wide, m, with this many quads a side (4 m apart). */
 const TILE = 160;
-const RES = 40;
+const RES = TILE / GRID_M;
 /** Tiles kept around the camera (a circle this many tiles across, either way). */
 const RING = 4;
 /** Trees grow only on tiles this close. */
@@ -19,18 +20,7 @@ const CHUNK = 50;
 /** One dash and gap of the centre line, m (the road texture's length). */
 const DASH_PERIOD = 12;
 
-/** Road cross-section: offset from the centre line, drop below the surface, texture u. */
-const SECTION: [number, number, number][] = [
-  [-(ROAD_HALF + 1.8), -0.95, 0],
-  [-(ROAD_HALF + 0.6), -0.07, 0.07],
-  [-ROAD_HALF, 0, 0.1],
-  [-ROAD_HALF / 2, 0, 0.3],
-  [0, 0, 0.5],
-  [ROAD_HALF / 2, 0, 0.7],
-  [ROAD_HALF, 0, 0.9],
-  [ROAD_HALF + 0.6, -0.07, 0.93],
-  [ROAD_HALF + 1.8, -0.95, 1],
-];
+const SECTION = ROAD_SECTION;
 
 type TreeKind = "pine" | "broad" | "bush" | "rock";
 
@@ -235,7 +225,16 @@ export class World {
 
   /** Grows the world around the camera, spending about `budgetMs` on new ground this frame. */
   update(camX: number, camZ: number, carS: number, budgetMs = 5): void {
-    this.land.road.ensure(carS + 7000);
+    const road = this.land.road;
+    const before = road.samples;
+    road.ensure(carS + 7000);
+    // driving freely, the car can head anywhere: keep the end of the road well out of reach
+    for (let k = 0; k < 4; k++) {
+      const [ex, , ez] = road.sample(road.samples - 1);
+      if (Math.hypot(ex - camX, ez - camZ) > 4200) break;
+      road.ensure(road.length + 1000);
+    }
+    if (road.samples !== before) this.roadGrew(before);
     this.updateRoad(carS);
     const tx = Math.floor(camX / TILE);
     const tz = Math.floor(camZ / TILE);
@@ -276,6 +275,41 @@ export class World {
     }
     if (this.plantsDirty) this.fillPlants();
   }
+
+  /**
+   * Fresh road was laid. Normally that's far ahead of anything built; but if it came within
+   * reach of ground already built (driving off the road and round to where it's going), that
+   * ground was shaped without it: build it again.
+   */
+  private roadGrew(from: number) {
+    const road = this.land.road;
+    let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
+    for (let i = from; i < road.samples; i++) {
+      const [x, , z] = road.sample(i);
+      x0 = Math.min(x0, x);
+      z0 = Math.min(z0, z);
+      x1 = Math.max(x1, x);
+      z1 = Math.max(z1, z);
+    }
+    let stale = false;
+    for (const [key, tile] of this.tiles) {
+      const [ix, iz] = key.split(",").map(Number);
+      if ((ix + 1) * TILE < x0 - WILD_M || ix * TILE > x1 + WILD_M || (iz + 1) * TILE < z0 - WILD_M || iz * TILE > z1 + WILD_M) continue;
+      this.group.remove(tile.mesh);
+      tile.mesh.geometry.dispose();
+      this.tiles.delete(key);
+      stale = true;
+    }
+    if (stale) {
+      this.farCache.clear();
+      this.farCentre = "";
+      this.plantsDirty = true;
+      this.onRoadGrew?.();
+    }
+  }
+
+  /** Told when built ground had to be redone (anything caching heights should forget them). */
+  onRoadGrew: (() => void) | null = null;
 
   private buildTile(ix: number, iz: number) {
     const x0 = ix * TILE;
