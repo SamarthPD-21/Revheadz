@@ -5,7 +5,8 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { mulberry32 } from "../../lib/cruise/noise";
 import { GroundProbe, type Footing } from "../../lib/cruise/ground";
-import { LANE_OFFSET, ROAD_HALF, WATER_Y, rightOf, surfaceY, bankOf, type RoadPoint } from "../../lib/cruise/road";
+import { chassisOf, stepHandling, steerLock, type Chassis, type Motion } from "../../lib/cruise/handling";
+import { LANE_OFFSET, ROAD_HALF, WATER_Y, rightOf, type RoadPoint } from "../../lib/cruise/road";
 import { Landscape } from "../../lib/cruise/terrain";
 import type { VehicleConfig } from "../../lib/vehicles/types";
 import { Atmosphere, type Weather } from "./atmosphere";
@@ -13,18 +14,29 @@ import { buildCar, type CarModel } from "./carModel";
 import { Puffs } from "./particles";
 import { World } from "./world";
 
-export type CameraMode = "chase" | "far" | "hood" | "cinematic";
-export const CAMERA_MODES: CameraMode[] = ["chase", "far", "hood", "cinematic"];
+export type CameraMode = "chase" | "far" | "hood" | "drone" | "cinematic";
+export const CAMERA_MODES: CameraMode[] = ["chase", "far", "hood", "drone", "cinematic"];
 export type { Weather };
 
 /** What the scene needs from the car and the driver each frame. */
 export interface Drive {
   speedKmh: number;
-  /** Brake pedal, 0-1 (taillights). */
+  /** Gas pedal, 0-1 (it uses up the driven wheels' grip). */
+  throttle: number;
+  /** Brake pedal, 0-1 (taillights, and grip). */
   brake: number;
   /** -1 full left .. 1 full right; 0 lets the lane assist take it back to the lane. */
   steer: number;
   ignition: boolean;
+}
+
+/** Where the car is in its world: enough to come back to exactly the same place. */
+export interface Place {
+  x: number;
+  z: number;
+  yaw: number;
+  s: number;
+  lane: number;
 }
 
 export interface Look {
@@ -37,6 +49,8 @@ const G = 9.81;
 const srgbColor = (r: number, g: number, b: number) => new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace);
 const tmpV = new THREE.Vector3();
 const damp = (current: number, target: number, rate: number, dt: number) => current + (target - current) * (1 - Math.exp(-rate * dt));
+/** An angle brought into -π..π (for turning the short way round). */
+const wrapAngle = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 
 /**
  * The cruise in 3D: an endless road through hills, forest, desert and mountains, a sky that
@@ -60,27 +74,32 @@ export class CruiseScene {
   private readonly rainSeeds: Float32Array;
   private readonly pt: RoadPoint = { x: 0, y: 0, z: 0, heading: 0, curvature: 0, grade: 0 };
 
-  /** Distance along the road, m (in free roam: of the nearest road point, for laying the world out). */
+  /** Distance along the road of the nearest road point (where the world is laid out from), m. */
   s: number;
-  /** Free roam: the car goes wherever it's steered, over the ground, not along the road. */
+  /** Free roam: no lane assist, so the car goes wherever it's steered, over the ground. */
   private free = false;
   private readonly probe: GroundProbe;
+  /** The car: where it is, which way it points, and how it's moving in its own frame. */
   private fx = 0;
   private fz = 0;
   private yaw = 0;
-  private steerAng = 0;
-  private yawRate = 0;
+  private readonly motion: Motion = { vy: 0, r: 0, delta: 0 };
+  private chassis: Chassis;
+  /** How hard the tyres are sliding, 0-1. */
+  private slide = 0;
   private carY = 0;
   private tiltP = 0;
   private tiltR = 0;
   private footing: Footing | null = null;
+  /** Where across the road the lane assist steers for (+ right of the centre line). */
+  private lane = LANE_OFFSET;
   private readonly puffs = new Puffs(700);
   private puffDue = 0;
   private blocked = false;
-  /** Lateral offset from the centre line, + right, m. */
-  private d = LANE_OFFSET;
-  private dVel = 0;
   private lastSteerAt = -10;
+  /** The chase camera's own heading: it follows the way the car is travelling, a moment late. */
+  private camYaw = 0;
+  private accelSm = 0;
   private prevV = 0;
   private pitch = 0;
   private pitchVel = 0;
@@ -121,7 +140,9 @@ export class CruiseScene {
 
     this.s = 1500; // the road is laid from 0: start well along it, so it runs out of sight behind too
     this.car = buildCar(cfg);
+    this.chassis = chassisOf(cfg, this.car.length);
     this.mountCar();
+    this.putOnRoad(this.s, LANE_OFFSET);
     this.scene.add(this.carRoot);
     this.beam.castShadow = false;
     this.scene.add(this.beam, this.beam.target);
@@ -146,17 +167,72 @@ export class CruiseScene {
 
   /** Builds the world around the start (slow: do it behind a loading screen). */
   warmUp(look: Look): void {
-    const p = this.land.road.at(this.s, this.pt);
     this.applyLook(look, true);
-    this.world.warmUp(p.x, p.z, this.s);
-    this.placeCar(0);
+    this.world.warmUp(this.fx, this.fz, this.s);
+    this.place(0);
+    this.camYaw = this.yaw;
     this.placeCamera(0, look.camera, 0, true);
+  }
+
+  /** Where the car is now (to save, and come back to with `restore`). */
+  get placeNow(): Place {
+    return { x: this.fx, z: this.fz, yaw: this.yaw, s: this.s, lane: this.lane };
+  }
+
+  /** Puts the car back where it was (before `warmUp`). */
+  restore(p: Place): void {
+    this.fx = p.x;
+    this.fz = p.z;
+    this.yaw = p.yaw;
+    this.s = p.s;
+    this.lane = p.lane;
+    this.land.road.ensure(p.s + 2000);
+    Object.assign(this.motion, { vy: 0, r: 0, delta: 0 });
+  }
+
+  /** Carries the trip on from an earlier visit. */
+  set trip(m: number) {
+    this.distance = m;
+  }
+
+  /** Saved map tiles to use instead of building them. */
+  primeTiles(tiles: Map<string, import("./world").TileData>): void {
+    this.world.prime(tiles);
+  }
+
+  /** Tiles built since last asked, to keep for next time. */
+  takeFreshTiles() {
+    return this.world.takeFresh();
+  }
+
+  /** Puts the car on the road at arc length s, `lane` metres right of the centre, facing along it. */
+  private putOnRoad(s: number, lane: number) {
+    const p = this.land.road.at(s, this.pt);
+    const [rx, rz] = rightOf(p.heading);
+    this.s = s;
+    this.lane = lane;
+    this.fx = p.x + rx * lane;
+    this.fz = p.z + rz * lane;
+    this.yaw = p.heading;
+    this.camYaw = p.heading;
+    Object.assign(this.motion, { vy: 0, r: 0, delta: 0 });
+    this.footing = null;
+  }
+
+  /** Back to the nearest bit of road, in the right-hand lane, pointing the way the road goes. */
+  resetToRoad(): void {
+    const f = this.probe.at(this.fx, this.fz);
+    this.putOnRoad(Number.isFinite(f.s) ? f.s : this.s, LANE_OFFSET);
+    this.cine = null;
+    this.place(0);
+    this.placeCamera(0, this.camMode, 0, true);
   }
 
   setCar(cfg: VehicleConfig): void {
     this.carRoot.clear();
     this.car.dispose();
     this.car = buildCar(cfg);
+    this.chassis = chassisOf(cfg, this.car.length);
     this.mountCar();
   }
 
@@ -190,7 +266,7 @@ export class CruiseScene {
     this.orbit.at = this.time;
   }
 
-  /** Total distance driven since this scene started, m. */
+  /** Total distance driven, m. */
   get trip(): number {
     return this.distance;
   }
@@ -200,41 +276,29 @@ export class CruiseScene {
   }
 
   /**
-   * Leaves the road to drive anywhere, or comes back to it: onto the road where you are if
-   * you're on or near it, otherwise to the nearest bit of road (or where you left it).
+   * Free roam on: the lane assist lets go, and the car goes where it's steered. Off: the assist
+   * takes it back. If it has wandered far from the road, it's put back on it.
    */
   setFreeRoam(on: boolean): void {
     if (on === this.free) return;
-    if (on) {
-      const p = this.land.road.at(this.s, this.pt);
-      this.fx = this.carRoot.position.x;
-      this.fz = this.carRoot.position.z;
-      this.carY = this.carRoot.position.y;
-      this.yaw = p.heading + Math.atan2(this.dVel, Math.max(this.prevV, 3));
-      this.steerAng = 0;
-    } else {
-      const f = this.probe.at(this.fx, this.fz);
-      const limit = ROAD_HALF - Math.min(1.05, this.car.width / 2 + 0.15);
-      if (Number.isFinite(f.s)) {
-        this.s = f.s;
-        this.d = Math.abs(f.d) < limit ? f.d : LANE_OFFSET;
-      } else this.d = LANE_OFFSET;
-      this.dVel = 0;
-    }
     this.free = on;
     this.cine = null;
+    if (!on) {
+      const f = this.probe.at(this.fx, this.fz);
+      if (!Number.isFinite(f.d) || Math.abs(f.d) > ROAD_HALF + 8) this.resetToRoad();
+      else this.lane = Math.max(-ROAD_HALF + 1, Math.min(ROAD_HALF - 1, f.d));
+    }
   }
 
   /** The slope along the car (rise per metre), for gravity in the simulation. */
   get grade(): number {
-    if (this.free) return Math.tan(this.tiltP);
-    return this.land.road.at(this.s, this.pt).grade;
+    return Math.tan(this.tiltP);
   }
 
   /** Underfoot in free roam: what slows the car (grass, dirt, water) and whether it's run into deep water. */
-  get surface(): { offRoad: boolean; depth: number; blocked: boolean } {
+  get surface(): { offRoad: boolean; depth: number; blocked: boolean; slide: number } {
     const f = this.footing;
-    return { offRoad: this.free && !!f && !f.road, depth: this.free && f ? f.depth : 0, blocked: this.free && this.blocked };
+    return { offRoad: !!f && !f.road, depth: f ? f.depth : 0, blocked: this.blocked, slide: this.slide };
   }
 
   /** The road ahead, for a driver (or the autopilot) choosing a speed: tightest bend within `ahead` m. */
@@ -271,12 +335,9 @@ export class CruiseScene {
 
     const v = drive.speedKmh / 3.6;
     this.distance += v * dt;
-    if (this.free) this.driveFree(drive, v, dt);
-    else {
-      this.s += v * dt;
-      this.steer(drive, v, dt);
-    }
+    this.drive(drive, v, dt);
     const accel = dt > 0 ? (v - this.prevV) / dt : 0;
+    this.accelSm = damp(this.accelSm, accel, 3, dt);
     this.prevV = v;
     // the body on its springs: squats under power, dives on the brakes
     const pitchTarget = THREE.MathUtils.clamp(accel * 0.0065, -0.05, 0.035);
@@ -284,9 +345,8 @@ export class CruiseScene {
     this.pitch += this.pitchVel * dt;
 
     this.applyLook(look, false);
-    if (this.free) this.placeFree(dt);
-    else this.placeCar(dt);
-    const heading = this.free ? this.yaw : this.land.road.at(this.s, this.pt).heading;
+    this.place(dt);
+    const heading = this.yaw;
     this.world.update(this.camera.position.x, this.camera.position.z, this.s);
     this.updateLights(drive);
     this.placeCamera(dt, look.camera, v, false);
@@ -299,60 +359,76 @@ export class CruiseScene {
     else this.renderer.render(this.scene, this.camera);
   }
 
-  private steer(drive: Drive, v: number, dt: number) {
-    const limit = ROAD_HALF - Math.min(1.05, this.car.width / 2 + 0.15);
-    let want: number;
-    if (Math.abs(drive.steer) > 0.05) {
-      this.lastSteerAt = this.time;
-      want = drive.steer * THREE.MathUtils.clamp(v * 0.22, 1.2, 5.5);
-    } else {
-      // lane assist: after a moment hands-off, ease back to the middle of whichever lane we're in
-      const lane = this.d >= 0 ? LANE_OFFSET : -LANE_OFFSET;
-      want = this.time - this.lastSteerAt > 1.2 ? THREE.MathUtils.clamp((lane - this.d) * 0.8, -1.4, 1.4) : 0;
-    }
-    if (v < 0.5) want = 0;
-    this.dVel = damp(this.dVel, want, 5, dt);
-    this.d += this.dVel * dt;
-    if (Math.abs(this.d) > limit) {
-      this.d = Math.sign(this.d) * limit;
-      this.dVel = 0;
-    }
+  /** How much grip the surface under the car has. */
+  private grip(): number {
+    const f = this.footing;
+    if (!f) return 1;
+    if (f.depth > 0.05) return 0.35;
+    if (f.road) return this.atmo.light.wet > 0 ? 0.72 : 1;
+    return 0.62 - 0.12 * f.dry; // grass grips better than loose dry dirt
   }
 
   /**
-   * Free roam: a bicycle model. The steering lock shrinks with speed, and the yaw rate is
-   * capped by grip (less of it off the tarmac), so asking too much just runs wide.
+   * Moves the car: the tyre model turns steering into yaw and sideways slip, and the car goes
+   * the way it's actually travelling. On the road the lane assist does the steering.
    */
-  private driveFree(drive: Drive, v: number, dt: number) {
-    const bike = this.car.width < 1;
-    const wheelbase = bike ? 1.45 : THREE.MathUtils.clamp(this.car.length * 0.6, 2.3, 3.0);
-    const lock = THREE.MathUtils.clamp(0.62 / (1 + v / 9), 0.06, 0.6);
-    this.steerAng = damp(this.steerAng, drive.steer * lock, 8, dt);
-    const grip = this.footing?.road === false ? 5.5 : 8.5;
-    const maxRate = grip / Math.max(v, 1);
-    this.yawRate = THREE.MathUtils.clamp((v * Math.tan(this.steerAng)) / wheelbase, -maxRate, maxRate);
-    this.yaw += this.yawRate * dt;
-    const nx = this.fx + Math.cos(this.yaw) * v * dt;
-    const nz = this.fz + Math.sin(this.yaw) * v * dt;
+  private drive(drive: Drive, v: number, dt: number) {
+    const steer = this.free ? drive.steer : this.laneAssist(drive.steer, v, dt);
+    this.slide = stepHandling(this.motion, this.chassis, { vx: v, steer, accel: this.accelSm, mu: this.grip() }, dt);
+    this.yaw += this.motion.r * dt;
+    const c = Math.cos(this.yaw);
+    const sn = Math.sin(this.yaw);
+    const vy = this.motion.vy;
+    const nx = this.fx + (c * v - sn * vy) * dt;
+    const nz = this.fz + (sn * v + c * vy) * dt;
     // deep water stops you at the edge; shallows you can splash through
-    const ahead = this.probe.at(nx + Math.cos(this.yaw) * this.car.length * 0.5, nz + Math.sin(this.yaw) * this.car.length * 0.5);
+    const ahead = this.probe.at(nx + c * this.car.length * 0.5, nz + sn * this.car.length * 0.5);
     this.blocked = ahead.depth > 1.1;
     if (!this.blocked) {
       this.fx = nx;
       this.fz = nz;
-    }
+    } else this.motion.vy = 0;
     // too steep across: the car slides down the hill sideways
     const over = Math.abs(this.tiltR) - 0.5;
-    if (over > 0 && this.car.width >= 1) {
-      const down = -Math.sign(this.tiltR); // + right when the left side is higher
-      this.fx += -Math.sin(this.yaw) * down * over * 9 * dt;
-      this.fz += Math.cos(this.yaw) * down * over * 9 * dt;
+    if (over > 0 && !this.chassis.bike) {
+      const down = -Math.sign(this.tiltR);
+      this.fx += -sn * down * over * 9 * dt;
+      this.fz += c * down * over * 9 * dt;
     }
   }
 
-  /** Free roam: stand the car on the ground under its four corners, tilting with the slope. */
-  private placeFree(dt: number) {
-    const bike = this.car.width < 1;
+  /**
+   * Lane assist: steers for a point on the lane a little way ahead (further at speed), the way
+   * a driver looks up the road. A and D move that point across the road; let go and it drifts
+   * back to the middle of the lane you're in. It always heads on along the road, never back.
+   */
+  private laneAssist(input: number, v: number, dt: number): number {
+    const limit = ROAD_HALF - Math.min(1.05, this.car.width / 2 + 0.15);
+    if (Math.abs(input) > 0.05) {
+      this.lastSteerAt = this.time;
+      this.lane += input * THREE.MathUtils.clamp(v * 0.12, 1.2, 3.5) * dt;
+    } else if (this.time - this.lastSteerAt > 1.2) {
+      this.lane = damp(this.lane, this.lane >= 0 ? LANE_OFFSET : -LANE_OFFSET, 1.4, dt);
+    }
+    this.lane = THREE.MathUtils.clamp(this.lane, -limit, limit);
+    const look = 7 + v * 0.5;
+    const p = this.land.road.at(this.s + look, this.pt);
+    const [rx, rz] = rightOf(p.heading);
+    const dx = p.x + rx * this.lane - this.fx;
+    const dz = p.z + rz * this.lane - this.fz;
+    const c = Math.cos(this.yaw);
+    const sn = Math.sin(this.yaw);
+    const ahead = dx * c + dz * sn;
+    const side = -dx * sn + dz * c;
+    const alpha = Math.atan2(side, ahead);
+    // pure pursuit, less the yaw we already have (damps any sway)
+    const delta = Math.atan2(2 * this.chassis.wheelbase * Math.sin(alpha), Math.max(4, Math.hypot(dx, dz))) - this.motion.r * 0.04;
+    return THREE.MathUtils.clamp(delta / steerLock(v), -1, 1);
+  }
+
+  /** Stands the car on whatever is under its four corners, tilting with the slope, and rolls the body. */
+  private place(dt: number) {
+    const bike = this.chassis.bike;
     const c = Math.cos(this.yaw);
     const sn = Math.sin(this.yaw);
     const L = this.car.length * 0.42;
@@ -380,8 +456,9 @@ export class CruiseScene {
       this.tiltR = damp(this.tiltR, roll, 12, dt);
     }
     const v = this.prevV;
-    const latAccel = v * this.yawRate;
-    const rollTarget = bike ? Math.atan(latAccel / G) : THREE.MathUtils.clamp(-latAccel * 0.008, -0.06, 0.06);
+    const latAccel = v * this.motion.r;
+    // cars roll out of a bend on their springs; bikes lean into it
+    const rollTarget = bike ? Math.atan(latAccel / G) : THREE.MathUtils.clamp(-latAccel * 0.009, -0.07, 0.07);
     this.roll = dt ? damp(this.roll, rollTarget, 6, dt) : rollTarget;
     // off the tarmac the body jiggles over the rough ground
     const rough = f.road ? 0 : Math.min(1, v / 12) * 0.018;
@@ -389,12 +466,12 @@ export class CruiseScene {
     this.carRoot.position.set(this.fx, this.carY, this.fz);
     this.carRoot.rotation.set(this.tiltR + (bike ? this.roll : 0), -this.yaw, this.tiltP, "YZX");
     this.car.body.rotation.set(bike ? 0 : this.roll, 0, this.pitch);
-    for (const w of this.car.wheels) w.node.rotation.set(0, w.front ? -this.steerAng : 0, -this.distance / w.r, "YZX");
+    for (const w of this.car.wheels) w.node.rotation.set(0, w.front ? -this.motion.delta : 0, -this.distance / w.r, "YZX");
   }
 
   /** What the rear wheels throw up: dust off the road, spray in water, a mist on wet tarmac. */
   private kickUp(dt: number, v: number) {
-    const f = this.free ? this.footing : null;
+    const f = this.footing;
     let kind: "dust" | "spray" | "mist" | null = null;
     if (f && f.depth > 0.05 && v > 1) kind = "spray";
     else if (f && !f.road && v > 2) kind = "dust";
@@ -424,25 +501,6 @@ export class CruiseScene {
         this.puffs.emit(at.x + r() * 0.2, at.y - w.r * 0.6, at.z + r() * 0.2, -fwd.x * v * 0.12 + r(), lift * (0.6 + this.rand() * 0.6), -fwd.z * v * 0.12 + r(), life * (0.7 + this.rand() * 0.6), size, color, opacity);
       }
     }
-  }
-
-  private placeCar(dt: number) {
-    this.car.body.position.y = 0;
-    const p = this.land.road.at(this.s, this.pt);
-    const [rx, rz] = rightOf(p.heading);
-    const v = this.prevV;
-    const yawOff = Math.atan2(this.dVel, Math.max(v, 3));
-    const latAccel = v * v * p.curvature;
-    const bike = this.car.width < 1;
-    // cars roll out of a bend on their springs; bikes lean into it
-    const rollTarget = bike ? Math.atan(latAccel / G) : THREE.MathUtils.clamp(-latAccel * 0.008, -0.05, 0.05);
-    this.roll = dt ? damp(this.roll, rollTarget, 6, dt) : rollTarget;
-    this.carRoot.position.set(p.x + rx * this.d, surfaceY(p, this.d), p.z + rz * this.d);
-    this.carRoot.rotation.set(Math.atan(bankOf(p.curvature)) + (bike ? this.roll : 0), -(p.heading + yawOff), Math.atan(p.grade), "YZX");
-    this.car.body.rotation.set(bike ? 0 : this.roll, 0, this.pitch);
-    // wheels: rolling with the distance, the front ones steering into the bend
-    const steerAngle = THREE.MathUtils.clamp(Math.atan(p.curvature * 2.6) + yawOff * 1.5, -0.5, 0.5);
-    for (const w of this.car.wheels) w.node.rotation.set(0, w.front ? -steerAngle : 0, -this.distance / w.r, "YZX");
   }
 
   private updateLights(drive: Drive) {
@@ -541,17 +599,26 @@ export class CruiseScene {
       return;
     }
 
-    const far = mode === "far";
-    // a tall, narrow screen crops the sides: stand further back and higher so the car still fits
-    const narrow = Math.pow(THREE.MathUtils.clamp(1.25 / cam.aspect, 1, 2.6), 0.85);
-    const back = ((far ? 11.5 : 5.4) + Math.min(v, 70) * (far ? 0.025 : 0.015) + (this.car.length - 4.5) * 0.6) * narrow;
-    const up = (far ? 3.9 : 1.75) * Math.pow(narrow, 1.15);
+    // chase, far and drone follow the way the car is travelling (its heading plus any slide),
+    // turning a moment after it does, so a bend or a slide shows the car a little from the side
+    const v2 = Math.max(v, 3);
+    const travel = this.yaw + Math.atan2(this.motion.vy, v2) * 0.7;
+    if (snap) this.camYaw = travel;
+    else this.camYaw += wrapAngle(travel - this.camYaw) * (1 - Math.exp(-(mode === "drone" ? 2 : 4.5) * dt));
     const settle = this.time - this.orbit.at > 2.5;
     if (settle) {
       this.orbit.yaw = damp(this.orbit.yaw, 0, 2, dt || 1);
       this.orbit.pitch = damp(this.orbit.pitch, 0, 2, dt || 1);
     }
-    const yaw = Math.atan2(fwd.z, fwd.x) + Math.PI + this.orbit.yaw;
+    // a tall, narrow screen crops the sides: stand further back and higher so the car still fits
+    const narrow = Math.pow(THREE.MathUtils.clamp(1.25 / cam.aspect, 1, 2.6), 0.85);
+    const size = (this.car.length - 4.5) * 0.6;
+    const [baseBack, baseUp] = mode === "far" ? [10.5, 3.4] : mode === "drone" ? [16, 17] : [5.0, 1.5];
+    // a little further back while it pulls hard, closer as it brakes: you feel the speed
+    const surge = mode === "drone" ? 0 : THREE.MathUtils.clamp(this.accelSm * 0.12, -0.5, 0.9);
+    const back = (baseBack + Math.min(v, 70) * (mode === "far" ? 0.02 : 0.012) + size + surge) * narrow;
+    const up = baseUp * Math.pow(narrow, 1.15);
+    const yaw = this.camYaw + Math.PI + this.orbit.yaw;
     const pitch = Math.atan2(up, back) + this.orbit.pitch;
     const r = Math.hypot(up, back);
     const want = new THREE.Vector3(
@@ -563,21 +630,20 @@ export class CruiseScene {
     want.y = Math.max(want.y, this.probe.at(want.x, want.z).y + 1, WATER_Y + 0.5);
     if (snap) cam.position.copy(want);
     else {
-      // follow tightly sideways, a touch looser along the road, so speed reads as a little lag
-      // follow the car's motion exactly, then ease the rest: speed shows as a slight lag, not a drift
-      const moved = carPos.clone().sub(this.lastCarPos);
-      cam.position.add(moved.multiplyScalar(0.92));
-      cam.position.x = damp(cam.position.x, want.x, 6, dt);
-      cam.position.z = damp(cam.position.z, want.z, 6, dt);
-      cam.position.y = damp(cam.position.y, want.y, 5, dt);
+      cam.position.x = want.x;
+      cam.position.z = want.z;
+      // height eases, so bumps and crests don't shake the picture
+      cam.position.y = damp(cam.position.y, want.y, 6, dt);
     }
-    const look = carPos.clone().add(new THREE.Vector3(0, tall, 0)).addScaledVector(fwd, far ? 4 : 3);
+    const ahead = mode === "drone" ? 6 : 4 + Math.min(v, 50) * 0.06;
+    const look = carPos.clone().add(new THREE.Vector3(Math.cos(this.camYaw) * ahead, mode === "drone" ? 0 : tall * 0.95, Math.sin(this.camYaw) * ahead));
     if (snap) this.camLook.copy(look);
-    else this.camLook.lerp(look, 1 - Math.exp(-dt * 12));
+    else this.camLook.lerp(look, 1 - Math.exp(-dt * 14));
     this.lastCarPos.copy(carPos);
     cam.lookAt(this.camLook);
     // the faster you go, the wider it opens up
-    cam.fov = damp(cam.fov, (far ? 52 : 60) + Math.min(v, 80) * 0.16, 2, dt || 1);
+    const fov0 = mode === "far" ? 50 : mode === "drone" ? 45 : 58;
+    cam.fov = damp(cam.fov, fov0 + Math.min(v, 80) * 0.18, 2, dt || 1);
     cam.updateProjectionMatrix();
   }
 
