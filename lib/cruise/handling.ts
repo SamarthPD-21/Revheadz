@@ -14,7 +14,30 @@ export interface Chassis {
   /** Share of the drive at the rear wheels (1 rear-drive, ~0.6 all-wheel drive). */
   rearDrive: number;
   bike: boolean;
+  /** The tyres' grip next to an ordinary road car's (slicks and semi-slicks above 1). */
+  tyre: number;
+  /** How well those tyres do on loose ground (grass, dirt): a rally car's best, slicks are hopeless. */
+  offRoad: number;
+  /** Aerodynamic downforce, N per (m/s)²: grip that grows with speed (wings, floors). */
+  downforce: number;
+  /** Height of the centre of mass, m: how much weight shifts back under power or up a hill. */
+  cgHeight: number;
 }
+
+/** Tyres by body: [grip, off-road, downforce]. */
+const TYRES: Record<string, [number, number, number]> = {
+  formula: [1.45, 0.45, 3.4],
+  gtcar: [1.25, 0.6, 1.0],
+  supercar: [1.15, 0.7, 0.2],
+  gt: [1.08, 0.75, 0.1],
+  sport: [1.08, 0.8, 0.05],
+  coupe: [1.0, 0.85, 0],
+  hatch: [1.0, 0.95, 0],
+  muscle: [0.92, 0.85, 0],
+  rally: [1.0, 1.45, 0.05],
+  superbike: [1.05, 0.7, 0],
+  cruiser: [0.9, 0.9, 0],
+};
 
 export function chassisOf(cfg: VehicleConfig, lengthM: number): Chassis {
   const bike = cfg.type === "bike";
@@ -25,6 +48,11 @@ export function chassisOf(cfg: VehicleConfig, lengthM: number): Chassis {
     front: bike ? 0.5 : mid ? 0.43 : 0.53,
     rearDrive: AWD.has(cfg.id) ? 0.6 : 1,
     bike,
+    ...(() => {
+      const [tyre, offRoad, downforce] = TYRES[cfg.ui.silhouette] ?? [1, 0.85, 0];
+      return { tyre, offRoad, downforce };
+    })(),
+    cgHeight: bike ? 0.65 : cfg.ui.silhouette === "formula" ? 0.3 : 0.5,
   };
 }
 
@@ -45,7 +73,7 @@ export interface Controls {
   steer: number;
   /** How hard the car is speeding up (+) or slowing (-), m/s²: what the tyres are spending grip on. */
   accel: number;
-  /** Grip of the surface: about 1 on dry tarmac, less wet, on grass, dirt or in water. */
+  /** Grip under the tyres (surface and tyres together): about 1 for a road car on dry tarmac. */
   mu: number;
 }
 
@@ -74,8 +102,10 @@ export function stepHandling(m: Motion, c: Chassis, u: Controls, dt: number): nu
   const b = L * c.front; // to rear axle
   const mass = c.massKg;
   const Iz = mass * a * b;
-  const fzF = (mass * G * b) / L;
-  const fzR = (mass * G * a) / L;
+  // downforce presses the tyres harder into the road the faster it goes
+  const aero = c.downforce * vx * vx;
+  const fzF = (mass * G * b) / L + aero * c.front;
+  const fzR = (mass * G * a) / L + aero * (1 - c.front);
   const grip = u.mu * (c.bike ? 1.15 : 1);
   // the force each axle is putting down along the road leaves it less for cornering (the friction circle)
   const drive = Math.max(0, u.accel) * mass;
@@ -92,6 +122,7 @@ export function stepHandling(m: Motion, c: Chassis, u: Controls, dt: number): nu
 
   let sliding = 0;
   const steps = Math.max(1, Math.ceil(dt / (1 / 240)));
+  // (grip limits below are per unit of load; the load includes downforce)
   const h = dt / steps;
   for (let i = 0; i < steps; i++) {
     const v = Math.max(vx, 0.5);
