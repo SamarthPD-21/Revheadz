@@ -3,7 +3,7 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import { hash2, mulberry32 } from "../../lib/cruise/noise";
 import { ROAD_HALF, ROAD_SECTION, STEP, WATER_Y, bankOf, rightOf, type RoadPoint } from "../../lib/cruise/road";
 import { GRID_M } from "../../lib/cruise/ground";
-import { Landscape, RoadDistance, WILD_M, type Ground } from "../../lib/cruise/terrain";
+import { Landscape, RoadDistance, WILD_M } from "../../lib/cruise/terrain";
 
 /** Near ground comes in square tiles this wide, m, with this many quads a side (4 m apart). */
 const TILE = 160;
@@ -15,6 +15,8 @@ const TREE_RING = 3;
 /** The far ground: a coarse lattice out to the horizon, centred on the camera. */
 const FAR_STEP = 50;
 const FAR_HALF = 64;
+/** Far lattice points kept (a few screens' worth); past that the cache starts again. */
+const FAR_SLOTS = (FAR_HALF * 2 + 1) ** 2 * 3;
 /** Road meshes are built 50 samples (100 m) at a time. */
 const CHUNK = 50;
 /** One dash and gap of the centre line, m (the road texture's length). */
@@ -29,6 +31,8 @@ const lin = (c: number) => Math.pow(c, 2.2);
 const KINDS: TreeKind[] = ["pine", "broad", "bush", "rock", "grass"];
 /** Grass grows only this close (in tiles): tufts are tiny, and there are a lot of them. */
 const GRASS_RING = 1.6;
+/** How close new road has to come to built ground to make it rebuild (the road's verge and banks), m. */
+const REACH = 60;
 /** Instances per kind, at most. */
 const CAP: Record<TreeKind, number> = { pine: 26000, broad: 26000, bush: 26000, rock: 26000, grass: 30000 };
 
@@ -49,6 +53,36 @@ interface Tile {
   mesh: THREE.Mesh;
   /** Per kind: x, y, z, yaw, scale, r, g, b for each plant or rock. */
   plants: Record<TreeKind, number[]>;
+  /** The same, ready to copy straight into the instanced meshes: 16-float matrices and linear colours. */
+  ready?: Record<TreeKind, { mats: Float32Array; cols: Float32Array }>;
+}
+
+/** Works out a tile's plant matrices and colours once, so refilling the instances is just copying. */
+function readyPlants(plants: Tile["plants"]): NonNullable<Tile["ready"]> {
+  const m4 = new THREE.Matrix4();
+  const qn = new THREE.Quaternion();
+  const up = new THREE.Vector3(0, 1, 0);
+  const p = new THREE.Vector3();
+  const sc = new THREE.Vector3();
+  const out = {} as NonNullable<Tile["ready"]>;
+  for (const kind of KINDS) {
+    const list = plants[kind];
+    const n = list.length / 8;
+    const mats = new Float32Array(n * 16);
+    const cols = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const k = i * 8;
+      qn.setFromAxisAngle(up, list[k + 3]);
+      p.set(list[k], list[k + 1], list[k + 2]);
+      sc.setScalar(list[k + 4]);
+      m4.compose(p, qn, sc).toArray(mats, i * 16);
+      cols[i * 3] = lin(list[k + 5]);
+      cols[i * 3 + 1] = lin(list[k + 6]);
+      cols[i * 3 + 2] = lin(list[k + 7]);
+    }
+    out[kind] = { mats, cols };
+  }
+  return out;
 }
 
 function roadTexture(): THREE.CanvasTexture {
@@ -225,7 +259,13 @@ export class World {
   private readonly wind = { uTime: { value: 0 }, uWind: { value: 1 } };
   private readonly ripples: THREE.DataTexture;
   private readonly far: THREE.Mesh;
-  private readonly farCache = new Map<number, Ground>();
+  /**
+   * The far ground's lattice points, worked out once: a slot per point in one flat array
+   * (height, then linear colour), so a long drive's worth of them is no work for the GC.
+   */
+  private readonly farSlot = new Map<number, number>();
+  private readonly farData = new Float32Array(FAR_SLOTS * 4);
+  private farNext = 0;
   private farCentre = "";
   private readonly water: THREE.Mesh;
   private camTile = { x: 0, z: 0 };
@@ -330,7 +370,8 @@ export class World {
   update(camX: number, camZ: number, carS: number, budgetMs = 5): void {
     const road = this.land.road;
     const before = road.samples;
-    road.ensure(carS + 7000);
+    // lay the road out a kilometre at a time, well ahead (not a sample every frame)
+    if (road.length < carS + 6500) road.ensure(carS + 7500);
     // driving freely, the car can head anywhere: keep the end of the road well out of reach
     for (let k = 0; k < 4; k++) {
       const [ex, , ez] = road.sample(road.samples - 1);
@@ -397,7 +438,9 @@ export class World {
     let stale = false;
     for (const [key, tile] of this.tiles) {
       const [ix, iz] = key.split(",").map(Number);
-      if ((ix + 1) * TILE < x0 - WILD_M || ix * TILE > x1 + WILD_M || (iz + 1) * TILE < z0 - WILD_M || iz * TILE > z1 + WILD_M) continue;
+      // only where the new road actually reshapes the ground (its verge and banks); the
+      // mountains it calms further off are too far to see change
+      if ((ix + 1) * TILE < x0 - REACH || ix * TILE > x1 + REACH || (iz + 1) * TILE < z0 - REACH || iz * TILE > z1 + REACH) continue;
       this.group.remove(tile.mesh);
       tile.mesh.geometry.dispose();
       this.tiles.delete(key);
@@ -405,8 +448,6 @@ export class World {
       stale = true;
     }
     if (stale) {
-      this.farCache.clear();
-      this.farCentre = "";
       this.plantsDirty = true;
       this.onRoadGrew?.();
     }
@@ -443,7 +484,7 @@ export class World {
     const road = this.land.road;
     for (let i = from; i < road.samples; i += 4) {
       const [x, , z] = road.sample(i);
-      if (x > ix * TILE - WILD_M && x < (ix + 1) * TILE + WILD_M && z > iz * TILE - WILD_M && z < (iz + 1) * TILE + WILD_M) return true;
+      if (x > ix * TILE - REACH && x < (ix + 1) * TILE + REACH && z > iz * TILE - REACH && z < (iz + 1) * TILE + REACH) return true;
     }
     return false;
   }
@@ -576,32 +617,36 @@ export class World {
     }
   }
 
+  /**
+   * Refills the instanced plants from the tiles near the camera. Each tile's matrices were worked
+   * out when it was built, so this is block copies (the outer ring takes every other plant).
+   */
   private fillPlants() {
     this.plantsDirty = false;
-    const m4 = new THREE.Matrix4();
-    const qn = new THREE.Quaternion();
-    const up = new THREE.Vector3(0, 1, 0);
-    const p = new THREE.Vector3();
-    const s = new THREE.Vector3();
     for (const kind of KINDS) {
       const mesh = this.plants[kind];
       const cap = mesh.instanceMatrix.count;
+      const mats = mesh.instanceMatrix.array as Float32Array;
+      const cols = mesh.instanceColor!.array as Float32Array;
       let n = 0;
       for (const [key, tile] of this.tiles) {
         const [ix, iz] = key.split(",").map(Number);
         const ring = Math.hypot(ix - this.camTile.x, iz - this.camTile.z);
         if (ring > (kind === "grass" ? GRASS_RING : TREE_RING + 0.5)) continue;
-        const list = tile.plants[kind];
-        // the outer ring gets every other plant: far off, the fog and the count hide it
-        const stride = ring > TREE_RING - 0.5 && kind !== "rock" && kind !== "grass" ? 16 : 8;
-        for (let k = 0; k < list.length && n < cap; k += stride) {
-          qn.setFromAxisAngle(up, list[k + 3]);
-          p.set(list[k], list[k + 1], list[k + 2]);
-          s.setScalar(list[k + 4]);
-          m4.compose(p, qn, s);
-          mesh.setMatrixAt(n, m4);
-          mesh.instanceColor!.setXYZ(n, lin(list[k + 5]), lin(list[k + 6]), lin(list[k + 7]));
-          n++;
+        tile.ready ??= readyPlants(tile.plants);
+        const src = tile.ready[kind];
+        const count = src.cols.length / 3;
+        // far off, the fog and the count hide every other tree
+        if (ring > TREE_RING - 0.5 && kind !== "rock" && kind !== "grass") {
+          for (let i = 0; i < count && n < cap; i += 2, n++) {
+            mats.set(src.mats.subarray(i * 16, i * 16 + 16), n * 16);
+            cols.set(src.cols.subarray(i * 3, i * 3 + 3), n * 3);
+          }
+        } else {
+          const take = Math.min(count, cap - n);
+          mats.set(src.mats.subarray(0, take * 16), n * 16);
+          cols.set(src.cols.subarray(0, take * 3), n * 3);
+          n += take;
         }
       }
       mesh.count = n;
@@ -631,30 +676,37 @@ export class World {
         const gx = cx - FAR_HALF + i;
         const gz = cz - FAR_HALF + j;
         const key = (gx + 100000) * 200003 + (gz + 100000);
-        let g = this.farCache.get(key);
+        let slot = this.farSlot.get(key);
         const x = gx * FAR_STEP;
         const z = gz * FAR_STEP;
-        if (!g) {
+        if (slot === undefined) {
           if (!prepared) {
             this.farDist.prepare(ox, oz, ox + F * FAR_STEP, oz + F * FAR_STEP, WILD_M);
             prepared = true;
           }
           this.farDist.query(x, z, q);
-          g = this.land.ground(x, z, q[0], q[1]);
-          this.farCache.set(key, g);
+          const g = this.land.ground(x, z, q[0], q[1]);
+          if (this.farNext === FAR_SLOTS) {
+            // full: start again (only points still in view get worked out again)
+            this.farSlot.clear();
+            this.farNext = 0;
+          }
+          slot = this.farNext++;
+          this.farData.set([g.y, lin(g.color[0]), lin(g.color[1]), lin(g.color[2])], slot * 4);
+          this.farSlot.set(key, slot);
         }
+        const d = this.farData;
+        const y = d[slot * 4];
         const inside = x > nx0 + FAR_STEP && x < nx1 - FAR_STEP && z > nz0 + FAR_STEP && z < nz1 - FAR_STEP;
         const k = j * F + i;
-        pos.setXYZ(k, x - ox, inside ? g.y - 14 : g.y - 0.6, z - oz);
-        col.setXYZ(k, lin(g.color[0]), lin(g.color[1]), lin(g.color[2]));
+        pos.setXYZ(k, x - ox, inside ? y - 14 : y - 0.6, z - oz);
+        col.setXYZ(k, d[slot * 4 + 1], d[slot * 4 + 2], d[slot * 4 + 3]);
       }
     }
     this.far.position.set(ox, 0, oz);
     pos.needsUpdate = true;
     col.needsUpdate = true;
     geo.computeVertexNormals();
-    // keep the cache from growing without end on a long drive
-    if (this.farCache.size > F * F * 6) this.farCache.clear();
   }
 
   private updateRoad(carS: number) {

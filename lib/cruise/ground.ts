@@ -3,6 +3,8 @@ import { Landscape, RoadDistance, WILD_M } from "./terrain";
 
 /** The near ground's mesh is a lattice this many metres apart (the world's tiles are built on it). */
 export const GRID_M = 4;
+/** Lattice points the probe keeps; past that it starts again. */
+const LATTICE_SLOTS = 20000;
 
 export interface Footing {
   /** Height of whatever is underfoot: road surface or ground. */
@@ -25,7 +27,10 @@ export interface Footing {
  */
 export class GroundProbe {
   private readonly dist: RoadDistance;
-  private readonly lattice = new Map<number, { y: number; dry: number }>();
+  /** Lattice points worked out so far: a slot each in one flat array (height, dryness). */
+  private readonly lattice = new Map<number, number>();
+  private readonly data = new Float32Array(LATTICE_SLOTS * 2);
+  private next = 0;
   private centre = { x: Infinity, z: Infinity };
   private readonly q: [number, number] = [0, 0];
   private readonly pt: RoadPoint = { x: 0, y: 0, z: 0, heading: 0, curvature: 0, grade: 0 };
@@ -39,27 +44,33 @@ export class GroundProbe {
     if (Math.hypot(x - this.centre.x, z - this.centre.z) < 60) return;
     this.centre = { x, z };
     this.dist.prepare(x - 120, z - 120, x + 120, z + 120, WILD_M);
-    if (this.lattice.size > 20000) this.lattice.clear();
   }
 
   /** Forgets cached ground (call when the road has been laid somewhere new). */
   reset(): void {
     this.lattice.clear();
+    this.next = 0;
     this.centre = { x: Infinity, z: Infinity };
   }
 
   private node(i: number, j: number) {
     const key = (i + 1_000_000) * 2_000_003 + (j + 1_000_000);
-    let n = this.lattice.get(key);
-    if (!n) {
+    let slot = this.lattice.get(key);
+    if (slot === undefined) {
       const x = i * GRID_M;
       const z = j * GRID_M;
       this.dist.query(x, z, this.q);
       const g = this.land.ground(x, z, this.q[0], this.q[1]);
-      n = { y: g.y, dry: g.dry };
-      this.lattice.set(key, n);
+      if (this.next === LATTICE_SLOTS) {
+        this.lattice.clear();
+        this.next = 0;
+      }
+      slot = this.next++;
+      this.data[slot * 2] = g.y;
+      this.data[slot * 2 + 1] = g.dry;
+      this.lattice.set(key, slot);
     }
-    return n;
+    return slot;
   }
 
   /** The ground mesh's height at a point (its two triangles per cell, split the same way). */
@@ -71,12 +82,13 @@ export class GroundProbe {
     const j = Math.floor(fz);
     const u = fx - i;
     const v = fz - j;
-    const h00 = this.node(i, j);
-    const h10 = this.node(i + 1, j);
-    const h01 = this.node(i, j + 1);
-    const h11 = this.node(i + 1, j + 1);
-    const y = u + v <= 1 ? h00.y + u * (h10.y - h00.y) + v * (h01.y - h00.y) : h11.y + (1 - u) * (h01.y - h11.y) + (1 - v) * (h10.y - h11.y);
-    return { y, dry: h00.dry };
+    const d = this.data;
+    const h00 = d[this.node(i, j) * 2];
+    const h10 = d[this.node(i + 1, j) * 2];
+    const h01 = d[this.node(i, j + 1) * 2];
+    const h11 = d[this.node(i + 1, j + 1) * 2];
+    const y = u + v <= 1 ? h00 + u * (h10 - h00) + v * (h01 - h00) : h11 + (1 - u) * (h01 - h11) + (1 - v) * (h10 - h11);
+    return { y, dry: d[this.node(i, j) * 2 + 1] };
   }
 
   at(x: number, z: number): Footing {
