@@ -94,8 +94,15 @@ to compare. When you're ready, race a friend or the CPU over the quarter mile. N
   lakes, and mountains that rise away from the road so it threads the valleys between them. The day goes by (or
   pick a time: sunrise, golden hour, the stars), with clear, hazy, foggy or rainy weather, headlights and glowing
   road reflectors after dark, and five cameras: chase (it swings round as the car slides), far, bonnet, a high drone
-  and a film camera by the road that you drive past. The car handles on a tyre model: grip that runs out, weight on
-  each axle, power that can step a rear-drive car's tail out, and traction and stability control to catch it. On the
+  and a film camera by the road that you drive past. **Every machine drives like the real one**: its own power and
+  torque curve, kerb weight, weight distribution, aero drag and drivetrain, with everything that spins (wheels,
+  crank, flywheel) to spin up too, so 0-100 km/h and top speed land close to the road tests (a GT3 RS does 3.2 s, a
+  911 SC 6.8; the Chiron stops at its 420 km/h limiter). The tyres grip like tyres: force builds with slip to a peak
+  and falls away as they slide, weight shifts forward on the brakes and back under power (brake into a bend and the
+  tail goes light), a hard bend costs speed, and the brakes stop you in a real car's distance, longer in the wet.
+  **Driver aids** are the car's own (an F40 or a '71 'Cuda has none, so it spins its wheels, locks them under hard
+  braking and can spin), or switch them all on or off; dash lights show ABS, traction and stability control working.
+  Let go of the wheel in a slide and it self-centres along it, which is how you catch one. On the
   road a lane assist steers it; choose **Manual** or **Automatic** gears. In Manual, a car with a clutch pedal
   **stalls** like a real one: brake to a stop in gear, pull away in 3rd, or lug a tall gear below idle, and it dies
   (`N`, then `I` to restart). Every car has its own **grip**: tyres (slicks and semi-slicks grip more, a muscle
@@ -231,13 +238,18 @@ flowchart LR
   fractal noise, flattened into a verge under the road and banked up or down to it. It is drawn as 160 m tiles that
   are built a few per frame around the camera, plus a coarse far layer out to the horizon. The simulation still
   only knows speed along a line (plus gravity on a slope); the scene places the car on the road from it and adds the
-  lane, body roll and pitch. It steers with a dynamic bicycle model (`lib/cruise/handling.ts`): slip angles at each
-  axle, tyre force that levels off at the grip of the surface, and a friction circle, so accelerating or braking
-  leaves less grip for cornering. On the road the lane assist steers it by pure pursuit. It stands on the ground
+  lane, body roll and pitch. Each machine's real figures (`lib/cruise/specs.ts`: power and torque with their revs,
+  weight and its spread, drag area, drive layout, skidpad grip, aids, and the road tests to check against) give the
+  simulation a road model: a monotone torque curve through the figures, drivetrain losses, rotating inertia and
+  grip-limited brakes (`tests/cruise-realism.test.ts` holds every car to its 0-100 and top speed). It steers with a
+  dynamic bicycle model (`lib/cruise/handling.ts`): slip angles at each axle into a "magic formula" tyre curve with a
+  peak and a fall-off, axle loads that shift with braking and power, and a friction circle, so accelerating or
+  braking leaves less grip for cornering; the cornering forces' drag goes back to the simulation as lost speed. On the road the lane assist steers it by pure pursuit. It stands on the ground
   through a probe (`lib/cruise/ground.ts`) that rebuilds the very triangles the ground is drawn with. Built map
   tiles are kept in IndexedDB (`lib/cruise/tileCache.ts`) and loaded back on the next visit. The simulation takes
-  two optional extras for the cruise, both off on the strip so drag races and replays are untouched: a traction limit
-  (drive past it becomes wheelspin, and the revs flare) and stalling. Clouds,
+  optional extras for the cruise, all off on the strip so drag races and replays are untouched: the road model, a
+  traction limit (traction control trims the drive to it; without, drive past it becomes wheelspin, the revs flare
+  and a spinning tyre grips less), a braking limit (ABS holds it; without, the wheels lock) and stalling. Clouds,
   rippling water, wind in the trees and grass, and the dust and spray are small shaders. The resolution adapts to
   hold the chosen frame rate (`lib/cruise/frameGate.ts` paces the frames and measures the screen's refresh).
 - **Splits to the millisecond.** The page samples the car once a frame, and every split, and the moment the revs
