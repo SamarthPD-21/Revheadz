@@ -32,6 +32,19 @@ const GRASS_RING = 1.6;
 /** Instances per kind, at most. */
 const CAP: Record<TreeKind, number> = { pine: 26000, broad: 26000, bush: 26000, rock: 26000, grass: 30000 };
 
+/**
+ * A built tile's ground, kept so it never has to be worked out again: heights (with their
+ * border), colours, and every tree, bush and rock (grass is cheap to redo from these). Saved
+ * in the browser between visits by the cruise screen.
+ */
+export interface TileData {
+  hs: Float32Array;
+  cols: Float32Array;
+  plants: Record<"pine" | "broad" | "bush" | "rock", Float32Array>;
+  /** How much road had been laid when it was built (road laid near it since makes it stale). */
+  roadSamples: number;
+}
+
 interface Tile {
   mesh: THREE.Mesh;
   /** Per kind: x, y, z, yaw, scale, r, g, b for each plant or rock. */
@@ -388,6 +401,7 @@ export class World {
       this.group.remove(tile.mesh);
       tile.mesh.geometry.dispose();
       this.tiles.delete(key);
+      this.saved.delete(key);
       stale = true;
     }
     if (stale) {
@@ -396,6 +410,42 @@ export class World {
       this.plantsDirty = true;
       this.onRoadGrew?.();
     }
+  }
+
+  /** Tiles to use instead of building them ("ix,iz" → data), from an earlier visit. */
+  private readonly saved = new Map<string, TileData>();
+  /** Tiles built this visit that aren't saved yet. */
+  private fresh: { key: string; data: TileData }[] = [];
+
+  /** Hands over tiles saved on an earlier visit, to use instead of building them. */
+  prime(tiles: Map<string, TileData>): void {
+    for (const [k, v] of tiles) this.saved.set(k, v);
+  }
+
+  /** The tile keys within the ring around a point (to load from the cache before building). */
+  static keysAround(x: number, z: number): string[] {
+    const tx = Math.floor(x / TILE);
+    const tz = Math.floor(z / TILE);
+    const out: string[] = [];
+    for (let dz = -RING - 1; dz <= RING + 1; dz++) for (let dx = -RING - 1; dx <= RING + 1; dx++) out.push(`${tx + dx},${tz + dz}`);
+    return out;
+  }
+
+  /** Tiles built since last asked, to save. */
+  takeFresh(): { key: string; data: TileData }[] {
+    const out = this.fresh;
+    this.fresh = [];
+    return out;
+  }
+
+  /** Has road been laid within reach of a tile since sample `from`? (Then its saved ground is out of date.) */
+  private roadNear(ix: number, iz: number, from: number): boolean {
+    const road = this.land.road;
+    for (let i = from; i < road.samples; i += 4) {
+      const [x, , z] = road.sample(i);
+      if (x > ix * TILE - WILD_M && x < (ix + 1) * TILE + WILD_M && z > iz * TILE - WILD_M && z < (iz + 1) * TILE + WILD_M) return true;
+    }
+    return false;
   }
 
   /** Told when built ground had to be redone (anything caching heights should forget them). */
@@ -409,10 +459,14 @@ export class World {
     this.dist.prepare(x0, z0, x0 + TILE, z0 + TILE, WILD_M);
     // heights with a one-vertex border, so normals match across tile edges
     const B = N + 2;
-    const hs = new Float32Array(B * B);
-    const cols = new Float32Array(N * N * 3);
+    const key = `${ix},${iz}`;
+    let saved = this.saved.get(key);
+    if (saved && (saved.hs.length !== B * B || this.roadNear(ix, iz, saved.roadSamples))) saved = undefined;
+    this.saved.delete(key);
+    const hs = saved ? saved.hs : new Float32Array(B * B);
+    const cols = saved ? saved.cols : new Float32Array(N * N * 3);
     const q: [number, number] = [0, 0];
-    for (let j = 0; j < B; j++) {
+    for (let j = 0; j < (saved ? 0 : B); j++) {
       for (let i = 0; i < B; i++) {
         const x = x0 + (i - 1) * step;
         const z = z0 + (j - 1) * step;
@@ -453,7 +507,8 @@ export class World {
 
     // plants: one chance every 8 m, jittered, kept or not by how green the ground is
     const plants: Tile["plants"] = { pine: [], broad: [], bush: [], rock: [], grass: [] };
-    const cells = TILE / 8;
+    if (saved) for (const k of ["pine", "broad", "bush", "rock"] as const) plants[k] = Array.from(saved.plants[k]);
+    const cells = saved ? 0 : TILE / 8;
     for (let j = 0; j < cells; j++) {
       for (let i = 0; i < cells; i++) {
         const rand = mulberry32(hash2(ix * cells + i, iz * cells + j, this.land.seed));
@@ -507,7 +562,18 @@ export class World {
         plants.grass.push(x, y - 0.02, z, rand() * Math.PI * 2, sc, toSrgb(r) * 1.15, toSrgb(g) * 1.2, toSrgb(b) * 1.05);
       }
     }
-    this.tiles.set(`${ix},${iz}`, { mesh, plants });
+    this.tiles.set(key, { mesh, plants });
+    if (!saved) {
+      this.fresh.push({
+        key,
+        data: {
+          hs,
+          cols,
+          plants: { pine: new Float32Array(plants.pine), broad: new Float32Array(plants.broad), bush: new Float32Array(plants.bush), rock: new Float32Array(plants.rock) },
+          roadSamples: this.land.road.samples,
+        },
+      });
+    }
   }
 
   private fillPlants() {
