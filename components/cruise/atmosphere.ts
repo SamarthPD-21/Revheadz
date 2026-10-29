@@ -127,17 +127,21 @@ export class Atmosphere {
             vec2 u = f * f * (3.0 - 2.0 * f);
             return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
           }
-          float fbm(vec2 p) {
+          float fbm(vec2 p, int octaves) {
             float s = 0.0, a = 0.5;
-            for (int i = 0; i < 5; i++) { s += a * noise(p); p = p * 2.03 + vec2(17.1, 9.3); a *= 0.5; }
+            for (int i = 0; i < 4; i++) {
+              if (i >= octaves) break;
+              s += a * noise(p); p = p * 2.03 + vec2(17.1, 9.3); a *= 0.5;
+            }
             return s;
           }
           void main() {
             vec2 p = vWorld.xz / 1500.0 + vec2(uTime * 0.0045, uTime * 0.0018);
-            float n = fbm(p);
+            float n = fbm(p, 4);
             float density = smoothstep(1.0 - uCoverage, 1.0 - uCoverage + 0.16, n);
             // thicker cloud just towards the sun shades this bit: a cheap self-shadow
-            float toward = fbm(p + normalize(uSunDir.xz + 1e-4) * 0.05);
+            float toward = fbm(p + normalize(uSunDir.xz + 1e-4) * 0.05, 2); // its broad shape is enough for shading
+            toward += (n - fbm(p, 2)); // put the fine detail back, so only the broad shape differs
             float shade = clamp(1.0 - (toward - n) * 5.0, 0.3, 1.15);
             // thick middles are darker underneath; thin edges glow with the light through them
             float core = smoothstep(0.0, 0.25, n - (1.0 - uCoverage));
