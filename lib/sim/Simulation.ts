@@ -385,6 +385,10 @@ export class Simulation {
       const ease = 0.35 + 0.65 * Math.min(1, v / 1.5);
       force -= this.brake * ease * this.cfg.dynamics.massKg * this.cfg.dynamics.brakeDecel;
     }
+    // gravity along a slope (only off the flat strip: the drag races never set it)
+    const grade = this.input.grade;
+    // sin(atan(grade)), written with sqrt: exact in every browser, like the rest of the physics
+    if (grade) force -= (this.cfg.dynamics.massKg * G * grade) / Math.sqrt(1 + grade * grade);
     const prevSpeed = this.speedMs;
     this.speedMs = Math.max(0, this.speedMs + (force / this.cfg.dynamics.massKg) * dt);
     // resistance can't push a stationary car backwards

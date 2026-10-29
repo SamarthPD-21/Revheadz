@@ -31,6 +31,8 @@ export interface SimInput {
   throttle: number;
   /** Brake, 0-1 */
   brake: number;
+  /** Slope of the ground along the car, rise per metre (+ uphill). Absent on the flat (the strip). */
+  grade?: number;
 }
 
 export type SimListener = (event: SimEvent) => void;
