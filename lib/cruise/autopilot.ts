@@ -46,7 +46,7 @@ export class SpeedHold {
  */
 export function autoShift(sim: Simulation, cfg: VehicleConfig, throttle: number, now: number, lastShift: number): number {
   const s = sim.state;
-  if (s.ignition !== "running" || s.shifting || now - lastShift < 0.9) return lastShift;
+  if (s.ignition !== "running" || s.shifting || now - lastShift < 0.5) return lastShift;
   const ratios = cfg.gearbox.ratios;
   const top = ratios.length;
   const red = cfg.engine.redlineRpm;
@@ -61,7 +61,7 @@ export function autoShift(sim: Simulation, cfg: VehicleConfig, throttle: number,
   // the revs below which it changes down; up-changes must land comfortably above it
   const floor = Math.max(cfg.engine.idleRpm * 1.5, red * 0.3);
   // gentle throttle: change up early and cruise low; flat out: use the revs
-  const upAt = red * (0.45 + 0.43 * Math.pow(Math.min(1, throttle), 1.5));
+  const upAt = red * (0.45 + 0.52 * Math.pow(Math.min(1, throttle), 1.5));
   if (g < top && s.rpm > upAt) {
     const next = (s.rpm * ratios[g]) / ratios[g - 1];
     if (next > floor * 1.15) {
