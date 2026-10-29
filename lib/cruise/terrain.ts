@@ -115,6 +115,8 @@ export class RoadDistance {
   private coarse: number[] = [];
   private pts: Float64Array = new Float64Array(0);
   private count = 0;
+  /** The road sample the last query found nearest (-1 if there was none). */
+  lastIndex = -1;
 
   constructor(private readonly road: Road) {}
 
@@ -141,6 +143,7 @@ export class RoadDistance {
     if (!this.count) {
       out[0] = Infinity;
       out[1] = 0;
+      this.lastIndex = -1;
       return out;
     }
     let best = Infinity;
@@ -166,6 +169,7 @@ export class RoadDistance {
     }
     out[0] = Math.sqrt(best);
     out[1] = p[bk * 4 + 1];
+    this.lastIndex = p[bk * 4 + 3];
     return out;
   }
 }

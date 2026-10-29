@@ -29,6 +29,30 @@ export interface RoadPoint {
   grade: number;
 }
 
+/**
+ * The road across its width: offset from the centre line (m), drop below the surface (m) and
+ * texture u. Flat across the lanes, then a gravel shoulder falling away to the verge.
+ */
+export const ROAD_SECTION: [number, number, number][] = [
+  [-(ROAD_HALF + 1.8), -0.95, 0],
+  [-(ROAD_HALF + 0.6), -0.07, 0.07],
+  [-ROAD_HALF, 0, 0.1],
+  [-ROAD_HALF / 2, 0, 0.3],
+  [0, 0, 0.5],
+  [ROAD_HALF / 2, 0, 0.7],
+  [ROAD_HALF, 0, 0.9],
+  [ROAD_HALF + 0.6, -0.07, 0.93],
+  [ROAD_HALF + 1.8, -0.95, 1],
+];
+
+/** How far the road's edge has dropped `d` metres from the centre line (0 on the lanes). */
+export function sectionDrop(d: number): number {
+  const a = Math.abs(d);
+  if (a <= ROAD_HALF) return 0;
+  if (a <= ROAD_HALF + 0.6) return (-0.07 * (a - ROAD_HALF)) / 0.6;
+  return -0.07 - (0.88 * Math.min(1, (a - ROAD_HALF - 0.6) / 1.2));
+}
+
 /** How much the road leans into a bend: how far it drops per metre towards the inside of it. */
 export const bankOf = (curvature: number): number => Math.max(-0.05, Math.min(0.05, curvature * 30));
 

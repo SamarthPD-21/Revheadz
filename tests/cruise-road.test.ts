@@ -61,8 +61,9 @@ describe("cruise road", () => {
       land.ground(x, z, q[0], q[1]);
     }
     const ms = performance.now() - t0;
-    // one 160 m tile at 4 m spacing
-    expect(ms).toBeLessThan(60);
+    // one 160 m tile at 4 m spacing: a few ms normally; the bound only catches something
+    // pathologically slow (it runs alongside the whole suite, on a busy machine at times)
+    expect(ms).toBeLessThan(150);
     console.log(`tile: ${ms.toFixed(1)} ms`);
   });
 });
