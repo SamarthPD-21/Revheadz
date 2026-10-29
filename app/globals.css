@@ -896,3 +896,8 @@ button.menu-option:hover { background: #17171d; }
   .cruise-steer { display: flex; gap: 0.5rem; align-self: flex-end; margin-bottom: 0.2rem; }
   .cruise-steer .ctl { width: 4.2rem; height: 4.2rem; display: grid; place-items: center; background: rgba(24, 24, 30, 0.55); border-radius: 14px; touch-action: none; }
 }
+/* cruise: what's under the tyres and how grippy it is, with a warning when they let go */
+.cruise-grip { align-self: flex-end; margin-right: 0.4rem; display: flex; gap: 0.5rem; align-items: center; font-family: var(--font-mono); font-size: 0.66rem; color: #a1a1aa; text-shadow: 0 1px 4px #000; }
+.cruise-grip b { font-family: var(--font-sans, inherit); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #fbbf24; }
+.cruise-grip b:empty { display: none; }
+.cruise-stalled { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.24em; text-transform: uppercase; color: #f87171; text-shadow: 0 1px 8px #000; }

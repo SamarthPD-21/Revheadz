@@ -202,6 +202,8 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
   const steerKeys = useRef(new Set<string>());
   /** Touch steering in free roam: -1, 0 or 1 from the on-screen arrows. */
   const touchSteer = useRef(0);
+  const gripRef = useRef<HTMLParagraphElement>(null);
+  const [stalled, setStalled] = useState(false);
 
   const update = (patch: Partial<Settings>) => {
     const next = { ...settingsRef.current, ...patch };
@@ -296,8 +298,8 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       return () => clearTimeout(t);
     }
     sceneRef.current = scene;
-    // dev only: lets a test drive measure the renderer from the console
-    if (process.env.NODE_ENV !== "production") (window as unknown as { __cruise?: CruiseScene }).__cruise = scene;
+    // in development, or with ?debug in the address: lets a test drive measure the renderer
+    if (process.env.NODE_ENV !== "production" || new URLSearchParams(location.search).has("debug")) (window as unknown as { __cruise?: CruiseScene }).__cruise = scene;
     const { sim, audio, ambience, input } = rig;
     const resize = () => scene.resize(canvas.clientWidth || 1, canvas.clientHeight || 1, Math.min(window.devicePixelRatio || 1, 2));
     resize();
@@ -339,6 +341,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       }, 30);
     });
     let lastSave = performance.now();
+    let lastGrip = 0;
 
     const tick = (now: number) => {
       raf = requestAnimationFrame(tick);
@@ -364,6 +367,10 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       const under = scene.surface;
       const drag = under.blocked ? 1 : under.depth > 0 ? 0.35 : under.offRoad ? 0.07 : 0;
       sim.input.grade = scene.grade;
+      // what the tyres can put down here (grip, weight on the driven wheels, slope)
+      sim.input.traction = scene.traction;
+      // with a clutch pedal and you on the gears, it can stall
+      sim.canStall = s.gears === "manual" && !s.autopilot;
       if (drag) sim.input.brake = Math.max(sim.input.brake, drag * Math.min(1, sim.state.speedKmh / 15 + (under.blocked ? 1 : 0)));
       // tyres scrubbing sideways cost speed
       if (under.slide > 0) sim.input.brake = Math.max(sim.input.brake, under.slide * 0.25);
@@ -374,7 +381,25 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       ambience.update(sim.state.speedKmh, s.weather === "rain");
       const keys = steerKeys.current;
       const steer = clampUnit((STEER_RIGHT.some((k) => keys.has(k)) ? 1 : 0) - (STEER_LEFT.some((k) => keys.has(k)) ? 1 : 0) + touchSteer.current);
-      scene.frame(dt, { speedKmh: sim.state.speedKmh, throttle: sim.input.throttle, brake: sim.input.brake, steer, ignition: running }, { hour: hourRef.current, weather: s.weather, camera: s.camera });
+      scene.frame(dt, { speedKmh: sim.state.speedKmh, throttle: sim.input.throttle, brake: sim.input.brake, wheelspin: sim.state.wheelspin ?? 0, steer, ignition: running }, { hour: hourRef.current, weather: s.weather, camera: s.camera });
+      // grip readout: what's underfoot, how grippy it is for this car, and any wheelspin or slide
+      const gripEl = gripRef.current;
+      if (gripEl && now - lastGrip > 120) {
+        lastGrip = now;
+        const g = scene.gripInfo;
+        const spin = (sim.state.wheelspin ?? 0) > 0.2;
+        const slide = scene.surface.slide > 0.35;
+        const text = `${g.name} · grip ×${g.factor.toFixed(2)}`;
+        if (gripEl.dataset.text !== text) {
+          gripEl.dataset.text = text;
+          gripEl.firstChild!.textContent = text;
+        }
+        const warn = spin ? "Wheelspin" : slide ? "Sliding" : "";
+        if (gripEl.dataset.warn !== warn) {
+          gripEl.dataset.warn = warn;
+          (gripEl.lastChild as HTMLElement).textContent = warn;
+        }
+      }
       // the slow-moving numbers on screen: a few times a second is plenty
       if (now - lastUi > 400) {
         lastUi = now;
@@ -431,6 +456,11 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
     input.attach();
     const off = sim.subscribe((e) => {
       audio.handleEvent(e);
+      if (e.type === "stall") {
+        setStalled(true);
+        navigator.vibrate?.([30, 40, 60]);
+      }
+      if (e.type === "start") setStalled(false);
       if (e.type === "shift") navigator.vibrate?.(12);
     });
     const onVis = () => ambience.suspend(document.hidden);
@@ -585,8 +615,11 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
 
       {ignition === "off" && !loading && !failed && (
         <div className="drive-start cruise-start">
+          {stalled && <p className="cruise-stalled">Stalled</p>}
           <IgnitionButton store={sim.store} onPress={press} pending={pending} subscribe={subscribe} />
-          <p className="text-xs text-zinc-300">Start it up and take it for a drive</p>
+          <p className="text-xs text-zinc-300">
+            {stalled ? "Knock it into neutral (N) or 1st, then start it again (I)" : "Start it up and take it for a drive"}
+          </p>
         </div>
       )}
 
@@ -617,6 +650,10 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
             <Speedometer state={sim.state} accent={accent} maxKmh={maxKmh} />
           </div>
         </div>
+        <p ref={gripRef} className="cruise-grip" aria-live="off">
+          <span>Tarmac · grip ×1.00</span>
+          <b />
+        </p>
         <p className="cruise-trip" title="This trip: distance, time on the move and average speed">
           {(trip.m / 1000).toFixed(1)} km · {duration(trip.s)} · avg {trip.s > 5 ? Math.round((trip.m / trip.s) * 3.6) : 0} km/h · {settings.gears === "auto" ? "Auto" : "Manual"}
         </p>
