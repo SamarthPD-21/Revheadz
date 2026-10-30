@@ -855,6 +855,15 @@ button.menu-option:hover { background: #17171d; }
 .cruise-label { font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: #71717a; }
 .cruise-clock { font-family: var(--font-mono); font-size: 0.95rem; color: #fafafa; margin-right: auto; }
 .cruise-hint { font-family: var(--font-mono); font-size: 0.62rem; color: #52525b; }
+/* settings: tabs along the top, a close button, and the frame counter in the corner */
+.cruise-settings { max-height: calc(100dvh - 6rem); overflow-y: auto; }
+.cruise-tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid #27272a; margin: 0.1rem 0 0.35rem; }
+.cruise-tabs > button { flex: 1; padding: 0.4rem 0.2rem; font-size: 0.72rem; font-weight: 600; color: #a1a1aa; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; }
+.cruise-tabs > button:hover { color: #fff; }
+.cruise-tabs > button[aria-selected="true"] { color: #fff; border-color: var(--accent); }
+.cruise-close { width: 1.6rem; height: 1.6rem; border-radius: 999px; font-size: 1.1rem; line-height: 1; color: #a1a1aa; }
+.cruise-close:hover { color: #fff; background: #27272a; }
+.cruise-fps { position: absolute; top: 4.4rem; left: 1rem; z-index: 5; font-family: var(--font-mono); font-size: 0.7rem; color: #a3e635; text-shadow: 0 1px 4px #000; pointer-events: none; }
 .cruise-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .cruise-chips .chip { padding: 0.2rem 0.55rem; font-size: 0.68rem; }
 .cruise-toggles { justify-content: flex-start; gap: 1rem; padding: 0.2rem 0; }

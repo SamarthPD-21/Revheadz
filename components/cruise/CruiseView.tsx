@@ -27,7 +27,9 @@ import { Ambience } from "./ambience";
 import { FrameGate } from "../../lib/cruise/frameGate";
 import { forgetRoad, loadTiles, saveTiles } from "../../lib/cruise/tileCache";
 import { CAMERA_MODES, CruiseScene, type CameraMode, type Place, type Weather } from "./scene";
-import { World, type TileData } from "./world";
+import { SettingsPanel } from "./SettingsPanel";
+import { DEFAULTS, graphicsOf, type Settings } from "./settings";
+import { RANGES, World, type TileData } from "./world";
 
 export interface Neighbour {
   id: string;
@@ -42,25 +44,7 @@ interface Props {
   garage: PickerVehicle[];
 }
 
-interface Settings {
-  hour: number;
-  /** Let the day go by: an hour every minute. */
-  cycle: boolean;
-  weather: Weather;
-  camera: CameraMode;
-  autopilot: boolean;
-  /** Who changes gear: you (E / Q), or the car. */
-  gears: "manual" | "auto";
-  /** Off the road and anywhere on the map. */
-  free: boolean;
-  /** Frames a second to aim for ("max": as fast as the screen refreshes). */
-  fps: "60" | "90" | "120" | "max";
-  /** Driver aids: the ones the car was built with, all of them, or none. */
-  aids: "car" | "on" | "off";
-}
-
 const STORE_KEY = "revheadz:cruise";
-const DEFAULTS: Settings = { hour: 18.85, cycle: true, weather: "clear", camera: "chase", autopilot: false, gears: "auto", free: false, fps: "90", aids: "car" };
 const WEATHERS: { id: Weather; label: string }[] = [
   { id: "clear", label: "Clear" },
   { id: "haze", label: "Haze" },
@@ -77,12 +61,6 @@ const MOMENTS = [
 ];
 /** Game hours per real second when the day is going by (a day in 24 minutes). */
 const HOURS_PER_S = 1 / 60;
-const FRAME_RATES: { id: Settings["fps"]; label: string }[] = [
-  { id: "60", label: "60" },
-  { id: "90", label: "90" },
-  { id: "120", label: "120" },
-  { id: "max", label: "Max" },
-];
 const AIDS: { id: Settings["aids"]; label: string; title: string }[] = [
   { id: "car", label: "As built", title: "The aids this car left the factory with" },
   { id: "on", label: "All on", title: "ABS, traction control and stability control" },
@@ -215,6 +193,8 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
   const [failed, setFailed] = useState(false);
   const [pending, setPending] = useState(false);
   const [panel, setPanel] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [renderScale, setRenderScale] = useState(1);
   const [idle, setIdle] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -242,14 +222,16 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
     saveSettings({ ...next, hour: hourRef.current });
   };
 
-  const toggleMute = () => {
-    setMuted((m) => {
-      const v = m ? 0.8 : 0;
-      rig.audio.setVolume(v);
-      rig.ambience.setVolume(v);
-      return !m;
-    });
-  };
+  const toggleMute = () => setMuted((m) => !m);
+  // the sound settings (and mute over them)
+  useEffect(() => {
+    rig.audio.setVolume(muted ? 0 : settings.engineVolume);
+    rig.ambience.setVolume(muted ? 0 : settings.worldVolume);
+  }, [rig, muted, settings.engineVolume, settings.worldVolume]);
+  // the graphics settings, as they change
+  useEffect(() => {
+    sceneRef.current?.setGraphics(graphicsOf(settings));
+  }, [settings]);
   const toggleFullscreen = () => {
     if (document.fullscreenElement) void document.exitFullscreen?.();
     else void document.documentElement.requestFullscreen?.().catch(() => undefined);
@@ -266,6 +248,10 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       else if (e.code === "KeyB") sceneRef.current?.resetToRoad();
       else if (e.code === "KeyR") update({ free: !s.free });
       else if (e.code === "KeyH") setHidden((h) => !h);
+      else if (e.code === "KeyO") {
+        setSettingsOpen((o) => !o);
+        setPanel(false);
+      } else if (e.code === "Escape") setSettingsOpen(false);
       else if (e.code === "KeyM") toggleMute();
       else if (e.code === "KeyF") toggleFullscreen();
       else if (e.code === "BracketLeft") router.push(`/cruise/${prev.id}`);
@@ -324,6 +310,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       return () => clearTimeout(t);
     }
     sceneRef.current = scene;
+    scene.setGraphics(graphicsOf(settingsRef.current));
     // in development, or with ?debug in the address: lets a test drive measure the renderer
     if (process.env.NODE_ENV !== "production" || new URLSearchParams(location.search).has("debug")) (window as unknown as { __cruise?: CruiseScene }).__cruise = scene;
     const { sim, audio, ambience, input } = rig;
@@ -354,7 +341,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
     let ready = false;
     let warm = 0;
     const start = scene.placeNow;
-    void loadTiles<TileData>(seed, World.keysAround(start.x, start.z)).then((tiles) => {
+    void loadTiles<TileData>(seed, World.keysAround(start.x, start.z, RANGES[settingsRef.current.distance].ring)).then((tiles) => {
       if (cancelled) return;
       scene.primeTiles(tiles);
       warm = window.setTimeout(() => {
@@ -453,6 +440,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
         setTrip({ m: scene.trip, s: tripS });
         setSetKmh(Math.round(setKmhRef.current));
         setFps({ now: Math.round((frames * 1000) / Math.max(1, now - fpsAt)), screen: Math.round(1000 / gate.screenMs) });
+        setRenderScale(scene.renderScale);
         frames = 0;
         fpsAt = now;
       }
@@ -566,8 +554,31 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
           <button type="button" className={iconBtn} onClick={() => sceneRef.current?.resetToRoad()} aria-label="Back to the road (B)" title="Back to the road (B)">
             <RoadIcon />
           </button>
-          <button type="button" className={iconBtn} onClick={() => setPanel((p) => !p)} aria-expanded={panel} aria-label="Time, weather and camera" title="Time, weather and camera">
+          <button
+            type="button"
+            className={iconBtn}
+            onClick={() => {
+              setPanel((p) => !p);
+              setSettingsOpen(false);
+            }}
+            aria-expanded={panel}
+            aria-label="Time, weather and camera"
+            title="Time, weather and camera"
+          >
             <SunIcon />
+          </button>
+          <button
+            type="button"
+            className={iconBtn}
+            onClick={() => {
+              setSettingsOpen((o) => !o);
+              setPanel(false);
+            }}
+            aria-expanded={settingsOpen}
+            aria-label="Settings (O)"
+            title="Settings: resolution, frame rate, render distance, graphics, sound (O)"
+          >
+            <GearIcon />
           </button>
           <button type="button" className={iconBtn} onClick={toggleMute} aria-pressed={muted} aria-label={muted ? "Unmute (M)" : "Mute (M)"} title={muted ? "Unmute (M)" : "Mute (M)"}>
             <SpeakerIcon muted={muted} />
@@ -577,6 +588,13 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
           </button>
         </div>
       </header>
+
+      {settingsOpen && <SettingsPanel settings={settings} update={update} fps={fps} renderScale={renderScale} accent={accent} onClose={() => setSettingsOpen(false)} />}
+      {settings.showFps && (
+        <p className="cruise-fps" aria-hidden>
+          {fps.now} fps
+        </p>
+      )}
 
       {panel && (
         <section className="cruise-panel" aria-label="Time, weather and camera">
@@ -622,25 +640,6 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
             {CAMERA_MODES.map((c) => (
               <button key={c} type="button" aria-pressed={settings.camera === c} onClick={() => update({ camera: c })}>
                 {CAMERA_LABEL[c]}
-              </button>
-            ))}
-          </div>
-          <div className="cruise-row">
-            <span className="cruise-label">Frame rate</span>
-            <span className="cruise-hint" title="Frames drawn a second right now, and how fast your screen refreshes">
-              {fps.now} fps · screen {fps.screen} Hz
-            </span>
-          </div>
-          <div className="segmented" role="group" aria-label="Frame rate">
-            {FRAME_RATES.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                aria-pressed={settings.fps === f.id}
-                onClick={() => update({ fps: f.id })}
-                title={f.id === "max" ? "As fast as your screen refreshes" : `Aim for ${f.label} frames a second (the picture sharpens or softens to hold it)`}
-              >
-                {f.label}
               </button>
             ))}
           </div>
@@ -823,6 +822,21 @@ function SpeakerIcon({ muted }: { muted: boolean }) {
       ) : (
         <path d="M13 7a4 4 0 010 6m2.2-8.5a7.5 7.5 0 010 11" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
       )}
+    </svg>
+  );
+}
+
+function GearIcon() {
+  return (
+    <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden>
+      <circle cx="10" cy="10" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.7" />
+      <path
+        d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
