@@ -184,10 +184,11 @@ export function loftBody(shape: CarShape, main: XY[], o: BodyOptions): Body {
       for (const s of [1, -1]) {
         const a = [ring.x, pts[k].y, s * pts[k].z];
         const b = [ring.x, pts[k + 1].y, s * pts[k + 1].z];
-        const flip = (dir === 1) === (s === 1);
-        const part: Part = "paint";
-        if (flip) push(part, ...a, ...b, ...tip);
-        else push(part, ...a, ...tip, ...b);
+        // wound to face out along the car (the outline doubles back through the well's corner,
+        // so each triangle is checked rather than assumed)
+        const nx = (b[1] - a[1]) * (tip[2] - a[2]) - (b[2] - a[2]) * (tip[1] - a[1]);
+        if (nx * dir >= 0) push("paint", ...a, ...b, ...tip);
+        else push("paint", ...a, ...tip, ...b);
       }
     }
   }
