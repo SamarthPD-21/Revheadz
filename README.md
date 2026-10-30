@@ -10,7 +10,8 @@ Pick one of 35 real machines, from the Toyota Supra and Ferrari F40 to a Formula
 the start button, and drive it down an endless drag strip with your keyboard or thumbs. The sound follows every
 throttle input, gear change, limiter bounce and overrun pop in real time, and every run from a standstill is timed.
 Every engine is built from recordings of that exact machine, and you can switch any of them to the engine-model sound
-to compare. When you're ready, race a friend or the CPU over the quarter mile. No install, no account, no server.
+to compare. When you're ready, race a friend or the CPU over the quarter mile, or take any of them down an endless 3D
+road in **Cruise**. No install, no account, no server.
 
 <p align="center">
   <img src="docs/screenshots/drive.jpg" alt="Drive screen: a Supra on the endless strip, with the shift log, timing panel and gauges" width="100%">
@@ -18,6 +19,10 @@ to compare. When you're ready, race a friend or the CPU over the quarter mile. N
 
 <p align="center">
   <img src="docs/screenshots/drag.jpg" alt="Drag race: two cars launching off the line in tyre smoke, the tree on green" width="100%">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/cruise.jpg" alt="Cruise: a Porsche 911 GT3 RS on a mountain road, a guardrail along the bend, the map of the road ahead and the odometer" width="100%">
 </p>
 
 <p align="center">
@@ -89,41 +94,79 @@ to compare. When you're ready, race a friend or the CPU over the quarter mile. N
   editing the link can't fake a faster time
 - **Online rooms**: create a room and send the 4-letter code. The class is shared, so either player can pick it and
   you both move to it
-- **Cruise** (`/cruise`): take any machine down an endless 3D road, inspired by [slowroads.io](https://slowroads.io).
-  The road and the land are grown from a seed as you drive: rolling hills, forest, meadow and dry gold country,
-  lakes, and mountains that rise away from the road so it threads the valleys between them. The day goes by (or
-  pick a time: sunrise, golden hour, the stars), with clear, hazy, foggy or rainy weather, headlights and glowing
-  road reflectors after dark, and five cameras: chase (it swings round as the car slides), far, bonnet, a high drone
-  and a film camera by the road that you drive past. **Every machine drives like the real one**: its own power and
-  torque curve, kerb weight, weight distribution, aero drag and drivetrain, with everything that spins (wheels,
-  crank, flywheel) to spin up too, so 0-100 km/h and top speed land close to the road tests (a GT3 RS does 3.2 s, a
-  911 SC 6.8; the Chiron stops at its 420 km/h limiter). The tyres grip like tyres: force builds with slip to a peak
-  and falls away as they slide, weight shifts forward on the brakes and back under power (brake into a bend and the
-  tail goes light), a hard bend costs speed, and the brakes stop you in a real car's distance, longer in the wet.
-  **Driver aids** are the car's own (an F40 or a '71 'Cuda has none, so it spins its wheels, locks them under hard
-  braking and can spin), or switch them all on or off; dash lights show ABS, traction and stability control working.
-  Let go of the wheel in a slide and it self-centres along it, which is how you catch one. On the
-  road a lane assist steers it; choose **Manual** or **Automatic** gears. In Manual, a car with a clutch pedal
-  **stalls** like a real one: brake to a stop in gear, pull away in 3rd, or lug a tall gear below idle, and it dies
-  (`N`, then `I` to restart). Every car has its own **grip**: tyres (slicks and semi-slicks grip more, a muscle
-  car's less), how they cope off the tarmac (the rally car is best on dirt, slicks are hopeless) and downforce for
-  the racers; the HUD shows the surface and your grip on it. **Traction is real**: the tyres can only put down so much
-  of the engine's torque, set by the grip and the weight on the driven wheels (which shifts back under power and
-  uphill), so a rear-drive car spins its wheels and stalls its climb on a steep grassy hill that all-wheel drive walks up. Your world is remembered: come back and
-  you're on the same road where you left it, with the map loaded from the browser, and a trip computer (distance,
-  time on the move, average speed) carries on. **Back to road** (`B`) puts you on the nearest bit of road. **Settings** (`O`)
-  has it all: resolution (Auto adapts to hold the frame rate, or fix it from 50% to 150%), **frame rate** (60, 90 by
-  default, 120 or Max, paced exactly on faster screens, with the frames you're getting and your screen's rate),
-  field of view, a frame counter, quality presets from Low to Ultra, **render distance** (Near to Extreme: the
-  horizon from 2 to 5.5 km), how thickly trees and grass grow, shadows, glow and clouds, and engine and
-  wind-and-rain volume. Every change applies as you make it and is remembered.
-  Switch on the **autopilot** (`T`) and it drives for you, holding the speed you set and slowing for the bends it can
-  see coming; `G` switches between manual and automatic gears. Press **`R` for free roam** and the whole map is yours: leave the
-  road and drive across meadows, up hillsides and through the shallows. Hills pull you back and push you on, grass and
-  dirt drag at the wheels, steep slopes slide you sideways and deep water stops you; dust and spray fly off the tyres.
-  Clouds drift overhead and glow at sunset, trees and grass sway in the wind and the lakes ripple. The cars are the
-  garage's own, built in 3D from the same profiles as the strip, with the same engines, gearboxes and sound
+- **Cruise** (`/cruise`): take any machine down an endless 3D road through hills, forest, desert and mountains,
+  inspired by [slowroads.io](https://slowroads.io). The cars drive like the real ones, the day goes by and the
+  weather changes, and you can leave the road and roam. See [Cruise](#cruise) below
 - **Free to host**: a static site you can put on Vercel, Netlify or Cloudflare Pages
+
+## Cruise
+
+An endless road you never drive the same way twice. Pick a machine at `/cruise`, start it, and go.
+
+### The road and the world
+
+- **Grown from a seed as you drive**: rolling hills, forest, meadow and dry gold country, lakes, and mountain
+  ranges whose slopes rise close beside the road, so it threads the valleys between them
+- **Guardrails where a road would have them**: round the outside of the bends (both sides of the tight ones) and
+  along drops and embankments, on steel posts with reflectors. The straights are left open, with the odd field gate,
+  so there's plenty of room to run off into the country. Hit a rail and it stops you there: you glance off along it in
+  a shower of sparks, and it costs you speed
+- **Free roam** (`R`): the whole map is yours. Drive across meadows, up hillsides and through the shallows. Hills pull
+  you back and push you on, grass and dirt drag at the wheels, steep slopes slide you sideways and deep water stops you
+- **Day and weather**: let the day go by (an hour a minute) or pick a time from sunrise to the stars; clear, hazy,
+  foggy or rainy. Headlights and glowing reflectors after dark, a sun that flares in the lens, clouds that drift and
+  glow at sunset, trees and grass that sway, lakes that ripple
+- **Your world is remembered**: come back and you're on the same road where you left it, with the map loaded from the
+  browser. **Back to road** (`B`) puts you on the nearest bit of road
+
+### Driving
+
+- **Every car drives like the real one**: its own power and torque curve, kerb weight and weight distribution, size
+  and wheelbase, aero drag, drivetrain and everything that spins, so 0-100 km/h and top speed land close to the road
+  tests (a GT3 RS does 3.2 s, a 911 SC 6.8; the Chiron stops at its 420 km/h limiter)
+- **Tyres that grip like tyres**: force builds with slip to a peak and falls away as they slide; weight shifts forward
+  on the brakes and back under power; a hard bend costs speed; the brakes stop you in a real car's distance, longer in
+  the wet. Set up like road cars, they run wide at the limit rather than snap round, and a slide caught at speed
+  settles instead of throwing you the other way. Let go of the wheel in a slide and it self-centres along it
+- **Driver aids as built**: ABS, traction and stability control as the car left the factory (an F40 or a '71 'Cuda has
+  none, so it spins its wheels, locks them under hard braking and can spin), or all on, or all off. Dash lights show
+  each one working
+- **Gears**: automatic, or manual on `E` / `Q`, where a car with a clutch pedal stalls like a real one (brake to a stop
+  in gear and it dies: `N`, then `I`)
+- **Grip and traction**: every car has its own tyres and copes with dirt in its own way (the rally car best, slicks
+  hopeless), the driven wheels can only put down so much, and the HUD shows the surface and your grip on it
+- **Autopilot** (`T`): it drives for you, holding the speed you set and slowing for the bends it can see coming. Off
+  free roam, a lane assist keeps you in your lane while `A` / `D` move you across the road
+
+### The cars
+
+- **Modelled to the real thing**: each car is lofted into a smooth body at its real length, width, height and
+  wheelbase, sitting on its real wheels, with its own touches: ducktails, lips, swan-neck and rally wings; bonnet
+  scoops and vents; pop-up, round or slim headlights; the four round taillights of the GT-Rs and the F40; intakes in
+  the flanks of the mid-engined cars; exhausts in the middle, at the corners or in fours
+- **Fire and smoke**: flames from the exhaust on backfires, overrun pops, the limiter and hard upshifts; tyre smoke
+  pouring off a drift or a burnout; black rubber laid on the road and ruts torn in the grass
+- **Felt and heard**: the engine's own recordings, plus wind that builds with speed, the drone of the road, a crunch
+  off it, tyres squealing in a slide and a hum through the camera at speed
+- **Bikes are in beta**: they ride, but their handling and models are still being tuned
+
+### On screen
+
+- **A map of the road ahead**, bottom left: it turns with you and shows the next 1.3 km, bends tinted by how tight they
+  are, guardrails along the edges and a mark every 500 m
+- **An odometer** with rolling drums counts each car's kilometres between visits, with a trip meter and a trip
+  computer (distance, time on the move, average speed)
+- **Five cameras** (`C`): chase, far, bonnet, a high drone and a film camera by the road. Drag to look round the car
+
+### Settings
+
+The **Settings** button (`O`) has it all, applied as you change it and remembered:
+
+- **Display**: resolution (Auto adapts to hold the frame rate, or fix it from 50% to 150%), frame rate (60, 90 by
+  default, 120 or Max, paced exactly on faster screens), field of view and a frame counter
+- **Graphics**: presets from Low to Ultra, render distance (Near to Extreme: the horizon from 2 to 5.5 km), how thickly
+  trees and grass grow, shadows, glow and clouds
+- **Sound**: engine, and wind and rain, each on its own
 
 ## Quick start
 
@@ -163,8 +206,8 @@ npm run dev          # http://localhost:3000
 In Cruise, `A` / `D` (or `←` / `→`) move across the road (it eases back into your lane when you let go), `R`
 switches free roam on and off (then `A` / `D` steer anywhere, and `R` again hands back to the lane assist), `B` puts
 you back on the nearest road, `C` changes camera, `T` toggles the autopilot (then `W` / `S` set its speed), `G` switches
-manual and automatic gears and `H` hides the HUD. Drag
-the mouse to look round the car. On a touch screen the car keeps its lane by itself, and free roam adds steering
+manual and automatic gears, `O` opens the settings (`Esc` closes them) and `H` hides the HUD. Drag the mouse to look
+round the car. On a touch screen the car keeps its lane by itself, and free roam adds steering
 arrows.
 
 In a drag race, Simple controls put everything on one button (`Space`, or tap): launch on the green, then shift on
@@ -236,11 +279,14 @@ flowchart LR
   painter's sort. It is built to hold 60 fps: if a device falls behind for two seconds running, the canvas drops its
   resolution a step until it keeps up.
 - **The cars are modelled, not imported.** Each body style's side profile (the same one the strip draws) is
+  stretched to the real car's length, height and wheelbase, its arches on the real wheel centres
+  (`components/cruise/carShapes.ts`, which also lists each car's wings, scoops, lamps, intakes and exhausts), then
   lofted into a smooth skin through 150 cross-sections (`components/cruise/carBody.ts`): sills tucked under,
   flanks fullest low down, a shoulder at the beltline, a glasshouse leaning in to a crowned roof, the nose and tail
   rounded in plan and arches opened round each wheel. The glass is laid over it (the side windows follow the
   window outline, the screens are shaped panes inside their pillars), with lens headlights, light bars, mirrors, a
-  diffuser, lathe-turned tyres, dished spoked rims with discs and calipers, and a soft contact shadow.
+  diffuser, lathe-turned tyres, dished spoked rims with discs and calipers, and a soft contact shadow. The car stands
+  on the ground under each of its tyres, never below the highest, and its body dives and rolls about its middle.
 - **Cruise is real 3D.** It uses three.js, loaded only on the cruise screen. The road (`lib/cruise/road.ts`) is a
   seeded curve: its bend is a sum of slow sine waves with straights mixed in, and its height is the land averaged
   along it with an 8% grade limit, so it rides the hills like a real road. The ground (`lib/cruise/terrain.ts`) is
@@ -259,8 +305,12 @@ flowchart LR
   optional extras for the cruise, all off on the strip so drag races and replays are untouched: the road model, a
   traction limit (traction control trims the drive to it; without, drive past it becomes wheelspin, the revs flare
   and a spinning tyre grips less), a braking limit (ABS holds it; without, the wheels lock) and stalling. Clouds,
-  rippling water, wind in the trees and grass, and the dust and spray are small shaders. The resolution adapts to
-  hold the chosen frame rate (`lib/cruise/frameGate.ts` paces the frames and measures the screen's refresh).
+  rippling water, wind in the trees and grass, the dust and spray, and the exhaust flames are small shaders; skid marks
+  are a ring of quads laid behind each sliding tyre (`components/cruise/effects.ts`). The guardrails are planned in
+  10 m cells from the seed alone (`lib/cruise/barriers.ts`: the bends and drops that want one, short gaps closed,
+  stubs dropped, the odd gate cut in), so the road always has the same rails and the scene, its collisions and the
+  map (`components/cruise/minimap.ts`) agree. The resolution adapts to hold the chosen frame rate
+  (`lib/cruise/frameGate.ts` paces the frames and measures the screen's refresh).
 - **Splits to the millisecond.** The page samples the car once a frame, and every split, and the moment the revs
   reach the shift light, is interpolated between samples, so timing doesn't depend on the frame rate.
 - **Sample blending.** Each vehicle has looping recordings at several RPMs, for on-load (accelerating) and overrun.
@@ -332,15 +382,19 @@ Source recordings are cached in `.sound-cache/`, which is not committed.
 ## Project structure
 
 ```
-app/                     Pages: home (/), playground (/playground), drive (/drive/[vehicleId]), drag racing (/drag), credits
+app/                     Pages: home (/), playground (/playground), drive (/drive/[vehicleId]), drag racing (/drag),
+                         cruise (/cruise, /cruise/[vehicleId]), credits
 components/              React UI: Simulator, TrackView (the endless strip), gauges, shift lights, controls, garage cards
   drag/                  Drag racing UI and the shared 2.5D scene renderer
+  cruise/                Cruise in three.js: scene, world, sky, car models, effects, map, odometer, settings
 hooks/                   useEngineState: the slow-changing state React subscribes to
 lib/
   sim/                   Engine, Gearbox, Simulation: pure TypeScript, no React
   drag/                  Drag racing: deterministic runs, classes and parity trims, CPU driver, peer-to-peer rooms,
                          challenge links, launch and shift ratings
   track/                 Run timer (splits and top speed) and the shift log
+  cruise/                Cruise's road, land, guardrails, ground probe, real-car specs, handling, autopilot,
+                         frame pacing and map cache
   audio/                 AudioEngine, SampleLayer, loop shuffling, card previews, SynthEngine (AudioWorklet), OneShots, blend maths
   assets/                Sound fetching, decoding and caching
   input/                 Keyboard and touch → throttle, brake and commands
@@ -387,7 +441,8 @@ Netlify or Cloudflare Pages.
 ## Tech stack
 
 [Next.js](https://nextjs.org) (App Router, static export) · TypeScript · [Tailwind CSS](https://tailwindcss.com) ·
-Web Audio API with AudioWorklet · Canvas 2D · [Vitest](https://vitest.dev) · ffmpeg for the sound pipelines
+Web Audio API with AudioWorklet · Canvas 2D · [three.js](https://threejs.org) (WebGL, Cruise) · [Vitest](https://vitest.dev) ·
+ffmpeg for the sound pipelines
 
 ## Credits
 
