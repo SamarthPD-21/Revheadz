@@ -28,6 +28,8 @@ import { FrameGate } from "../../lib/cruise/frameGate";
 import { forgetRoad, loadTiles, saveTiles } from "../../lib/cruise/tileCache";
 import { CAMERA_MODES, CruiseScene, type CameraMode, type Place, type Weather } from "./scene";
 import { SettingsPanel } from "./SettingsPanel";
+import { drawMinimap } from "./minimap";
+import { Odometer, loadOdometer, saveOdometer } from "./Odometer";
 import { DEFAULTS, graphicsOf, type Settings } from "./settings";
 import { RANGES, World, type TileData } from "./world";
 
@@ -209,6 +211,10 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
   /** Touch steering in free roam: -1, 0 or 1 from the on-screen arrows. */
   const touchSteer = useRef(0);
   const gripRef = useRef<HTMLParagraphElement>(null);
+  const mapRef = useRef<HTMLCanvasElement>(null);
+  /** This car's odometer, km (counted every frame, shown a few times a second). */
+  const odoRef = useRef(0);
+  const [odo, setOdo] = useState(0);
   const [stalled, setStalled] = useState(false);
 
   const update = (patch: Partial<Settings>) => {
@@ -332,7 +338,10 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       scene.trip = was.tripM;
       tripS = was.tripS;
     }
+    odoRef.current = loadOdometer(vehicle.id);
+    let lastMap = 0;
     const save = () => {
+      saveOdometer(vehicle.id, odoRef.current);
       saveWorld({ seed, place: scene.placeNow, tripM: scene.trip, tripS });
       void saveTiles(seed, scene.takeFreshTiles());
     };
@@ -405,6 +414,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       if (scene.escActive) sim.input.throttle *= 0.4;
       sim.advance(dt);
       if (sim.state.speedKmh > 1) tripS += dt;
+      odoRef.current += (sim.state.speedKmh / 3.6) * dt * 0.001;
       audio.update(sim.state);
       if (s.cycle) hourRef.current = (hourRef.current + dt * HOURS_PER_S) % 24;
       {
@@ -415,6 +425,11 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       const keys = steerKeys.current;
       const steer = clampUnit((STEER_RIGHT.some((k) => keys.has(k)) ? 1 : 0) - (STEER_LEFT.some((k) => keys.has(k)) ? 1 : 0) + touchSteer.current);
       scene.frame(dt, { speedKmh: sim.state.speedKmh, throttle: sim.input.throttle, brake: sim.input.brake, wheelspin: sim.state.wheelspin ?? 0, locked: Boolean(sim.state.locked), steer, ignition: running }, { hour: hourRef.current, weather: s.weather, camera: s.camera });
+      // the map, fifteen times a second
+      if (mapRef.current && now - lastMap > 66) {
+        lastMap = now;
+        drawMinimap(mapRef.current, scene.route(), vehicle.ui.accent);
+      }
       // a knock against a guardrail costs the speed it cost, and sounds like it
       const hit = scene.takeImpact();
       if (hit) {
@@ -452,6 +467,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
         setSetKmh(Math.round(setKmhRef.current));
         setFps({ now: Math.round((frames * 1000) / Math.max(1, now - fpsAt)), screen: Math.round(1000 / gate.screenMs) });
         setRenderScale(scene.renderScale);
+        setOdo(odoRef.current);
         frames = 0;
         fpsAt = now;
       }
@@ -730,6 +746,8 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
         </p>
       )}
 
+      <canvas ref={mapRef} className="cruise-map cruise-fade" aria-label="Map of the road ahead" />
+
       <div className="track-cluster cruise-cluster">
         <div className="track-lights">
           <ShiftLights state={sim.state} redlineRpm={vehicle.engine.redlineRpm} />
@@ -754,6 +772,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
             <i>ESC</i>
           </span>
         </p>
+        <Odometer km={odo} tripKm={trip.m / 1000} />
         <p className="cruise-trip" title="This trip: distance, time on the move and average speed">
           {(trip.m / 1000).toFixed(1)} km · {duration(trip.s)} · avg {trip.s > 5 ? Math.round((trip.m / trip.s) * 3.6) : 0} km/h · {settings.gears === "auto" ? "Auto" : "Manual"}
         </p>

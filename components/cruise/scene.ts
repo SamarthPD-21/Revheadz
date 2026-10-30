@@ -595,6 +595,27 @@ export class CruiseScene {
     return [cx, cz];
   }
 
+  /**
+   * The road round the car for the map: points every 10 m from a little behind to well ahead
+   * (x, z, curvature, and which sides have a rail: bit 1 left, bit 2 right), and where the car
+   * is and which way it's pointing.
+   */
+  route(behind = 200, ahead = 1600): { x: number; z: number; yaw: number; pts: Float32Array; from: number; s: number } {
+    const road = this.land.road;
+    const from = Math.max(0, this.s - behind);
+    const n = Math.floor((ahead + (this.s - from)) / 10) + 1;
+    const pts = new Float32Array(n * 4);
+    for (let i = 0; i < n; i++) {
+      const sAt = from + i * 10;
+      const p = road.at(sAt, this.pt);
+      pts[i * 4] = p.x;
+      pts[i * 4 + 1] = p.z;
+      pts[i * 4 + 2] = p.curvature;
+      pts[i * 4 + 3] = this.world.barriers.cell(Math.floor(sAt / 10));
+    }
+    return { x: this.fx, z: this.fz, yaw: this.yaw, pts, from, s: this.s };
+  }
+
   /** The last knock against a rail since asked: the share of speed left, and how hard it was (m/s). */
   takeImpact(): { share: number; strength: number } | null {
     const hit = this.impact;

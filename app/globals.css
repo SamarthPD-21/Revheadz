@@ -855,6 +855,20 @@ button.menu-option:hover { background: #17171d; }
 .cruise-label { font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: #71717a; }
 .cruise-clock { font-family: var(--font-mono); font-size: 0.95rem; color: #fafafa; margin-right: auto; }
 .cruise-hint { font-family: var(--font-mono); font-size: 0.62rem; color: #52525b; }
+/* the map of the road ahead, bottom left above the key hints */
+.cruise-map { position: absolute; left: var(--edge); bottom: 4.2rem; width: 10.5rem; height: 10.5rem; z-index: 4; pointer-events: none; border-radius: 999px; filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45)); }
+@media (max-width: 640px) { .cruise-map { width: 7.5rem; height: 7.5rem; bottom: auto; top: 6.5rem; } }
+/* the odometer: rolling number drums, the tenths in red */
+.cruise-odo { align-self: flex-end; margin-right: 0.4rem; display: flex; align-items: center; gap: 0.4rem; font-family: var(--font-mono); }
+.cruise-odo-label { font-size: 0.55rem; letter-spacing: 0.1em; color: #71717a; text-transform: uppercase; }
+.cruise-odo-drums { display: inline-flex; padding: 2px; gap: 1px; border-radius: 4px; background: #050507; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8); }
+.cruise-odo-drum { position: relative; display: block; width: 0.72rem; height: 1rem; overflow: hidden; border-radius: 2px; background: linear-gradient(#18181b, #2a2a30 50%, #18181b); }
+.cruise-odo-drum > span { display: flex; flex-direction: column; transition: transform 380ms linear; }
+.cruise-odo-drum i { display: block; height: 1rem; line-height: 1rem; text-align: center; font-style: normal; font-size: 0.7rem; font-weight: 700; color: #f4f4f5; }
+.cruise-odo-drum.red { background: linear-gradient(#7f1d1d, #b91c1c 50%, #7f1d1d); }
+.cruise-odo-drum::after { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(0, 0, 0, 0.55), transparent 35%, transparent 65%, rgba(0, 0, 0, 0.55)); pointer-events: none; }
+.cruise-odo-trip { font-size: 0.6rem; color: #71717a; letter-spacing: 0.08em; }
+.cruise-odo-trip b { color: #e4e4e7; font-weight: 700; }
 /* a lens's gentle fall-off towards the corners, over the 3D view and under the HUD */
 .cruise-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 80% 75% at 50% 48%, transparent 58%, rgba(0, 0, 0, 0.32) 100%); }
 /* the settings button: a labelled pill where there's room, the cog alone on a phone */
