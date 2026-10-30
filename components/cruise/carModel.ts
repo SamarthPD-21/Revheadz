@@ -1,13 +1,13 @@
 import * as THREE from "three";
 import type { VehicleConfig } from "../../lib/vehicles/types";
 import { loftBody, type BodyOptions, type Part } from "./carBody";
+import { cruiseShape, featuresOf } from "./carShapes";
 import {
   FORMULA_WHEELS,
   LIVERY,
   area,
   bikeLayout,
   bikeParts,
-  carShape,
   exhaustTips,
   formulaParts,
   hexRgb,
@@ -363,7 +363,8 @@ export function buildCar(cfg: VehicleConfig): CarModel {
     length = 2.2;
     width = 0.8;
   } else {
-    const shape = carShape(cfg);
+    const shape = cruiseShape(cfg);
+    const feat = featuresOf(cfg);
     const W = shape.width;
     length = shape.len;
     width = W;
@@ -379,7 +380,7 @@ export function buildCar(cfg: VehicleConfig): CarModel {
       body.add(mesh);
     }
     // wings and spoilers: the strip's outlines, extruded thin and shaded smoothly
-    for (const poly of shape.wings) {
+    for (const poly of feat.wing === "none" ? shape.wings : []) {
       const hw = W / 2 - 0.14;
       for (let i = 0; i < poly.length; i++) {
         const [ax, ay] = poly[i];
@@ -396,7 +397,7 @@ export function buildCar(cfg: VehicleConfig): CarModel {
     round.build(body, true);
 
     // twin stripes over the bonnet, roof and boot, laid on the skin
-    if (livery.stripes) {
+    if (feat.stripes) {
       const stripeM = std("stripe", () => new THREE.MeshPhysicalMaterial({ color: 0xececf0, roughness: 0.3, clearcoat: 1 }));
       const steps = 90;
       for (let i = 0; i < steps; i++) {
@@ -425,15 +426,33 @@ export function buildCar(cfg: VehicleConfig): CarModel {
     const hx = (frontXAt(hy) ?? shape.len) - 0.2;
     const lensGeo = new THREE.SphereGeometry(1, 20, 12);
     for (const sz of [1, -1]) {
-      const lens = new THREE.Mesh(lensGeo, head);
       const hz = skin.halfWidth(hx) * 0.7;
-      lens.scale.set(0.2, 0.055, 0.17);
+      if (feat.lamps === "popup") {
+        // pop-ups folded flat into the bonnet: a painted lid with a dark seam round it, the
+        // lamp just showing at its front edge
+        const lx = hx - 0.05;
+        const ly = skin.topAt(lx) + 0.004;
+        const seam = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.012, 0.3), trimM);
+        seam.position.set(lx, ly, sz * hz);
+        body.add(seam);
+        const lid = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.016, 0.28), paintM);
+        lid.position.set(lx, ly + 0.004, sz * hz);
+        body.add(lid);
+        const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.018, 0.22), head);
+        lamp.position.set(lx + 0.17, ly, sz * hz);
+        body.add(lamp);
+        headlights.push(new THREE.Vector3(lx + 0.25, ly, sz * hz));
+        continue;
+      }
+      const round = feat.lamps === "round";
+      const lens = new THREE.Mesh(lensGeo, head);
+      lens.scale.set(round ? 0.12 : 0.2, round ? 0.085 : 0.055, round ? 0.085 : 0.17);
       lens.position.set(hx + 0.08, hy, sz * hz);
       lens.rotation.y = sz * 0.35;
       body.add(lens);
       // the dark housing it sits in
       const bezel = new THREE.Mesh(lensGeo, trimM);
-      bezel.scale.set(0.2, 0.068, 0.2);
+      bezel.scale.set(round ? 0.12 : 0.2, round ? 0.1 : 0.068, round ? 0.1 : 0.2);
       bezel.position.set(hx + 0.06, hy, sz * hz);
       bezel.rotation.y = sz * 0.35;
       body.add(bezel);
@@ -448,13 +467,91 @@ export function buildCar(cfg: VehicleConfig): CarModel {
     const ty = Math.min(skin.topAt(skin.x0 + 0.25) - 0.08, 0.78);
     const tx = (rearXAt(main, ty) ?? 0) - 0.005;
     const thw = skin.halfWidth(tx + 0.05);
-    const bar = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.035, thw * 1.75), tail);
-    bar.position.set(tx, ty, 0);
-    body.add(bar);
-    for (const sz of [1, -1]) {
-      const cluster = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.09, 0.42), tail);
-      cluster.position.set(tx + 0.01, ty - 0.02, sz * (thw - 0.27));
-      body.add(cluster);
+    if (feat.tail === "quad") {
+      // four round lamps, the way GT-Rs and the F40 wear them
+      const disc = new THREE.CylinderGeometry(0.075, 0.075, 0.05, 20).rotateZ(Math.PI / 2);
+      for (const sz of [1, -1]) {
+        for (const off of [0.2, 0.46]) {
+          const lamp = new THREE.Mesh(disc, tail);
+          lamp.position.set(tx, ty - 0.01, sz * (thw - off));
+          body.add(lamp);
+          const ring = new THREE.Mesh(new THREE.TorusGeometry(0.078, 0.012, 6, 20).rotateY(Math.PI / 2), trimM);
+          ring.position.set(tx - 0.02, ty - 0.01, sz * (thw - off));
+          body.add(ring);
+        }
+      }
+    } else {
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.035, thw * 1.75), tail);
+      bar.position.set(tx, ty, 0);
+      body.add(bar);
+      for (const sz of [1, -1]) {
+        const cluster = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.09, 0.42), tail);
+        cluster.position.set(tx + 0.01, ty - 0.02, sz * (thw - 0.27));
+        body.add(cluster);
+      }
+    }
+
+    // the rear wing
+    const deckX = skin.x0 + 0.22;
+    const deckY = skin.topAt(deckX);
+    const span = skin.halfWidth(deckX) * 1.7;
+    if (feat.wing === "lip" || feat.wing === "duck") {
+      // a lip on the boot's edge, or a ducktail turned up from it
+      const duck = feat.wing === "duck";
+      const lip = new THREE.Mesh(new THREE.BoxGeometry(duck ? 0.34 : 0.16, duck ? 0.05 : 0.025, span), paintM);
+      lip.position.set(skin.x0 + (duck ? 0.2 : 0.1), deckY + (duck ? 0.04 : 0.015), 0);
+      lip.rotation.z = duck ? -0.22 : -0.12;
+      body.add(lip);
+    } else if (feat.wing === "gt" || feat.wing === "tall") {
+      // a full wing on two uprights, with endplates
+      const tall = feat.wing === "tall";
+      const lift = tall ? 0.22 : 0.3;
+      const wx = skin.x0 + (tall ? 0.24 : 0.3);
+      const wy = skin.topAt(wx) + lift;
+      const plane = new THREE.Mesh(new THREE.BoxGeometry(tall ? 0.24 : 0.34, 0.03, span * (tall ? 0.95 : 0.9)), tall ? paintM : wingM);
+      plane.position.set(wx, wy, 0);
+      plane.rotation.z = 0.12;
+      body.add(plane);
+      for (const sz of [1, -1]) {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, lift, 0.025), wingM);
+        post.position.set(wx + 0.02, wy - lift / 2, sz * span * 0.28);
+        body.add(post);
+        const plate = new THREE.Mesh(new THREE.BoxGeometry(tall ? 0.26 : 0.38, 0.13, 0.012), wingM);
+        plate.position.set(wx, wy + 0.02, sz * span * (tall ? 0.475 : 0.45));
+        body.add(plate);
+      }
+    }
+
+    // on the bonnet
+    const bx = skin.x1 - Math.min(0.95, (skin.x1 - skin.x0) * 0.2);
+    const by = skin.topAt(bx);
+    if (feat.bonnet === "scoop") {
+      const scoop = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.08, 0.5), paintM);
+      scoop.position.set(bx, by + 0.035, 0);
+      scoop.rotation.z = -0.05;
+      body.add(scoop);
+      const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.05, 0.4), trimM);
+      mouth.position.set(bx + 0.25, by + 0.045, 0);
+      body.add(mouth);
+    } else if (feat.bonnet === "vents") {
+      for (const sz of [1, -1]) {
+        const vent = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.012, 0.13), trimM);
+        vent.position.set(bx, by + 0.006, sz * 0.32);
+        body.add(vent);
+      }
+    }
+
+    // intakes in the flanks ahead of the rear wheels (the mid-engined cars breathe there)
+    if (feat.intakes) {
+      const rearW = shape.wheels.reduce((a, w) => (w.x < a.x ? w : a));
+      const ix = rearW.x + rearW.r + 0.38;
+      for (const sz of [1, -1]) {
+        const scoop = new THREE.Mesh(lensGeo, trimM);
+        scoop.scale.set(0.32, 0.11, 0.05);
+        scoop.position.set(ix, shape.belt - 0.12, sz * (skin.halfWidth(ix) - 0.015));
+        scoop.rotation.y = sz * -0.12;
+        body.add(scoop);
+      }
     }
     // diffuser under the tail
     const dif = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, thw * 1.4), trimM);
@@ -481,12 +578,14 @@ export function buildCar(cfg: VehicleConfig): CarModel {
     }
     b.build(body);
 
-    // exhaust tips through the diffuser
-    for (const ez of [-0.42, 0.42]) {
-      tips.push(new THREE.Vector3(skin.x0 - 0.05, style.clearance + 0.1, ez));
+    // exhaust tips: a pair at the corners, a pair in the middle, or four
+    const ey = style.clearance + (feat.exhaust === "centre" ? 0.2 : 0.1);
+    const pipes = feat.exhaust === "centre" ? [-0.09, 0.09] : feat.exhaust === "quad" ? [-0.55, -0.4, 0.4, 0.55] : [-0.42, 0.42];
+    for (const ez of pipes) {
+      tips.push(new THREE.Vector3(skin.x0 - 0.05, ey, ez));
       const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.055, 0.14, 16, 1, true), chromeM);
       tip.rotation.z = Math.PI / 2;
-      tip.position.set(skin.x0 + 0.02, style.clearance + 0.1, ez);
+      tip.position.set(skin.x0 + 0.02, ey, ez);
       body.add(tip);
     }
 
