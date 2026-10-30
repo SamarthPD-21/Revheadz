@@ -111,9 +111,12 @@ to compare. When you're ready, race a friend or the CPU over the quarter mile. N
   of the engine's torque, set by the grip and the weight on the driven wheels (which shifts back under power and
   uphill), so a rear-drive car spins its wheels and stalls its climb on a steep grassy hill that all-wheel drive walks up. Your world is remembered: come back and
   you're on the same road where you left it, with the map loaded from the browser, and a trip computer (distance,
-  time on the move, average speed) carries on. **Back to road** (`B`) puts you on the nearest bit of road. Pick a
-  **frame rate** (60, 90 by default, 120, or Max): on a screen that refreshes faster, frames are paced to hold it,
-  and the picture sharpens or softens to keep up (the panel shows the frames you're getting and your screen's rate).
+  time on the move, average speed) carries on. **Back to road** (`B`) puts you on the nearest bit of road. **Settings** (`O`)
+  has it all: resolution (Auto adapts to hold the frame rate, or fix it from 50% to 150%), **frame rate** (60, 90 by
+  default, 120 or Max, paced exactly on faster screens, with the frames you're getting and your screen's rate),
+  field of view, a frame counter, quality presets from Low to Ultra, **render distance** (Near to Extreme: the
+  horizon from 2 to 5.5 km), how thickly trees and grass grow, shadows, glow and clouds, and engine and
+  wind-and-rain volume. Every change applies as you make it and is remembered.
   Switch on the **autopilot** (`T`) and it drives for you, holding the speed you set and slowing for the bends it can
   see coming; `G` switches between manual and automatic gears. Press **`R` for free roam** and the whole map is yours: leave the
   road and drive across meadows, up hillsides and through the shallows. Hills pull you back and push you on, grass and
@@ -232,6 +235,12 @@ flowchart LR
   (`components/drag/scene25d.ts`): an isometric camera, models lofted from cross-sections and lit per face, and a
   painter's sort. It is built to hold 60 fps: if a device falls behind for two seconds running, the canvas drops its
   resolution a step until it keeps up.
+- **The cars are modelled, not imported.** Each body style's side profile (the same one the strip draws) is
+  lofted into a smooth skin through 150 cross-sections (`components/cruise/carBody.ts`): sills tucked under,
+  flanks fullest low down, a shoulder at the beltline, a glasshouse leaning in to a crowned roof, the nose and tail
+  rounded in plan and arches opened round each wheel. The glass is laid over it (the side windows follow the
+  window outline, the screens are shaped panes inside their pillars), with lens headlights, light bars, mirrors, a
+  diffuser, lathe-turned tyres, dished spoked rims with discs and calipers, and a soft contact shadow.
 - **Cruise is real 3D.** It uses three.js, loaded only on the cruise screen. The road (`lib/cruise/road.ts`) is a
   seeded curve: its bend is a sum of slow sine waves with straights mixed in, and its height is the land averaged
   along it with an 8% grade limit, so it rides the hills like a real road. The ground (`lib/cruise/terrain.ts`) is
