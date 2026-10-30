@@ -12,11 +12,22 @@ import type { VehicleConfig } from "../../lib/vehicles/types";
 import { Atmosphere, type Weather } from "./atmosphere";
 import { buildCar, type CarModel } from "./carModel";
 import { Puffs } from "./particles";
-import { World } from "./world";
+import { World, type Range } from "./world";
 
 export type CameraMode = "chase" | "far" | "hood" | "drone" | "cinematic";
 export const CAMERA_MODES: CameraMode[] = ["chase", "far", "hood", "drone", "cinematic"];
 export type { Weather };
+
+export interface Graphics {
+  /** Share of the screen's resolution to draw at, or "auto" to adapt it to hold the frame rate. */
+  scale: "auto" | number;
+  range: Range;
+  shadows: "off" | "on" | "high";
+  bloom: boolean;
+  clouds: boolean;
+  /** Field of view, degrees. */
+  fov: number;
+}
 
 /** What the scene needs from the car and the driver each frame. */
 export interface Drive {
@@ -133,6 +144,12 @@ export class CruiseScene {
    * own refresh if that's slower (nothing draws faster than the screen refreshes).
    */
   targetMs = 1000 / 60;
+  /** A fixed share of the screen's resolution, or null to adapt it to hold the frame rate. */
+  private fixedScale: number | null = null;
+  /** Glow round lights at night and in the wet. */
+  private bloomAllowed = true;
+  /** Field of view of the chase camera at a standstill, degrees. */
+  private fovBase = 58;
   private dpr = 1;
   private size = { w: 1, h: 1 };
   private camMode: CameraMode = "chase";
@@ -272,6 +289,30 @@ export class CruiseScene {
     this.bloom.resolution.set(this.size.w * pr * 0.4, this.size.h * pr * 0.4);
   }
 
+  /** The graphics settings: resolution, how far out the world is built, shadows, glow, clouds, field of view. */
+  setGraphics(g: Graphics): void {
+    this.fixedScale = g.scale === "auto" ? null : g.scale;
+    if (this.fixedScale !== null && this.fixedScale !== this.quality) {
+      this.quality = this.fixedScale;
+      this.applySize();
+    }
+    if (this.fixedScale === null && this.quality > 1) {
+      this.quality = 1;
+      this.applySize();
+    }
+    this.world.setRange(g.range);
+    this.atmo.setQuality(g.shadows, g.clouds);
+    this.bloomAllowed = g.bloom;
+    this.fovBase = g.fov;
+    // the light is worked out again next frame (shadows and glow go with it)
+    this.lastLook = "";
+  }
+
+  /** The share of full resolution being drawn right now. */
+  get renderScale(): number {
+    return this.quality;
+  }
+
   /** Turns the chase camera round the car (a mouse or finger drag, in pixels). */
   nudgeOrbit(dx: number, dy: number): void {
     this.orbit.yaw += dx * 0.006;
@@ -334,10 +375,11 @@ export class CruiseScene {
     this.steady = this.frameMs < target * 1.08 ? this.steady + dt : 0;
     this.ceiling = Math.min(1, this.ceiling + dt * 0.004);
     let next = this.quality;
-    if (this.frameMs > target * 1.25 && this.time - this.qualityAt > 0.5) {
+    if (this.fixedScale !== null) next = this.fixedScale;
+    else if (this.frameMs > target * 1.25 && this.time - this.qualityAt > 0.5) {
       this.ceiling = this.quality - 0.05;
       next = Math.max(0.5, this.quality - 0.1);
-    } else if (this.steady > 3 && this.quality < this.ceiling) {
+    } else if (this.steady > 3 && this.quality < Math.min(1, this.ceiling)) {
       next = Math.min(this.ceiling, this.quality + 0.05);
       this.steady = 0;
     }
@@ -596,7 +638,7 @@ export class CruiseScene {
     const L = this.atmo.light;
     this.world.setLight(L.wet, L.night);
     this.bloom.strength = 0.3 + L.night * 0.5;
-    this.bloomOn = L.night > 0.15 || L.wet > 0;
+    this.bloomOn = this.bloomAllowed && (L.night > 0.15 || L.wet > 0);
   }
 
   private placeCamera(dt: number, mode: CameraMode, v: number, snap: boolean) {
@@ -623,7 +665,7 @@ export class CruiseScene {
       const ahead = this.car.root.localToWorld(new THREE.Vector3(this.car.length + 25, 0.6, 0));
       this.camLook.copy(ahead);
       cam.lookAt(this.camLook);
-      cam.fov = damp(cam.fov, 68 + v * 0.06, 3, dt || 1);
+      cam.fov = damp(cam.fov, this.fovBase + 10 + v * 0.06, 3, dt || 1);
       cam.updateProjectionMatrix();
       return;
     }
@@ -711,7 +753,7 @@ export class CruiseScene {
     this.lastCarPos.copy(carPos);
     cam.lookAt(this.camLook);
     // the faster you go, the wider it opens up
-    const fov0 = mode === "far" ? 50 : mode === "drone" ? 45 : 58;
+    const fov0 = this.fovBase + (mode === "far" ? -8 : mode === "drone" ? -13 : 0);
     cam.fov = damp(cam.fov, fov0 + Math.min(v, 80) * 0.18, 2, dt || 1);
     cam.updateProjectionMatrix();
   }

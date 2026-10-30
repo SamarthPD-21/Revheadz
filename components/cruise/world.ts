@@ -8,15 +8,33 @@ import { Landscape, RoadDistance, WILD_M } from "../../lib/cruise/terrain";
 /** Near ground comes in square tiles this wide, m, with this many quads a side (4 m apart). */
 const TILE = 160;
 const RES = TILE / GRID_M;
-/** Tiles kept around the camera (a circle this many tiles across, either way). */
-const RING = 4;
-/** Trees grow only on tiles this close. */
-const TREE_RING = 3;
 /** The far ground: a coarse lattice out to the horizon, centred on the camera. */
 const FAR_STEP = 50;
-const FAR_HALF = 64;
+/** The furthest the far ground ever reaches, in lattice steps either way. */
+const FAR_MAX = 110;
 /** Far lattice points kept (a few screens' worth); past that the cache starts again. */
-const FAR_SLOTS = (FAR_HALF * 2 + 1) ** 2 * 3;
+const FAR_SLOTS = (FAR_MAX * 2 + 1) ** 2 * 2;
+
+/** How far the world is built out, and how thickly it's planted (the graphics settings). */
+export interface Range {
+  /** Tiles of detailed ground kept round the camera (a circle this many tiles across, either way). */
+  ring: number;
+  /** Trees grow only on tiles this close. */
+  trees: number;
+  /** Grass only this close (0: none). */
+  grass: number;
+  /** The far ground's reach, in 50 m lattice steps either way. */
+  far: number;
+  /** Share of the plants drawn (thinned evenly). */
+  density: number;
+}
+
+export const RANGES = {
+  near: { ring: 3, trees: 2, grass: 1.2, far: 44, density: 1 },
+  medium: { ring: 4, trees: 3, grass: 1.6, far: 64, density: 1 },
+  far: { ring: 5, trees: 4, grass: 2, far: 84, density: 1 },
+  extreme: { ring: 7, trees: 5, grass: 2.4, far: FAR_MAX, density: 1 },
+} satisfies Record<string, Range>;
 /** Road meshes are built 50 samples (100 m) at a time. */
 const CHUNK = 50;
 /** One dash and gap of the centre line, m (the road texture's length). */
@@ -29,12 +47,10 @@ type TreeKind = "pine" | "broad" | "bush" | "rock" | "grass";
 /** Colours here are picked as sRGB; vertex and instance colours are linear. */
 const lin = (c: number) => Math.pow(c, 2.2);
 const KINDS: TreeKind[] = ["pine", "broad", "bush", "rock", "grass"];
-/** Grass grows only this close (in tiles): tufts are tiny, and there are a lot of them. */
-const GRASS_RING = 1.6;
 /** How close new road has to come to built ground to make it rebuild (the road's verge and banks), m. */
 const REACH = 60;
 /** Instances per kind, at most. */
-const CAP: Record<TreeKind, number> = { pine: 26000, broad: 26000, bush: 26000, rock: 26000, grass: 30000 };
+const CAP: Record<TreeKind, number> = { pine: 70000, broad: 70000, bush: 60000, rock: 40000, grass: 60000 };
 
 /**
  * A built tile's ground, kept so it never has to be worked out again: heights (with their
@@ -258,7 +274,8 @@ export class World {
   /** Wind for every swaying plant: time, and how hard it's blowing. */
   private readonly wind = { uTime: { value: 0 }, uWind: { value: 1 } };
   private readonly ripples: THREE.DataTexture;
-  private readonly far: THREE.Mesh;
+  private far: THREE.Mesh;
+  private range: Range = RANGES.medium;
   /**
    * The far ground's lattice points, worked out once: a slot per point in one flat array
    * (height, then linear colour), so a long drive's worth of them is no work for the GC.
@@ -299,8 +316,21 @@ export class World {
       this.group.add(m);
     }
 
-    // the far ground: positions and colours filled in when it's centred
-    const F = FAR_HALF * 2 + 1;
+    this.far = this.makeFar();
+
+    this.ripples = rippleNormals();
+    this.ripples.repeat.set(400, 400); // one tile every 35 m
+    this.water = new THREE.Mesh(
+      new THREE.PlaneGeometry(14000, 14000).rotateX(-Math.PI / 2),
+      new THREE.MeshStandardMaterial({ color: 0x0d2a36, roughness: 0.07, metalness: 0.1, transparent: true, opacity: 0.9, normalMap: this.ripples, normalScale: new THREE.Vector2(0.35, 0.35) }),
+    );
+    this.water.position.y = WATER_Y;
+    this.group.add(this.water);
+  }
+
+  /** The far ground's mesh at the current reach: positions and colours filled in when it's centred. */
+  private makeFar(): THREE.Mesh {
+    const F = this.range.far * 2 + 1;
     const fg = new THREE.BufferGeometry();
     fg.setAttribute("position", new THREE.Float32BufferAttribute(new Float32Array(F * F * 3), 3));
     fg.setAttribute("color", new THREE.Float32BufferAttribute(new Float32Array(F * F * 3), 3));
@@ -312,18 +342,27 @@ export class World {
       }
     }
     fg.setIndex(fi);
-    this.far = new THREE.Mesh(fg, this.terrainMat);
-    this.far.frustumCulled = false;
-    this.group.add(this.far);
+    const far = new THREE.Mesh(fg, this.terrainMat);
+    far.frustumCulled = false;
+    this.group.add(far);
+    return far;
+  }
 
-    this.ripples = rippleNormals();
-    this.ripples.repeat.set(400, 400); // one tile every 35 m
-    this.water = new THREE.Mesh(
-      new THREE.PlaneGeometry(14000, 14000).rotateX(-Math.PI / 2),
-      new THREE.MeshStandardMaterial({ color: 0x0d2a36, roughness: 0.07, metalness: 0.1, transparent: true, opacity: 0.9, normalMap: this.ripples, normalScale: new THREE.Vector2(0.35, 0.35) }),
-    );
-    this.water.position.y = WATER_Y;
-    this.group.add(this.water);
+  /**
+   * How far out to build and how thickly to plant. Changing it takes effect over the next
+   * frames: tiles beyond the new reach go, missing ones are built nearest first.
+   */
+  setRange(range: Range): void {
+    const old = this.range;
+    if (old.ring === range.ring && old.trees === range.trees && old.grass === range.grass && old.far === range.far && old.density === range.density) return;
+    this.range = range;
+    if (old.far !== range.far) {
+      this.group.remove(this.far);
+      this.far.geometry.dispose();
+      this.far = this.makeFar();
+    }
+    this.farCentre = "";
+    this.plantsDirty = true;
   }
 
   /**
@@ -389,7 +428,7 @@ export class World {
     // drop tiles that have fallen behind
     for (const [key, tile] of this.tiles) {
       const [ix, iz] = key.split(",").map(Number);
-      if (Math.hypot(ix - tx, iz - tz) > RING + 1.2) {
+      if (Math.hypot(ix - tx, iz - tz) > this.range.ring + 1.2) {
         this.group.remove(tile.mesh);
         tile.mesh.geometry.dispose();
         this.tiles.delete(key);
@@ -398,6 +437,7 @@ export class World {
     }
     // build the missing ones, nearest first
     const want: [number, number, number][] = [];
+    const RING = this.range.ring;
     for (let dz = -RING; dz <= RING; dz++) {
       for (let dx = -RING; dx <= RING; dx++) {
         const d = Math.hypot(dx, dz);
@@ -464,7 +504,7 @@ export class World {
   }
 
   /** The tile keys within the ring around a point (to load from the cache before building). */
-  static keysAround(x: number, z: number): string[] {
+  static keysAround(x: number, z: number, RING = RANGES.medium.ring): string[] {
     const tx = Math.floor(x / TILE);
     const tz = Math.floor(z / TILE);
     const out: string[] = [];
@@ -632,13 +672,17 @@ export class World {
       for (const [key, tile] of this.tiles) {
         const [ix, iz] = key.split(",").map(Number);
         const ring = Math.hypot(ix - this.camTile.x, iz - this.camTile.z);
-        if (ring > (kind === "grass" ? GRASS_RING : TREE_RING + 0.5)) continue;
+        if (ring > (kind === "grass" ? this.range.grass : this.range.trees + 0.5)) continue;
         tile.ready ??= readyPlants(tile.plants);
         const src = tile.ready[kind];
         const count = src.cols.length / 3;
         // far off, the fog and the count hide every other tree
-        if (ring > TREE_RING - 0.5 && kind !== "rock" && kind !== "grass") {
-          for (let i = 0; i < count && n < cap; i += 2, n++) {
+        // far off, the fog and the count hide every other tree; a lower density thins them all
+        const thin = ring > this.range.trees - 0.5 && kind !== "rock" && kind !== "grass" ? 2 : 1;
+        const stride = thin / this.range.density;
+        if (stride > 1.01) {
+          for (let f = 0; f < count && n < cap; f += stride, n++) {
+            const i = Math.floor(f);
             mats.set(src.mats.subarray(i * 16, i * 16 + 16), n * 16);
             cols.set(src.cols.subarray(i * 3, i * 3 + 3), n * 3);
           }
@@ -650,12 +694,19 @@ export class World {
         }
       }
       mesh.count = n;
+      // upload only what's drawn
+      mesh.instanceMatrix.clearUpdateRanges();
+      mesh.instanceMatrix.addUpdateRange(0, n * 16);
       mesh.instanceMatrix.needsUpdate = true;
+      mesh.instanceColor!.clearUpdateRanges();
+      mesh.instanceColor!.addUpdateRange(0, n * 3);
       mesh.instanceColor!.needsUpdate = true;
     }
   }
 
   private buildFar(tx: number, tz: number) {
+    const FAR_HALF = this.range.far;
+    const RING = this.range.ring;
     const F = FAR_HALF * 2 + 1;
     const cx = Math.round(((tx + 0.5) * TILE) / FAR_STEP);
     const cz = Math.round(((tz + 0.5) * TILE) / FAR_STEP);

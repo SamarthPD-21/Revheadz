@@ -44,6 +44,8 @@ export class Atmosphere {
   private readonly envScene = new THREE.Scene();
   private envTarget: THREE.WebGLRenderTarget | null = null;
   private envKey = "";
+  /** The sun's shadows: none, ordinary, or a finer map. */
+  shadows: "off" | "on" | "high" = "on";
   readonly light: Light = { elevation: 30, night: 0, fog: DAY_FOG.clone(), wet: 0 };
   private readonly sunDir = new THREE.Vector3();
 
@@ -202,7 +204,7 @@ export class Atmosphere {
     this.sun.position.copy(this.sunDir).multiplyScalar(60);
     this.sun.color.setRGB(1, 0.6 + 0.38 * smoothstep(2, 25, elevation), 0.38 + 0.56 * smoothstep(2, 30, elevation), THREE.SRGBColorSpace);
     this.sun.intensity = 2.9 * day * (1 - cloudy * 0.7);
-    this.sun.castShadow = day > 0.05 && cloudy < 0.9;
+    this.sun.castShadow = this.shadows !== "off" && day > 0.05 && cloudy < 0.9;
     this.moon.position.copy(this.sunDir).multiplyScalar(-60).setY(Math.abs(this.sunDir.y) * 60 + 20);
     this.moon.intensity = 0.32 * night;
 
@@ -260,6 +262,21 @@ export class Atmosphere {
       scene.environment = next.texture;
       scene.environmentIntensity = 0.2 + 0.45 * day;
     }
+  }
+
+  /** Shadow quality and whether the cloud layer is drawn (the graphics settings). */
+  setQuality(shadows: "off" | "on" | "high", clouds: boolean): void {
+    if (shadows !== this.shadows) {
+      const size = shadows === "high" ? 2048 : 1024;
+      if (this.sun.shadow.mapSize.x !== size) {
+        this.sun.shadow.mapSize.set(size, size);
+        // a new map at the new size next frame
+        this.sun.shadow.map?.dispose();
+        this.sun.shadow.map = null;
+      }
+      this.shadows = shadows;
+    }
+    this.clouds.visible = clouds;
   }
 
   /** Keeps the sky and its lights centred on the camera (and the sun's shadow on the car). */
