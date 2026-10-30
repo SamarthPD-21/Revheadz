@@ -6,6 +6,7 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 import { mulberry32 } from "../../lib/cruise/noise";
 import { GroundProbe, type Footing } from "../../lib/cruise/ground";
 import { UNDERSTEER, brakeLimit, chassisOf, stepHandling, steerLock, tractionLimit, type Aids, type Chassis, type Motion } from "../../lib/cruise/handling";
+import { BARRIER_D } from "../../lib/cruise/barriers";
 import { LANE_OFFSET, ROAD_HALF, WATER_Y, rightOf, type RoadPoint } from "../../lib/cruise/road";
 import { Landscape } from "../../lib/cruise/terrain";
 import type { VehicleConfig } from "../../lib/vehicles/types";
@@ -67,6 +68,7 @@ const tmpV = new THREE.Vector3();
 /** Tyre rubber on tarmac, and ruts torn into the ground. */
 const RUBBER = srgbColor(0.03, 0.03, 0.035);
 const RUT = srgbColor(0.16, 0.12, 0.08);
+const SPARK = srgbColor(1, 0.75, 0.35);
 const damp = (current: number, target: number, rate: number, dt: number) => current + (target - current) * (1 - Math.exp(-rate * dt));
 /** An angle brought into -π..π (for turning the short way round). */
 const wrapAngle = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
@@ -107,6 +109,11 @@ export class CruiseScene {
   private flames!: ExhaustFlames;
   private readonly skids = new SkidMarks();
   private readonly rubberAt = new THREE.Vector3();
+  /** The car's offset across the road last step (to tell which way it crossed a rail line). */
+  private lastD = NaN;
+  private impact: { share: number; strength: number } | null = null;
+  /** A knock's jolt through the camera, 0-1, dying away. */
+  private jolt = 0;
   private readonly rubberFwd = new THREE.Vector3();
   private readonly turned = new THREE.Vector3();
   /** Driver aids in use; null: the car's own. */
@@ -222,6 +229,7 @@ export class CruiseScene {
 
   /** Puts the car back where it was (before `warmUp`). */
   restore(p: Place): void {
+    this.lastD = NaN;
     this.fx = p.x;
     this.fz = p.z;
     this.yaw = p.yaw;
@@ -262,6 +270,7 @@ export class CruiseScene {
 
   /** Back to the nearest bit of road, in the right-hand lane, pointing the way the road goes. */
   resetToRoad(): void {
+    this.lastD = NaN;
     const f = this.probe.at(this.fx, this.fz);
     this.putOnRoad(Number.isFinite(f.s) ? f.s : this.s, LANE_OFFSET);
     this.cine = null;
@@ -501,8 +510,11 @@ export class CruiseScene {
     const c = Math.cos(this.yaw);
     const sn = Math.sin(this.yaw);
     const vy = this.motion.vy;
-    const nx = this.fx + (c * v - sn * vy) * dt;
-    const nz = this.fz + (sn * v + c * vy) * dt;
+    let nx = this.fx + (c * v - sn * vy) * dt;
+    let nz = this.fz + (sn * v + c * vy) * dt;
+    // the guardrails: run into one and it stops you there
+    const kept = this.railCheck(nx, nz, c * v - sn * vy, sn * v + c * vy, v);
+    if (kept) [nx, nz] = kept;
     // deep water stops you at the edge; shallows you can splash through
     const ahead = this.probe.at(nx + c * this.car.length * 0.5, nz + sn * this.car.length * 0.5);
     this.blocked = ahead.depth > 1.1;
@@ -517,6 +529,77 @@ export class CruiseScene {
       this.fx += -sn * down * over * 9 * dt;
       this.fz += c * down * over * 9 * dt;
     }
+  }
+
+  /**
+   * The guardrails, solid. If this step would carry the car through one (from the road, or
+   * from the fields behind it) it stops at the rail: the speed along the rail is kept (less
+   * the scrape), the speed into it is lost bar a small bounce, and the car is turned to glance
+   * off along it. Sparks fly, the picture jolts, and the knock is handed to the engine.
+   * Returns where the car ends up, or null if it hit nothing.
+   */
+  private railCheck(nx: number, nz: number, wx: number, wz: number, v: number): [number, number] | null {
+    const f = this.probe.at(nx, nz);
+    const was = this.lastD;
+    this.lastD = f.d;
+    if (!Number.isFinite(f.d) || !Number.isFinite(was)) return null;
+    const side = (Math.abs(was) > 0.01 ? Math.sign(was) : Math.sign(f.d)) as 1 | -1;
+    if (!this.world.barriers.has(f.s, side)) return null;
+    const half = this.chassis.bike ? 0.4 : this.car.width / 2 + 0.08;
+    const inner = BARRIER_D - half;
+    const outer = BARRIER_D + half;
+    const a0 = Math.abs(was);
+    const a1 = side * f.d; // how far out on that side it would be
+    let target: number;
+    if (a0 <= inner + 0.02 && a1 > inner) target = inner;
+    else if (a0 >= outer - 0.02 && a1 < outer) target = outer;
+    else return null;
+    const p = this.land.road.at(f.s, this.pt);
+    const [rx, rz] = rightOf(p.heading);
+    // the road's outward direction on that side, and along it
+    const ox = rx * side;
+    const oz = rz * side;
+    const tx = Math.cos(p.heading);
+    const tz = Math.sin(p.heading);
+    const into = (wx * ox + wz * oz) * (target === inner ? 1 : -1); // speed towards the rail
+    const along = wx * tx + wz * tz;
+    const speed = Math.max(0.1, Math.hypot(wx, wz));
+    // stay on the right side of it
+    const push = (target - a1) * side;
+    const cx = nx + rx * push;
+    const cz = nz + rz * push;
+    this.lastD = Number.isFinite(f.d) ? f.d + push : f.d;
+    if (into > 0) {
+      // the speed into the rail is gone (a tenth bounces back), the scrape costs some along it
+      const keep = Math.abs(along) * (0.9 - Math.min(0.4, into * 0.02));
+      const back = -into * 0.12 * (target === inner ? 1 : -1);
+      const vx2 = tx * along * (keep / Math.max(0.1, Math.abs(along))) + ox * back;
+      const vz2 = tz * along * (keep / Math.max(0.1, Math.abs(along))) + oz * back;
+      const heading = Math.atan2(vz2, vx2);
+      // glance off: the nose swings round towards where it's now going
+      if (Math.hypot(vx2, vz2) > 1) this.yaw += wrapAngle(heading - this.yaw) * 0.55;
+      this.motion.vy *= 0.2;
+      this.motion.r *= 0.2;
+      const share = Math.min(1, Math.hypot(vx2, vz2) / speed);
+      this.impact = { share: Math.min(this.impact?.share ?? 1, share), strength: Math.max(this.impact?.strength ?? 0, into) };
+      this.jolt = Math.max(this.jolt, Math.min(1, into / 8));
+      // sparks off the steel where it touched
+      const sparks = Math.min(40, 4 + into * 3 + v * 0.2);
+      const at = new THREE.Vector3(cx + ox * half * (target === inner ? 1 : -1), 0, cz + oz * half * (target === inner ? 1 : -1));
+      at.y = this.probe.at(at.x, at.z).y + 0.5;
+      for (let i = 0; i < sparks; i++) {
+        const r = () => (this.rand() - 0.5) * 2;
+        this.puffs.emit(at.x, at.y, at.z, tx * along * 0.4 + r() * 2.5, 1.5 + this.rand() * 3, tz * along * 0.4 + r() * 2.5, 0.25 + this.rand() * 0.3, 0.06, SPARK, 1);
+      }
+    }
+    return [cx, cz];
+  }
+
+  /** The last knock against a rail since asked: the share of speed left, and how hard it was (m/s). */
+  takeImpact(): { share: number; strength: number } | null {
+    const hit = this.impact;
+    this.impact = null;
+    return hit;
   }
 
   /**
@@ -826,7 +909,8 @@ export class CruiseScene {
       const f = this.footing;
       const rough = f && !f.road ? Math.min(1, v / 15) * 0.006 : 0;
       const hum = Math.min(1, (v / 70) ** 2) * 0.0011;
-      const shake = hum + rough + this.slide * 0.0018;
+      this.jolt = Math.max(0, this.jolt - dt * 3);
+      const shake = hum + rough + this.slide * 0.0018 + this.jolt * 0.02;
       const t = this.time;
       cam.rotateX(shake * (Math.sin(t * 37.1) * 0.6 + Math.sin(t * 61.7) * 0.4));
       cam.rotateY(shake * 0.6 * (Math.sin(t * 29.3 + 1.3) * 0.7 + Math.sin(t * 53.9) * 0.3));

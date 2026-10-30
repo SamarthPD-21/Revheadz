@@ -1,5 +1,5 @@
 import { hash2 } from "./noise";
-import { ROAD_HALF, STEP, rightOf, type RoadPoint } from "./road";
+import { ROAD_HALF, rightOf, type RoadPoint } from "./road";
 import type { Landscape } from "./terrain";
 
 /** How far out from the centre line the guardrail stands, m (on the edge of the shoulder). */

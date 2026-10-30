@@ -415,6 +415,13 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       const keys = steerKeys.current;
       const steer = clampUnit((STEER_RIGHT.some((k) => keys.has(k)) ? 1 : 0) - (STEER_LEFT.some((k) => keys.has(k)) ? 1 : 0) + touchSteer.current);
       scene.frame(dt, { speedKmh: sim.state.speedKmh, throttle: sim.input.throttle, brake: sim.input.brake, wheelspin: sim.state.wheelspin ?? 0, locked: Boolean(sim.state.locked), steer, ignition: running }, { hour: hourRef.current, weather: s.weather, camera: s.camera });
+      // a knock against a guardrail costs the speed it cost, and sounds like it
+      const hit = scene.takeImpact();
+      if (hit) {
+        sim.bump(hit.share);
+        ambience.impact(hit.strength);
+        if (hit.strength > 4) navigator.vibrate?.(Math.min(120, hit.strength * 8));
+      }
       // grip readout: what's underfoot, how grippy it is for this car, and any wheelspin or slide
       const gripEl = gripRef.current;
       if (gripEl && now - lastGrip > 120) {

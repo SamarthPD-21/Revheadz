@@ -210,6 +210,11 @@ export class Simulation {
     this.publish();
   }
 
+  /** A knock (running into a guardrail): the car's speed is cut to this share of what it was. */
+  bump(share: number): void {
+    this.speedMs *= Math.min(1, Math.max(0, share));
+  }
+
   // ---- stepping -----------------------------------------------------------
 
   /** Advances by a real frame time using fixed steps. */

@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { hash2, mulberry32 } from "../../lib/cruise/noise";
-import { ROAD_HALF, ROAD_SECTION, STEP, WATER_Y, bankOf, rightOf, type RoadPoint } from "../../lib/cruise/road";
+import { BARRIER_D, Barriers } from "../../lib/cruise/barriers";
+import { ROAD_HALF, ROAD_SECTION, STEP, WATER_Y, bankOf, rightOf, sectionDrop, type RoadPoint } from "../../lib/cruise/road";
 import { GRID_M } from "../../lib/cruise/ground";
 import { Landscape, RoadDistance, WILD_M } from "../../lib/cruise/terrain";
 
@@ -266,6 +267,13 @@ export class World {
   private readonly postMat = new THREE.MeshStandardMaterial({ color: 0xe8e8e2, roughness: 0.6 });
   private readonly reflectorMat = new THREE.MeshStandardMaterial({ color: 0x6a3a08, emissive: 0xff8a1a, emissiveIntensity: 0.2, roughness: 0.3 });
   private readonly postGeo = new THREE.BoxGeometry(0.1, 1.05, 0.1).translate(0, 0.52, 0);
+  /** The guardrail's back, seen from the fields. */
+  private readonly railBackMat = new THREE.MeshStandardMaterial({ color: 0x8c9198, metalness: 0.6, roughness: 0.5, side: THREE.BackSide });
+  /** Galvanised steel for the guardrails. */
+  private readonly railMat = new THREE.MeshStandardMaterial({ color: 0xb8bdc4, metalness: 0.7, roughness: 0.42, envMapIntensity: 0.8 });
+  private readonly railPostGeo = new THREE.BoxGeometry(0.1, 1, 0.14).translate(0, 0.2, 0);
+  /** Where the guardrails go (the scene asks it too, for crashing into them). */
+  readonly barriers: Barriers;
   private readonly reflectorGeo = new THREE.BoxGeometry(0.11, 0.16, 0.06).translate(0, 0.86, 0);
   /** Every tile's triangles index the same way (each gets its own copy: buffers are freed per tile). */
   private readonly tileIndex: Uint16Array;
@@ -290,6 +298,7 @@ export class World {
 
   constructor(private readonly land: Landscape, maxAnisotropy: number) {
     this.dist = new RoadDistance(land.road);
+    this.barriers = new Barriers(land);
     this.farDist = new RoadDistance(land.road);
     const tex = roadTexture();
     tex.anisotropy = maxAnisotropy;
@@ -815,7 +824,70 @@ export class World {
     mesh.receiveShadow = true;
     group.add(mesh);
 
-    // a post on each side every 50 m, with a reflector facing the traffic
+    // guardrails where they're planned: a corrugated steel beam on posts
+    const rails = this.barriers;
+    const beam: number[] = [];
+    const railPosts = new THREE.InstancedMesh(this.railPostGeo, this.railMat, CHUNK + 2);
+    const railRefl = new THREE.InstancedMesh(this.reflectorGeo, this.reflectorMat, CHUNK / 5 + 4);
+    let np = 0;
+    let nr = 0;
+    const m4r = new THREE.Matrix4();
+    // the beam's cross-section, outward offset (m) and height above the shoulder (m): a W
+    const W: [number, number][] = [[0.06, 0.46], [0, 0.52], [0.05, 0.6], [0, 0.68], [0.06, 0.74]];
+    for (const side of [-1, 1] as const) {
+      let prev: number[][] | null = null;
+      for (let i = 0; i <= CHUNK; i++) {
+        const s = (i0 + i) * STEP;
+        const on = rails.has(s, side);
+        if (!on) {
+          prev = null;
+          continue;
+        }
+        const p = road.at(s, this.pt);
+        const [rx, rz] = rightOf(p.heading);
+        const d = side * BARRIER_D;
+        const base = p.y - bankOf(p.curvature) * d + sectionDrop(d) - oy;
+        const ring = W.map(([out, h]) => {
+          const dd = d + side * out;
+          return [p.x + rx * dd - ox, base + h, p.z + rz * dd - oz];
+        });
+        if (prev) {
+          for (let k = 0; k + 1 < W.length; k++) {
+            const a = prev[k], b = prev[k + 1], c2 = ring[k + 1], e = ring[k];
+            // facing the road: the quad's winding depends on which side it's on
+            if (side === 1) beam.push(...a, ...b, ...c2, ...a, ...c2, ...e);
+            else beam.push(...a, ...c2, ...b, ...a, ...e, ...c2);
+          }
+        }
+        prev = ring;
+        // a post every 4 m behind the beam, a reflector on every fifth
+        if ((i0 + i) % 2 === 0) {
+          m4r.makeRotationY(-p.heading);
+          const pd = d + side * 0.14;
+          m4r.setPosition(p.x + rx * pd - ox, base, p.z + rz * pd - oz);
+          railPosts.setMatrixAt(np++, m4r);
+          if ((i0 + i) % 10 === 0 && nr < railRefl.instanceMatrix.count) {
+            m4r.setPosition(p.x + rx * (d - side * 0.02) - ox, base - 0.22, p.z + rz * (d - side * 0.02) - oz);
+            railRefl.setMatrixAt(nr++, m4r);
+          }
+        }
+      }
+    }
+    if (beam.length) {
+      const bg = new THREE.BufferGeometry();
+      bg.setAttribute("position", new THREE.Float32BufferAttribute(beam, 3));
+      bg.computeVertexNormals();
+      const bm = new THREE.Mesh(bg, this.railMat);
+      bm.castShadow = true;
+      bm.receiveShadow = true;
+      const back = new THREE.Mesh(bg, this.railBackMat);
+      group.add(bm, back);
+    }
+    railPosts.count = np;
+    railRefl.count = nr;
+    group.add(railPosts, railRefl);
+
+    // a post on each side every 50 m, with a reflector facing the traffic (none where there's a rail)
     const posts = new THREE.InstancedMesh(this.postGeo, this.postMat, 4);
     const refl = new THREE.InstancedMesh(this.reflectorGeo, this.reflectorMat, 4);
     const m4 = new THREE.Matrix4();
@@ -823,7 +895,8 @@ export class World {
     for (let i = 0; i < CHUNK; i += 25) {
       const p = road.at((i0 + i) * STEP, this.pt);
       const [rx, rz] = rightOf(p.heading);
-      for (const side of [-1, 1]) {
+      for (const side of [-1, 1] as const) {
+        if (rails.has((i0 + i) * STEP, side)) continue;
         const d = side * (ROAD_HALF + 1.15);
         m4.makeRotationY(-p.heading);
         m4.setPosition(p.x + rx * d - ox, p.y - bankOf(p.curvature) * d - 0.12 - oy, p.z + rz * d - oz);
@@ -845,7 +918,8 @@ export class World {
     });
     this.postGeo.dispose();
     this.reflectorGeo.dispose();
-    for (const m of [this.terrainMat, this.roadMat, this.postMat, this.reflectorMat]) m.dispose();
+    this.railPostGeo.dispose();
+    for (const m of [this.terrainMat, this.roadMat, this.postMat, this.reflectorMat, this.railMat, this.railBackMat]) m.dispose();
     this.roadMat.map?.dispose();
     for (const kind of KINDS) (this.plants[kind].material as THREE.Material).dispose();
     (this.water.material as THREE.Material).dispose();

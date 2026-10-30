@@ -21,6 +21,7 @@ export class Ambience {
   private master: GainNode | null = null;
   private road: { drone: GainNode; droneF: BiquadFilterNode; crunch: GainNode; squeal: GainNode; squealF: BiquadFilterNode } | null = null;
   private volume = 0.8;
+  private noise: AudioBuffer | null = null;
 
   unlock(): void {
     if (this.ctx) {
@@ -30,6 +31,7 @@ export class Ambience {
     const ctx = new AudioContext({ latencyHint: "playback" });
     this.ctx = ctx;
     const noise = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
+    this.noise = noise;
     const d = noise.getChannelData(0);
     // pinkish noise (Paul Kellet's filter): fuller and softer than white
     let b0 = 0, b1 = 0, b2 = 0;
@@ -127,6 +129,37 @@ export class Ambience {
     ramp(this.wind.filter.frequency, 220 + 2400 * v, ctx, 0.2);
     ramp(this.rain.gain.gain, raining ? 0.16 : 0, ctx, 0.8);
     ramp(this.rain.spray.gain, raining ? 0.05 + 0.35 * Math.min(1, speedKmh / 120) : 0, ctx, 0.3);
+  }
+
+  /** A knock against a guardrail: a thud of steel, louder the harder it was (speed into it, m/s). */
+  impact(strength: number): void {
+    const ctx = this.ctx;
+    if (!ctx || !this.master || !this.noise || strength < 0.3) return;
+    const now = ctx.currentTime;
+    const loud = Math.min(1, strength / 12);
+    const src = ctx.createBufferSource();
+    src.buffer = this.noise;
+    const f = ctx.createBiquadFilter();
+    f.type = "lowpass";
+    f.frequency.value = 500 + 1500 * loud;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.25 + 0.9 * loud, now + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.18 + 0.35 * loud);
+    src.connect(f).connect(g).connect(this.master);
+    src.start(now, Math.random() * 3);
+    src.stop(now + 0.6);
+    // and the ring of the rail
+    const o = ctx.createOscillator();
+    o.type = "triangle";
+    o.frequency.value = 180 + Math.random() * 60;
+    const og = ctx.createGain();
+    og.gain.setValueAtTime(0.0001, now);
+    og.gain.exponentialRampToValueAtTime(0.12 * loud + 0.02, now + 0.01);
+    og.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+    o.connect(og).connect(this.master);
+    o.start(now);
+    o.stop(now + 0.55);
   }
 
   suspend(hidden: boolean): void {
