@@ -15,7 +15,7 @@ import type { TimeOfDay } from "../../lib/ui/trackTime";
  * pre-rendered sprites (no shadowBlur), text only on cached canvases.
  */
 
-type V = [number, number, number];
+export type V = [number, number, number];
 type Canvas = HTMLCanvasElement;
 
 const LANE_Z = { me: 2, opp: -2 }; // + is the near side
@@ -63,14 +63,14 @@ function glowSprite(color: string, size = 128): Canvas {
   return c;
 }
 
-const hexRgb = (hex: string): [number, number, number] => {
+export const hexRgb = (hex: string): [number, number, number] => {
   const n = parseInt(hex.replace("#", ""), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 };
 const rgbStr = (c: [number, number, number], k = 1) => `rgb(${Math.min(255, Math.round(c[0] * k))},${Math.min(255, Math.round(c[1] * k))},${Math.min(255, Math.round(c[2] * k))})`;
 
 /** A solid made of planar faces (each listed counter-clockwise from outside, or flipped by `fix`). */
-interface Solid {
+export interface Solid {
   faces: V[][];
   color: [number, number, number];
   /** Faces drawn unlit (lamps, glass highlights). */
@@ -79,7 +79,7 @@ interface Solid {
 }
 
 /** Axis-aligned box from two corners. */
-function box(x0: number, x1: number, y0: number, y1: number, z0: number, z1: number, color: [number, number, number], flat = false): Solid {
+export function box(x0: number, x1: number, y0: number, y1: number, z0: number, z1: number, color: [number, number, number], flat = false): Solid {
   const p = (x: number, y: number, z: number): V => [x, y, z];
   const a = p(x0, y0, z0), b = p(x1, y0, z0), c = p(x1, y1, z0), d = p(x0, y1, z0);
   const e = p(x0, y0, z1), f = p(x1, y0, z1), g = p(x1, y1, z1), h = p(x0, y1, z1);
@@ -87,7 +87,7 @@ function box(x0: number, x1: number, y0: number, y1: number, z0: number, z1: num
 }
 
 /** A wheel: an n-sided cylinder along z, rotated by `spin`. */
-function wheel(cx: number, cy: number, r: number, z0: number, z1: number, spin: number, color: [number, number, number], n = 10): Solid {
+export function wheel(cx: number, cy: number, r: number, z0: number, z1: number, spin: number, color: [number, number, number], n = 10): Solid {
   const ring = (z: number) => Array.from({ length: n }, (_, i): V => {
     const a = spin + (i * Math.PI * 2) / n;
     return [cx + Math.cos(a) * r, cy + Math.sin(a) * r, z];
@@ -100,10 +100,10 @@ function wheel(cx: number, cy: number, r: number, z0: number, z1: number, spin: 
 }
 
 /** A rectangular cross-section across the car at `x`: y0..y1 tall, ±hw wide. */
-const sec = (x: number, y0: number, y1: number, hw: number): V[] => [[x, y0, -hw], [x, y0, hw], [x, y1, hw], [x, y1, -hw]];
+export const sec = (x: number, y0: number, y1: number, hw: number): V[] => [[x, y0, -hw], [x, y0, hw], [x, y1, hw], [x, y1, -hw]];
 
 /** A solid lofted between two quads (corresponding corners in the same order): nose cones, pods, limbs. */
-function loft(a: V[], b: V[], color: [number, number, number], flat = false): Solid {
+export function loft(a: V[], b: V[], color: [number, number, number], flat = false): Solid {
   const faces: V[][] = [a, b];
   for (let i = 0; i < 4; i++) faces.push([a[i], a[(i + 1) % 4], b[(i + 1) % 4], b[i]]);
   const center = [...a, ...b].reduce<V>((s, v) => [s[0] + v[0] / 8, s[1] + v[1] / 8, s[2] + v[2] / 8], [0, 0, 0]);
@@ -111,7 +111,7 @@ function loft(a: V[], b: V[], color: [number, number, number], flat = false): So
 }
 
 /** Per-silhouette paint details. */
-const LIVERY: Record<string, { stripes?: boolean; darkRoof?: boolean; roundel?: boolean }> = {
+export const LIVERY: Record<string, { stripes?: boolean; darkRoof?: boolean; roundel?: boolean }> = {
   muscle: { stripes: true },
   supercar: { darkRoof: true },
   rally: { roundel: true, darkRoof: true },
@@ -119,10 +119,10 @@ const LIVERY: Record<string, { stripes?: boolean; darkRoof?: boolean; roundel?: 
   sport: { darkRoof: true },
 };
 
-type XY = [number, number];
+export type XY = [number, number];
 
 /** Where a horizontal line at `y` first meets the polygon from the rear (smallest x), if it does. */
-function rearXAt(poly: XY[], y: number): number | null {
+export function rearXAt(poly: XY[], y: number): number | null {
   let best: number | null = null;
   for (let i = 0; i < poly.length; i++) {
     const [ax, ay] = poly[i];
@@ -162,7 +162,7 @@ function pathPolys(d: string): XY[][] {
 }
 
 /** Keeps the part of a polygon above (keepAbove) or below a horizontal line (Sutherland-Hodgman). */
-function clipY(poly: XY[], yCut: number, keepAbove: boolean): XY[] {
+export function clipY(poly: XY[], yCut: number, keepAbove: boolean): XY[] {
   const inside = (p: XY) => (keepAbove ? p[1] >= yCut : p[1] <= yCut);
   const out: XY[] = [];
   for (let i = 0; i < poly.length; i++) {
@@ -177,13 +177,13 @@ function clipY(poly: XY[], yCut: number, keepAbove: boolean): XY[] {
   return out;
 }
 
-const area = (poly: XY[]) => poly.reduce((s, p, i) => {
+export const area = (poly: XY[]) => poly.reduce((s, p, i) => {
   const q = poly[(i + 1) % poly.length];
   return s + p[0] * q[1] - q[0] * p[1];
 }, 0) / 2;
 
 /** A car built from its garage side profile: x from the rear (0) to the nose (len), y up. */
-interface CarShape {
+export interface CarShape {
   len: number;
   width: number;
   height: number;
@@ -203,7 +203,7 @@ interface CarShape {
 const WIDTH: Record<string, number> = { muscle: 1.95, coupe: 1.85, sport: 1.8, supercar: 2.0, gt: 1.95, hatch: 1.8, rally: 1.85, gtcar: 2.05, formula: 0.8, superbike: 0.36, cruiser: 0.5 };
 const shapeCache = new Map<string, CarShape>();
 
-function carShape(cfg: VehicleConfig): CarShape {
+export function carShape(cfg: VehicleConfig): CarShape {
   const kind = cfg.ui.silhouette;
   const hit = shapeCache.get(kind);
   if (hit) return hit;
@@ -243,6 +243,117 @@ function carShape(cfg: VehicleConfig): CarShape {
   return shape;
 }
 
+/** A formula car's front and rear wheels: where they sit along the car, their size and their span across it. */
+export const FORMULA_WHEELS = [
+  { x: 4.12, r: 0.3, z: [0.6, 0.9] as const },
+  { x: 0.78, r: 0.34, z: [0.58, 0.96] as const },
+] as const;
+
+/** A formula car built part by part (everything but the wheels), in car space. */
+export function formulaParts(acc: [number, number, number]): Solid[] {
+  const dark: [number, number, number] = [22, 22, 27];
+  const carbon: [number, number, number] = [34, 34, 40];
+  const white: [number, number, number] = [228, 228, 232];
+  const accDark = acc.map((v) => v * 0.7) as [number, number, number];
+  const [FW, RW] = FORMULA_WHEELS;
+  return [
+    // nose cone and tub
+    loft(sec(4.75, 0.2, 0.3, 0.07), sec(3.5, 0.18, 0.52, 0.3), acc),
+    loft(sec(3.5, 0.15, 0.52, 0.3), sec(2.0, 0.12, 0.6, 0.38), acc),
+    // front wing: main plane, flap, endplates
+    box(4.45, 4.9, 0.07, 0.12, -1.0, 1.0, carbon),
+    box(4.4, 4.6, 0.12, 0.2, -0.98, 0.98, accDark),
+    box(4.4, 4.92, 0.06, 0.32, 0.96, 1.0, carbon),
+    box(4.4, 4.92, 0.06, 0.32, -1.0, -0.96, carbon),
+    // sidepods, tapering towards the rear
+    loft(sec(2.75, 0.12, 0.5, 0.72), sec(1.15, 0.12, 0.34, 0.5), acc),
+    // engine cover and airbox rising behind the driver
+    loft(sec(2.25, 0.5, 0.98, 0.2), sec(0.75, 0.3, 0.55, 0.14), accDark),
+    box(2.12, 2.3, 0.86, 1.04, -0.12, 0.12, dark),
+    // floor and diffuser
+    box(0.35, 3.6, 0.04, 0.12, -0.82, 0.82, carbon),
+    loft(sec(0.75, 0.06, 0.16, 0.5), sec(0.1, 0.06, 0.34, 0.5), carbon),
+    // rear wing on a central pillar
+    box(0.04, 0.5, 0.86, 0.98, -0.52, 0.52, carbon),
+    box(0.12, 0.42, 1.02, 1.09, -0.52, 0.52, accDark),
+    box(0.0, 0.55, 0.42, 1.12, 0.52, 0.56, acc),
+    box(0.0, 0.55, 0.42, 1.12, -0.56, -0.52, acc),
+    box(0.25, 0.33, 0.3, 0.88, -0.03, 0.03, dark),
+    // driver: helmet in the cockpit, halo over it
+    box(2.42, 2.72, 0.6, 0.86, -0.14, 0.14, white),
+    box(2.62, 2.73, 0.66, 0.76, -0.12, 0.12, [18, 22, 30], true),
+    box(2.45, 2.95, 0.88, 0.92, 0.2, 0.24, dark),
+    box(2.45, 2.95, 0.88, 0.92, -0.24, -0.2, dark),
+    box(2.92, 2.98, 0.55, 0.92, -0.03, 0.03, dark),
+    box(2.4, 2.48, 0.86, 0.92, -0.24, 0.24, dark),
+    // wishbones out to the wheels
+    box(FW.x - 0.25, FW.x + 0.05, 0.3, 0.33, 0.28, FW.z[0], dark),
+    box(FW.x - 0.25, FW.x + 0.05, 0.3, 0.33, -FW.z[0], -0.28, dark),
+    box(RW.x - 0.2, RW.x + 0.15, 0.32, 0.35, 0.3, RW.z[0], dark),
+    box(RW.x - 0.2, RW.x + 0.15, 0.32, 0.35, -RW.z[0], -0.3, dark),
+  ];
+}
+
+/** A motorbike's wheel radius and where its rear and front wheels sit along it, m. */
+export const bikeLayout = (sport: boolean) => ({ R: 0.31, RX: 0.32, FX: sport ? 1.86 : 1.95 });
+
+/** A motorbike and its rider built part by part (everything but the wheels), in bike space. */
+export function bikeParts(sport: boolean, acc: [number, number, number]): Solid[] {
+  const accDark = acc.map((v) => v * 0.6) as [number, number, number];
+  const metal: [number, number, number] = [120, 120, 130];
+  const engine: [number, number, number] = [44, 44, 52];
+  const leathers: [number, number, number] = [30, 30, 36];
+  const { R, RX, FX } = bikeLayout(sport);
+  // a limb or tube between two points, `t` thick
+  const rod = (a: V, b: V, t: number, color: [number, number, number]) => loft(sec(a[0], a[1] - t, a[1] + t, t).map(([x, y, z]): V => [x, y, z + a[2]]), sec(b[0], b[1] - t, b[1] + t, t).map(([x, y, z]): V => [x, y, z + b[2]]), color);
+  const parts: Solid[] = [
+    // swingarm, engine, exhaust
+    rod([RX, R, 0.1], [0.95, 0.42, 0.1], 0.04, metal),
+    rod([RX, R, -0.1], [0.95, 0.42, -0.1], 0.04, metal),
+    box(0.82, 1.38, 0.22, 0.62, -0.17, 0.17, engine),
+    rod([1.25, 0.26, 0.2], [0.5, sport ? 0.62 : 0.34, 0.22], 0.06, [150, 150, 160]),
+    // forks up to the bars
+    rod([FX, R, 0.1], [FX - 0.24, sport ? 0.98 : 1.05, 0.1], 0.035, [190, 170, 120]),
+    rod([FX, R, -0.1], [FX - 0.24, sport ? 0.98 : 1.05, -0.1], 0.035, [190, 170, 120]),
+    // tank, seat and tail
+    loft(sec(1.32, 0.78, 1.02, 0.17), sec(0.95, 0.8, 0.94, 0.15), acc),
+    box(0.55, 0.98, sport ? 0.86 : 0.74, sport ? 0.93 : 0.8, -0.14, 0.14, [20, 20, 24]),
+    sport ? loft(sec(0.95, 0.78, 0.9, 0.14), sec(0.22, 0.96, 1.04, 0.05), acc) : box(0.25, 0.6, 0.6, 0.7, -0.15, 0.15, acc),
+    // front mudguard
+    box(FX - 0.25, FX + 0.12, R + 0.06, R + 0.1, -0.08, 0.08, sport ? accDark : acc),
+  ];
+  if (sport) {
+    parts.push(
+      // fairing: nose with the headlight, flanks over the engine, and a dark screen
+      loft(sec(1.95, 0.62, 0.92, 0.07), sec(1.45, 0.4, 1.06, 0.21), acc),
+      loft(sec(1.45, 0.34, 0.78, 0.21), sec(1.0, 0.32, 0.62, 0.19), accDark),
+      box(1.5, 1.68, 1.02, 1.16, -0.12, 0.12, [24, 30, 42], true),
+    );
+  } else {
+    parts.push(box(FX - 0.32, FX - 0.2, 0.88, 1.0, -0.12, 0.12, [220, 220, 210], true)); // round lamp
+    parts.push(rod([FX - 0.3, 1.05, -0.38], [FX - 0.3, 1.05, 0.38], 0.025, [190, 190, 200])); // wide bars
+  }
+  // the rider: sports bike tucked flat on the tank, cruiser upright with feet forward
+  const hip: V = sport ? [0.78, 1.0, 0] : [0.55, 0.88, 0];
+  const sh: V = sport ? [1.3, 1.2, 0] : [0.68, 1.42, 0];
+  const bars: V = sport ? [1.6, 0.98, 0] : [FX - 0.32, 1.08, 0];
+  const knee = sport ? 1.12 : 1.1;
+  const peg: V = sport ? [0.88, 0.48, 0] : [1.35, 0.42, 0];
+  parts.push(loft(sec(hip[0], hip[1] - 0.1, hip[1] + 0.12, 0.17), sec(sh[0], sh[1] - 0.11, sh[1] + 0.09, 0.2), accDark));
+  for (const side of [1, -1]) {
+    const z = 0.19 * side;
+    parts.push(rod([sh[0] - 0.02, sh[1], z], [bars[0], bars[1], z * 1.1], 0.05, leathers));
+    parts.push(rod([hip[0] + 0.05, hip[1], z * 0.9], [knee, sport ? 0.8 : 0.7, z * 1.25], 0.07, leathers));
+    parts.push(rod([knee, sport ? 0.8 : 0.7, z * 1.25], [peg[0], peg[1], z * 1.05], 0.06, leathers));
+  }
+  // round helmet (a short cylinder seen side-on) with a dark visor
+  const hx = sh[0] + (sport ? 0.12 : 0.06);
+  const hy = sh[1] + (sport ? 0.12 : 0.2);
+  parts.push(wheel(hx, hy, 0.15, -0.13, 0.13, 0, [226, 226, 232]));
+  parts.push(box(hx + 0.04, hx + 0.16, hy - 0.06, hy + 0.04, -0.1, 0.1, [16, 20, 30], true));
+  return parts;
+}
+
 interface Puff {
   x: number;
   y: number;
@@ -260,7 +371,7 @@ interface Puff {
 }
 
 /** Where the exhaust tips are, in car space (x from the rear). */
-function exhaustTips(cfg: VehicleConfig): V[] {
+export function exhaustTips(cfg: VehicleConfig): V[] {
   const kind = cfg.ui.silhouette;
   if (kind === "formula") return [[0.25, 0.58, 0]];
   if (cfg.type === "bike") return [[0.42, kind === "cruiser" ? 0.36 : 0.64, 0.22]];
@@ -567,49 +678,9 @@ export class DragScene25D {
    * front and rear wings, tub, sidepods, airbox, halo, driver, suspension and exposed wheels.
    */
   private formulaCar(c: SceneCar, lane: "me" | "opp", body: (v: V) => V, flat: (v: V) => V, acc: [number, number, number], spin: number, time: number) {
-    const dark: [number, number, number] = [22, 22, 27];
-    const carbon: [number, number, number] = [34, 34, 40];
+    const [FW, RW] = FORMULA_WHEELS;
     const tyre: [number, number, number] = [16, 16, 19];
-    const white: [number, number, number] = [228, 228, 232];
-    const accDark = acc.map((v) => v * 0.7) as [number, number, number];
-    const FW = { x: 4.12, r: 0.3, z: [0.6, 0.9] as const };
-    const RW = { x: 0.78, r: 0.34, z: [0.58, 0.96] as const };
-    const parts: Solid[] = [
-      // nose cone and tub
-      loft(sec(4.75, 0.2, 0.3, 0.07), sec(3.5, 0.18, 0.52, 0.3), acc),
-      loft(sec(3.5, 0.15, 0.52, 0.3), sec(2.0, 0.12, 0.6, 0.38), acc),
-      // front wing: main plane, flap, endplates
-      box(4.45, 4.9, 0.07, 0.12, -1.0, 1.0, carbon),
-      box(4.4, 4.6, 0.12, 0.2, -0.98, 0.98, accDark),
-      box(4.4, 4.92, 0.06, 0.32, 0.96, 1.0, carbon),
-      box(4.4, 4.92, 0.06, 0.32, -1.0, -0.96, carbon),
-      // sidepods, tapering towards the rear
-      loft(sec(2.75, 0.12, 0.5, 0.72), sec(1.15, 0.12, 0.34, 0.5), acc),
-      // engine cover and airbox rising behind the driver
-      loft(sec(2.25, 0.5, 0.98, 0.2), sec(0.75, 0.3, 0.55, 0.14), accDark),
-      box(2.12, 2.3, 0.86, 1.04, -0.12, 0.12, dark),
-      // floor and diffuser
-      box(0.35, 3.6, 0.04, 0.12, -0.82, 0.82, carbon),
-      loft(sec(0.75, 0.06, 0.16, 0.5), sec(0.1, 0.06, 0.34, 0.5), carbon),
-      // rear wing on a central pillar
-      box(0.04, 0.5, 0.86, 0.98, -0.52, 0.52, carbon),
-      box(0.12, 0.42, 1.02, 1.09, -0.52, 0.52, accDark),
-      box(0.0, 0.55, 0.42, 1.12, 0.52, 0.56, acc),
-      box(0.0, 0.55, 0.42, 1.12, -0.56, -0.52, acc),
-      box(0.25, 0.33, 0.3, 0.88, -0.03, 0.03, dark),
-      // driver: helmet in the cockpit, halo over it
-      box(2.42, 2.72, 0.6, 0.86, -0.14, 0.14, white),
-      box(2.62, 2.73, 0.66, 0.76, -0.12, 0.12, [18, 22, 30], true),
-      box(2.45, 2.95, 0.88, 0.92, 0.2, 0.24, dark),
-      box(2.45, 2.95, 0.88, 0.92, -0.24, -0.2, dark),
-      box(2.92, 2.98, 0.55, 0.92, -0.03, 0.03, dark),
-      box(2.4, 2.48, 0.86, 0.92, -0.24, 0.24, dark),
-      // wishbones out to the wheels
-      box(FW.x - 0.25, FW.x + 0.05, 0.3, 0.33, 0.28, FW.z[0], dark),
-      box(FW.x - 0.25, FW.x + 0.05, 0.3, 0.33, -FW.z[0], -0.28, dark),
-      box(RW.x - 0.2, RW.x + 0.15, 0.32, 0.35, 0.3, RW.z[0], dark),
-      box(RW.x - 0.2, RW.x + 0.15, 0.32, 0.35, -RW.z[0], -0.3, dark),
-    ];
+    const parts = formulaParts(acc);
     const wheels: Solid[] = [];
     for (const w of [FW, RW]) {
       wheels.push(wheel(w.x, w.r, w.r, -w.z[1], -w.z[0], spin * (0.33 / w.r), tyre));
@@ -633,60 +704,8 @@ export class DragScene25D {
    */
   private bike(c: SceneCar, lane: "me" | "opp", body: (v: V) => V, flat: (v: V) => V, acc: [number, number, number], spin: number) {
     const sport = c.cfg.ui.silhouette !== "cruiser";
-    const accDark = acc.map((v) => v * 0.6) as [number, number, number];
-    const metal: [number, number, number] = [120, 120, 130];
-    const engine: [number, number, number] = [44, 44, 52];
-    const leathers: [number, number, number] = [30, 30, 36];
-    const R = 0.31;
-    const RX = 0.32;
-    const FX = sport ? 1.86 : 1.95;
-    // a limb or tube between two points, `t` thick
-    const rod = (a: V, b: V, t: number, color: [number, number, number]) => loft(sec(a[0], a[1] - t, a[1] + t, t).map(([x, y, z]): V => [x, y, z + a[2]]), sec(b[0], b[1] - t, b[1] + t, t).map(([x, y, z]): V => [x, y, z + b[2]]), color);
-    const parts: Solid[] = [
-      // swingarm, engine, exhaust
-      rod([RX, R, 0.1], [0.95, 0.42, 0.1], 0.04, metal),
-      rod([RX, R, -0.1], [0.95, 0.42, -0.1], 0.04, metal),
-      box(0.82, 1.38, 0.22, 0.62, -0.17, 0.17, engine),
-      rod([1.25, 0.26, 0.2], [0.5, sport ? 0.62 : 0.34, 0.22], 0.06, [150, 150, 160]),
-      // forks up to the bars
-      rod([FX, R, 0.1], [FX - 0.24, sport ? 0.98 : 1.05, 0.1], 0.035, [190, 170, 120]),
-      rod([FX, R, -0.1], [FX - 0.24, sport ? 0.98 : 1.05, -0.1], 0.035, [190, 170, 120]),
-      // tank, seat and tail
-      loft(sec(1.32, 0.78, 1.02, 0.17), sec(0.95, 0.8, 0.94, 0.15), acc),
-      box(0.55, 0.98, sport ? 0.86 : 0.74, sport ? 0.93 : 0.8, -0.14, 0.14, [20, 20, 24]),
-      sport ? loft(sec(0.95, 0.78, 0.9, 0.14), sec(0.22, 0.96, 1.04, 0.05), acc) : box(0.25, 0.6, 0.6, 0.7, -0.15, 0.15, acc),
-      // front mudguard
-      box(FX - 0.25, FX + 0.12, R + 0.06, R + 0.1, -0.08, 0.08, sport ? accDark : acc),
-    ];
-    if (sport) {
-      parts.push(
-        // fairing: nose with the headlight, flanks over the engine, and a dark screen
-        loft(sec(1.95, 0.62, 0.92, 0.07), sec(1.45, 0.4, 1.06, 0.21), acc),
-        loft(sec(1.45, 0.34, 0.78, 0.21), sec(1.0, 0.32, 0.62, 0.19), accDark),
-        box(1.5, 1.68, 1.02, 1.16, -0.12, 0.12, [24, 30, 42], true),
-      );
-    } else {
-      parts.push(box(FX - 0.32, FX - 0.2, 0.88, 1.0, -0.12, 0.12, [220, 220, 210], true)); // round lamp
-      parts.push(rod([FX - 0.3, 1.05, -0.38], [FX - 0.3, 1.05, 0.38], 0.025, [190, 190, 200])); // wide bars
-    }
-    // the rider: sports bike tucked flat on the tank, cruiser upright with feet forward
-    const hip: V = sport ? [0.78, 1.0, 0] : [0.55, 0.88, 0];
-    const sh: V = sport ? [1.3, 1.2, 0] : [0.68, 1.42, 0];
-    const bars: V = sport ? [1.6, 0.98, 0] : [FX - 0.32, 1.08, 0];
-    const knee = sport ? 1.12 : 1.1;
-    const peg: V = sport ? [0.88, 0.48, 0] : [1.35, 0.42, 0];
-    parts.push(loft(sec(hip[0], hip[1] - 0.1, hip[1] + 0.12, 0.17), sec(sh[0], sh[1] - 0.11, sh[1] + 0.09, 0.2), accDark));
-    for (const side of [1, -1]) {
-      const z = 0.19 * side;
-      parts.push(rod([sh[0] - 0.02, sh[1], z], [bars[0], bars[1], z * 1.1], 0.05, leathers));
-      parts.push(rod([hip[0] + 0.05, hip[1], z * 0.9], [knee, sport ? 0.8 : 0.7, z * 1.25], 0.07, leathers));
-      parts.push(rod([knee, sport ? 0.8 : 0.7, z * 1.25], [peg[0], peg[1], z * 1.05], 0.06, leathers));
-    }
-    // round helmet (a short cylinder seen side-on) with a dark visor
-    const hx = sh[0] + (sport ? 0.12 : 0.06);
-    const hy = sh[1] + (sport ? 0.12 : 0.2);
-    parts.push(wheel(hx, hy, 0.15, -0.13, 0.13, 0, [226, 226, 232]));
-    parts.push(box(hx + 0.04, hx + 0.16, hy - 0.06, hy + 0.04, -0.1, 0.1, [16, 20, 30], true));
+    const { R, RX, FX } = bikeLayout(sport);
+    const parts = bikeParts(sport, acc);
     const wheels = [wheel(RX, R, R, -0.07, 0.07, spin * (0.33 / R), [16, 16, 19]), wheel(FX, R, R, -0.06, 0.06, spin * (0.33 / R), [16, 16, 19])];
     this.assembly([...wheels, ...parts], body);
     // rims and brake discs on the near side, so the wheels read against the track

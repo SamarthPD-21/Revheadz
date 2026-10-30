@@ -814,3 +814,126 @@ button.menu-option:hover { background: #17171d; }
 @media (orientation: landscape) and (max-height: 520px) {
   .track-cluster { --gauge: 5.6rem; bottom: 0.5rem; }
 }
+
+/* ---- Cruise: the endless road in 3D --------------------------------------- */
+.cruise { background: #05060a; }
+.cruise-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+.cruise-canvas:active { cursor: grabbing; }
+.cruise-overlay {
+  position: absolute; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 50% 60%, #141824, #05060a 70%); text-align: center; padding: 1rem;
+}
+.cruise-loading { font-size: 0.8rem; letter-spacing: 0.24em; text-transform: uppercase; color: #a1a1aa; animation: cruise-pulse 1.4s ease-in-out infinite; }
+@keyframes cruise-pulse { 50% { opacity: 0.4; } }
+/* the HUD steps aside when nothing has moved for a while; H hides it all */
+.cruise-fade { transition: opacity 600ms ease; }
+.cruise[data-idle="1"] .cruise-fade { opacity: 0; pointer-events: none; }
+.cruise[data-idle="1"] .cruise-cluster { opacity: 0.55; }
+.cruise-cluster { transition: opacity 600ms ease; }
+.cruise[data-hidden="1"] .cruise-fade, .cruise[data-hidden="1"] .cruise-cluster, .cruise[data-hidden="1"] .cruise-panel { opacity: 0; pointer-events: none; }
+.cruise .drive-header { background: linear-gradient(to bottom, rgba(5, 6, 10, 0.55), rgba(5, 6, 10, 0)); }
+.cruise .track-cluster::before { background: radial-gradient(ellipse at 70% 70%, rgba(5, 6, 10, 0.6), rgba(5, 6, 10, 0) 70%); }
+.cruise-trip { align-self: flex-end; margin-right: 0.4rem; font-family: var(--font-mono); font-size: 0.68rem; color: #a1a1aa; text-shadow: 0 1px 4px #000; }
+.cruise-start { top: 40%; }
+.cruise-start p { text-shadow: 0 1px 6px #000; }
+.cruise-pilot {
+  position: absolute; left: 50%; top: calc(var(--hud-top) + 0.4rem); z-index: 10; transform: translateX(-50%);
+  padding: 0.3rem 0.8rem; border-radius: 9999px; background: rgba(5, 6, 10, 0.55); border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.75rem; color: #e4e4e7; white-space: nowrap;
+}
+.cruise-pilot span { margin-left: 0.5rem; color: #71717a; font-size: 0.66rem; }
+.cruise-panel {
+  position: absolute; right: var(--edge); top: var(--hud-top); z-index: 25; width: min(21rem, calc(100vw - 1.5rem));
+  display: flex; flex-direction: column; gap: 0.5rem; padding: 0.8rem; border-radius: 12px;
+  background: rgba(10, 11, 16, 0.78); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px);
+  font-size: 0.75rem; color: #d4d4d8;
+}
+.cruise-panel input[type="range"] { width: 100%; }
+.cruise-panel .segmented { display: flex; }
+.cruise-panel .segmented > button { flex: 1; }
+.cruise-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.15rem; }
+.cruise-label { font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: #71717a; }
+.cruise-clock { font-family: var(--font-mono); font-size: 0.95rem; color: #fafafa; margin-right: auto; }
+.cruise-hint { font-family: var(--font-mono); font-size: 0.62rem; color: #52525b; }
+/* a feature still being tuned */
+.beta-tag { display: inline-block; padding: 0.05rem 0.4rem; border-radius: 999px; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #1c1917; background: #fbbf24; vertical-align: middle; }
+.cruise-beta { position: absolute; top: 4.4rem; left: 50%; transform: translateX(-50%); z-index: 5; display: flex; align-items: center; gap: 0.45rem; padding: 0.3rem 0.7rem; border-radius: 999px; font-size: 0.72rem; color: #e4e4e7; background: rgba(10, 11, 16, 0.7); border: 1px solid rgba(251, 191, 36, 0.35); pointer-events: none; white-space: nowrap; }
+/* the map of the road ahead, bottom left above the key hints */
+.cruise-map { position: absolute; left: var(--edge); bottom: 4.2rem; width: 10.5rem; height: 10.5rem; z-index: 4; pointer-events: none; border-radius: 999px; filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45)); }
+@media (max-width: 640px) { .cruise-map { width: 7.5rem; height: 7.5rem; bottom: auto; top: 6.5rem; } }
+/* the odometer: rolling number drums, the tenths in red */
+.cruise-odo { align-self: flex-end; margin-right: 0.4rem; display: flex; align-items: center; gap: 0.4rem; font-family: var(--font-mono); }
+.cruise-odo-label { font-size: 0.55rem; letter-spacing: 0.1em; color: #71717a; text-transform: uppercase; }
+.cruise-odo-drums { display: inline-flex; padding: 2px; gap: 1px; border-radius: 4px; background: #050507; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8); }
+.cruise-odo-drum { position: relative; display: block; width: 0.72rem; height: 1rem; overflow: hidden; border-radius: 2px; background: linear-gradient(#18181b, #2a2a30 50%, #18181b); }
+.cruise-odo-drum > span { display: flex; flex-direction: column; transition: transform 380ms linear; }
+.cruise-odo-drum i { display: block; height: 1rem; line-height: 1rem; text-align: center; font-style: normal; font-size: 0.7rem; font-weight: 700; color: #f4f4f5; }
+.cruise-odo-drum.red { background: linear-gradient(#7f1d1d, #b91c1c 50%, #7f1d1d); }
+.cruise-odo-drum::after { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(0, 0, 0, 0.55), transparent 35%, transparent 65%, rgba(0, 0, 0, 0.55)); pointer-events: none; }
+.cruise-odo-trip { font-size: 0.6rem; color: #71717a; letter-spacing: 0.08em; }
+.cruise-odo-trip b { color: #e4e4e7; font-weight: 700; }
+/* a lens's gentle fall-off towards the corners, over the 3D view and under the HUD */
+.cruise-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 80% 75% at 50% 48%, transparent 58%, rgba(0, 0, 0, 0.32) 100%); }
+/* the settings button: a labelled pill where there's room, the cog alone on a phone */
+.cruise-settings-btn { width: auto !important; gap: 0.4rem; padding: 0 0.75rem; display: inline-flex !important; align-items: center; }
+.cruise-btn-label { font-size: 0.75rem; font-weight: 600; }
+@media (max-width: 640px) { .cruise-btn-label { display: none; } .cruise-settings-btn { padding: 0 0.55rem; } }
+/* settings: tabs along the top, a close button, and the frame counter in the corner */
+.cruise-settings { max-height: calc(100dvh - 6rem); overflow-y: auto; }
+.cruise-tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid #27272a; margin: 0.1rem 0 0.35rem; }
+.cruise-tabs > button { flex: 1; padding: 0.4rem 0.2rem; font-size: 0.72rem; font-weight: 600; color: #a1a1aa; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; }
+.cruise-tabs > button:hover { color: #fff; }
+.cruise-tabs > button[aria-selected="true"] { color: #fff; border-color: var(--accent); }
+.cruise-close { width: 1.6rem; height: 1.6rem; border-radius: 999px; font-size: 1.1rem; line-height: 1; color: #a1a1aa; }
+.cruise-close:hover { color: #fff; background: #27272a; }
+.cruise-fps { position: absolute; top: 4.4rem; left: 1rem; z-index: 5; font-family: var(--font-mono); font-size: 0.7rem; color: #a3e635; text-shadow: 0 1px 4px #000; pointer-events: none; }
+.cruise-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.cruise-chips .chip { padding: 0.2rem 0.55rem; font-size: 0.68rem; }
+.cruise-toggles { justify-content: flex-start; gap: 1rem; padding: 0.2rem 0; }
+.cruise-keys { max-width: calc(100% - 32rem); }
+@media (pointer: coarse) { .cruise-canvas { cursor: default; } }
+/* the cruise garage: a dusk sky over a far ridge */
+.cruise-backdrop {
+  background:
+    linear-gradient(to bottom, rgba(5, 6, 10, 0) 55%, #07060d 100%),
+    radial-gradient(ellipse 60% 40% at 70% 78%, rgba(255, 170, 90, 0.28), rgba(255, 170, 90, 0) 70%),
+    linear-gradient(to bottom, #0b1024 0%, #2a2347 45%, #6b3f4a 72%, #07060d 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
+  mask-image: linear-gradient(to bottom, #000 70%, transparent);
+}
+/* the Cruise card on the home page: a road running away into a sunset */
+.cruise-mini { position: relative; height: 5.5rem; overflow: hidden; border-radius: 10px; background: linear-gradient(to bottom, #1b1838 0%, #5b3550 55%, #c56a45 100%); }
+.cruise-mini-sun { position: absolute; left: 50%; bottom: 34%; width: 3.2rem; height: 3.2rem; margin-left: -1.6rem; border-radius: 9999px; background: radial-gradient(circle, #ffd59a 0%, #ff9d5c 45%, rgba(255, 140, 80, 0) 70%); }
+.cruise-mini-hills { position: absolute; inset: auto 0 0 0; height: 46%; background: #1c2a24; clip-path: polygon(0 40%, 14% 18%, 30% 44%, 46% 12%, 62% 40%, 78% 16%, 100% 38%, 100% 100%, 0 100%); }
+.cruise-mini-road {
+  position: absolute; left: 50%; bottom: 0; width: 62%; height: 50%; transform: translateX(-50%);
+  clip-path: polygon(47% 0, 53% 0, 100% 100%, 0 100%);
+  background:
+    repeating-linear-gradient(to bottom, rgba(240, 236, 220, 0.9) 0 7px, transparent 7px 18px) center / 3px 100% no-repeat,
+    linear-gradient(to bottom, #2a2a30, #18181c);
+  animation: cruise-dash 0.9s linear infinite;
+}
+@keyframes cruise-dash { to { background-position: center 18px, 0 0; } }
+@media (prefers-reduced-motion: reduce) { .cruise-mini-road { animation: none; } }
+/* free roam: a pill to say so (and take you back), and steering arrows on touch screens */
+.cruise-free {
+  position: absolute; left: var(--edge); top: calc(var(--hud-top) + 0.4rem); z-index: 10;
+  padding: 0.3rem 0.8rem; border-radius: 9999px; background: rgba(5, 6, 10, 0.55); border: 1px solid rgba(163, 230, 53, 0.35);
+  font-size: 0.75rem; color: #d9f99d; white-space: nowrap;
+}
+.cruise-free span { margin-left: 0.5rem; color: #71717a; font-size: 0.66rem; }
+.cruise-free:hover span { color: #d4d4d8; }
+.cruise-steer { display: none; }
+@media (pointer: coarse) {
+  .cruise-steer { display: flex; gap: 0.5rem; align-self: flex-end; margin-bottom: 0.2rem; }
+  .cruise-steer .ctl { width: 4.2rem; height: 4.2rem; display: grid; place-items: center; background: rgba(24, 24, 30, 0.55); border-radius: 14px; touch-action: none; }
+}
+/* cruise: what's under the tyres and how grippy it is, with a warning when they let go */
+.cruise-grip { align-self: flex-end; margin-right: 0.4rem; display: flex; gap: 0.5rem; align-items: center; font-family: var(--font-mono); font-size: 0.66rem; color: #a1a1aa; text-shadow: 0 1px 4px #000; }
+.cruise-grip b { font-family: var(--font-sans, inherit); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #fbbf24; }
+.cruise-grip b:empty { display: none; }
+/* dash warning lights: dark until their aid steps in */
+.cruise-lights { display: inline-flex; gap: 0.25rem; }
+.cruise-lights i { font-style: normal; font-family: var(--font-sans, inherit); font-size: 0.55rem; font-weight: 800; letter-spacing: 0.06em; padding: 0.05rem 0.28rem; border-radius: 0.2rem; border: 1px solid #3f3f46; color: #52525b; }
+.cruise-lights i.lit { color: #1c1917; background: #f59e0b; border-color: #f59e0b; box-shadow: 0 0 8px #f59e0b88; }
+.cruise-stalled { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.24em; text-transform: uppercase; color: #f87171; text-shadow: 0 1px 8px #000; }

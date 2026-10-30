@@ -272,6 +272,9 @@ export default function Simulator({ vehicle, prev, next, maxKmh, garage }: Props
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
           <IgnitionButton store={sim.store} onPress={press} pending={pending} subscribe={rig.subscribe} compact />
+          <Link href={`/cruise/${vehicle.id}`} className="chip hidden shrink-0 sm:inline-flex" title={`Take the ${vehicle.name} for a cruise`}>
+            Cruise
+          </Link>
           <button
             type="button"
             className={iconBtn}

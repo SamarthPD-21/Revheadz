@@ -89,6 +89,40 @@ to compare. When you're ready, race a friend or the CPU over the quarter mile. N
   editing the link can't fake a faster time
 - **Online rooms**: create a room and send the 4-letter code. The class is shared, so either player can pick it and
   you both move to it
+- **Cruise** (`/cruise`): take any machine down an endless 3D road, inspired by [slowroads.io](https://slowroads.io).
+  The road and the land are grown from a seed as you drive: rolling hills, forest, meadow and dry gold country,
+  lakes, and mountains that rise away from the road so it threads the valleys between them. The day goes by (or
+  pick a time: sunrise, golden hour, the stars), with clear, hazy, foggy or rainy weather, headlights and glowing
+  road reflectors after dark, and five cameras: chase (it swings round as the car slides), far, bonnet, a high drone
+  and a film camera by the road that you drive past. **Every machine drives like the real one**: its own power and
+  torque curve, kerb weight, weight distribution, aero drag and drivetrain, with everything that spins (wheels,
+  crank, flywheel) to spin up too, so 0-100 km/h and top speed land close to the road tests (a GT3 RS does 3.2 s, a
+  911 SC 6.8; the Chiron stops at its 420 km/h limiter). The tyres grip like tyres: force builds with slip to a peak
+  and falls away as they slide, weight shifts forward on the brakes and back under power (brake into a bend and the
+  tail goes light), a hard bend costs speed, and the brakes stop you in a real car's distance, longer in the wet.
+  **Driver aids** are the car's own (an F40 or a '71 'Cuda has none, so it spins its wheels, locks them under hard
+  braking and can spin), or switch them all on or off; dash lights show ABS, traction and stability control working.
+  Let go of the wheel in a slide and it self-centres along it, which is how you catch one. On the
+  road a lane assist steers it; choose **Manual** or **Automatic** gears. In Manual, a car with a clutch pedal
+  **stalls** like a real one: brake to a stop in gear, pull away in 3rd, or lug a tall gear below idle, and it dies
+  (`N`, then `I` to restart). Every car has its own **grip**: tyres (slicks and semi-slicks grip more, a muscle
+  car's less), how they cope off the tarmac (the rally car is best on dirt, slicks are hopeless) and downforce for
+  the racers; the HUD shows the surface and your grip on it. **Traction is real**: the tyres can only put down so much
+  of the engine's torque, set by the grip and the weight on the driven wheels (which shifts back under power and
+  uphill), so a rear-drive car spins its wheels and stalls its climb on a steep grassy hill that all-wheel drive walks up. Your world is remembered: come back and
+  you're on the same road where you left it, with the map loaded from the browser, and a trip computer (distance,
+  time on the move, average speed) carries on. **Back to road** (`B`) puts you on the nearest bit of road. **Settings** (`O`)
+  has it all: resolution (Auto adapts to hold the frame rate, or fix it from 50% to 150%), **frame rate** (60, 90 by
+  default, 120 or Max, paced exactly on faster screens, with the frames you're getting and your screen's rate),
+  field of view, a frame counter, quality presets from Low to Ultra, **render distance** (Near to Extreme: the
+  horizon from 2 to 5.5 km), how thickly trees and grass grow, shadows, glow and clouds, and engine and
+  wind-and-rain volume. Every change applies as you make it and is remembered.
+  Switch on the **autopilot** (`T`) and it drives for you, holding the speed you set and slowing for the bends it can
+  see coming; `G` switches between manual and automatic gears. Press **`R` for free roam** and the whole map is yours: leave the
+  road and drive across meadows, up hillsides and through the shallows. Hills pull you back and push you on, grass and
+  dirt drag at the wheels, steep slopes slide you sideways and deep water stops you; dust and spray fly off the tyres.
+  Clouds drift overhead and glow at sunset, trees and grass sway in the wind and the lakes ripple. The cars are the
+  garage's own, built in 3D from the same profiles as the strip, with the same engines, gearboxes and sound
 - **Free to host**: a static site you can put on Vercel, Netlify or Cloudflare Pages
 
 ## Quick start
@@ -125,6 +159,13 @@ npm run dev          # http://localhost:3000
 | `[` / `]` | ‹ / › in the header | Previous / next vehicle |
 | `V` | Vehicle name in the header | Switch vehicle (searchable list) |
 | `/` | | Search the Playground |
+
+In Cruise, `A` / `D` (or `←` / `→`) move across the road (it eases back into your lane when you let go), `R`
+switches free roam on and off (then `A` / `D` steer anywhere, and `R` again hands back to the lane assist), `B` puts
+you back on the nearest road, `C` changes camera, `T` toggles the autopilot (then `W` / `S` set its speed), `G` switches
+manual and automatic gears and `H` hides the HUD. Drag
+the mouse to look round the car. On a touch screen the car keeps its lane by itself, and free roam adds steering
+arrows.
 
 In a drag race, Simple controls put everything on one button (`Space`, or tap): launch on the green, then shift on
 every shift light. Pro controls stage with `S`+`W`, launch by letting go of `S`, and shift with `E`/`Q`.
@@ -194,6 +235,32 @@ flowchart LR
   (`components/drag/scene25d.ts`): an isometric camera, models lofted from cross-sections and lit per face, and a
   painter's sort. It is built to hold 60 fps: if a device falls behind for two seconds running, the canvas drops its
   resolution a step until it keeps up.
+- **The cars are modelled, not imported.** Each body style's side profile (the same one the strip draws) is
+  lofted into a smooth skin through 150 cross-sections (`components/cruise/carBody.ts`): sills tucked under,
+  flanks fullest low down, a shoulder at the beltline, a glasshouse leaning in to a crowned roof, the nose and tail
+  rounded in plan and arches opened round each wheel. The glass is laid over it (the side windows follow the
+  window outline, the screens are shaped panes inside their pillars), with lens headlights, light bars, mirrors, a
+  diffuser, lathe-turned tyres, dished spoked rims with discs and calipers, and a soft contact shadow.
+- **Cruise is real 3D.** It uses three.js, loaded only on the cruise screen. The road (`lib/cruise/road.ts`) is a
+  seeded curve: its bend is a sum of slow sine waves with straights mixed in, and its height is the land averaged
+  along it with an 8% grade limit, so it rides the hills like a real road. The ground (`lib/cruise/terrain.ts`) is
+  fractal noise, flattened into a verge under the road and banked up or down to it. It is drawn as 160 m tiles that
+  are built a few per frame around the camera, plus a coarse far layer out to the horizon. The simulation still
+  only knows speed along a line (plus gravity on a slope); the scene places the car on the road from it and adds the
+  lane, body roll and pitch. Each machine's real figures (`lib/cruise/specs.ts`: power and torque with their revs,
+  weight and its spread, drag area, drive layout, skidpad grip, aids, and the road tests to check against) give the
+  simulation a road model: a monotone torque curve through the figures, drivetrain losses, rotating inertia and
+  grip-limited brakes (`tests/cruise-realism.test.ts` holds every car to its 0-100 and top speed). It steers with a
+  dynamic bicycle model (`lib/cruise/handling.ts`): slip angles at each axle into a "magic formula" tyre curve with a
+  peak and a fall-off, axle loads that shift with braking and power, and a friction circle, so accelerating or
+  braking leaves less grip for cornering; the cornering forces' drag goes back to the simulation as lost speed. On the road the lane assist steers it by pure pursuit. It stands on the ground
+  through a probe (`lib/cruise/ground.ts`) that rebuilds the very triangles the ground is drawn with. Built map
+  tiles are kept in IndexedDB (`lib/cruise/tileCache.ts`) and loaded back on the next visit. The simulation takes
+  optional extras for the cruise, all off on the strip so drag races and replays are untouched: the road model, a
+  traction limit (traction control trims the drive to it; without, drive past it becomes wheelspin, the revs flare
+  and a spinning tyre grips less), a braking limit (ABS holds it; without, the wheels lock) and stalling. Clouds,
+  rippling water, wind in the trees and grass, and the dust and spray are small shaders. The resolution adapts to
+  hold the chosen frame rate (`lib/cruise/frameGate.ts` paces the frames and measures the screen's refresh).
 - **Splits to the millisecond.** The page samples the car once a frame, and every split, and the moment the revs
   reach the shift light, is interpolated between samples, so timing doesn't depend on the frame rate.
 - **Sample blending.** Each vehicle has looping recordings at several RPMs, for on-load (accelerating) and overrun.

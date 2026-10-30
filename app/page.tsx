@@ -51,7 +51,7 @@ export default function Home() {
         </p>
       </section>
 
-      <section className="mt-12 grid gap-4 lg:grid-cols-2" aria-label="Modes">
+      <section className="mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Modes">
         <Link href="/playground" className="mode-card group">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -90,6 +90,24 @@ export default function Home() {
             {["#facc15", "#facc15", "#facc15", "#22c55e"].map((c, i) => (
               <span key={i} className="tree-light" style={{ "--c": c, animationDelay: `${i * 0.45}s` } as React.CSSProperties} />
             ))}
+          </div>
+        </Link>
+
+        <Link href="/cruise" className="mode-card group md:col-span-2 xl:col-span-1">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="eyebrow">Sit back</p>
+              <h2 className="display mt-2 text-4xl text-white">Cruise</h2>
+              <p className="mt-2 max-w-sm text-sm text-zinc-400">
+                An endless 3D road through hills, forest and mountains. Watch the day turn to night, bring in the rain, or let the autopilot drive.
+              </p>
+            </div>
+            {arrow}
+          </div>
+          <div className="cruise-mini mt-6" aria-hidden>
+            <span className="cruise-mini-sun" />
+            <span className="cruise-mini-hills" />
+            <span className="cruise-mini-road" />
           </div>
         </Link>
       </section>
