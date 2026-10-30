@@ -1,15 +1,25 @@
 import { ramp } from "../../lib/audio/util";
 
+/** What the tyres are doing, for their sound. */
+export interface TyreSound {
+  /** 0-1 how hard they're sliding (a drift, scrubbing wide) or spinning. */
+  slide: number;
+  /** What's under them. */
+  surface: "road" | "loose" | "water";
+}
+
 /**
  * The world's sound under the engine: wind that builds with speed (a dull rumble at a
- * cruise, a roar flat out) and, in the rain, the hiss of it falling and of tyres on a wet
- * road. Filtered noise, so it never loops audibly. Created from a tap, like the engine.
+ * cruise, a roar flat out), the road itself (a low drone off the tarmac, a crunch off it),
+ * tyres squealing when they slide and, in the rain, the hiss of it falling and of tyres on a
+ * wet road. Filtered noise, so it never loops audibly. Created from a tap, like the engine.
  */
 export class Ambience {
   private ctx: AudioContext | null = null;
   private wind: { filter: BiquadFilterNode; gain: GainNode } | null = null;
   private rain: { gain: GainNode; spray: GainNode } | null = null;
   private master: GainNode | null = null;
+  private road: { drone: GainNode; droneF: BiquadFilterNode; crunch: GainNode; squeal: GainNode; squealF: BiquadFilterNode } | null = null;
   private volume = 0.8;
 
   unlock(): void {
@@ -65,6 +75,31 @@ export class Ambience {
     sg.gain.value = 0;
     src(1.07).connect(sf).connect(sg).connect(this.master);
     this.rain = { gain: rg, spray: sg };
+
+    // the road: tyre drone off the tarmac, a coarse crunch off it, and a squeal (a narrow band of
+    // noise, wavering) when they slide
+    const df = ctx.createBiquadFilter();
+    df.type = "bandpass";
+    df.frequency.value = 110;
+    df.Q.value = 1.1;
+    const dg = ctx.createGain();
+    dg.gain.value = 0;
+    src(0.8).connect(df).connect(dg).connect(this.master);
+    const cf = ctx.createBiquadFilter();
+    cf.type = "bandpass";
+    cf.frequency.value = 1300;
+    cf.Q.value = 0.6;
+    const cg = ctx.createGain();
+    cg.gain.value = 0;
+    src(1.3).connect(cf).connect(cg).connect(this.master);
+    const qf = ctx.createBiquadFilter();
+    qf.type = "bandpass";
+    qf.frequency.value = 1050;
+    qf.Q.value = 18;
+    const qg = ctx.createGain();
+    qg.gain.value = 0;
+    src(1).connect(qf).connect(qg).connect(this.master);
+    this.road = { drone: dg, droneF: df, crunch: cg, squeal: qg, squealF: qf };
   }
 
   setVolume(v: number): void {
@@ -72,9 +107,21 @@ export class Ambience {
     if (this.ctx && this.master) ramp(this.master.gain, v, this.ctx, 0.05);
   }
 
-  update(speedKmh: number, raining: boolean): void {
+  update(speedKmh: number, raining: boolean, tyres: TyreSound = { slide: 0, surface: "road" }): void {
     const ctx = this.ctx;
     if (!ctx || !this.wind || !this.rain) return;
+    const road = this.road;
+    if (road) {
+      const moving = Math.min(1, speedKmh / 140);
+      const onRoad = tyres.surface === "road";
+      ramp(road.drone.gain, onRoad ? 0.05 + 0.4 * moving : 0.02, ctx, 0.15);
+      ramp(road.droneF.frequency, 80 + 140 * moving, ctx, 0.2);
+      ramp(road.crunch.gain, tyres.surface === "loose" ? 0.05 + 0.45 * Math.min(1, speedKmh / 60) : 0, ctx, 0.12);
+      // a squeal on tarmac only; it wavers in pitch as the tyres chatter
+      const squeal = onRoad && speedKmh > 3 ? Math.min(1, tyres.slide * 1.3) : 0;
+      ramp(road.squeal.gain, squeal * squeal * 0.9, ctx, 0.06);
+      ramp(road.squealF.frequency, 900 + 300 * tyres.slide + 60 * Math.sin(ctx.currentTime * 23), ctx, 0.05);
+    }
     const v = Math.min(1, speedKmh / 260);
     ramp(this.wind.gain.gain, 0.02 + 0.55 * v * v, ctx, 0.2);
     ramp(this.wind.filter.frequency, 220 + 2400 * v, ctx, 0.2);
@@ -92,6 +139,7 @@ export class Ambience {
     const ctx = this.ctx;
     this.ctx = null;
     this.wind = this.rain = null;
+    this.road = null;
     if (ctx && ctx.state !== "closed") void ctx.close();
   }
 }

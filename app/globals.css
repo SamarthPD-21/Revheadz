@@ -855,6 +855,12 @@ button.menu-option:hover { background: #17171d; }
 .cruise-label { font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: #71717a; }
 .cruise-clock { font-family: var(--font-mono); font-size: 0.95rem; color: #fafafa; margin-right: auto; }
 .cruise-hint { font-family: var(--font-mono); font-size: 0.62rem; color: #52525b; }
+/* a lens's gentle fall-off towards the corners, over the 3D view and under the HUD */
+.cruise-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 80% 75% at 50% 48%, transparent 58%, rgba(0, 0, 0, 0.32) 100%); }
+/* the settings button: a labelled pill where there's room, the cog alone on a phone */
+.cruise-settings-btn { width: auto !important; gap: 0.4rem; padding: 0 0.75rem; display: inline-flex !important; align-items: center; }
+.cruise-btn-label { font-size: 0.75rem; font-weight: 600; }
+@media (max-width: 640px) { .cruise-btn-label { display: none; } .cruise-settings-btn { padding: 0 0.55rem; } }
 /* settings: tabs along the top, a close button, and the frame counter in the corner */
 .cruise-settings { max-height: calc(100dvh - 6rem); overflow-y: auto; }
 .cruise-tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid #27272a; margin: 0.1rem 0 0.35rem; }

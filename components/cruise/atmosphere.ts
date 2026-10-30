@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { Lensflare, LensflareElement } from "three/examples/jsm/objects/Lensflare.js";
 import { Sky } from "three/examples/jsm/objects/Sky.js";
 import { mulberry32, smoothstep } from "../../lib/cruise/noise";
 
@@ -205,6 +206,11 @@ export class Atmosphere {
     this.sun.color.setRGB(1, 0.6 + 0.38 * smoothstep(2, 25, elevation), 0.38 + 0.56 * smoothstep(2, 30, elevation), THREE.SRGBColorSpace);
     this.sun.intensity = 2.9 * day * (1 - cloudy * 0.7);
     this.sun.castShadow = this.shadows !== "off" && day > 0.05 && cloudy < 0.9;
+    // the sun's flare, when it's up and the sky's clear enough to see it
+    this.flare ??= this.makeFlare();
+    if (!this.flare.parent) this.group.add(this.flare);
+    this.flare.position.copy(this.sunDir).multiplyScalar(4000);
+    this.flare.visible = elevation > 1 && cloudy < 0.5;
     this.moon.position.copy(this.sunDir).multiplyScalar(-60).setY(Math.abs(this.sunDir.y) * 60 + 20);
     this.moon.intensity = 0.32 * night;
 
@@ -264,6 +270,44 @@ export class Atmosphere {
     }
   }
 
+  /** The sun seen through a lens: a soft glow round it and faint ghosts across the picture. */
+  private flare: Lensflare | null = null;
+  private flareTextures: THREE.Texture[] = [];
+
+  private makeFlare(): Lensflare {
+    const tex = (inner: string, outer: string, ring = false) => {
+      const c = document.createElement("canvas");
+      c.width = c.height = 128;
+      const g = c.getContext("2d")!;
+      const grad = g.createRadialGradient(64, 64, ring ? 40 : 0, 64, 64, 64);
+      if (ring) {
+        grad.addColorStop(0, "rgba(0,0,0,0)");
+        grad.addColorStop(0.5, inner);
+        grad.addColorStop(1, "rgba(0,0,0,0)");
+      } else {
+        grad.addColorStop(0, inner);
+        grad.addColorStop(0.25, outer);
+        grad.addColorStop(1, "rgba(0,0,0,0)");
+      }
+      g.fillStyle = grad;
+      g.fillRect(0, 0, 128, 128);
+      const t = new THREE.CanvasTexture(c);
+      this.flareTextures.push(t);
+      return t;
+    };
+    const glow = tex("rgba(255,250,235,1)", "rgba(255,220,160,0.35)");
+    const ghost = tex("rgba(255,255,255,0.5)", "rgba(255,255,255,0.12)");
+    const halo = tex("rgba(255,240,210,0.18)", "", true);
+    const f = new Lensflare();
+    f.addElement(new LensflareElement(glow, 420, 0, new THREE.Color(1, 0.95, 0.85)));
+    f.addElement(new LensflareElement(halo, 700, 0, new THREE.Color(1, 0.9, 0.75)));
+    f.addElement(new LensflareElement(ghost, 50, 0.45, new THREE.Color(0.6, 0.8, 1)));
+    f.addElement(new LensflareElement(ghost, 90, 0.62, new THREE.Color(1, 0.75, 0.5)));
+    f.addElement(new LensflareElement(ghost, 36, 0.8, new THREE.Color(0.7, 1, 0.8)));
+    f.addElement(new LensflareElement(ghost, 140, 1.0, new THREE.Color(0.55, 0.6, 1)));
+    return f;
+  }
+
   /** Shadow quality and whether the cloud layer is drawn (the graphics settings). */
   setQuality(shadows: "off" | "on" | "high", clouds: boolean): void {
     if (shadows !== this.shadows) {
@@ -291,6 +335,8 @@ export class Atmosphere {
   }
 
   dispose(): void {
+    this.flare?.dispose();
+    this.flareTextures.forEach((t) => t.dispose());
     this.envTarget?.dispose();
     this.pmrem.dispose();
     this.sky.geometry.dispose();

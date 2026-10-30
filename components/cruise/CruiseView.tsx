@@ -407,7 +407,11 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       if (sim.state.speedKmh > 1) tripS += dt;
       audio.update(sim.state);
       if (s.cycle) hourRef.current = (hourRef.current + dt * HOURS_PER_S) % 24;
-      ambience.update(sim.state.speedKmh, s.weather === "rain");
+      {
+        const u = scene.surface;
+        const surface = u.depth > 0.05 ? "water" : u.offRoad ? "loose" : "road";
+        ambience.update(sim.state.speedKmh, s.weather === "rain", { slide: Math.max(u.slide, Math.max(0, (sim.state.wheelspin ?? 0) - 0.2), sim.state.locked ? 0.8 : 0), surface });
+      }
       const keys = steerKeys.current;
       const steer = clampUnit((STEER_RIGHT.some((k) => keys.has(k)) ? 1 : 0) - (STEER_LEFT.some((k) => keys.has(k)) ? 1 : 0) + touchSteer.current);
       scene.frame(dt, { speedKmh: sim.state.speedKmh, throttle: sim.input.throttle, brake: sim.input.brake, wheelspin: sim.state.wheelspin ?? 0, locked: Boolean(sim.state.locked), steer, ignition: running }, { hour: hourRef.current, weather: s.weather, camera: s.camera });
@@ -499,6 +503,10 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       }
       if (e.type === "start") setStalled(false);
       if (e.type === "shift") navigator.vibrate?.(12);
+      // fire from the exhaust
+      if (e.type === "backfire") sceneRef.current?.burst("bang");
+      else if (e.type === "crackle" || e.type === "limiter") sceneRef.current?.burst("pop");
+      else if (e.type === "shiftCrack") sceneRef.current?.burst("crack");
     });
     const onVis = () => ambience.suspend(document.hidden);
     document.addEventListener("visibilitychange", onVis);
@@ -522,6 +530,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
   return (
     <main ref={mainRef} className="drive cruise" data-idle={idle && !panel ? "1" : undefined} data-hidden={hidden ? "1" : undefined} style={{ "--accent": accent } as React.CSSProperties}>
       <canvas ref={canvasRef} className="cruise-canvas" aria-label={`Driving the ${vehicle.name} down an endless road`} />
+      <div className="cruise-vignette" aria-hidden />
 
       {failed && (
         <div className="cruise-overlay">
@@ -569,7 +578,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
           </button>
           <button
             type="button"
-            className={iconBtn}
+            className={`${iconBtn} cruise-settings-btn`}
             onClick={() => {
               setSettingsOpen((o) => !o);
               setPanel(false);
@@ -579,6 +588,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
             title="Settings: resolution, frame rate, render distance, graphics, sound (O)"
           >
             <GearIcon />
+            <span className="cruise-btn-label">Settings</span>
           </button>
           <button type="button" className={iconBtn} onClick={toggleMute} aria-pressed={muted} aria-label={muted ? "Unmute (M)" : "Mute (M)"} title={muted ? "Unmute (M)" : "Mute (M)"}>
             <SpeakerIcon muted={muted} />
@@ -828,14 +838,11 @@ function SpeakerIcon({ muted }: { muted: boolean }) {
 
 function GearIcon() {
   return (
-    <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden>
-      <circle cx="10" cy="10" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.7" />
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" aria-hidden>
       <path
-        d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
+        fill="currentColor"
+        fillRule="evenodd"
+        d="M10.3 2h3.4l.5 2.6a7.6 7.6 0 0 1 1.9 1.1l2.5-.9 1.7 2.9-2 1.7a7.7 7.7 0 0 1 0 2.2l2 1.7-1.7 2.9-2.5-.9a7.6 7.6 0 0 1-1.9 1.1l-.5 2.6h-3.4l-.5-2.6a7.6 7.6 0 0 1-1.9-1.1l-2.5.9-1.7-2.9 2-1.7a7.7 7.7 0 0 1 0-2.2l-2-1.7 1.7-2.9 2.5.9a7.6 7.6 0 0 1 1.9-1.1zM12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z"
       />
     </svg>
   );
