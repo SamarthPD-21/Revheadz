@@ -855,6 +855,9 @@ button.menu-option:hover { background: #17171d; }
 .cruise-label { font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: #71717a; }
 .cruise-clock { font-family: var(--font-mono); font-size: 0.95rem; color: #fafafa; margin-right: auto; }
 .cruise-hint { font-family: var(--font-mono); font-size: 0.62rem; color: #52525b; }
+/* a feature still being tuned */
+.beta-tag { display: inline-block; padding: 0.05rem 0.4rem; border-radius: 999px; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #1c1917; background: #fbbf24; vertical-align: middle; }
+.cruise-beta { position: absolute; top: 4.4rem; left: 50%; transform: translateX(-50%); z-index: 5; display: flex; align-items: center; gap: 0.45rem; padding: 0.3rem 0.7rem; border-radius: 999px; font-size: 0.72rem; color: #e4e4e7; background: rgba(10, 11, 16, 0.7); border: 1px solid rgba(251, 191, 36, 0.35); pointer-events: none; white-space: nowrap; }
 /* the map of the road ahead, bottom left above the key hints */
 .cruise-map { position: absolute; left: var(--edge); bottom: 4.2rem; width: 10.5rem; height: 10.5rem; z-index: 4; pointer-events: none; border-radius: 999px; filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45)); }
 @media (max-width: 640px) { .cruise-map { width: 7.5rem; height: 7.5rem; bottom: auto; top: 6.5rem; } }

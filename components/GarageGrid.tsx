@@ -58,8 +58,11 @@ const haystack = (v: GarageVehicle) =>
     .join(" ")
     .toLowerCase();
 
-/** `base` is where a card goes: the playground's drive screen, or another mode's. */
-export function GarageGrid({ vehicles, base = "/drive" }: { vehicles: GarageVehicle[]; base?: string }) {
+/**
+ * `base` is where a card goes: the playground's drive screen, or another mode's. `betaBikes`
+ * marks the bikes as still in beta there (Cruise).
+ */
+export function GarageGrid({ vehicles, base = "/drive", betaBikes = false }: { vehicles: GarageVehicle[]; base?: string; betaBikes?: boolean }) {
   const [chosenFilter, setFilter] = useState<Filter>("all");
   const [sort, setSort] = useState<Sort>("featured");
   const [query, setQuery] = useState("");
@@ -280,6 +283,11 @@ export function GarageGrid({ vehicles, base = "/drive" }: { vehicles: GarageVehi
                       className="card-link inline-flex items-center gap-1.5 outline-none"
                     >
                       {v.name}
+                      {betaBikes && v.type === "bike" && (
+                        <span className="beta-tag" title="Bikes are in beta here: their riding and models are still being tuned">
+                          Beta
+                        </span>
+                      )}
                       <svg viewBox="0 0 16 16" className="card-go h-4 w-4 text-[var(--accent)]" aria-hidden>
                         <path d="M5 3l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>

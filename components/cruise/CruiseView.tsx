@@ -578,7 +578,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
             base="/cruise"
             current={{ id: vehicle.id, name: vehicle.name, make: vehicle.ui.make, year: vehicle.ui.year, layout: vehicle.ui.layout, accent }}
             vehicles={garage}
-            eyebrow={["Cruise", vehicle.ui.make ?? vehicle.ui.category, vehicle.ui.year].filter(Boolean).join(" · ")}
+            eyebrow={["Cruise", vehicle.ui.make ?? vehicle.ui.category, vehicle.ui.year, vehicle.type === "bike" ? "Beta" : null].filter(Boolean).join(" · ")}
           />
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
@@ -732,6 +732,12 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
             {stalled ? "Knock it into neutral (N) or 1st, then start it again (I)" : "Start it up and take it for a drive"}
           </p>
         </div>
+      )}
+
+      {vehicle.type === "bike" && (
+        <p className="cruise-beta cruise-fade" title="Riding, lean and the bike models are still being tuned">
+          <span className="beta-tag">Beta</span> Bikes in Cruise are still being tuned
+        </p>
       )}
 
       {settings.free && (

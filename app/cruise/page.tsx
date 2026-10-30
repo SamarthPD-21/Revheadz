@@ -31,7 +31,7 @@ export default function CruiseGarage() {
             stars, bring in fog or rain, and switch on the <b className="text-zinc-200">autopilot</b> to just sit back and listen.
           </p>
         </header>
-        <GarageGrid vehicles={list} base="/cruise" />
+        <GarageGrid vehicles={list} base="/cruise" betaBikes />
       </div>
     </div>
   );
