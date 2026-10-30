@@ -38,7 +38,9 @@ function open(): Promise<IDBDatabase | null> {
   return opening;
 }
 
-const rowKey = (seed: number, tile: string) => `${seed}:${tile}`;
+/** Bumped whenever the land is shaped differently, so maps saved from the old shape aren't used. */
+const LAND_VERSION = 2;
+const rowKey = (seed: number, tile: string) => `${seed}:v${LAND_VERSION}:${tile}`;
 
 /** The saved tiles for a road among `tiles` ("ix,iz"), as a map; empty if none or no storage. */
 export async function loadTiles<T>(seed: number, tiles: string[]): Promise<Map<string, T>> {

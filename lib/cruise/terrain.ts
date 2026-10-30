@@ -4,7 +4,7 @@ import { ROAD_HALF, Road, WATER_Y } from "./road";
 export type RGB = [number, number, number];
 
 /** Past this distance from the road the ground is left wild (mountains at full height), m. */
-export const WILD_M = 420;
+export const WILD_M = 240;
 
 const LUSH: RGB = [0.2, 0.38, 0.13];
 const MEADOW: RGB = [0.45, 0.5, 0.2];
@@ -58,7 +58,8 @@ export class Landscape {
 
   /** Mountain ridges (sharp crests from folded noise), only where the slow mask allows. */
   ridge(x: number, z: number): number {
-    const mask = smoothstep(0.05, 0.55, fbm(this.nMask, x / 2400, z / 2400, 3));
+    // (mountains most of the way: the slow mask leaves the odd plain between ranges)
+    const mask = smoothstep(-0.12, 0.4, fbm(this.nMask, x / 2400, z / 2400, 3));
     if (mask <= 0) return 0;
     const r = 1 - Math.abs(fbm(this.nRidge, x / 650, z / 650, 5, 0.52));
     return r * r * 230 * mask;
@@ -70,7 +71,8 @@ export class Landscape {
 
   /** The ground at a point, given its distance from the road and the road's height there. */
   ground(x: number, z: number, roadDist: number, roadY: number): Ground {
-    const wild = smoothstep(40, WILD_M, roadDist);
+    // the slopes start rising a stone's throw from the verge, so the road runs between them
+    const wild = smoothstep(25, WILD_M, roadDist);
     const raw = this.hills(x, z) + this.ridge(x, z) * wild;
     // a flat verge just under the road (clear of its banking), then a bank up or down to the land
     const blend = smoothstep(ROAD_HALF + 1.2, ROAD_HALF + 30, roadDist);
