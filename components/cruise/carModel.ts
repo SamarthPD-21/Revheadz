@@ -302,6 +302,8 @@ export function buildCar(cfg: VehicleConfig): CarModel {
   own.push(head, tail);
 
   const kind = cfg.ui.silhouette;
+  /** Where the exhausts come out (for the flames), when the body sets them. */
+  const tips: THREE.Vector3[] = [];
   const wheels: CarModel["wheels"] = [];
   const headlights: THREE.Vector3[] = [];
   const b = new Builder();
@@ -481,6 +483,7 @@ export function buildCar(cfg: VehicleConfig): CarModel {
 
     // exhaust tips through the diffuser
     for (const ez of [-0.42, 0.42]) {
+      tips.push(new THREE.Vector3(skin.x0 - 0.05, style.clearance + 0.1, ez));
       const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.055, 0.14, 16, 1, true), chromeM);
       tip.rotation.z = Math.PI / 2;
       tip.position.set(skin.x0 + 0.02, style.clearance + 0.1, ez);
@@ -513,7 +516,7 @@ export function buildCar(cfg: VehicleConfig): CarModel {
   root.traverse((o) => {
     if (o instanceof THREE.Mesh && o !== blob && o.material !== wellM) o.castShadow = true;
   });
-  const exhausts = exhaustTips(cfg).map(([x, y, z]) => new THREE.Vector3(x, y, z));
+  const exhausts = tips.length ? tips : exhaustTips(cfg).map(([x, y, z]) => new THREE.Vector3(x, y, z));
   const wheelbaseMid = wheels.length ? wheels.reduce((s, w) => s + w.r, 0) / wheels.length : 0.33;
   return {
     root,

@@ -13,6 +13,7 @@ import { Atmosphere, type Weather } from "./atmosphere";
 import { buildCar, type CarModel } from "./carModel";
 import { Puffs } from "./particles";
 import { World, type Range } from "./world";
+import { ExhaustFlames, SkidMarks } from "./effects";
 
 export type CameraMode = "chase" | "far" | "hood" | "drone" | "cinematic";
 export const CAMERA_MODES: CameraMode[] = ["chase", "far", "hood", "drone", "cinematic"];
@@ -63,6 +64,9 @@ export interface Look {
 const G = 9.81;
 const srgbColor = (r: number, g: number, b: number) => new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace);
 const tmpV = new THREE.Vector3();
+/** Tyre rubber on tarmac, and ruts torn into the ground. */
+const RUBBER = srgbColor(0.03, 0.03, 0.035);
+const RUT = srgbColor(0.16, 0.12, 0.08);
 const damp = (current: number, target: number, rate: number, dt: number) => current + (target - current) * (1 - Math.exp(-rate * dt));
 /** An angle brought into -π..π (for turning the short way round). */
 const wrapAngle = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
@@ -99,6 +103,12 @@ export class CruiseScene {
   private fz = 0;
   private yaw = 0;
   private readonly motion: Motion = { vy: 0, r: 0, delta: 0 };
+  private readonly pivot = new THREE.Vector3();
+  private flames!: ExhaustFlames;
+  private readonly skids = new SkidMarks();
+  private readonly rubberAt = new THREE.Vector3();
+  private readonly rubberFwd = new THREE.Vector3();
+  private readonly turned = new THREE.Vector3();
   /** Driver aids in use; null: the car's own. */
   aids: Aids | null = null;
   private chassis: Chassis;
@@ -172,6 +182,7 @@ export class CruiseScene {
     this.car = buildCar(cfg);
     this.chassis = chassisOf(cfg, this.car.length);
     this.mountCar();
+    this.scene.add(this.skids.mesh);
     this.putOnRoad(this.s, LANE_OFFSET);
     this.scene.add(this.carRoot);
     this.beam.castShadow = false;
@@ -270,6 +281,14 @@ export class CruiseScene {
     const inner = this.car.root;
     inner.position.x = -this.car.length / 2; // the car's middle sits on the road point
     this.carRoot.add(inner);
+    this.flames?.dispose();
+    this.flames = new ExhaustFlames(this.car.exhausts);
+    this.car.body.add(this.flames.group);
+  }
+
+  /** Fire from the exhaust: a backfire's bang, an overrun pop, a hard upshift's crack. */
+  burst(kind: "bang" | "pop" | "crack"): void {
+    this.flames.burst(kind);
   }
 
   resize(w: number, h: number, dpr: number): void {
@@ -398,7 +417,8 @@ export class CruiseScene {
     this.accelSm = damp(this.accelSm, accel, 3, dt);
     this.prevV = v;
     // the body on its springs: squats under power, dives on the brakes
-    const pitchTarget = THREE.MathUtils.clamp(accel * 0.0065, -0.05, 0.035);
+    // (about a degree and a half nose-down under hard braking: a real car's dive)
+    const pitchTarget = THREE.MathUtils.clamp(accel * 0.0028, -0.026, 0.018);
     this.pitchVel += ((pitchTarget - this.pitch) * 140 - this.pitchVel * 14) * dt;
     this.pitch += this.pitchVel * dt;
 
@@ -411,6 +431,8 @@ export class CruiseScene {
     this.updateRain(look.weather === "rain", v, heading);
     this.world.animate(this.time, look.weather === "rain" ? 1 : look.weather === "fog" ? 0.25 : 0);
     this.kickUp(dt, v);
+    this.flames.update(dt, this.time);
+    this.layRubber(v, drive);
     this.puffs.update(dt, 0.3 + 0.7 * (1 - this.atmo.light.night), this.size.h * this.renderer.getPixelRatio(), this.camera.fov);
     this.atmo.follow(this.camera.position, this.carRoot.position, this.time);
     if (this.bloomOn) this.composer.render(dt);
@@ -533,42 +555,85 @@ export class CruiseScene {
     const bike = this.chassis.bike;
     const c = Math.cos(this.yaw);
     const sn = Math.sin(this.yaw);
-    const L = this.car.length * 0.42;
-    const W = Math.max(0.3, this.car.width * 0.42);
-    const at = (fwd: number, side: number) => this.probe.at(this.fx + c * fwd - sn * side, this.fz + sn * fwd + c * side).y;
     const f = this.probe.at(this.fx, this.fz);
     this.footing = f;
     if (Number.isFinite(f.s)) this.s = f.s;
-    const hf = at(L, 0);
-    const hb = at(-L, 0);
-    const hl = at(0, -W);
-    const hr = at(0, W);
-    // ride on the crest, never sink into it; in the shallows the wheels stay on the bed
-    let y = Math.max(f.y, (hf + hb) / 2, (hl + hr) / 2);
-    if (f.depth > 0) y = Math.max(y, WATER_Y - 0.5);
-    const pitch = Math.atan2(hf - hb, 2 * L);
-    const roll = bike ? 0 : Math.atan2(hl - hr, 2 * W);
+    // the ground under each tyre, where the tyres actually are
+    const spots = this.car.wheels.map((w) => {
+      const x = w.node.position.x - this.car.length / 2;
+      const z = w.node.position.z;
+      return { x, z, h: this.probe.at(this.fx + c * x - sn * z, this.fz + sn * x + c * z).y };
+    });
+    const avg = (pick: (p: (typeof spots)[number]) => boolean) => {
+      const ps = spots.filter(pick);
+      if (!ps.length) return null;
+      const mean = (get: (p: (typeof spots)[number]) => number) => ps.reduce((a, p) => a + get(p), 0) / ps.length;
+      return { h: mean((p) => p.h), at: mean((p) => p.x), z: mean((p) => p.z) };
+    };
+    const front = avg((p) => p.x > 0);
+    const rear = avg((p) => p.x <= 0);
+    const left = avg((p) => p.z < -0.01);
+    const right = avg((p) => p.z > 0.01);
+    const pitch = front && rear ? Math.atan2(front.h - rear.h, front.at - rear.at) : 0;
+    const roll = !bike && left && right ? Math.atan2(left.h - right.h, right.z - left.z) : 0;
     if (!dt) {
-      this.carY = y;
       this.tiltP = pitch;
       this.tiltR = roll;
     } else {
-      this.carY = damp(this.carY, y, 20, dt);
-      this.tiltP = damp(this.tiltP, pitch, 12, dt);
-      this.tiltR = damp(this.tiltR, roll, 12, dt);
+      this.tiltP = damp(this.tiltP, pitch, 18, dt);
+      this.tiltR = damp(this.tiltR, roll, 18, dt);
     }
+    // stood so no tyre is below the ground at the tilt it has now (a contact point at (x, z) on
+    // the car sits x·sin(pitch) - z·sin(roll)·cos(pitch) above the car's origin)
+    const sP = Math.sin(this.tiltP);
+    const sR = Math.sin(this.tiltR) * Math.cos(this.tiltP);
+    let y = spots.length ? Math.max(...spots.map((p) => p.h - (p.x * sP - p.z * sR))) : f.y;
+    // in the shallows the wheels stay on the bed
+    if (f.depth > 0) y = Math.max(y, WATER_Y - 0.5);
+    // settling down is eased; rising never lags (that's what put cars into hillsides)
+    this.carY = !dt ? y : Math.max(y, damp(this.carY, y, 20, dt));
     const v = this.prevV;
     const latAccel = v * this.motion.r;
     // cars roll out of a bend on their springs; bikes lean into it
-    const rollTarget = bike ? Math.atan(latAccel / G) : THREE.MathUtils.clamp(-latAccel * 0.009, -0.07, 0.07);
+    // (a real car rolls 2-3 degrees at 1 g)
+    const rollTarget = bike ? Math.atan(latAccel / G) : THREE.MathUtils.clamp(-latAccel * 0.0045, -0.04, 0.04);
     this.roll = dt ? damp(this.roll, rollTarget, 6, dt) : rollTarget;
     // off the tarmac the body jiggles over the rough ground
     const rough = f.road ? 0 : Math.min(1, v / 12) * 0.018;
     this.car.body.position.y = rough * (Math.sin(this.time * 31) * 0.6 + Math.sin(this.time * 17.3) * 0.4);
     this.carRoot.position.set(this.fx, this.carY, this.fz);
     this.carRoot.rotation.set(this.tiltR + (bike ? this.roll : 0), -this.yaw, this.tiltP, "YZX");
-    this.car.body.rotation.set(bike ? 0 : this.roll, 0, this.pitch);
+    // the body pitches and rolls about its middle, at about hub height, not about the road
+    const bodyRoll = bike ? 0 : this.roll;
+    this.car.body.rotation.set(bodyRoll, 0, this.pitch);
+    const pivot = this.pivot.set(this.car.length / 2, this.car.wheelbaseMid + 0.12, 0);
+    const turned = this.turned.copy(pivot).applyEuler(this.car.body.rotation);
+    this.car.body.position.x = pivot.x - turned.x;
+    this.car.body.position.y += pivot.y - turned.y;
+    this.car.body.position.z = pivot.z - turned.z;
     for (const w of this.car.wheels) w.node.rotation.set(0, w.front ? -this.motion.delta : 0, -this.distance / w.r, "YZX");
+  }
+
+  /**
+   * Skid marks under any tyre that's sliding: the driven ones when they spin, the rears in a
+   * drift, all four when the brakes lock. Black rubber on the road, dark ruts off it.
+   */
+  private layRubber(v: number, drive: Drive) {
+    const f = this.footing;
+    const onRoad = !f || f.road;
+    const ground = onRoad ? RUBBER : RUT;
+    const rearSlide = Math.max(0, this.slide - 0.25) / 0.75;
+    const at = this.rubberAt;
+    const fwd = this.rubberFwd.set(Math.cos(this.yaw), 0, Math.sin(this.yaw));
+    this.car.wheels.forEach((w, i) => {
+      const driven = w.front ? this.chassis.rearDrive < 1 : true;
+      let amount = Math.max(drive.locked ? 0.9 : 0, w.front ? rearSlide * 0.35 : rearSlide, driven ? Math.max(0, this.spin - 0.15) * 1.4 : 0);
+      if (v < 0.5 && this.spin < 0.2) amount = 0;
+      if (f && f.depth > 0.05) amount = 0; // nothing to mark under water
+      w.node.getWorldPosition(at);
+      at.y = this.probe.at(at.x, at.z).y;
+      this.skids.lay(i, at, fwd, this.chassis.bike ? 0.12 : 0.22, Math.min(1, amount), ground);
+    });
   }
 
   /** What the rear wheels throw up: dust off the road, spray in water, a mist on wet tarmac. */
@@ -585,7 +650,8 @@ export class CruiseScene {
       return;
     }
     // spinning wheels throw it up even standing still
-    const rate = kind === "smoke" ? 26 * Math.max(spin, this.slide) : (kind === "spray" ? 1.5 : kind === "dust" ? 0.9 : 0.35) * Math.max(v, spin * 20);
+    // a drift or a burnout pours out smoke, more the harder and faster the tyres are sliding
+    const rate = kind === "smoke" ? (30 + v * 1.2) * Math.max(spin, this.slide) : (kind === "spray" ? 1.5 : kind === "dust" ? 0.9 : 0.35) * Math.max(v, spin * 20);
     this.puffDue += rate * dt;
     if (this.puffDue < 1) return;
     const color =
@@ -597,7 +663,7 @@ export class CruiseScene {
             ? srgbColor(0.88, 0.88, 0.9)
             : srgbColor(0.72, 0.74, 0.78);
     const [life, size, opacity, lift] =
-      kind === "dust" ? [1.7, 0.7, 0.35 + 0.3 * (f?.dry ?? 0.5), 1.4] : kind === "spray" ? [0.9, 0.5, 0.6, 3] : kind === "smoke" ? [2.4, 0.9, 0.42, 0.9] : [0.8, 0.9, 0.16, 0.6];
+      kind === "dust" ? [1.7, 0.7, 0.35 + 0.3 * (f?.dry ?? 0.5), 1.4] : kind === "spray" ? [0.9, 0.5, 0.6, 3] : kind === "smoke" ? [3.2, 1.3, 0.38, 0.7] : [0.8, 0.9, 0.16, 0.6];
     this.carRoot.updateMatrixWorld(true);
     const fwd = tmpV.set(1, 0, 0).transformDirection(this.carRoot.matrixWorld).clone();
     const at = new THREE.Vector3();
@@ -607,7 +673,9 @@ export class CruiseScene {
         if (w.front) continue;
         w.node.getWorldPosition(at);
         const r = () => (this.rand() - 0.5) * 2;
-        this.puffs.emit(at.x + r() * 0.2, at.y - w.r * 0.6, at.z + r() * 0.2, -fwd.x * v * 0.12 + r(), lift * (0.6 + this.rand() * 0.6), -fwd.z * v * 0.12 + r(), life * (0.7 + this.rand() * 0.6), size, color, opacity);
+        // (smoke starts above the road so its puffs don't cut flat where they meet it)
+        const y0 = kind === "smoke" ? at.y + size * 0.25 : at.y - w.r * 0.6;
+        this.puffs.emit(at.x + r() * 0.2, y0, at.z + r() * 0.2, -fwd.x * v * 0.12 + r(), lift * (0.6 + this.rand() * 0.6), -fwd.z * v * 0.12 + r(), life * (0.7 + this.rand() * 0.6), size, color, opacity);
       }
     }
   }
@@ -752,6 +820,17 @@ export class CruiseScene {
     else this.camLook.lerp(look, 1 - Math.exp(-dt * 14));
     this.lastCarPos.copy(carPos);
     cam.lookAt(this.camLook);
+    // the road comes up through the camera: a fine hum at speed on tarmac, a jolt and a judder
+    // over rough ground, a shudder in a slide
+    if (mode !== "drone" && dt) {
+      const f = this.footing;
+      const rough = f && !f.road ? Math.min(1, v / 15) * 0.006 : 0;
+      const hum = Math.min(1, (v / 70) ** 2) * 0.0011;
+      const shake = hum + rough + this.slide * 0.0018;
+      const t = this.time;
+      cam.rotateX(shake * (Math.sin(t * 37.1) * 0.6 + Math.sin(t * 61.7) * 0.4));
+      cam.rotateY(shake * 0.6 * (Math.sin(t * 29.3 + 1.3) * 0.7 + Math.sin(t * 53.9) * 0.3));
+    }
     // the faster you go, the wider it opens up
     const fov0 = this.fovBase + (mode === "far" ? -8 : mode === "drone" ? -13 : 0);
     cam.fov = damp(cam.fov, fov0 + Math.min(v, 80) * 0.18, 2, dt || 1);
@@ -788,6 +867,8 @@ export class CruiseScene {
     this.rain.geometry.dispose();
     this.rain.material.dispose();
     this.puffs.dispose();
+    this.flames.dispose();
+    this.skids.dispose();
     this.composer.dispose();
     this.renderer.dispose();
   }
