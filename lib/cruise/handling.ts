@@ -55,7 +55,7 @@ export function chassisOf(cfg: VehicleConfig, lengthM: number): Chassis {
   const [offRoad, downforce] = BODY[cfg.ui.silhouette] ?? [0.85, 0];
   return {
     massKg: roadModel(cfg).massKg,
-    wheelbase: bike ? 1.45 : Math.min(3.0, Math.max(2.3, lengthM * 0.6)),
+    wheelbase: bike ? 1.45 : (spec.dims?.[3] ?? Math.min(3.0, Math.max(2.3, lengthM * 0.6))),
     front: spec.front,
     rearDrive: spec.drive === "awd" ? 0.6 : 1,
     bike,
