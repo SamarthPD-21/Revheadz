@@ -155,6 +155,56 @@ function addSolid(b: Builder, s: Solid, mat: (s: Solid) => THREE.Material) {
   }
 }
 
+/**
+ * A part from the strip's kit, rounded off: each four-cornered section becomes a rounded
+ * rectangle (a superellipse inside its corners), lofted between the two ends and capped, so
+ * fairings, tanks, limbs and wings come out moulded instead of boxy. Helmets become spheres.
+ */
+function addRounded(b: Builder, s: Solid, m: THREE.Material, into: THREE.Object3D): boolean {
+  // a helmet: the white solid round the rider's or driver's head
+  const [r0, g0, b0] = s.color;
+  if (r0 > 220 && g0 > 220 && b0 > 220 && !s.flat) {
+    const pts = s.faces.flat();
+    const ext = [0, 1, 2].map((k) => Math.max(...pts.map((p) => p[k])) - Math.min(...pts.map((p) => p[k])));
+    const r = Math.max(0.12, Math.min(ext[0], ext[1]) / 2);
+    const helmet = new THREE.Mesh(new THREE.SphereGeometry(r, 20, 14), m);
+    helmet.position.set(s.center[0], s.center[1], s.center[2]);
+    into.add(helmet);
+    return true;
+  }
+  if (s.faces.length !== 6 || s.faces[0].length !== 4 || s.faces[1].length !== 4 || s.flat) return false;
+  const A = s.faces[0];
+  // the far end, its corners matched to the near end's: a loft keeps them in order; a box's far
+  // face runs the other way round
+  const F = s.faces[1];
+  const B = s.faces[2][1] === A[1] ? F : [F[0], F[3], F[2], F[1]];
+  const K = 16;
+  const ring = (Q: V[]): V[] =>
+    Array.from({ length: K }, (_, k) => {
+      const t = (k / K) * Math.PI * 2;
+      // a superellipse (power 4): squarish with round corners
+      const c = Math.cos(t);
+      const sn = Math.sin(t);
+      const u = 0.5 + 0.5 * Math.sign(c) * Math.pow(Math.abs(c), 0.5);
+      const v = 0.5 + 0.5 * Math.sign(sn) * Math.pow(Math.abs(sn), 0.5);
+      // bilinear across the section's four corners
+      return [0, 1, 2].map((i) => (1 - u) * (1 - v) * Q[0][i] + u * (1 - v) * Q[1][i] + u * v * Q[2][i] + (1 - u) * v * Q[3][i]) as V;
+    });
+  const ra = ring(A);
+  const rb = ring(B);
+  const out = (p: V): V => [p[0] - s.center[0], p[1] - s.center[1], p[2] - s.center[2]];
+  for (let k = 0; k < K; k++) {
+    const k1 = (k + 1) % K;
+    const mid: V = [(ra[k][0] + rb[k1][0]) / 2, (ra[k][1] + rb[k1][1]) / 2, (ra[k][2] + rb[k1][2]) / 2];
+    b.quad(m, ra[k], ra[k1], rb[k1], rb[k], out(mid));
+  }
+  for (const [r, end] of [[ra, A], [rb, B]] as const) {
+    const c = end.reduce<V>((acc, p) => [acc[0] + p[0] / 4, acc[1] + p[1] / 4, acc[2] + p[2] / 4], [0, 0, 0]);
+    for (let k = 0; k < K; k++) b.tri(m, c, r[k], r[(k + 1) % K], out(c));
+  }
+  return true;
+}
+
 const wheelGeo = new Map<string, THREE.BufferGeometry>();
 /** Geometry shared between wheels of the same size. */
 function cached(key: string, make: () => THREE.BufferGeometry) {
@@ -269,8 +319,9 @@ export function buildCar(cfg: VehicleConfig): CarModel {
   };
 
   if (kind === "formula") {
-    for (const s of formulaParts(acc)) addSolid(b, s, solidMat);
+    for (const s of formulaParts(acc)) if (!addRounded(round, s, solidMat(s), body)) addSolid(b, s, solidMat);
     b.build(body);
+    round.build(body, true);
     for (const w of FORMULA_WHEELS) {
       for (const side of [1, -1] as const) {
         const wh = makeWheel(w.r, w.z[1] - w.z[0], acc, side, 6);
@@ -289,8 +340,9 @@ export function buildCar(cfg: VehicleConfig): CarModel {
   } else if (cfg.type === "bike") {
     const sport = kind !== "cruiser";
     const { R, RX, FX } = bikeLayout(sport);
-    for (const s of bikeParts(sport, acc)) addSolid(b, s, solidMat);
+    for (const s of bikeParts(sport, acc)) if (!addRounded(round, s, solidMat(s), body)) addSolid(b, s, solidMat);
     b.build(body);
+    round.build(body, true);
     for (const [x, front] of [[RX, false], [FX, true]] as const) {
       const wh = makeWheel(R, front ? 0.12 : 0.14, acc, 1, 5);
       wh.position.set(x, R, 0);
