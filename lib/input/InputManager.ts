@@ -63,7 +63,9 @@ export class InputManager {
     if (now < this.blipUntil) throttle = Math.max(throttle, BLIP_THROTTLE);
     let brake = this.touchBrake;
     for (const k of BRAKE_KEYS) if (this.keys.has(k)) brake = true;
-    return { throttle, brake: brake ? 1 : 0 };
+    // spacebar: hold for the handbrake (locks the rear wheels)
+    const handbrake = this.keys.has("Space");
+    return { throttle, brake: brake ? 1 : 0, handbrake };
   }
 
   /** True while a keyboard key (KeyboardEvent.code) is held. */
@@ -81,6 +83,7 @@ export class InputManager {
     const l = this.levels(now);
     out.throttle = l.throttle;
     out.brake = l.brake;
+    out.handbrake = l.handbrake;
   }
 
   private clear = () => {
@@ -102,7 +105,6 @@ export class InputManager {
       case "KeyQ": this.handlers.shiftDown(); break;
       case "KeyN": this.handlers.neutral(); break;
       case "KeyI": this.handlers.ignition(); break;
-      case "Space": this.blip(); break;
     }
   };
 

@@ -145,6 +145,32 @@ function paint(rgb: RGB) {
   return new THREE.MeshPhysicalMaterial({ color: toColor(rgb), metalness: 0.35, roughness: 0.32, clearcoat: 1, clearcoatRoughness: 0.06 });
 }
 
+let carbonTex: THREE.CanvasTexture | null = null;
+/** A dark twill weave for carbon fibre wings, splitters and diffusers. */
+function carbonMap(): THREE.CanvasTexture {
+  if (!carbonTex) {
+    const c = document.createElement("canvas");
+    c.width = c.height = 128;
+    const g = c.getContext("2d")!;
+    g.fillStyle = "#1c1d21";
+    g.fillRect(0, 0, 128, 128);
+    g.strokeStyle = "#2c2d34";
+    g.lineWidth = 2;
+    for (let i = 0; i < 128; i += 10) {
+      g.beginPath(); g.moveTo(i, 0); g.lineTo(i + 6, 12); g.stroke();
+      g.beginPath(); g.moveTo(128 - i, 128); g.lineTo(128 - i - 6, 116); g.stroke();
+    }
+    g.strokeStyle = "#0f1014";
+    g.lineWidth = 1;
+    for (let i = 2; i < 128; i += 10) {
+      g.beginPath(); g.moveTo(i + 6, 12); g.lineTo(i + 12, 0); g.stroke();
+      g.beginPath(); g.moveTo(128 - i - 6, 116); g.lineTo(128 - i - 12, 128); g.stroke();
+    }
+    carbonTex = new THREE.CanvasTexture(c);
+  }
+  return carbonTex;
+}
+
 /** A solid from the drag strip's model kit, added face by face. */
 function addSolid(b: Builder, s: Solid, mat: (s: Solid) => THREE.Material) {
   const m = mat(s);
@@ -296,6 +322,9 @@ export function buildCar(cfg: VehicleConfig): CarModel {
   const trimM = std("trim", () => new THREE.MeshStandardMaterial({ color: 0x141418, roughness: 0.75 }));
   const wingM = std("wing", () => new THREE.MeshStandardMaterial({ color: 0x2c2c34, roughness: 0.55, metalness: 0.2 }));
   const chromeM = std("chrome", () => new THREE.MeshStandardMaterial({ color: 0xa8a8b0, metalness: 0.9, roughness: 0.25 }));
+  const carbonM = std("carbon", () => new THREE.MeshStandardMaterial({ color: 0x1c1d21, metalness: 0.45, roughness: 0.28, map: carbonMap() }));
+  const carbonDarkM = std("carbonDark", () => new THREE.MeshStandardMaterial({ color: 0x0e0f12, metalness: 0.4, roughness: 0.35, map: carbonMap() }));
+  const tintedGlassM = std("tinted", () => new THREE.MeshPhysicalMaterial({ color: 0x05070a, metalness: 0.05, roughness: 0.03, clearcoat: 1, side: THREE.DoubleSide, transparent: true, opacity: 0.5, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }));
   const wellM = std("well", () => new THREE.MeshStandardMaterial({ color: 0x0a0a0c, roughness: 0.95, side: THREE.DoubleSide }));
   const head = new THREE.MeshStandardMaterial({ color: 0xf2efe6, emissive: 0xfff6e0, emissiveIntensity: 0.6, roughness: 0.2 });
   const tail = new THREE.MeshStandardMaterial({ color: 0x5a0606, emissive: 0xff1a12, emissiveIntensity: 0.5, roughness: 0.3 });
@@ -372,7 +401,9 @@ export function buildCar(cfg: VehicleConfig): CarModel {
     const main = shape.bodies.reduce((a, c) => (Math.abs(area(c)) > Math.abs(area(a)) ? c : a));
     const style = BODY_STYLE[kind] ?? BODY_STYLE.coupe;
     const skin = loftBody(shape, main, style);
-    const partMat: Record<Part, THREE.Material> = { paint: paintM, roof: livery.darkRoof ? darkRoofM : paintM, glass: glassM, dark: wellM };
+    const partMat: Record<Part, THREE.Material> = { paint: paintM, roof: livery.darkRoof ? darkRoofM : paintM, glass: feat.tinted ? tintedGlassM : glassM, dark: wellM };
+    const wingMat = feat.carbon ? carbonM : wingM;
+    const detailM = feat.carbon ? carbonDarkM : trimM;
     for (const [part, g] of skin.geometries) {
       const mesh = new THREE.Mesh(g, partMat[part]);
       mesh.castShadow = part !== "dark";
@@ -385,13 +416,13 @@ export function buildCar(cfg: VehicleConfig): CarModel {
       for (let i = 0; i < poly.length; i++) {
         const [ax, ay] = poly[i];
         const [bx, by] = poly[(i + 1) % poly.length];
-        round.quad(wingM, [ax, ay, hw], [bx, by, hw], [bx, by, -hw], [ax, ay, -hw], [by - ay, ax - bx, 0]);
+        round.quad(wingMat, [ax, ay, hw], [bx, by, hw], [bx, by, -hw], [ax, ay, -hw], [by - ay, ax - bx, 0]);
       }
       const tris = THREE.ShapeUtils.triangulateShape(poly.map(([x, y]) => new THREE.Vector2(x, y)), []);
       for (const [i, j, k] of tris) {
         const P = (n: number, sz: number): V => [poly[n][0], poly[n][1], sz * hw];
-        b.tri(wingM, P(i, 1), P(j, 1), P(k, 1), [0, 0, 1]);
-        b.tri(wingM, P(i, -1), P(j, -1), P(k, -1), [0, 0, -1]);
+        b.tri(wingMat, P(i, 1), P(j, 1), P(k, 1), [0, 0, 1]);
+        b.tri(wingMat, P(i, -1), P(j, -1), P(k, -1), [0, 0, -1]);
       }
     }
     round.build(body, true);
@@ -461,9 +492,79 @@ export function buildCar(cfg: VehicleConfig): CarModel {
     // grille and splitter
     const gy = Math.max(style.clearance + 0.12, hy - 0.22);
     const gx = (frontXAt(gy) ?? shape.len) - 0.04;
-    const grille = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.13, skin.halfWidth(gx) * 1.1), trimM);
-    grille.position.set(gx, gy, 0);
-    body.add(grille);
+    const gw = skin.halfWidth(gx) * 0.92;
+    if (feat.grille !== "none") {
+      const barM = detailM;
+      if (feat.grille === "slat") {
+        for (let i = 0; i < 5; i++) {
+          const bar = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.14, 0.05), barM);
+          bar.position.set(gx, gy + 0.07, -gw + (gw * 2 / 4) * i);
+          body.add(bar);
+        }
+      } else if (feat.grille === "mesh") {
+        for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) {
+          const m = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.025, 0.05), barM);
+          m.position.set(gx, gy - 0.06 + j * 0.045, -gw + (gw * 2 / 3) * i);
+          body.add(m);
+        }
+      } else if (feat.grille === "horse") {
+        const oval = new THREE.Mesh(new THREE.CylinderGeometry(gw * 0.55, gw * 0.55, 0.06, 16), barM);
+        oval.rotation.x = Math.PI / 2;
+        oval.position.set(gx, gy + 0.03, 0);
+        body.add(oval);
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(0.04, gw * 1.1, 0.06), barM);
+        bar.position.set(gx, gy, 0);
+        body.add(bar);
+      } else if (feat.grille === "kidney") {
+        for (const sz of [1, -1]) {
+          const k = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.16, gw * 0.42), barM);
+          k.position.set(gx, gy + 0.08, sz * gw * 0.55);
+          body.add(k);
+        }
+      } else if (feat.grille === "big") {
+        const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.2, gw * 1.05), barM);
+        mouth.position.set(gx, gy + 0.1, 0);
+        body.add(mouth);
+        const surround = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.24, gw * 1.15), paintM);
+        surround.position.set(gx - 0.015, gy + 0.12, 0);
+        body.add(surround);
+      } else if (feat.grille === "eggcrate") {
+        for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) {
+          const c = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.05), barM);
+          c.position.set(gx, gy - 0.08 + j * 0.045, -gw + (gw * 2 / 5) * i);
+          body.add(c);
+        }
+      } else if (feat.grille === "intake") {
+        const lip = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.17, gw * 1.1), barM);
+        lip.position.set(gx, gy + 0.085, 0);
+        body.add(lip);
+        const inner = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.13, gw * 0.9), wellM);
+        inner.position.set(gx + 0.04, gy + 0.085, 0);
+        body.add(inner);
+      }
+    }
+    // front splitter or lip under the nose
+    if (feat.splitter === "lip") {
+      const lip = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.035, skin.halfWidth(skin.x0 + 0.3) * 1.15), detailM);
+      lip.position.set(skin.x0 + 0.25, style.clearance, 0);
+      body.add(lip);
+    } else if (feat.splitter === "wing") {
+      const wing = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.05, skin.halfWidth(skin.x0 + 0.5) * 1.3), detailM);
+      wing.position.set(skin.x0 + 0.5, style.clearance - 0.015, 0);
+      body.add(wing);
+    }
+    // canards ahead of the front wheels
+    if (feat.canards) {
+      const fw = shape.wheels.slice().sort((a, b) => b.x - a.x)[0];
+      const fx = fw.x + fw.r * 0.5;
+      const fy = style.clearance + 0.14;
+      for (const sz of [1, -1]) {
+        const c = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.07, 0.15), detailM);
+        c.position.set(fx, fy, sz * (skin.halfWidth(fx) - 0.02));
+        c.rotation.z = sz * -0.4;
+        body.add(c);
+      }
+    }
     const ty = Math.min(skin.topAt(skin.x0 + 0.25) - 0.08, 0.78);
     const tx = (rearXAt(main, ty) ?? 0) - 0.005;
     const thw = skin.halfWidth(tx + 0.05);
@@ -508,36 +609,17 @@ export function buildCar(cfg: VehicleConfig): CarModel {
       const lift = tall ? 0.22 : 0.3;
       const wx = skin.x0 + (tall ? 0.24 : 0.3);
       const wy = skin.topAt(wx) + lift;
-      const plane = new THREE.Mesh(new THREE.BoxGeometry(tall ? 0.24 : 0.34, 0.03, span * (tall ? 0.95 : 0.9)), tall ? paintM : wingM);
+      const plane = new THREE.Mesh(new THREE.BoxGeometry(tall ? 0.24 : 0.34, 0.03, span * (tall ? 0.95 : 0.9)), tall ? paintM : wingMat);
       plane.position.set(wx, wy, 0);
       plane.rotation.z = 0.12;
       body.add(plane);
       for (const sz of [1, -1]) {
-        const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, lift, 0.025), wingM);
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, lift, 0.025), wingMat);
         post.position.set(wx + 0.02, wy - lift / 2, sz * span * 0.28);
         body.add(post);
-        const plate = new THREE.Mesh(new THREE.BoxGeometry(tall ? 0.26 : 0.38, 0.13, 0.012), wingM);
+        const plate = new THREE.Mesh(new THREE.BoxGeometry(tall ? 0.26 : 0.38, 0.13, 0.012), wingMat);
         plate.position.set(wx, wy + 0.02, sz * span * (tall ? 0.475 : 0.45));
         body.add(plate);
-      }
-    }
-
-    // on the bonnet
-    const bx = skin.x1 - Math.min(0.95, (skin.x1 - skin.x0) * 0.2);
-    const by = skin.topAt(bx);
-    if (feat.bonnet === "scoop") {
-      const scoop = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.08, 0.5), paintM);
-      scoop.position.set(bx, by + 0.035, 0);
-      scoop.rotation.z = -0.05;
-      body.add(scoop);
-      const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.05, 0.4), trimM);
-      mouth.position.set(bx + 0.25, by + 0.045, 0);
-      body.add(mouth);
-    } else if (feat.bonnet === "vents") {
-      for (const sz of [1, -1]) {
-        const vent = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.012, 0.13), trimM);
-        vent.position.set(bx, by + 0.006, sz * 0.32);
-        body.add(vent);
       }
     }
 
@@ -554,27 +636,26 @@ export function buildCar(cfg: VehicleConfig): CarModel {
       }
     }
     // diffuser under the tail
-    const dif = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, thw * 1.4), trimM);
+    const dif = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, thw * 1.4), feat.carbon ? carbonM : detailM);
     dif.position.set(skin.x0 + 0.17, style.clearance + 0.1, 0);
     body.add(dif);
+    if (feat.diffuser === "fins") {
+      for (let i = 0; i < 5; i++) {
+        const fin = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.14, 0.15), feat.carbon ? carbonM : detailM);
+        fin.position.set(skin.x0 + 0.18 + i * 0.06, style.clearance + 0.17, -thw * 0.62 + i * 0.31);
+        body.add(fin);
+      }
+    }
 
-    // door mirrors at the foot of the windscreen
-    const win = shape.windows.length ? Math.max(...shape.windows.map((p) => p[0])) : shape.len * 0.62;
-    const mx = Math.min(win - 0.12, shape.len * 0.7);
-    for (const sz of [1, -1]) {
-      const my = shape.belt + 0.07;
-      const mz = skin.halfWidth(mx) * 0.9 + 0.09;
-      const mirror = new THREE.Mesh(lensGeo, paintM);
-      mirror.scale.set(0.08, 0.05, 0.085);
-      mirror.position.set(mx, my, sz * mz);
-      body.add(mirror);
-      const stalk = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.02, 0.12), trimM);
-      stalk.position.set(mx + 0.01, my - 0.03, sz * (mz - 0.07));
-      body.add(stalk);
-      const glassFace = new THREE.Mesh(new THREE.CircleGeometry(0.042, 12), chromeM);
-      glassFace.position.set(mx - 0.065, my, sz * mz);
-      glassFace.rotation.y = -Math.PI / 2;
-      body.add(glassFace);
+    // make-and-model lettering plates on the tail
+    if (feat.badges) {
+      const badgeM = std("badge", () => new THREE.MeshStandardMaterial({ color: 0xececf0, metalness: 0.3, roughness: 0.4 }));
+      const plate = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.05, 0.4), badgeM);
+      plate.position.set(skin.x1 - 0.08, shape.belt + 0.2, 0);
+      body.add(plate);
+      const small = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.03, 0.26), badgeM);
+      small.position.set(skin.x1 - 0.08, shape.belt + 0.13, 0);
+      body.add(small);
     }
     b.build(body);
 
@@ -582,10 +663,10 @@ export function buildCar(cfg: VehicleConfig): CarModel {
     const ey = style.clearance + (feat.exhaust === "centre" ? 0.2 : 0.1);
     const pipes = feat.exhaust === "centre" ? [-0.09, 0.09] : feat.exhaust === "quad" ? [-0.55, -0.4, 0.4, 0.55] : [-0.42, 0.42];
     for (const ez of pipes) {
-      tips.push(new THREE.Vector3(skin.x0 - 0.05, ey, ez));
+      tips.push(new THREE.Vector3(skin.x0 + 0.02, ey, ez));
       const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.055, 0.14, 16, 1, true), chromeM);
       tip.rotation.z = Math.PI / 2;
-      tip.position.set(skin.x0 + 0.02, ey, ez);
+      tip.position.set(skin.x0 + 0.06, ey, ez);
       body.add(tip);
     }
 

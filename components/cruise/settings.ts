@@ -15,8 +15,9 @@ export interface Settings {
   free: boolean;
   /** Frames a second to aim for ("max": as fast as the screen refreshes). */
   fps: "60" | "90" | "120" | "max";
-  /** Driver aids: the ones the car was built with, all of them, or none. */
-  aids: "car" | "on" | "off";
+  /** Driver aids: "as built" uses the car's own factory ABS / TC / ESC; otherwise the three are set separately below. */
+  aidsAsBuilt: boolean;
+  aids: { abs: boolean; tc: boolean; esc: boolean };
 
   // display and graphics
   /** Resolution: adapt to hold the frame rate, or a fixed share of the screen's (in %). */
@@ -48,7 +49,8 @@ export const DEFAULTS: Settings = {
   gears: "auto",
   free: false,
   fps: "90",
-  aids: "car",
+  aidsAsBuilt: true,
+  aids: { abs: true, tc: true, esc: true },
   scale: "auto",
   distance: "medium",
   vegetation: "high",

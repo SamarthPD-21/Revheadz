@@ -136,7 +136,8 @@ export class ExhaustFlames {
       geo.rotateZ(Math.PI / 2); // apex towards -x
       geo.translate(-0.375, 0, 0);
       const m = new THREE.Mesh(geo, this.material);
-      m.position.copy(tip);
+      // start just inside the pipe so the flame emerges cleanly without clipping the rear
+      m.position.copy(tip).add(new THREE.Vector3(0.04, 0, 0));
       m.visible = false;
       m.frustumCulled = false;
       this.flames.push(m);

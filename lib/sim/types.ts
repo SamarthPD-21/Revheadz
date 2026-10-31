@@ -54,6 +54,8 @@ export interface SimInput {
   abs?: boolean;
   /** Any other force holding the car back, N: soft ground, the tyres scrubbing through a bend. */
   resist?: number;
+  /** The parking brake: pulls hard on the rear wheels, locking them and breaking the back end loose. */
+  handbrake?: boolean;
 }
 
 /**

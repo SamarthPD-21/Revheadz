@@ -452,6 +452,12 @@ export class Simulation {
           s.abs = true;
         }
       }
+      // the parking brake: hauls hard on the rear wheels, locking them regardless of ABS
+      if (this.input.handbrake) {
+        braking += mass * (model ? model.brakeDecel : this.cfg.dynamics.brakeDecel) * 0.85;
+        s.locked = true;
+        s.abs = false;
+      }
       force -= braking;
       if (this.input.resist) force -= this.input.resist;
     }

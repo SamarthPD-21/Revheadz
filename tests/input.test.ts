@@ -46,13 +46,14 @@ describe("InputManager", () => {
     expect(handlers.ignition).toHaveBeenCalledTimes(1);
   });
 
-  it("space blips the throttle briefly, then lets go", () => {
+  it("space holds the handbrake only while the key is down", () => {
     const { input, out, press } = setup();
     press("keydown", "Space");
-    input.apply(out, performance.now());
-    expect(out.throttle).toBeGreaterThan(0.5);
-    input.apply(out, performance.now() + 500);
-    expect(out.throttle).toBe(0);
+    input.apply(out);
+    expect(out.handbrake).toBe(true);
+    press("keyup", "Space");
+    input.apply(out);
+    expect(out.handbrake).toBe(false);
   });
 
   it("touch throttle maps position straight to 0-1 and clamps", () => {

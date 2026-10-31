@@ -63,16 +63,9 @@ const MOMENTS = [
 ];
 /** Game hours per real second when the day is going by (a day in 24 minutes). */
 const HOURS_PER_S = 1 / 60;
-const AIDS: { id: Settings["aids"]; label: string; title: string }[] = [
-  { id: "car", label: "As built", title: "The aids this car left the factory with" },
-  { id: "on", label: "All on", title: "ABS, traction control and stability control" },
-  { id: "off", label: "Off", title: "No ABS, no traction control, no stability control" },
-];
-const ALL_AIDS: Aids = { abs: true, tc: true, esc: true };
-const NO_AIDS: Aids = { abs: false, tc: false, esc: false };
-const aidList = (a: Aids) => [a.abs && "ABS", a.tc && "TC", a.esc && "ESC"].filter(Boolean).join(" · ") || "none";
 const STEER_LEFT = ["KeyA", "ArrowLeft"];
 const clampUnit = (v: number) => Math.max(-1, Math.min(1, v));
+const aidNames = (a: Aids) => [a.abs && "ABS", a.tc && "TC", a.esc && "ESC"].filter(Boolean).join(" · ") || "none";
 const STEER_RIGHT = ["KeyD", "ArrowRight"];
 
 /** The world you were in: its road, where you'd got to, and your trip so far. */
@@ -395,7 +388,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       // free roam: grass and dirt drag at the wheels, water much more, and deep water stops you dead
       if (scene.freeRoam !== s.free) scene.setFreeRoam(s.free);
       const under = scene.surface;
-      const aids = s.aids === "car" ? scene.carAids : s.aids === "on" ? ALL_AIDS : NO_AIDS;
+      const aids = s.aidsAsBuilt ? scene.carAids : s.aids;
       scene.aids = aids;
       sim.input.tc = aids.tc;
       sim.input.abs = aids.abs;
@@ -689,15 +682,29 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
           </div>
           <div className="cruise-row">
             <span className="cruise-label">Driver aids</span>
-            <span className="cruise-hint" title="What this car came with">{vehicle.name}: {aidList(rig.carAids)}</span>
+            <span className="cruise-hint" title="What this car came with">{vehicle.name}: {aidNames(rig.carAids)}</span>
           </div>
-          <div className="segmented" role="group" aria-label="Driver aids">
-            {AIDS.map((a) => (
-              <button key={a.id} type="button" aria-pressed={settings.aids === a.id} onClick={() => update({ aids: a.id })} title={a.title}>
-                {a.label}
+          <div className="cruise-row cruise-toggles">
+            <button type="button" className="track-toggle" aria-pressed={settings.aidsAsBuilt} onClick={() => update({ aidsAsBuilt: !settings.aidsAsBuilt })}>
+              As built ({aidNames(rig.carAids) || "none"})
+            </button>
+          </div>
+          {!settings.aidsAsBuilt && (
+            <>
+              <div className="cruise-row"><span className="cruise-label">ABS</span></div>
+              <button type="button" className="track-toggle" aria-pressed={settings.aids.abs} onClick={() => update({ aids: { ...settings.aids, abs: !settings.aids.abs } })}>
+                {settings.aids.abs ? "ABS on" : "ABS off"}
               </button>
-            ))}
-          </div>
+              <div className="cruise-row"><span className="cruise-label">Traction control</span></div>
+              <button type="button" className="track-toggle" aria-pressed={settings.aids.tc} onClick={() => update({ aids: { ...settings.aids, tc: !settings.aids.tc } })}>
+                {settings.aids.tc ? "TC on" : "TC off"}
+              </button>
+              <div className="cruise-row"><span className="cruise-label">Stability control</span></div>
+              <button type="button" className="track-toggle" aria-pressed={settings.aids.esc} onClick={() => update({ aids: { ...settings.aids, esc: !settings.aids.esc } })}>
+                {settings.aids.esc ? "ESC on" : "ESC off"}
+              </button>
+            </>
+          )}
           <div className="cruise-row cruise-toggles">
             <button type="button" className="track-toggle" aria-pressed={settings.autopilot} onClick={() => update({ autopilot: !settings.autopilot })}>
               Autopilot (T)
