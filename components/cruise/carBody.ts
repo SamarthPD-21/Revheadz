@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { toCreasedNormals } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { CarShape, XY } from "../drag/scene25d";
 
 /**
@@ -19,6 +20,8 @@ export interface BodyOptions {
   noseRound: number;
   /** Roof width as a share of the body's. */
   roofWidth: number;
+  /** How far the flanks bulge out over the wheels, m (fender flares). */
+  flare?: number;
 }
 
 /** Highest and lowest points of a closed profile on the vertical line at x. */
@@ -51,6 +54,8 @@ export interface Body {
   halfWidth(x: number): number;
   /** Top of the body at a point along it. */
   topAt(x: number): number;
+  /** 0..1: how much of the flare is under this point along the car (1 over a wheel's centre). */
+  flareAt(x: number): number;
   x0: number;
   x1: number;
 }
@@ -83,6 +88,16 @@ export function loftBody(shape: CarShape, main: XY[], o: BodyOptions): Body {
       if (Math.abs(dx) < R) y = Math.max(y, w.r + Math.sqrt(R * R - dx * dx));
     }
     return y;
+  };
+  const FLARE = o.flare ?? 0.035;
+  /** 1 over each wheel's centre, easing to 0 a little past its arch. */
+  const flareAt = (x: number) => {
+    let f = 0;
+    for (const w of shape.wheels) {
+      const d = Math.abs(x - w.x) / (w.r + 0.32);
+      if (d < 1) f = Math.max(f, 0.5 + 0.5 * Math.cos(Math.PI * d));
+    }
+    return f;
   };
 
   // stations along the car, closer together where the shape changes fastest (the ends)
@@ -117,7 +132,10 @@ export function loftBody(shape: CarShape, main: XY[], o: BodyOptions): Body {
     for (let i = 1; i <= SIDE; i++) {
       const s = i / SIDE;
       const y = sideBot + (yS - sideBot) * s;
-      const z = hw * (1 - 0.045 * Math.pow(1 - s, 3) - 0.025 * Math.pow(s, 5));
+      const z =
+        hw * (1 - 0.045 * Math.pow(1 - s, 3) - 0.025 * Math.pow(s, 5)) +
+        // the flare bulges the lower flank over each wheel and fades out before the shoulder
+        FLARE * flareAt(x) * Math.sin(Math.PI * Math.min(1, s / 0.85));
       pts.push({ z, y });
       parts.push("paint");
     }
@@ -289,31 +307,12 @@ export function loftBody(shape: CarShape, main: XY[], o: BodyOptions): Body {
   }
   if (glass.length) buckets.set("glass", glass);
 
+  // smooth across gentle curves, crisp where faces meet at more than 30 degrees
+  // (the sills, the nose and tail caps, the wheel wells' edges)
   for (const [part, list] of buckets) {
-    const g = weld(list);
-    g.computeVertexNormals();
-    geometries.set(part, g);
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(list, 3));
+    geometries.set(part, toCreasedNormals(g, Math.PI / 6));
   }
-  return { geometries, halfWidth, topAt, x0, x1 };
-}
-
-/** One shared vertex per position, so the skin shades smoothly across its strips. */
-function weld(list: number[]): THREE.BufferGeometry {
-  const map = new Map<string, number>();
-  const verts: number[] = [];
-  const index: number[] = [];
-  for (let i = 0; i < list.length; i += 3) {
-    const key = `${Math.round(list[i] * 2000)},${Math.round(list[i + 1] * 2000)},${Math.round(list[i + 2] * 2000)}`;
-    let k = map.get(key);
-    if (k === undefined) {
-      k = verts.length / 3;
-      verts.push(list[i], list[i + 1], list[i + 2]);
-      map.set(key, k);
-    }
-    index.push(k);
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
-  g.setIndex(index);
-  return g;
+  return { geometries, halfWidth, topAt, flareAt, x0, x1 };
 }

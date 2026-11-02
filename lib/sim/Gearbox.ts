@@ -15,6 +15,8 @@ export class Gearbox {
 
   /** Overall engine-to-wheel ratio for a gear (0 for neutral). */
   totalRatio(gear: number): number {
+    // Reverse is deliberately short and is only enabled by Cruise's road model.
+    if (gear === -1) return this.cfg.ratios[0] * this.cfg.finalDrive * 3;
     if (gear < 1 || gear > this.maxGear) return 0;
     return this.cfg.ratios[gear - 1] * this.cfg.finalDrive;
   }

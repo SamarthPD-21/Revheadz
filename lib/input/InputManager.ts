@@ -5,6 +5,7 @@ export interface InputHandlers {
   shiftUp(): void;
   shiftDown(): void;
   neutral(): void;
+  reverse?(): void;
 }
 
 const BLIP_MS = 160;
@@ -12,7 +13,7 @@ const BLIP_THROTTLE = 0.65;
 
 const THROTTLE_KEYS = new Set(["KeyW", "ArrowUp"]);
 const BRAKE_KEYS = new Set(["KeyS", "ArrowDown"]);
-const HANDLED = new Set([...THROTTLE_KEYS, ...BRAKE_KEYS, "KeyE", "KeyQ", "KeyN", "KeyI", "Space"]);
+const HANDLED = new Set([...THROTTLE_KEYS, ...BRAKE_KEYS, "KeyE", "KeyQ", "KeyN", "KeyI", "KeyX", "Space"]);
 
 /**
  * Turns keyboard and on-screen controls into throttle/brake levels and discrete
@@ -104,6 +105,7 @@ export class InputManager {
       case "KeyE": this.handlers.shiftUp(); break;
       case "KeyQ": this.handlers.shiftDown(); break;
       case "KeyN": this.handlers.neutral(); break;
+      case "KeyX": this.handlers.reverse?.(); break;
       case "KeyI": this.handlers.ignition(); break;
     }
   };

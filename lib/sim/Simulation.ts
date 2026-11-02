@@ -166,11 +166,23 @@ export class Simulation {
   }
 
   shiftDown(): void {
+    // In Cruise's H-pattern, one downshift from neutral selects reverse.
+    if (this.model && this.state.gear === 0) {
+      this.reverse();
+      return;
+    }
     const next = this.state.gear - 1;
-    if (next < 0) return;
+    if (next < (this.model ? -1 : 0)) return;
+    if (next === -1 && this.speedKmh() > 1) return;
     // Like a real ECU, refuse a downshift that would over-rev the engine.
     if (next > 0 && this.gearbox.rpmFromSpeed(this.speedKmh(), next) > this.cfg.engine.redlineRpm) return;
     this.changeGear(next, "down");
+  }
+
+  /** Select reverse in Cruise. The car must be stopped or nearly stopped. */
+  reverse(): void {
+    if (!this.model || this.speedKmh() > 1 || this.state.gear === -1) return;
+    this.changeGear(-1, "down");
   }
 
   neutral(): void {
@@ -275,7 +287,7 @@ export class Simulation {
 
     const gear = s.gear;
     // spinning wheels turn the gearbox faster than the road speed says
-    const wheelRpm = gear > 0 ? this.gearbox.rpmFromSpeed(this.speedKmh(), gear) : 0;
+    const wheelRpm = gear !== 0 ? this.gearbox.rpmFromSpeed(this.speedKmh(), gear) : 0;
     const locked = this.wheelSlip ? wheelRpm * (1 + this.wheelSlip) : wheelRpm;
     let rpm: number;
     let clutchLocked = false;
@@ -287,7 +299,7 @@ export class Simulation {
     } else if (!running) {
       // engine off: decays in neutral, follows the wheels in gear
       this.freeRpm = Math.max(0, this.freeRpm - this.freeRpm * dt * 6);
-      rpm = gear > 0 ? locked : this.freeRpm;
+      rpm = gear !== 0 ? locked : this.freeRpm;
     } else if (this.shift && this.shift.cut > 0) {
       // Phase 1: torque cut / clutch open. The engine is free: it falls under its own
       // braking on an upshift, or gets an automatic rev-matching blip on a downshift.
@@ -398,12 +410,12 @@ export class Simulation {
     let drive = 0;
     let force = 0;
     const engaging = Boolean(this.shift && this.shift.cut <= 0);
-    if (gear > 0 && running && inCut && this.style.carry > 0 && this.shift?.direction === "up") {
+    if (gear !== 0 && running && inCut && this.style.carry > 0 && this.shift?.direction === "up") {
       // a dual-clutch handover or a converter's overlap: most of the drive keeps flowing mid-shift
       const pedal = s.throttle * (fuelCut ? CUT_POWER : 1);
       drive += toWheels(torque(rpm, pedal)) * this.style.carry;
     }
-    if (gear > 0 && running && !inCut) {
+    if (gear !== 0 && running && !inCut) {
       const clutch = engaging ? this.engageProgress : 1;
       drive += toWheels(torque(rpm, effThrottle) * converterGain) * clutch;
       if (clutchLocked) {
@@ -428,7 +440,8 @@ export class Simulation {
       s.wheelspin = this.wheelSlip / 0.5;
     }
     // an electronic limiter eases the power off as the car reaches it
-    if (model?.topKmh) drive *= clamp((model.topKmh - this.speedKmh()) / 3, 0, 1);
+    if (gear === -1) drive *= clamp((25 - this.speedKmh()) / 2, 0, 1);
+    else if (model?.topKmh) drive *= clamp((model.topKmh - this.speedKmh()) / 3, 0, 1);
     force += drive;
     const mass = model ? model.massKg : this.cfg.dynamics.massKg;
     const v = this.speedMs;
@@ -470,7 +483,7 @@ export class Simulation {
     let inertia = mass;
     if (model) {
       const r = this.cfg.gearbox.wheelRadiusM;
-      const n = clutchLocked ? this.gearbox.totalRatio(gear) : 0;
+      const n = clutchLocked && gear !== 0 ? this.gearbox.totalRatio(gear) : 0;
       inertia += (model.wheelInertia + model.engineInertia * n * n * model.efficiency) / (r * r);
     }
     const prevSpeed = this.speedMs;

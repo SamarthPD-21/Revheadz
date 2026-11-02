@@ -12,6 +12,7 @@ import { Landscape } from "../../lib/cruise/terrain";
 import type { VehicleConfig } from "../../lib/vehicles/types";
 import { Atmosphere, type Weather } from "./atmosphere";
 import { buildCar, type CarModel } from "./carModel";
+import { CarReflections, loadCarEnvironment } from "./carEnvironment";
 import { Puffs } from "./particles";
 import { World, type Range } from "./world";
 import { ExhaustFlames, SkidMarks } from "./effects";
@@ -34,6 +35,8 @@ export interface Graphics {
 /** What the scene needs from the car and the driver each frame. */
 export interface Drive {
   speedKmh: number;
+  /** Travel backwards while the car remains pointed forward. */
+  reverse?: boolean;
   /** Gas pedal, 0-1 (it uses up the driven wheels' grip). */
   throttle: number;
   /** Brake pedal, 0-1 (taillights, and grip). */
@@ -89,6 +92,8 @@ export class CruiseScene {
   private readonly world: World;
   private readonly atmo: Atmosphere;
   private car: CarModel;
+  private readonly reflections = new CarReflections();
+  private carEnv: THREE.Texture | null = null;
   private readonly carRoot = new THREE.Group();
   private readonly beam = new THREE.SpotLight(0xfff1dc, 0, 140, 0.5, 0.55, 1.3);
   private readonly rain: THREE.LineSegments<THREE.BufferGeometry, THREE.LineBasicMaterial>;
@@ -173,7 +178,8 @@ export class CruiseScene {
 
   constructor(canvas: HTMLCanvasElement, cfg: VehicleConfig, seed: number) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMapping = THREE.AgXToneMapping; // truer colours than ACES, gentler highlights
+    this.renderer.toneMappingExposure = 1.1;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -189,6 +195,10 @@ export class CruiseScene {
     this.car = buildCar(cfg);
     this.chassis = chassisOf(cfg, this.car.length);
     this.mountCar();
+    void loadCarEnvironment(this.renderer).then((env) => {
+      this.carEnv = env;
+      if (env) this.reflections.attach(this.car.root, env);
+    });
     this.scene.add(this.skids.mesh);
     this.putOnRoad(this.s, LANE_OFFSET);
     this.scene.add(this.carRoot);
@@ -284,6 +294,15 @@ export class CruiseScene {
     this.car = buildCar(cfg);
     this.chassis = chassisOf(cfg, this.car.length);
     this.mountCar();
+  }
+
+  /** Swaps in another model of the same car (an authored .glb once it has loaded). */
+  setCarModel(next: CarModel): void {
+    this.car.root.removeFromParent();
+    this.car.dispose();
+    this.car = next;
+    this.mountCar();
+    if (this.carEnv) this.reflections.attach(next.root, this.carEnv);
   }
 
   private mountCar() {
@@ -419,7 +438,7 @@ export class CruiseScene {
     }
 
     const v = drive.speedKmh / 3.6;
-    this.distance += v * dt;
+    this.distance += Math.abs(v) * dt;
     this.spin = drive.wheelspin;
     this.drive(drive, v, dt);
     const accel = dt > 0 ? (v - this.prevV) / dt : 0;
@@ -436,6 +455,7 @@ export class CruiseScene {
     const heading = this.yaw;
     this.world.update(this.camera.position.x, this.camera.position.z, this.s);
     this.updateLights(drive);
+    this.reflections.setDaylight(1 - this.atmo.light.night);
     this.placeCamera(dt, look.camera, v, false);
     this.updateRain(look.weather === "rain", v, heading);
     this.world.animate(this.time, look.weather === "rain" ? 1 : look.weather === "fog" ? 0.25 : 0);
@@ -504,16 +524,17 @@ export class CruiseScene {
    * the way it's actually travelling. On the road the lane assist does the steering.
    */
   private drive(drive: Drive, v: number, dt: number) {
-    const steer = this.free ? drive.steer : this.laneAssist(drive.steer, v, dt);
-    this.slide = stepHandling(this.motion, this.chassis, { vx: v, steer, accel: this.accelSm, mu: this.grip(), aids: this.aids ?? undefined, locked: drive.locked, wheelspin: drive.wheelspin, assisted: !this.free }, dt);
-    this.yaw += this.motion.r * dt;
+    const direction = drive.reverse ? -1 : 1;
+    const steer = this.free || drive.reverse ? drive.steer : this.laneAssist(drive.steer, v, dt);
+    this.slide = stepHandling(this.motion, this.chassis, { vx: Math.abs(v), steer, accel: this.accelSm, mu: this.grip(), aids: this.aids ?? undefined, locked: drive.locked, wheelspin: drive.wheelspin, assisted: !this.free && !drive.reverse }, dt);
+    this.yaw += this.motion.r * direction * dt;
     const c = Math.cos(this.yaw);
     const sn = Math.sin(this.yaw);
     const vy = this.motion.vy;
-    let nx = this.fx + (c * v - sn * vy) * dt;
-    let nz = this.fz + (sn * v + c * vy) * dt;
+    let nx = this.fx + (c * v * direction - sn * vy * direction) * dt;
+    let nz = this.fz + (sn * v * direction + c * vy * direction) * dt;
     // the guardrails: run into one and it stops you there
-    const kept = this.railCheck(nx, nz, c * v - sn * vy, sn * v + c * vy, v);
+    const kept = this.railCheck(nx, nz, c * v * direction - sn * vy * direction, sn * v * direction + c * vy * direction, Math.abs(v));
     if (kept) [nx, nz] = kept;
     // deep water stops you at the edge; shallows you can splash through
     const ahead = this.probe.at(nx + c * this.car.length * 0.5, nz + sn * this.car.length * 0.5);

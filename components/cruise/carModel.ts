@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import type { VehicleConfig } from "../../lib/vehicles/types";
 import { loftBody, type BodyOptions, type Part } from "./carBody";
 import { cruiseShape, featuresOf } from "./carShapes";
@@ -44,6 +45,12 @@ function contactShadow(): THREE.MeshBasicMaterial {
     shadowTex = new THREE.CanvasTexture(c);
   }
   return std("contact", () => new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 })) as THREE.MeshBasicMaterial;
+}
+
+/** A box with softened edges: nothing real has perfectly sharp corners, and the bevel catches light. */
+function rbox(w: number, h: number, d: number, radius = 0.012): THREE.BufferGeometry {
+  const r = Math.max(0, Math.min(radius, Math.min(w, h, d) / 2 - 1e-4));
+  return r > 0 ? new RoundedBoxGeometry(w, h, d, 2, r) : new THREE.BoxGeometry(w, h, d);
 }
 
 /**
@@ -362,7 +369,7 @@ export function buildCar(cfg: VehicleConfig): CarModel {
       }
     }
     // rain light on the crash structure
-    const rain = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.08, 0.12), tail);
+    const rain = new THREE.Mesh(rbox(0.04, 0.08, 0.12), tail);
     rain.position.set(0.04, 0.42, 0);
     body.add(rain);
     headlights.push(new THREE.Vector3(4.6, 0.3, 0));
@@ -385,7 +392,7 @@ export function buildCar(cfg: VehicleConfig): CarModel {
     const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 8), head);
     lamp.position.set(lampX, lampY, 0);
     body.add(lamp);
-    const tl = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.05, 0.14), tail);
+    const tl = new THREE.Mesh(rbox(0.04, 0.05, 0.14), tail);
     tl.position.set(0.22, 0.98, 0);
     body.add(tl);
     headlights.push(new THREE.Vector3(lampX, lampY, 0));
@@ -409,6 +416,17 @@ export function buildCar(cfg: VehicleConfig): CarModel {
       mesh.castShadow = part !== "dark";
       mesh.receiveShadow = true;
       body.add(mesh);
+    }
+    // a rolled lip round each arch, out on the flare
+    const FLARE = style.flare ?? 0.035;
+    for (const w of shape.wheels) {
+      const R = w.r + 0.075;
+      for (const sz of [1, -1]) {
+        const lip = new THREE.Mesh(new THREE.TorusGeometry(R, 0.016, 8, 32, Math.PI), paintM);
+        lip.position.set(w.x, w.r, sz * (skin.halfWidth(w.x) * 0.975 + 0.6 * FLARE * skin.flareAt(w.x)));
+        lip.castShadow = true;
+        body.add(lip);
+      }
     }
     // wings and spoilers: the strip's outlines, extruded thin and shaded smoothly
     for (const poly of feat.wing === "none" ? shape.wings : []) {
@@ -463,13 +481,13 @@ export function buildCar(cfg: VehicleConfig): CarModel {
         // lamp just showing at its front edge
         const lx = hx - 0.05;
         const ly = skin.topAt(lx) + 0.004;
-        const seam = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.012, 0.3), trimM);
+        const seam = new THREE.Mesh(rbox(0.34, 0.012, 0.3), trimM);
         seam.position.set(lx, ly, sz * hz);
         body.add(seam);
-        const lid = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.016, 0.28), paintM);
+        const lid = new THREE.Mesh(rbox(0.32, 0.016, 0.28), paintM);
         lid.position.set(lx, ly + 0.004, sz * hz);
         body.add(lid);
-        const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.018, 0.22), head);
+        const lamp = new THREE.Mesh(rbox(0.02, 0.018, 0.22), head);
         lamp.position.set(lx + 0.17, ly, sz * hz);
         body.add(lamp);
         headlights.push(new THREE.Vector3(lx + 0.25, ly, sz * hz));
@@ -497,13 +515,13 @@ export function buildCar(cfg: VehicleConfig): CarModel {
       const barM = detailM;
       if (feat.grille === "slat") {
         for (let i = 0; i < 5; i++) {
-          const bar = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.14, 0.05), barM);
+          const bar = new THREE.Mesh(rbox(0.04, 0.14, 0.05), barM);
           bar.position.set(gx, gy + 0.07, -gw + (gw * 2 / 4) * i);
           body.add(bar);
         }
       } else if (feat.grille === "mesh") {
         for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) {
-          const m = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.025, 0.05), barM);
+          const m = new THREE.Mesh(rbox(0.025, 0.025, 0.05), barM);
           m.position.set(gx, gy - 0.06 + j * 0.045, -gw + (gw * 2 / 3) * i);
           body.add(m);
         }
@@ -512,44 +530,44 @@ export function buildCar(cfg: VehicleConfig): CarModel {
         oval.rotation.x = Math.PI / 2;
         oval.position.set(gx, gy + 0.03, 0);
         body.add(oval);
-        const bar = new THREE.Mesh(new THREE.BoxGeometry(0.04, gw * 1.1, 0.06), barM);
+        const bar = new THREE.Mesh(rbox(0.04, gw * 1.1, 0.06), barM);
         bar.position.set(gx, gy, 0);
         body.add(bar);
       } else if (feat.grille === "kidney") {
         for (const sz of [1, -1]) {
-          const k = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.16, gw * 0.42), barM);
+          const k = new THREE.Mesh(rbox(0.05, 0.16, gw * 0.42), barM);
           k.position.set(gx, gy + 0.08, sz * gw * 0.55);
           body.add(k);
         }
       } else if (feat.grille === "big") {
-        const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.2, gw * 1.05), barM);
+        const mouth = new THREE.Mesh(rbox(0.05, 0.2, gw * 1.05), barM);
         mouth.position.set(gx, gy + 0.1, 0);
         body.add(mouth);
-        const surround = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.24, gw * 1.15), paintM);
+        const surround = new THREE.Mesh(rbox(0.03, 0.24, gw * 1.15), paintM);
         surround.position.set(gx - 0.015, gy + 0.12, 0);
         body.add(surround);
       } else if (feat.grille === "eggcrate") {
         for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) {
-          const c = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.05), barM);
+          const c = new THREE.Mesh(rbox(0.02, 0.02, 0.05), barM);
           c.position.set(gx, gy - 0.08 + j * 0.045, -gw + (gw * 2 / 5) * i);
           body.add(c);
         }
       } else if (feat.grille === "intake") {
-        const lip = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.17, gw * 1.1), barM);
+        const lip = new THREE.Mesh(rbox(0.06, 0.17, gw * 1.1), barM);
         lip.position.set(gx, gy + 0.085, 0);
         body.add(lip);
-        const inner = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.13, gw * 0.9), wellM);
+        const inner = new THREE.Mesh(rbox(0.02, 0.13, gw * 0.9), wellM);
         inner.position.set(gx + 0.04, gy + 0.085, 0);
         body.add(inner);
       }
     }
     // front splitter or lip under the nose
     if (feat.splitter === "lip") {
-      const lip = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.035, skin.halfWidth(skin.x0 + 0.3) * 1.15), detailM);
+      const lip = new THREE.Mesh(rbox(0.55, 0.035, skin.halfWidth(skin.x0 + 0.3) * 1.15), detailM);
       lip.position.set(skin.x0 + 0.25, style.clearance, 0);
       body.add(lip);
     } else if (feat.splitter === "wing") {
-      const wing = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.05, skin.halfWidth(skin.x0 + 0.5) * 1.3), detailM);
+      const wing = new THREE.Mesh(rbox(1.0, 0.05, skin.halfWidth(skin.x0 + 0.5) * 1.3), detailM);
       wing.position.set(skin.x0 + 0.5, style.clearance - 0.015, 0);
       body.add(wing);
     }
@@ -559,7 +577,7 @@ export function buildCar(cfg: VehicleConfig): CarModel {
       const fx = fw.x + fw.r * 0.5;
       const fy = style.clearance + 0.14;
       for (const sz of [1, -1]) {
-        const c = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.07, 0.15), detailM);
+        const c = new THREE.Mesh(rbox(0.3, 0.07, 0.15), detailM);
         c.position.set(fx, fy, sz * (skin.halfWidth(fx) - 0.02));
         c.rotation.z = sz * -0.4;
         body.add(c);
@@ -582,11 +600,11 @@ export function buildCar(cfg: VehicleConfig): CarModel {
         }
       }
     } else {
-      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.035, thw * 1.75), tail);
+      const bar = new THREE.Mesh(rbox(0.05, 0.035, thw * 1.75), tail);
       bar.position.set(tx, ty, 0);
       body.add(bar);
       for (const sz of [1, -1]) {
-        const cluster = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.09, 0.42), tail);
+        const cluster = new THREE.Mesh(rbox(0.06, 0.09, 0.42), tail);
         cluster.position.set(tx + 0.01, ty - 0.02, sz * (thw - 0.27));
         body.add(cluster);
       }
@@ -599,7 +617,7 @@ export function buildCar(cfg: VehicleConfig): CarModel {
     if (feat.wing === "lip" || feat.wing === "duck") {
       // a lip on the boot's edge, or a ducktail turned up from it
       const duck = feat.wing === "duck";
-      const lip = new THREE.Mesh(new THREE.BoxGeometry(duck ? 0.34 : 0.16, duck ? 0.05 : 0.025, span), paintM);
+      const lip = new THREE.Mesh(rbox(duck ? 0.34 : 0.16, duck ? 0.05 : 0.025, span), paintM);
       lip.position.set(skin.x0 + (duck ? 0.2 : 0.1), deckY + (duck ? 0.04 : 0.015), 0);
       lip.rotation.z = duck ? -0.22 : -0.12;
       body.add(lip);
@@ -609,15 +627,15 @@ export function buildCar(cfg: VehicleConfig): CarModel {
       const lift = tall ? 0.22 : 0.3;
       const wx = skin.x0 + (tall ? 0.24 : 0.3);
       const wy = skin.topAt(wx) + lift;
-      const plane = new THREE.Mesh(new THREE.BoxGeometry(tall ? 0.24 : 0.34, 0.03, span * (tall ? 0.95 : 0.9)), tall ? paintM : wingMat);
+      const plane = new THREE.Mesh(rbox(tall ? 0.24 : 0.34, 0.03, span * (tall ? 0.95 : 0.9)), tall ? paintM : wingMat);
       plane.position.set(wx, wy, 0);
       plane.rotation.z = 0.12;
       body.add(plane);
       for (const sz of [1, -1]) {
-        const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, lift, 0.025), wingMat);
+        const post = new THREE.Mesh(rbox(0.1, lift, 0.025), wingMat);
         post.position.set(wx + 0.02, wy - lift / 2, sz * span * 0.28);
         body.add(post);
-        const plate = new THREE.Mesh(new THREE.BoxGeometry(tall ? 0.26 : 0.38, 0.13, 0.012), wingMat);
+        const plate = new THREE.Mesh(rbox(tall ? 0.26 : 0.38, 0.13, 0.012), wingMat);
         plate.position.set(wx, wy + 0.02, sz * span * (tall ? 0.475 : 0.45));
         body.add(plate);
       }
@@ -636,12 +654,12 @@ export function buildCar(cfg: VehicleConfig): CarModel {
       }
     }
     // diffuser under the tail
-    const dif = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, thw * 1.4), feat.carbon ? carbonM : detailM);
+    const dif = new THREE.Mesh(rbox(0.3, 0.1, thw * 1.4), feat.carbon ? carbonM : detailM);
     dif.position.set(skin.x0 + 0.17, style.clearance + 0.1, 0);
     body.add(dif);
     if (feat.diffuser === "fins") {
       for (let i = 0; i < 5; i++) {
-        const fin = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.14, 0.15), feat.carbon ? carbonM : detailM);
+        const fin = new THREE.Mesh(rbox(0.02, 0.14, 0.15), feat.carbon ? carbonM : detailM);
         fin.position.set(skin.x0 + 0.18 + i * 0.06, style.clearance + 0.17, -thw * 0.62 + i * 0.31);
         body.add(fin);
       }
@@ -650,10 +668,10 @@ export function buildCar(cfg: VehicleConfig): CarModel {
     // make-and-model lettering plates on the tail
     if (feat.badges) {
       const badgeM = std("badge", () => new THREE.MeshStandardMaterial({ color: 0xececf0, metalness: 0.3, roughness: 0.4 }));
-      const plate = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.05, 0.4), badgeM);
+      const plate = new THREE.Mesh(rbox(0.02, 0.05, 0.4), badgeM);
       plate.position.set(skin.x1 - 0.08, shape.belt + 0.2, 0);
       body.add(plate);
-      const small = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.03, 0.26), badgeM);
+      const small = new THREE.Mesh(rbox(0.02, 0.03, 0.26), badgeM);
       small.position.set(skin.x1 - 0.08, shape.belt + 0.13, 0);
       body.add(small);
     }
@@ -679,7 +697,7 @@ export function buildCar(cfg: VehicleConfig): CarModel {
         root.add(wh);
         wheels.push({ node: wh, r: w.r, front: w.x > shape.len / 2 });
         // the brake caliper, holding still while the wheel turns past it
-        const caliper = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.1, 0.07), std(`caliper${acc}`, () => new THREE.MeshStandardMaterial({ color: toColor(kind === "muscle" || kind === "coupe" ? [200, 30, 30] : acc), roughness: 0.4, metalness: 0.3 })));
+        const caliper = new THREE.Mesh(rbox(0.16, 0.1, 0.07), std(`caliper${acc}`, () => new THREE.MeshStandardMaterial({ color: toColor(kind === "muscle" || kind === "coupe" ? [200, 30, 30] : acc), roughness: 0.4, metalness: 0.3 })));
         caliper.position.set(w.x - w.r * 0.42 * (w.x > shape.len / 2 ? -1 : 1), w.r + w.r * 0.3, s * ((z0 + z1) / 2 - s * 0.0 + (z1 - z0) * 0.12));
         root.add(caliper);
       }

@@ -9,6 +9,7 @@ interface Props {
   onUp: () => void;
   onDown: () => void;
   onNeutral: () => void;
+  onReverse?: () => void;
   /** Simulation events, so the paddles flash however the shift was made (touch or keyboard). */
   subscribe: (fn: SimListener) => () => void;
   gear: () => number;
@@ -17,7 +18,7 @@ interface Props {
 const paddle =
   "ctl flex flex-1 touch-none select-none items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-gradient-to-b from-zinc-800 to-zinc-900 py-3 text-lg font-black text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]";
 
-export function ShiftButtons({ onUp, onDown, onNeutral, subscribe, gear }: Props) {
+export function ShiftButtons({ onUp, onDown, onNeutral, onReverse, subscribe, gear }: Props) {
   const up = useRef<HTMLButtonElement>(null);
   const down = useRef<HTMLButtonElement>(null);
   const neutral = useRef<HTMLButtonElement>(null);
@@ -33,9 +34,10 @@ export function ShiftButtons({ onUp, onDown, onNeutral, subscribe, gear }: Props
 
   return (
     <div className="flex gap-2" role="group" aria-label="Gear shift">
-      <button ref={down} type="button" className={paddle} {...pressHandlers(onDown)} aria-label="Shift down (Q)">
+      <button ref={down} type="button" className={paddle} {...pressHandlers(onDown)} aria-label={onReverse ? "Shift down (Q); from neutral, select reverse" : "Shift down (Q)"} title={onReverse ? "Shift down; from neutral selects reverse when stopped" : undefined}>
         <Arrow down /> <span className="text-[10px] font-semibold text-zinc-500 pointer-coarse:hidden">Q</span>
       </button>
+      {onReverse && <button type="button" className={`${paddle} max-w-14 text-base`} {...pressHandlers(onReverse)} aria-label="Select reverse (X)" title="Select reverse when stopped">R</button>}
       <button ref={neutral} type="button" className={`${paddle} max-w-14 text-base`} {...pressHandlers(onNeutral)} aria-label="Neutral (N)">
         N
       </button>

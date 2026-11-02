@@ -46,6 +46,8 @@ export class SpeedHold {
  */
 export function autoShift(sim: Simulation, cfg: VehicleConfig, throttle: number, now: number, lastShift: number): number {
   const s = sim.state;
+  // Reverse is driver-selected and must never be shifted by the automatic gearbox logic.
+  if (s.gear < 0) return lastShift;
   if (s.ignition !== "running" || s.shifting || now - lastShift < 0.5) return lastShift;
   const ratios = cfg.gearbox.ratios;
   const top = ratios.length;

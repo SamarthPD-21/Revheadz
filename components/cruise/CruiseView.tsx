@@ -26,6 +26,7 @@ import { VehiclePicker, type PickerVehicle } from "../VehiclePicker";
 import { Ambience } from "./ambience";
 import { FrameGate } from "../../lib/cruise/frameGate";
 import { forgetRoad, loadTiles, saveTiles } from "../../lib/cruise/tileCache";
+import { loadCarModel } from "./carGltf";
 import { CAMERA_MODES, CruiseScene, type CameraMode, type Place, type Weather } from "./scene";
 import { SettingsPanel } from "./SettingsPanel";
 import { drawMinimap } from "./minimap";
@@ -158,7 +159,7 @@ function createRig(vehicle: VehicleConfig, onPending: (p: boolean) => void) {
       if (sim.state.ignition === "off") sim.toggleIgnition();
     });
   };
-  const input = new InputManager({ ignition: press, shiftUp: () => sim.shiftUp(), shiftDown: () => sim.shiftDown(), neutral: () => sim.neutral() });
+  const input = new InputManager({ ignition: press, shiftUp: () => sim.shiftUp(), shiftDown: () => sim.shiftDown(), neutral: () => sim.neutral(), reverse: () => sim.reverse() });
   // stable functions for the gauges and buttons (a new one each render would re-subscribe them)
   const subscribe = (fn: SimListener) => sim.subscribe(fn);
   const shiftUp = () => sim.shiftUp();
@@ -309,6 +310,13 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       return () => clearTimeout(t);
     }
     sceneRef.current = scene;
+    // an authored model, if this car has one: the built-in body shows until it arrives
+    let modelWanted = true;
+    void loadCarModel(vehicle).then((m) => {
+      if (!m) return;
+      if (!modelWanted) return m.dispose();
+      scene.setCarModel(m);
+    });
     scene.setGraphics(graphicsOf(settingsRef.current));
     // in development, or with ?debug in the address: lets a test drive measure the renderer
     if (process.env.NODE_ENV !== "production" || new URLSearchParams(location.search).has("debug")) (window as unknown as { __cruise?: CruiseScene }).__cruise = scene;
@@ -417,7 +425,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       }
       const keys = steerKeys.current;
       const steer = clampUnit((STEER_RIGHT.some((k) => keys.has(k)) ? 1 : 0) - (STEER_LEFT.some((k) => keys.has(k)) ? 1 : 0) + touchSteer.current);
-      scene.frame(dt, { speedKmh: sim.state.speedKmh, throttle: sim.input.throttle, brake: sim.input.brake, wheelspin: sim.state.wheelspin ?? 0, locked: Boolean(sim.state.locked), steer, ignition: running }, { hour: hourRef.current, weather: s.weather, camera: s.camera });
+      scene.frame(dt, { speedKmh: sim.state.speedKmh, reverse: sim.state.gear === -1, throttle: sim.input.throttle, brake: sim.input.brake, wheelspin: sim.state.wheelspin ?? 0, locked: Boolean(sim.state.locked), steer, ignition: running }, { hour: hourRef.current, weather: s.weather, camera: s.camera });
       // the map, fifteen times a second
       if (mapRef.current && now - lastMap > 66) {
         lastMap = now;
@@ -490,6 +498,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
     document.addEventListener("visibilitychange", onHide);
     window.addEventListener("pagehide", save);
     return () => {
+      modelWanted = false;
       cancelled = true;
       clearTimeout(warm);
       document.removeEventListener("visibilitychange", onHide);
@@ -797,7 +806,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
           ["A / D", "Steer"],
           ["R", "Free roam"],
           ["B", "Back to road"],
-          ["E / Q", "Shift"],
+          ["E / Q", "Shift · Q from N = reverse"],
           ["C", "Camera"],
           ["T", "Autopilot"],
           ["H", "Hide HUD"],
@@ -811,7 +820,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
 
       <div className="drive-touch">
         <div className="drive-touch-left">
-          <ShiftButtons onUp={rig.shiftUp} onDown={rig.shiftDown} onNeutral={rig.neutral} subscribe={subscribe} gear={rig.gear} />
+          <ShiftButtons onUp={rig.shiftUp} onDown={rig.shiftDown} onNeutral={rig.neutral} onReverse={() => rig.sim.reverse()} subscribe={subscribe} gear={rig.gear} />
           <div className="drive-touch-brake">
             <BrakePad input={input} />
           </div>

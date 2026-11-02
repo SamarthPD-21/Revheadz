@@ -4,7 +4,7 @@ export interface SimState {
   rpm: number;
   throttle: number;
   load: number;
-  /** 0 = neutral, 1..n */
+  /** -1 = reverse (Cruise only), 0 = neutral, 1..n */
   gear: number;
   speedKmh: number;
   ignition: IgnitionState;
