@@ -32,7 +32,34 @@ export interface Chassis {
   cgHeight: number;
   /** The driver aids the car was built with. */
   aids: Aids;
+  /**
+   * Understeer built into the suspension (roll steer and compliance), rad of steering lost per
+   * m/s² of cornering: a nose-heavy saloon has a lot, a mid-engined car very little.
+   */
+  compliance: number;
+  /** Share of the weight thrown sideways in a bend that the front axle takes (its roll stiffness share). */
+  rollFront: number;
+  /** Distance between the left and right tyres, m. */
+  track: number;
+  /** An open differential lets the unloaded inside wheel spin away the power out of a bend. */
+  diff: "open" | "lsd";
+  /**
+   * The tyre rating is raised to hold the skidpad figure through a bend's weight transfer;
+   * pulling away and braking in a straight line don't have that transfer, so they use this
+   * share of it (the tyre's own straight-line grip).
+   */
+  along: number;
 }
+
+/** Engine behind the driver, ahead of the rear axle; and hung out behind it (911s). */
+const MID_ENGINED = new Set(["ferrari_f40", "v10_supercar", "aventador_svj", "pagani_zonda", "bugatti_chiron", "gt_racer", "audi_r8_v10", "corvette_z06", "rotary_twin"]);
+const REAR_ENGINED = new Set(["porsche_gt3rs", "flat6_sports"]);
+/** Heavier front-engined saloons, muscle cars and hatches: set up to push wide. */
+const PUSHY = new Set(["subaru_sti", "jdm_i6_turbo", "amg_c63", "bmw_m3_e46", "twin_turbo_i6", "hot_hatch", "hellcat", "mustang_gt", "muscle_v8", "v12_gt"]);
+/** Built with an open differential. */
+const OPEN_DIFF = new Set(["flat6_sports", "muscle_v8", "jdm_i6_turbo"]);
+/** How much a tyre's grip falls as it's loaded harder: an axle with its weight thrown onto one side grips less. */
+const LOAD_SENSITIVITY = 0.2;
 
 /** Tyres by body: [off-road, downforce]. */
 const BODY: Record<string, [number, number]> = {
@@ -53,19 +80,63 @@ export function chassisOf(cfg: VehicleConfig, lengthM: number): Chassis {
   const bike = cfg.type === "bike";
   const spec = specOf(cfg);
   const [offRoad, downforce] = BODY[cfg.ui.silhouette] ?? [0.85, 0];
+  const balance = balanceOf(cfg, spec.front, spec.drive === "awd", bike, spec.dims?.[1]);
+  const cgHeight = bike ? 0.72 : cfg.ui.silhouette === "formula" ? 0.3 : 0.5;
+  const massKg = roadModel(cfg).massKg;
+  // the tyres are rated so that, with the weight thrown across in a bend, the car still holds
+  // its real skidpad figure (that weight transfer costs every car a little grip)
+  const g0 = spec.g - downforce * 0.03;
+  const probe = { bike, track: balance.track, massKg, cgHeight } as Chassis;
+  const ayAtLimit = spec.g * G;
+  const lossF = lateralLoss(probe, ayAtLimit, massKg * G * spec.front, balance.rollFront);
+  const lossR = lateralLoss(probe, ayAtLimit, massKg * G * (1 - spec.front), 1 - balance.rollFront);
+  const kept = spec.front * lossF + (1 - spec.front) * lossR;
   return {
-    massKg: roadModel(cfg).massKg,
+    massKg,
     wheelbase: bike ? 1.45 : (spec.dims?.[3] ?? Math.min(3.0, Math.max(2.3, lengthM * 0.6))),
     front: spec.front,
     rearDrive: spec.drive === "awd" ? 0.6 : 1,
     bike,
     // (the skidpad figure includes a little downforce on the cars that have it)
-    tyre: spec.g - downforce * 0.03,
+    tyre: bike ? g0 : g0 / (kept * 0.97),
+    along: bike ? 1 : kept * 0.97,
     offRoad,
     downforce,
-    cgHeight: bike ? 0.72 : cfg.ui.silhouette === "formula" ? 0.3 : 0.5,
+    cgHeight,
     aids: { abs: spec.abs, tc: spec.tc, esc: spec.esc },
+    ...balance,
   };
+}
+
+/**
+ * How a car is set up to behave in a bend. Engine position sets most of it: a nose-heavy car
+ * is given understeer (roll steer and a stiffer front, so it runs wide before it spins),
+ * mid-engined cars are close to neutral, a 911 sits between, and a single-seater is sharp.
+ * All-wheel drive adds a little push.
+ */
+function balanceOf(cfg: VehicleConfig, front: number, awd: boolean, bike: boolean, width?: number) {
+  const formula = cfg.ui.silhouette === "formula";
+  void front;
+  const layout = formula ? "formula" : MID_ENGINED.has(cfg.id) ? "mid" : REAR_ENGINED.has(cfg.id) ? "rear" : "front";
+  // degrees of extra steering per g of cornering, from the suspension alone (the tyres add ~1 more)
+  const usDeg = bike ? 0 : layout === "formula" ? 0.1 : layout === "mid" ? 0.35 : layout === "rear" ? 0.75 : PUSHY.has(cfg.id) ? 2.1 : 1.2;
+  return {
+    compliance: ((usDeg + (awd && !bike ? 0.4 : 0)) / 57.3) / G,
+    rollFront: layout === "front" ? (PUSHY.has(cfg.id) ? 0.62 : 0.58) : layout === "rear" ? 0.56 : 0.5,
+    track: bike ? 0 : (width ?? 1.85) * 0.85,
+    diff: OPEN_DIFF.has(cfg.id) ? ("open" as const) : ("lsd" as const),
+  };
+}
+
+/**
+ * How much grip an axle keeps when a bend throws `ay` m/s² of weight onto its outer tyre:
+ * the outer tyre gains less grip than the inner one loses.
+ */
+function lateralLoss(c: Chassis, ay: number, axleLoad: number, share: number): number {
+  if (c.bike || c.track <= 0 || axleLoad <= 0) return 1;
+  const shift = (c.massKg * Math.abs(ay) * c.cgHeight * share) / c.track; // N moved across the axle
+  const r = Math.min(0.9, shift / axleLoad);
+  return Math.max(0.6, 1 - 4 * LOAD_SENSITIVITY * r * r);
 }
 
 /**
@@ -82,17 +153,23 @@ export function chassisOf(cfg: VehicleConfig, lengthM: number): Chassis {
 const ALONG_DRIVE = 1.3;
 const ALONG_BRAKE = 1.15;
 
-export function tractionLimit(c: Chassis, mu: number, accel: number, grade: number, v: number): number {
+export function tractionLimit(c: Chassis, mu: number, accel: number, grade: number, v: number, ay = 0): number {
   const transfer = ((accel / G + grade) * c.cgHeight) / c.wheelbase; // share of the weight that moves back
   const share = c.rearDrive < 1 ? 1 : Math.min(c.bike ? 1 : 0.9, Math.max(0.25, 1 - c.front + transfer));
   const load = (c.massKg * G) / Math.sqrt(1 + grade * grade) + c.downforce * v * v;
-  const grip = mu * ALONG_DRIVE * load * share;
+  let grip = mu * (c.along ?? 1) * ALONG_DRIVE * load * share;
+  // an open diff sends no more to the outer wheel than the unloaded inner one can take
+  if (c.diff === "open" && !c.bike && c.track > 0 && c.rearDrive === 1) {
+    const axle = load * share;
+    const shift = (c.massKg * Math.abs(ay) * c.cgHeight * (1 - c.rollFront)) / c.track;
+    grip = Math.min(grip, mu * (c.along ?? 1) * ALONG_DRIVE * 2 * Math.max(0.1 * axle, axle / 2 - shift));
+  }
   return c.bike ? Math.min(grip, (c.massKg * G * c.wheelbase * c.front) / c.cgHeight) : grip;
 }
 
 /** The most braking force the tyres can take before they lock, N (a bike's rear lifts first). */
 export function brakeLimit(c: Chassis, mu: number, v: number): number {
-  const grip = mu * ALONG_BRAKE * (c.massKg * G + c.downforce * v * v);
+  const grip = mu * (c.along ?? 1) * ALONG_BRAKE * (c.massKg * G + c.downforce * v * v);
   return c.bike ? Math.min(grip, (c.massKg * G * c.wheelbase * (1 - c.front)) / c.cgHeight) : grip;
 }
 
@@ -131,6 +208,8 @@ export interface Controls {
   wheelspin?: number;
   /** The lane assist is steering: it can turn the wheel quicker than a smooth pair of hands. */
   assisted?: boolean;
+  /** How far the ground leans across the car, rad (+: its right side lower): gravity pulls it that way. */
+  bank?: number;
 }
 
 /** How far the wheel can be turned at a speed: lots when parking, a little at speed (like a real rack's feel). */
@@ -228,8 +307,9 @@ export function stepHandling(m: Motion, c: Chassis, u: Controls, dt: number): nu
   // a locked wheel slides, and a sliding tyre hardly steers; road cars are set up to run wide
   // at the limit rather than spin, so the front gives up a little first
   const lockLoss = u.locked ? 0.3 : 1;
-  const maxF = grip * 0.97 * fzF * Math.sqrt(1 - pushF * pushF) * lockLoss;
+  const maxF0 = grip * 0.97 * fzF * Math.sqrt(1 - pushF * pushF) * lockLoss;
   const balanceR = c.bike ? 1.1 : 1.06;
+  const bankPull = G * Math.sin(Math.max(-0.6, Math.min(0.6, u.bank ?? 0)));
 
   let sliding = 0;
   let scrub = 0;
@@ -238,16 +318,20 @@ export function stepHandling(m: Motion, c: Chassis, u: Controls, dt: number): nu
   const h = dt / steps;
   for (let i = 0; i < steps; i++) {
     const v = Math.max(vx, 0.5);
-    const aF = Math.atan2(m.vy + a * m.r, v) - m.delta;
+    // how hard it's cornering now: weight thrown onto the outer tyres, and the suspension's
+    // roll steer taking a little lock off the front
+    const ay = vx * m.r;
+    const maxF = maxF0 * lateralLoss(c, ay, fzF, c.rollFront);
+    const aF = Math.atan2(m.vy + a * m.r, v) - (m.delta - c.compliance * ay);
     const aR = Math.atan2(m.vy - b * m.r, v);
     // traction control: as the driven rear starts to slide, the drive is eased off it
     const tcEase = aids.tc ? 1 - Math.min(1, Math.max(0, (Math.abs(aR) - 0.05) / 0.08)) : 1;
     const pr = pushR0 * tcEase;
-    const maxR = grip * balanceR * fzR * Math.sqrt(1 - pr * pr) * lockLoss;
+    const maxR = grip * balanceR * fzR * Math.sqrt(1 - pr * pr) * lockLoss * lateralLoss(c, ay, fzR, 1 - c.rollFront);
     const fF = tyreForce(aF, fzF, maxF, FRONT);
     const fR = tyreForce(aR, fzR, maxR, REAR);
     const cosD = Math.cos(m.delta);
-    m.vy += ((fF * cosD + fR) / mass - vx * m.r) * h;
+    m.vy += ((fF * cosD + fR) / mass - vx * m.r + bankPull) * h;
     m.r += ((a * fF * cosD - b * fR) / Iz) * h;
     // the front tyres' force leans back against the motion when they're turned, and a car
     // travelling sideways turns its speed into the slide

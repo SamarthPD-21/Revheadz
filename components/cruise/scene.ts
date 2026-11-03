@@ -491,7 +491,8 @@ export class CruiseScene {
    * all-wheel-drive car has all four. Downforce adds to it at speed.
    */
   get traction(): number {
-    return tractionLimit(this.chassis, this.grip(), this.accelSm, Math.tan(this.tiltP), this.prevV);
+    // (cornering lifts the inside wheel: an open diff loses drive to it)
+    return tractionLimit(this.chassis, this.grip(), this.accelSm, Math.tan(this.tiltP), this.prevV, this.prevV * this.motion.r);
   }
 
   /** The most braking force the tyres can take here before the wheels lock, N. */
@@ -526,7 +527,7 @@ export class CruiseScene {
   private drive(drive: Drive, v: number, dt: number) {
     const direction = drive.reverse ? -1 : 1;
     const steer = this.free || drive.reverse ? drive.steer : this.laneAssist(drive.steer, v, dt);
-    this.slide = stepHandling(this.motion, this.chassis, { vx: Math.abs(v), steer, accel: this.accelSm, mu: this.grip(), aids: this.aids ?? undefined, locked: drive.locked, wheelspin: drive.wheelspin, assisted: !this.free && !drive.reverse }, dt);
+    this.slide = stepHandling(this.motion, this.chassis, { vx: Math.abs(v), steer, accel: this.accelSm, mu: this.grip(), aids: this.aids ?? undefined, locked: drive.locked, wheelspin: drive.wheelspin, assisted: !this.free && !drive.reverse, bank: this.tiltR * direction }, dt);
     this.yaw += this.motion.r * direction * dt;
     const c = Math.cos(this.yaw);
     const sn = Math.sin(this.yaw);
@@ -671,7 +672,7 @@ export class CruiseScene {
     // pure pursuit, less the yaw we already have (damps any sway)
     // the arc to that point, plus the extra lock the car's understeer needs to hold it
     const curv = (2 * Math.sin(alpha)) / Math.max(4, Math.hypot(dx, dz));
-    const delta = Math.atan(this.chassis.wheelbase * curv) + UNDERSTEER * v * v * curv - this.motion.r * 0.04;
+    const delta = Math.atan(this.chassis.wheelbase * curv) + (UNDERSTEER + this.chassis.compliance) * v * v * curv - this.motion.r * 0.04;
     return THREE.MathUtils.clamp(delta / steerLock(v), -1, 1);
   }
 
