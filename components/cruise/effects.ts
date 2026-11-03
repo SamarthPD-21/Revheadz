@@ -75,14 +75,14 @@ export class SkidMarks {
 
 /**
  * Flames out of the exhaust: a backfire's bang, the crackle and pops on the overrun, the
- * limiter and a hard upshift. Each tip has a flame (a cone whose shader draws a hot blue root,
- * an orange body and a ragged, flickering tip) that bursts and dies in a tenth of a second or
- * so, and one light that flashes orange off the road and the car with it.
+ * limiter and a hard upshift. Each pipe has a flame, shaped to leave it at its width, whose
+ * shader draws a hot blue root, an orange body and a ragged, flickering tip; it bursts and dies
+ * in a tenth of a second or so, and one light flashes orange off the road and the car with it.
  */
 export class ExhaustFlames {
   readonly group = new THREE.Group();
   readonly light = new THREE.PointLight(0xff7a2a, 0, 6, 2);
-  private readonly flames: THREE.Mesh<THREE.ConeGeometry, THREE.ShaderMaterial>[] = [];
+  private readonly flames: THREE.Mesh<THREE.BufferGeometry, THREE.ShaderMaterial>[] = [];
   private readonly material: THREE.ShaderMaterial;
   /** 0-1 how hard it's burning right now, and how fast that dies away. */
   private heat = 0;
@@ -117,7 +117,7 @@ export class ExhaustFlames {
         uniform float uTime;
         float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
         void main() {
-          // along the flame: 1 at the pipe, 0 at the tip (the cone's uv runs base 0 to apex 1)
+          // along the flame: 1 at the pipe, 0 at the tip (the lathe's uv runs 0 at the pipe to 1 at the tip)
           float t = 1.0 - vAlong;
           float flick = 0.75 + 0.25 * hash(vec2(floor(uTime * 40.0), floor(vUv.x * 12.0)));
           float body = smoothstep(0.0, 0.55, t) * flick;
@@ -131,13 +131,19 @@ export class ExhaustFlames {
         }`,
     });
     for (const tip of tips) {
-      // a cone pointing out of the back: apex at the end of the flame, base at the pipe
-      const geo = new THREE.ConeGeometry(0.1, 0.75, 16, 1, true);
-      geo.rotateZ(Math.PI / 2); // apex towards -x
-      geo.translate(-0.375, 0, 0);
+      // a tongue of flame turned round its own axis: it leaves the pipe at the pipe's width,
+      // swells a little as it meets the air, then tapers away to nothing (pointing out of the back)
+      const profile: THREE.Vector2[] = [];
+      for (let i = 0; i <= 16; i++) {
+        const t = i / 16;
+        const r = 0.04 * Math.sqrt(1 - t) + 0.035 * Math.sin(Math.PI * Math.min(1, t * 1.6)) * (1 - t);
+        profile.push(new THREE.Vector2(Math.max(0.001, r), -0.75 * t));
+      }
+      const geo = new THREE.LatheGeometry(profile, 18);
+      geo.rotateZ(-Math.PI / 2); // its axis (y) along the car, the flame running out to -x
       const m = new THREE.Mesh(geo, this.material);
-      // start just inside the pipe so the flame emerges cleanly without clipping the rear
-      m.position.copy(tip).add(new THREE.Vector3(0.04, 0, 0));
+      // starting a few centimetres inside the pipe, so it comes out of it
+      m.position.copy(tip).add(new THREE.Vector3(0.05, 0, 0));
       m.visible = false;
       m.frustumCulled = false;
       this.flames.push(m);
