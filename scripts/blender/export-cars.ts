@@ -28,6 +28,7 @@ const cars = vehicles
       name: cfg.name,
       silhouette: cfg.ui.silhouette,
       accent: cfg.ui.accent,
+      year: parseInt(cfg.ui.year ?? "2000", 10),
       front: spec.front,
       dims: spec.dims ?? [shape.len, shape.width, shape.height, 2.6],
       wheelRadius: cfg.gearbox.wheelRadiusM,

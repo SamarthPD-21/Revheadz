@@ -4,6 +4,7 @@
   "name": "Toyota Supra MK4",
   "silhouette": "coupe",
   "accent": "#fb923c",
+  "year": 1998,
   "front": 0.53,
   "dims": [
    4.52,
@@ -204,6 +205,7 @@
   "name": "Nissan Skyline GT-R R34",
   "silhouette": "coupe",
   "accent": "#4f46e5",
+  "year": 1999,
   "front": 0.55,
   "dims": [
    4.6,
@@ -404,6 +406,7 @@
   "name": "Nissan GT-R R35",
   "silhouette": "coupe",
   "accent": "#a78bfa",
+  "year": 2012,
   "front": 0.54,
   "dims": [
    4.67,
@@ -604,6 +607,7 @@
   "name": "Mazda RX-7 FD3S",
   "silhouette": "coupe",
   "accent": "#fde047",
+  "year": 1993,
   "front": 0.5,
   "dims": [
    4.295,
@@ -804,6 +808,7 @@
   "name": "Honda S2000 AP1",
   "silhouette": "sport",
   "accent": "#f87171",
+  "year": 2000,
   "front": 0.5,
   "dims": [
    4.135,
@@ -976,6 +981,7 @@
   "name": "Subaru Impreza WRX STI",
   "silhouette": "rally",
   "accent": "#2563eb",
+  "year": 2006,
   "front": 0.6,
   "dims": [
    4.465,
@@ -1188,6 +1194,7 @@
   "name": "Toyota Chaser JZX100 Tourer V",
   "silhouette": "sport",
   "accent": "#cbd5e1",
+  "year": 1998,
   "front": 0.53,
   "dims": [
    4.715,
@@ -1360,6 +1367,7 @@
   "name": "Nissan 370Z",
   "silhouette": "coupe",
   "accent": "#38bdf8",
+  "year": 2009,
   "front": 0.53,
   "dims": [
    4.25,
@@ -1560,6 +1568,7 @@
   "name": "Ferrari F40",
   "silhouette": "supercar",
   "accent": "#ff2800",
+  "year": 1987,
   "front": 0.42,
   "dims": [
    4.358,
@@ -1736,6 +1745,7 @@
   "name": "Lexus LFA",
   "silhouette": "supercar",
   "accent": "#fde047",
+  "year": 2011,
   "front": 0.48,
   "dims": [
    4.505,
@@ -1912,6 +1922,7 @@
   "name": "Porsche 911 GT3 RS",
   "silhouette": "supercar",
   "accent": "#c8ff00",
+  "year": 2019,
   "front": 0.39,
   "dims": [
    4.549,
@@ -2088,6 +2099,7 @@
   "name": "Porsche Carrera GT",
   "silhouette": "supercar",
   "accent": "#84cc16",
+  "year": 2004,
   "front": 0.42,
   "dims": [
    4.613,
@@ -2264,6 +2276,7 @@
   "name": "Lamborghini Aventador SVJ",
   "silhouette": "supercar",
   "accent": "#fb923c",
+  "year": 2019,
   "front": 0.43,
   "dims": [
    4.943,
@@ -2440,6 +2453,7 @@
   "name": "Pagani Zonda F",
   "silhouette": "supercar",
   "accent": "#e879f9",
+  "year": 2005,
   "front": 0.47,
   "dims": [
    4.435,
@@ -2616,6 +2630,7 @@
   "name": "Bugatti Chiron",
   "silhouette": "supercar",
   "accent": "#3b5bdb",
+  "year": 2016,
   "front": 0.43,
   "dims": [
    4.544,
@@ -2792,6 +2807,7 @@
   "name": "Ferrari 458 Italia Straight Pipes",
   "silhouette": "gtcar",
   "accent": "#f43f5e",
+  "year": 2013,
   "front": 0.42,
   "dims": [
    4.527,
@@ -2968,6 +2984,7 @@
   "name": "Audi R8 V10 Plus",
   "silhouette": "supercar",
   "accent": "#3b82f6",
+  "year": 2016,
   "front": 0.42,
   "dims": [
    4.426,
@@ -3144,6 +3161,7 @@
   "name": "Chevrolet Corvette Z06",
   "silhouette": "supercar",
   "accent": "#10b981",
+  "year": 2023,
   "front": 0.4,
   "dims": [
    4.685,
@@ -3320,6 +3338,7 @@
   "name": "Ford Mustang GT",
   "silhouette": "muscle",
   "accent": "#1e40af",
+  "year": 2018,
   "front": 0.53,
   "dims": [
    4.789,
@@ -3532,6 +3551,7 @@
   "name": "Dodge Challenger SRT Hellcat",
   "silhouette": "muscle",
   "accent": "#7e22ce",
+  "year": 2015,
   "front": 0.57,
   "dims": [
    5.027,
@@ -3744,6 +3764,7 @@
   "name": "Plymouth Hemi 'Cuda",
   "silhouette": "muscle",
   "accent": "#f97316",
+  "year": 1971,
   "front": 0.57,
   "dims": [
    4.74,
@@ -3956,6 +3977,7 @@
   "name": "BMW M4 (F82)",
   "silhouette": "sport",
   "accent": "#0ea5e9",
+  "year": 2014,
   "front": 0.52,
   "dims": [
    4.671,
@@ -4128,6 +4150,7 @@
   "name": "BMW M3 E46",
   "silhouette": "sport",
   "accent": "#a16207",
+  "year": 2001,
   "front": 0.51,
   "dims": [
    4.492,
@@ -4300,6 +4323,7 @@
   "name": "Mercedes-AMG C63",
   "silhouette": "sport",
   "accent": "#9ca3af",
+  "year": 2008,
   "front": 0.54,
   "dims": [
    4.726,
@@ -4472,6 +4496,7 @@
   "name": "Porsche 911 SC",
   "silhouette": "sport",
   "accent": "#facc15",
+  "year": 1981,
   "front": 0.4,
   "dims": [
    4.291,
@@ -4644,6 +4669,7 @@
   "name": "Aston Martin DB9",
   "silhouette": "gt",
   "accent": "#dc2626",
+  "year": 2017,
   "front": 0.51,
   "dims": [
    4.739,
@@ -4844,6 +4870,7 @@
   "name": "Ford Focus RS",
   "silhouette": "hatch",
   "accent": "#e11d48",
+  "year": 2016,
   "front": 0.59,
   "dims": [
    4.39,
@@ -5044,6 +5071,7 @@
   "name": "Mazda 787B",
   "silhouette": "gtcar",
   "accent": "#22c55e",
+  "year": 1991,
   "front": 0.42,
   "dims": [
    4.8,
@@ -5220,6 +5248,7 @@
   "name": "Subaru Impreza WRC",
   "silhouette": "rally",
   "accent": "#4f46e5",
+  "year": 2006,
   "front": 0.52,
   "dims": [
    4.425,

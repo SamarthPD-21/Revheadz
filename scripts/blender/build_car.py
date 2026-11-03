@@ -116,6 +116,10 @@ material("amber", [0.9, 0.35, 0.02, 1], rough=0.2, emit=[1.0, 0.45, 0.05], emit_
 material("carbon", [0.025, 0.025, 0.03, 1], metallic=0.3, rough=0.35, coat=0.8)
 material("stripe", [0.92, 0.92, 0.94, 1], metallic=0.2, rough=0.3, coat=1.0)
 material("well", [0.006, 0.006, 0.007, 1], rough=0.95)
+material("interior", [0.03, 0.03, 0.033, 1], rough=0.75)
+material("plate", [0.85, 0.85, 0.82, 1], rough=0.4)
+material("reverse", [0.85, 0.86, 0.88, 1], rough=0.1)
+YEAR = CAR.get("year", 2000)
 
 
 def aero_mat():
@@ -270,6 +274,18 @@ def build_body():
                 f.material_index = 1
             else:
                 f.material_index = 0
+    # crisp character lines: the shoulder along each flank, and a softer one at the arch lips,
+    # so the subdivided body keeps an edge there instead of melting into one soft shape
+    crease = bm.edges.layers.float.get("crease_edge") or bm.edges.layers.float.new("crease_edge")
+    half_len = half_n  # points in a half-section (the floor's middle is shared)
+    shoulder = 3 + SIDE
+    lines = {(half_len - 1) + shoulder: 0.75, (half_len - 1) - shoulder: 0.75, (half_len - 1) + 3: 0.45, (half_len - 1) - 3: 0.45}
+    for r in range(len(rings) - 1):
+        for idx, value in lines.items():
+            if 0 <= idx < count:
+                e = bm.edges.get((rings[r][idx], rings[r + 1][idx]))
+                if e:
+                    e[crease] = value
     # close the nose and the tail with a fan to a point a few centimetres out
     for ring, dirn in ((rings[0], -1), (rings[-1], 1)):
         c = sum((v.co for v in ring), Vector()) / len(ring)
@@ -394,7 +410,7 @@ def tube(name, points, r, mat, closed=False):
     sp.use_cyclic_u = closed
     ob = bpy.data.objects.new(name, cu)
     scene.collection.objects.link(ob)
-    cu.materials.append(MATS[mat])
+    cu.materials.append(MATS[mat] if isinstance(mat, str) else mat)
     return ob
 
 
@@ -788,7 +804,11 @@ span = half_width(deck_x) * 1.75
 wing = F.get("wing", "none")
 if wing in ("lip", "duck"):
     duck = wing == "duck"
-    lp = box("wing_lip", (0.13 if duck else 0.06, span / 2, 0.02 if duck else 0.01), V(X0 + (0.17 if duck else 0.09), deck_y + (0.035 if duck else 0.012), 0), "paint" if not F.get("carbon") else "carbon", bevel=0.008)
+    # sat on the boot lid where it actually is (it falls away towards the tail)
+    lx = X0 + (0.17 if duck else 0.09)
+    under = on_top(lx, 0, 0.0)
+    ly = (under[0].z if under else top_at(lx)) + (0.03 if duck else 0.008)
+    lp = box("wing_lip", (0.13 if duck else 0.06, span / 2, 0.02 if duck else 0.01), V(lx, ly, 0), "paint" if not F.get("carbon") else "carbon", bevel=0.008)
     lp.rotation_euler = (0, 0.22 if duck else 0.12, 0)
 elif wing in ("gt", "tall"):
     tall = wing == "tall"
@@ -823,6 +843,100 @@ if F.get("rollCage") and windows:
     for x in (min(wx) + 0.1, max(wx) - 0.25):
         tube("roll_cage", [V(x, BELT - 0.25, -hw), V(x, hi, -hw * 0.85), V(x, hi, hw * 0.85), V(x, BELT - 0.25, hw)], 0.018, "trim")
 
+# ---------------------------------------------------------------------------- finishing details
+
+if windows:
+    wxs = [p[0] for p in windows]
+    wx0, wx1 = min(wxs), max(wxs)
+    floor_y = CLEARANCE + 0.16
+    # the cabin, seen through the glass: two seats, the dashboard and a wheel (driver on the left)
+    for z in (-0.36, 0.36):
+        sx = wx0 + (wx1 - wx0) * 0.38
+        box("seat", (0.24, 0.24, 0.05), V(sx, floor_y + 0.12, z), "interior", bevel=0.04, segments=3)
+        back = box("seat_back", (0.06, 0.24, 0.3), V(sx - 0.24, floor_y + 0.42, z), "interior", bevel=0.05, segments=3)
+        back.rotation_euler = (0, -0.28, 0)
+        box("headrest", (0.05, 0.12, 0.08), V(sx - 0.34, floor_y + 0.78, z), "interior", bevel=0.03, segments=2)
+    dash_x = wx1 - 0.12
+    box("dashboard", (0.18, half_width(dash_x) * 0.82, 0.08), V(dash_x, BELT - 0.04, 0), "interior", bevel=0.05, segments=3)
+    # the wheel goes where the cabin has headroom for it (under a raked windscreen that's well back)
+    wheel_x = dash_x - 0.24
+    while wheel_x > wx0 + 0.3 and top_at(wheel_x) - 0.06 < BELT + 0.2:
+        wheel_x -= 0.02
+    wheel_c = V(wheel_x, BELT - 0.01, -0.36)
+    bm = bmesh.new()
+    bmesh.ops.create_circle(bm, cap_ends=False, radius=0.18, segments=24)
+    sw = new_object("steering_rim", bm, ["interior"])
+    tube("steering_wheel", [wheel_c + Vector((0, math.cos(a) * 0.17, math.sin(a) * 0.17)) for a in [i / 24 * 2 * math.pi for i in range(25)]], 0.015, "interior")
+    bpy.data.objects.remove(sw)
+    cylinder("steering_column", 0.025, max(0.1, dash_x - wheel_x), wheel_c + Vector(((dash_x - wheel_x) / 2, 0, -0.04)), "interior", axis="X", segs=10)
+    # the belt line: a trim strip along the foot of the side windows
+    for side in (1, -1):
+        pts = []
+        for k in range(30):
+            x = wx0 + 0.05 + (wx1 - wx0 - 0.1) * k / 29
+            ys = [y for (xx, y) in windows]
+            bottom = min(ys)
+            hs = on_side(x, bottom + 0.01, side, 0.004)
+            if hs:
+                pts.append(hs[0])
+        if len(pts) > 4:
+            tube("belt_trim", pts, 0.007, "chrome" if YEAR < 1995 else "trim")
+
+# number plates, front and back
+pf = on_nose(CLEARANCE + 0.2, 0.0, 0.0)
+if pf:
+    pl = box("plate_front", (0.24, 0.055, 0.004), pf[0] + pf[1] * 0.006, "plate", bevel=0.004)
+    oriented(pl, pf[0] + pf[1] * 0.006, pf[1])
+    fr = box("plate_frame", (0.25, 0.064, 0.003), pf[0] + pf[1] * 0.003, "trim", bevel=0.004)
+    oriented(fr, pf[0] + pf[1] * 0.003, pf[1])
+pr_ = on_tail(tail_y - 0.21, 0.0, 0.0)
+if pr_:
+    pl = box("plate_rear", (0.24, 0.055, 0.004), pr_[0] + pr_[1] * 0.006, "plate", bevel=0.004)
+    oriented(pl, pr_[0] + pr_[1] * 0.006, pr_[1])
+    fr = box("plate_frame", (0.25, 0.064, 0.003), pr_[0] + pr_[1] * 0.003, "trim", bevel=0.004)
+    oriented(fr, pr_[0] + pr_[1] * 0.003, pr_[1])
+
+# white reversing lamps either side of the plate, and a third brake light at the top of the rear screen
+for side in (1, -1):
+    rv = on_tail(tail_y - 0.13, side * 0.42, 0.0)
+    if rv:
+        lamp = box("reverse_lamp", (0.05, 0.018, 0.006), rv[0], "reverse", bevel=0.006)
+        oriented(lamp, rv[0], rv[1])
+if len(SCREENS) > 1 and SCREENS[1][1] - SCREENS[1][0] > 0.15:
+    hm = on_top(SCREENS[1][1] - 0.04, 0.0, 0.004)
+    if hm:
+        box("tail_highmount", (0.012, 0.13, 0.006), hm[0], "tail", bevel=0.004)
+
+# fog lamps in the lower intakes of the road cars
+if F.get("grille") in ("slat", "big", "kidney", "eggcrate", "mesh") and not F.get("carbon"):
+    for side in (1, -1):
+        fl = on_nose(CLEARANCE + 0.14, side * half_width(X1 - 0.2) * 0.66, 0.0)
+        if fl:
+            ring = cylinder("fog_ring", 0.042, 0.012, fl[0] + fl[1] * 0.004, "chrome", segs=20)
+            oriented(ring, fl[0] + fl[1] * 0.004, fl[1])
+            lens = sphere("fog_lens", 0.036, fl[0] + fl[1] * 0.006, "lens", scale=(1, 1, 0.25), segs=16)
+            oriented(lens, fl[0] + fl[1] * 0.006, fl[1])
+
+# side skirts along the sills, between the arches
+rear_x = min(w["x"] for w in WHEELS) + CAR["wheelRadius"] + 0.1
+front_x = max(w["x"] for w in WHEELS) - CAR["wheelRadius"] - 0.1
+for side in (1, -1):
+    pts = []
+    for k in range(24):
+        x = rear_x + (front_x - rear_x) * k / 23
+        hs = on_side(x, CLEARANCE + 0.07, side, -0.004)
+        if hs:
+            pts.append(hs[0])
+    if len(pts) > 4:
+        tube("side_skirt", pts, 0.026, aero_mat())
+
+# a shark-fin aerial on the newer cars' roofs
+if YEAR >= 2010 and not F.get("aerial") and SCREENS:
+    fx = SCREENS[1][1] + 0.08
+    fin = on_top(fx, 0.0, 0.0)
+    if fin:
+        sphere("shark_fin", 0.06, fin[0] + Vector((0, 0, 0.012)), "paint", scale=(1.6, 0.35, 0.65), segs=16)
+
 # a dark floor pan so nothing shows through underneath
 box("floor", (LEN * 0.42, (W / 2) * 0.82, 0.005), V(X0 + LEN / 2, CLEARANCE + 0.02, 0), "well")
 
@@ -839,16 +953,28 @@ def make_wheel(name, cx, r, width, side, spokes):
     bm = bmesh.new()
     prof = []
     sh = min(0.05, hw * 0.45)
-    prof.append((rim_r + 0.005, -hw * 0.9))
-    prof.append((rim_r + (r - rim_r) * 0.55, -hw * 1.02))
+    side_wall = lambda sgn: [
+        (rim_r + 0.005, sgn * hw * 0.9),
+        (rim_r + (r - rim_r) * 0.3, sgn * hw * 0.99),
+        # a raised band round the sidewall, where the lettering would be
+        (rim_r + (r - rim_r) * 0.5, sgn * hw * 1.03),
+        (rim_r + (r - rim_r) * 0.62, sgn * hw * 1.035),
+        (rim_r + (r - rim_r) * 0.75, sgn * hw * 1.02),
+    ]
+    prof.extend(side_wall(-1))
     for i in range(7):
         a = i / 6 * math.pi / 2
         prof.append((r - sh + math.sin(a) * sh, -hw + sh - math.cos(a) * sh))
+    # the tread across the crown, with three circumferential grooves
+    crown = []
+    for g in (-0.33, 0.0, 0.33):
+        gx = g * (hw - sh)
+        crown += [(r, gx - 0.012), (r - 0.007, gx - 0.006), (r - 0.007, gx + 0.006), (r, gx + 0.012)]
+    prof.extend(crown)
     for i in range(7):
         a = i / 6 * math.pi / 2
         prof.append((r - sh + math.cos(a) * sh, hw - sh + math.sin(a) * sh))
-    prof.append((rim_r + (r - rim_r) * 0.55, hw * 1.02))
-    prof.append((rim_r + 0.005, hw * 0.9))
+    prof.extend(reversed(side_wall(1)))
     segs = 48
     rings = []
     for k in range(segs):
@@ -870,17 +996,28 @@ def make_wheel(name, cx, r, width, side, spokes):
     # the rim: an outer lip, a dark barrel, spokes, a cap and wheel nuts
     face = centre + axis * (hw * 0.85)
     lip = cylinder(name + "_lip", rim_r + 0.012, 0.03, face, "rim", axis="Y", segs=40, cap=False)
+    # a stepped lip: a second, narrower ring just inside the first
+    lip2 = cylinder(name + "_lip2", rim_r - 0.01, 0.02, face - axis * 0.022, "chrome", axis="Y", segs=40, cap=False)
+    valve = cylinder(name + "_valve", 0.004, 0.02, face + Vector((rim_r * 0.92, 0, 0)) + axis * 0.004, "trim", axis="Y", segs=6)
     barrel = cylinder(name + "_barrel", rim_r, width * 0.85, centre, "trim", axis="Y", segs=40, cap=False)
     disc = cylinder(name + "_disc", rim_r * 0.82, 0.03, centre + axis * (hw * 0.25), "disc", axis="Y", segs=36)
     hubc = cylinder(name + "_hub", rim_r * 0.2, 0.06, face - axis * 0.02, "rim", axis="Y", segs=20)
     cap = cylinder(name + "_cap", rim_r * 0.12, 0.02, face + axis * 0.012, "chrome", axis="Y", segs=20)
-    parts = [lip, barrel, disc, hubc, cap]
+    parts = [lip, lip2, valve, barrel, disc, hubc, cap]
+    # the spokes: few and wide are split into pairs; each dishes back a little towards the hub
+    split = spokes <= 6
     for i in range(spokes):
-        a = i / spokes * 2 * math.pi
-        mid = face + Vector((math.cos(a), 0, math.sin(a))) * (rim_r * 0.58) - axis * 0.012
-        sp = box(name + "_spoke", (rim_r * 0.4, 0.01, 0.016 if spokes > 7 else 0.026), mid, "rim", bevel=0.006)
-        sp.rotation_euler = (0, -a, 0)
-        parts.append(sp)
+        for off in ((-0.075, 0.075) if split else (0.0,)):
+            a = i / spokes * 2 * math.pi + off
+            mid = face + Vector((math.cos(a), 0, math.sin(a))) * (rim_r * 0.58) - axis * 0.012
+            sp = box(name + "_spoke", (rim_r * 0.4, 0.009, 0.011 if split else 0.016), mid, "rim", bevel=0.005)
+            sp.rotation_euler = (0, -a, 0)
+            parts.append(sp)
+    # cross-drilled brake disc
+    for i in range(12):
+        a = i / 12 * 2 * math.pi
+        hole = cylinder(name + "_drill", 0.006, 0.034, centre + axis * (hw * 0.25) + Vector((math.cos(a), 0, math.sin(a))) * (rim_r * 0.66), "trim", axis="Y", segs=6)
+        parts.append(hole)
     for i in range(5):
         a = i / 5 * 2 * math.pi + 0.3
         nut = cylinder(name + "_nut", 0.011, 0.02, face + Vector((math.cos(a), 0, math.sin(a))) * (rim_r * 0.3) + axis * 0.004, "chrome", axis="Y", segs=8)
