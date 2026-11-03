@@ -8,7 +8,7 @@ export function GearIndicator({ store }: { store: LowFreqStore }) {
   const { gear } = useEngineState(store);
   return (
     <span className="sr-only" aria-live="polite">
-      {gear === 0 ? "Neutral" : `Gear ${gear}`}
+      {gear === 0 ? "Neutral" : gear < 0 ? "Reverse" : `Gear ${gear}`}
     </span>
   );
 }

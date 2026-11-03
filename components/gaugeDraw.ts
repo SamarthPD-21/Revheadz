@@ -133,3 +133,6 @@ export function drawNeedle(ctx: CanvasRenderingContext2D, cx: number, cy: number
 /** Frame-rate independent exponential smoothing. */
 export const smooth = (current: number, target: number, dt: number, rate: number): number =>
   current + (target - current) * (1 - Math.exp(-dt * rate));
+
+/** What the gear readout shows: N for neutral, R for reverse (Cruise's one gear below neutral), else its number. */
+export const gearLabel = (gear: number): string => (gear === 0 ? "N" : gear < 0 ? "R" : String(gear));

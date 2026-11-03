@@ -89,3 +89,33 @@ describe("InputManager", () => {
     expect(e.defaultPrevented).toBe(false);
   });
 });
+
+describe("the gear readout", () => {
+  it("shows R once reverse is selected below neutral, N in neutral, and the number otherwise", async () => {
+    const { gearLabel } = await import("../components/gaugeDraw");
+    expect(gearLabel(-1)).toBe("R");
+    expect(gearLabel(0)).toBe("N");
+    expect(gearLabel(3)).toBe("3");
+  });
+
+  it("in Cruise, shifting down from N at a standstill selects reverse, and the gauge reads R", async () => {
+    const { gearLabel } = await import("../components/gaugeDraw");
+    const { Simulation } = await import("../lib/sim/Simulation");
+    const { roadModel } = await import("../lib/cruise/specs");
+    const { loadConfig, run, seeded } = await import("./helpers");
+    const cfg = loadConfig("supra_mk4");
+    const sim = new Simulation(cfg, seeded());
+    sim.model = roadModel(cfg);
+    sim.toggleIgnition();
+    run(sim, 1.2);
+    expect(gearLabel(sim.state.gear)).toBe("N");
+    sim.shiftDown();
+    run(sim, 0.5);
+    expect(sim.state.gear).toBe(-1);
+    expect(gearLabel(sim.state.gear)).toBe("R");
+    // and back up through N into 1st
+    sim.shiftUp();
+    run(sim, 0.5);
+    expect(gearLabel(sim.state.gear)).toBe("N");
+  });
+});

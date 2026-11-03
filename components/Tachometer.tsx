@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import type { SimListener, SimState } from "../lib/sim/types";
-import { COLORS, angleFor, drawDial, drawNeedle, smooth } from "./gaugeDraw";
+import { COLORS, angleFor, drawDial, drawNeedle, smooth, gearLabel } from "./gaugeDraw";
 import { useCanvasLoop } from "./useCanvasLoop";
 
 interface Props {
@@ -72,7 +72,7 @@ export function Tachometer({ state, redlineRpm, limiterRpm, accent, subscribe }:
 
     // cluster centre: gear, rpm readout
     const s = state;
-    const gear = s.gear === 0 ? "N" : String(s.gear);
+    const gear = gearLabel(s.gear);
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = s.ignition === "running" ? accent : COLORS.dim;
