@@ -420,6 +420,26 @@ tests/                   Vitest suites
 `npm test` and `npm run build` fail if a config is invalid or a referenced sound file is missing. They also fail if
 the loudest loop at any RPM would be pitched too far from its recording.
 
+## Car models (Blender)
+
+Every car in Cruise (not the single-seaters or the bikes) has a model built in Blender by a script, from the car's
+real length, width, height and wheelbase, its side profile and window outline, and the details listed for it in
+`components/cruise/carShapes.ts` (wings, grilles, lamps, intakes, exhausts and so on). The body is lofted into a
+cage and subdivided into smooth panels; glass, shut lines, lamps, grilles, mirrors, handles and aero are laid onto
+the finished surface, and each wheel (tyre, spoked rim, disc, caliper) is built at its real size. They're exported
+as Draco-compressed `.glb`s, about 300 KB each, to `public/vehicles/<id>/model.glb` and listed in
+`lib/cruise/models.ts`; the game loads them over its built-in bodies (`components/cruise/carGltf.ts`).
+
+To change a car and rebuild its model:
+
+```bash
+JITI_JSX=1 npx jiti scripts/blender/export-cars.ts        # the cars' data -> scripts/blender/cars.json
+BLENDER=/path/to/blender scripts/blender/build-cars.sh    # every car (or name some: ... build-cars.sh supra_mk4)
+PREVIEW_DIR=/tmp/previews scripts/blender/build-cars.sh hellcat   # with three rendered views to check it by
+```
+
+Blender 4.2 or newer; a portable download works (no install needed).
+
 ## Deploying
 
 The site exports to static files, so any static host works.
@@ -460,6 +480,8 @@ ffmpeg for the sound pipelines
   #GameAudioGDC bundles, under the Sonniss GDC bundle license (royalty-free, commercial use allowed).
 - YouTube recordings: the channels listed on the Credits page. Their audio is used for this personal project only;
   it is not covered by an open license.
-- Generated sounds and code: Revheadz.
+- Generated sounds, the Blender-built car models and code: Revheadz. The models are made by our own script in
+  [Blender](https://www.blender.org) (GPL; Blender's licence doesn't extend to what you make with it); the Draco
+  decoder in `public/draco/` is Google's (Apache 2.0), as shipped with three.js.
 
 The in-app **Credits** page lists every recording used.
