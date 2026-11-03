@@ -5,8 +5,21 @@ import type { DriveKey, DriveLog } from "./race";
 
 /**
  * Two-player rooms over WebRTC (PeerJS). The host's peer id is derived from the room code,
- * so the guest only needs the code. Signalling goes through the public PeerJS broker; once
- * connected, all traffic is browser to browser.
+ * so the guest only needs the code. Signalling goes through the public PeerJS broker (or your
+ * own, see below); once connected, all traffic is browser to browser.
+ *
+ * Getting two browsers to talk takes ICE servers. STUN (Google's and Cloudflare's, free and
+ * always up) finds each player's public address, which is enough on most home networks. When
+ * both sit behind strict routers (mobile data, offices, some ISPs) the traffic has to go via a
+ * TURN relay. PeerJS's own free relays have been shut down, and there's no free relay left that
+ * works without an account, so set yours (Metered and Cloudflare both have free tiers) with:
+ *
+ *   NEXT_PUBLIC_TURN_URLS        comma-separated, e.g. turn:global.relay.metered.ca:80,turns:global.relay.metered.ca:443?transport=tcp
+ *   NEXT_PUBLIC_TURN_USERNAME
+ *   NEXT_PUBLIC_TURN_CREDENTIAL
+ *
+ * and, to run your own PeerJS broker instead of the public one, NEXT_PUBLIC_PEER_HOST (plus
+ * NEXT_PUBLIC_PEER_PORT and NEXT_PUBLIC_PEER_PATH if they aren't 443 and "/").
  *
  * Fairness doesn't depend on the network: each player's reaction is measured against their
  * own tree on their own clock, and results are recomputed by replaying both drive logs. The
@@ -66,10 +79,45 @@ export interface RoomEvents {
   onError: (message: string) => void;
 }
 
+/** How long to wait for the other browser before saying it isn't going to work, ms. */
+const CONNECT_TIMEOUT_MS = 15000;
+
+/** STUN that's always up, and a TURN relay if one is configured. */
+export function iceServers(env: Record<string, string | undefined> = PUBLIC_ENV): RTCIceServer[] {
+  const servers: RTCIceServer[] = [{ urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] }, { urls: "stun:stun.cloudflare.com:3478" }];
+  const turn = (env.NEXT_PUBLIC_TURN_URLS ?? "")
+    .split(",")
+    .map((u) => u.trim())
+    .filter(Boolean);
+  if (turn.length) servers.push({ urls: turn, username: env.NEXT_PUBLIC_TURN_USERNAME, credential: env.NEXT_PUBLIC_TURN_CREDENTIAL });
+  return servers;
+}
+
+// (spelled out so the bundler inlines them in a static build)
+const PUBLIC_ENV = {
+  NEXT_PUBLIC_TURN_URLS: process.env.NEXT_PUBLIC_TURN_URLS,
+  NEXT_PUBLIC_TURN_USERNAME: process.env.NEXT_PUBLIC_TURN_USERNAME,
+  NEXT_PUBLIC_TURN_CREDENTIAL: process.env.NEXT_PUBLIC_TURN_CREDENTIAL,
+  NEXT_PUBLIC_PEER_HOST: process.env.NEXT_PUBLIC_PEER_HOST,
+  NEXT_PUBLIC_PEER_PORT: process.env.NEXT_PUBLIC_PEER_PORT,
+  NEXT_PUBLIC_PEER_PATH: process.env.NEXT_PUBLIC_PEER_PATH,
+};
+
+/** Whether a relay is set up (without one, players on strict networks can't always connect). */
+export const hasRelay = () => iceServers().length > 2;
+
 async function makePeer(id?: string): Promise<PeerT> {
   const { default: Peer } = await import("peerjs"); // browser-only: load on demand
-  return id ? new Peer(id, { debug: 0 }) : new Peer({ debug: 0 });
+  const host = PUBLIC_ENV.NEXT_PUBLIC_PEER_HOST;
+  const options = {
+    debug: 0,
+    config: { iceServers: iceServers() },
+    ...(host ? { host, port: Number(PUBLIC_ENV.NEXT_PUBLIC_PEER_PORT || 443), path: PUBLIC_ENV.NEXT_PUBLIC_PEER_PATH || "/", secure: true } : {}),
+  };
+  return id ? new Peer(id, options) : new Peer(options);
 }
+
+const CANT_REACH = "Couldn't connect to the other player: one of your networks blocks direct connections. Try another network (or Wi-Fi instead of mobile data).";
 
 function friendly(err: unknown): string {
   const type = (err as { type?: string })?.type;
@@ -80,10 +128,28 @@ function friendly(err: unknown): string {
   return (err as Error)?.message || "Connection failed.";
 }
 
-function wire(conn: DataConnection, peer: PeerT, code: string, isHost: boolean, ev: RoomEvents) {
+/**
+ * Wires up a connection. `onFail` is what happens if it never opens: the guest gives up and
+ * says why; the host just frees the room for another try.
+ */
+function wire(conn: DataConnection, peer: PeerT, code: string, isHost: boolean, ev: RoomEvents, onFail?: () => void) {
   let offset = 0;
   let bestRtt = Infinity;
   let closed = false;
+  let opened = false;
+  // no answer in time, or the browsers found no way through to each other: say so, rather than
+  // leaving both players looking at "connecting…" for ever
+  const fail = () => {
+    if (opened || closed) return;
+    closed = true;
+    if (onFail) return onFail();
+    ev.onError(CANT_REACH);
+    peer.destroy();
+  };
+  const timer = setTimeout(fail, CONNECT_TIMEOUT_MS);
+  conn.on("iceStateChanged", (state) => {
+    if (state === "failed") fail();
+  });
   const send = (m: Message) => {
     if (conn.open) conn.send(m);
   };
@@ -101,6 +167,8 @@ function wire(conn: DataConnection, peer: PeerT, code: string, isHost: boolean, 
   };
 
   conn.on("open", () => {
+    opened = true;
+    clearTimeout(timer);
     ev.onOpen(room);
     // guest: estimate the host clock from the round trips with the smallest delay
     if (!isHost) {
@@ -147,7 +215,11 @@ export async function hostRoom(code: string, ev: RoomEvents): Promise<() => void
       return;
     }
     taken = true;
-    wire(conn, peer, code, true, ev);
+    wire(conn, peer, code, true, ev, () => {
+      // that guest couldn't get through: let the next attempt in
+      taken = false;
+      conn.close();
+    });
   });
   peer.on("error", (e) => ev.onError(friendly(e)));
   return () => peer.destroy();
@@ -156,10 +228,22 @@ export async function hostRoom(code: string, ev: RoomEvents): Promise<() => void
 /** Joins a host's room by code. Returns a cancel function. */
 export async function joinRoom(code: string, ev: RoomEvents): Promise<() => void> {
   const peer = await makePeer();
+  // the matchmaking server itself not answering
+  const noBroker = setTimeout(() => {
+    ev.onError("Couldn't reach the matchmaking server. Check your connection.");
+    peer.destroy();
+  }, CONNECT_TIMEOUT_MS);
   peer.on("open", () => {
+    clearTimeout(noBroker);
     const conn = peer.connect(ID_PREFIX + code, { reliable: true });
     wire(conn, peer, code, false, ev);
   });
-  peer.on("error", (e) => ev.onError(friendly(e)));
-  return () => peer.destroy();
+  peer.on("error", (e) => {
+    clearTimeout(noBroker);
+    ev.onError(friendly(e));
+  });
+  return () => {
+    clearTimeout(noBroker);
+    peer.destroy();
+  };
 }

@@ -434,6 +434,16 @@ Optional environment variables:
 |---|---|
 | `NEXT_PUBLIC_FEEDBACK_URL` | Shows a "Send feedback" link on the home page (e.g. a Google Form) |
 | `NEXT_PUBLIC_SITE_URL` | Your custom domain, so social share images use absolute URLs |
+| `NEXT_PUBLIC_TURN_URLS` | A TURN relay for online drag rooms, comma-separated (e.g. `turn:global.relay.metered.ca:80,turns:global.relay.metered.ca:443?transport=tcp`) |
+| `NEXT_PUBLIC_TURN_USERNAME` / `NEXT_PUBLIC_TURN_CREDENTIAL` | That relay's username and password |
+| `NEXT_PUBLIC_PEER_HOST` (`_PORT`, `_PATH`) | Your own PeerJS server, instead of the public one |
+
+**Online rooms and relays.** Two players' browsers connect directly, using free public STUN servers to find each
+other. That works on most home networks, but when both sit behind strict routers (mobile data, offices, some ISPs)
+the traffic has to go through a TURN relay, and there's no free public relay left that works without an account. For
+rooms that connect anywhere, make a free account with a TURN provider (Metered and Cloudflare both have a free
+tier) and set the three `TURN` variables above. Without one, a room that can't connect says so after 15 seconds
+instead of waiting for ever.
 
 Vercel's free Hobby plan is for non-commercial use. If you ever monetise, the same static build runs unchanged on
 Netlify or Cloudflare Pages.
