@@ -8,8 +8,8 @@
   },
   {
     "vehicle": "Plymouth Hemi 'Cuda",
-    "files": "Generated one-shots: shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -22,8 +22,8 @@
   },
   {
     "vehicle": "Porsche 911 SC",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -36,8 +36,8 @@
   },
   {
     "vehicle": "Aston Martin DB9",
-    "files": "Generated one-shots: shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -50,8 +50,8 @@
   },
   {
     "vehicle": "Ford Focus RS",
-    "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: start, stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -71,8 +71,8 @@
   },
   {
     "vehicle": "BMW S1000RR",
-    "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: start, stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -85,8 +85,8 @@
   },
   {
     "vehicle": "Ferrari 458 Italia Straight Pipes",
-    "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: start, stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -99,8 +99,8 @@
   },
   {
     "vehicle": "Williams FW29",
-    "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: start, stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -127,8 +127,8 @@
   },
   {
     "vehicle": "Harley-Davidson Big Twin",
-    "files": "Generated one-shots: shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -141,8 +141,8 @@
   },
   {
     "vehicle": "Nissan GT-R R35",
-    "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: start, stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -162,8 +162,8 @@
   },
   {
     "vehicle": "BMW M4 (F82)",
-    "files": "Generated one-shots: start, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: start, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -190,8 +190,8 @@
   },
   {
     "vehicle": "Mercedes-AMG C63",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -211,8 +211,8 @@
   },
   {
     "vehicle": "Audi R8 V10 Plus",
-    "files": "Generated one-shots: shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -246,8 +246,8 @@
   },
   {
     "vehicle": "Lamborghini Aventador SVJ",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -288,8 +288,8 @@
   },
   {
     "vehicle": "BMW M3 E46",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -351,8 +351,8 @@
   },
   {
     "vehicle": "Subaru Impreza WRC",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -372,8 +372,8 @@
   },
   {
     "vehicle": "Bugatti Chiron",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -393,8 +393,8 @@
   },
   {
     "vehicle": "Chevrolet Corvette Z06",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -421,8 +421,8 @@
   },
   {
     "vehicle": "Ferrari F2004",
-    "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: start, stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -449,8 +449,8 @@
   },
   {
     "vehicle": "Ferrari F40",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -470,8 +470,8 @@
   },
   {
     "vehicle": "Dodge Challenger SRT Hellcat",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -505,8 +505,8 @@
   },
   {
     "vehicle": "Honda S2000 AP1",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -533,8 +533,8 @@
   },
   {
     "vehicle": "Toyota Chaser JZX100 Tourer V",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -575,8 +575,8 @@
   },
   {
     "vehicle": "Lexus LFA",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -596,8 +596,8 @@
   },
   {
     "vehicle": "Ford Mustang GT",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -617,8 +617,8 @@
   },
   {
     "vehicle": "Kawasaki Ninja H2",
-    "files": "Generated one-shots: start, stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: start, stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -638,8 +638,8 @@
   },
   {
     "vehicle": "Pagani Zonda F",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -659,8 +659,8 @@
   },
   {
     "vehicle": "Ducati Panigale V4 R",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -687,8 +687,8 @@
   },
   {
     "vehicle": "Porsche 911 GT3 RS",
-    "files": "Generated one-shots: shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -729,8 +729,8 @@
   },
   {
     "vehicle": "Mazda 787B",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -771,8 +771,8 @@
   },
   {
     "vehicle": "Mazda RX-7 FD3S",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -799,8 +799,8 @@
   },
   {
     "vehicle": "Nissan Skyline GT-R R34",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -834,8 +834,8 @@
   },
   {
     "vehicle": "Subaru Impreza WRX STI",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -855,8 +855,8 @@
   },
   {
     "vehicle": "Toyota Supra MK4",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -890,8 +890,8 @@
   },
   {
     "vehicle": "Nissan 370Z",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   },
@@ -911,8 +911,8 @@
   },
   {
     "vehicle": "Porsche Carrera GT",
-    "files": "Generated one-shots: stop, shift, backfire, blow-off",
-    "author": "Revheadz (generated)",
+    "files": "Engine-model one-shots: stop, shift, backfire, blow-off",
+    "author": "Revheadz",
     "source": "scripts/generate-sounds.mjs",
     "license": "CC0 1.0"
   }

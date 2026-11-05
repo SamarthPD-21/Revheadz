@@ -321,7 +321,7 @@ function writeCredits() {
       credits.push({ vehicle: cfg.name, files, author: s.author, source, license });
     }
     const gen = [...generated.map((k) => `${k}`), "shift", "backfire", "blow-off"].join(", ");
-    credits.push({ vehicle: cfg.name, files: `Generated one-shots: ${gen}`, author: "Revheadz (generated)", source: "scripts/generate-sounds.mjs", license: "CC0 1.0" });
+    credits.push({ vehicle: cfg.name, files: `Engine-model one-shots: ${gen}`, author: "Revheadz", source: "scripts/generate-sounds.mjs", license: "CC0 1.0" });
   }
   const existing = JSON.parse(readFileSync(path.join(ROOT, "credits.json"), "utf8"));
   const realNames = new Set(credits.map((c) => c.vehicle));
