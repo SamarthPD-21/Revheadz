@@ -16,14 +16,6 @@ export default function Home() {
   const list = garageList();
   const recorded = list.filter((v) => v.recorded).length;
   const showcase = SHOWCASE.map((id) => list.find((v) => v.id === id)).filter((v) => v !== undefined);
-  const arrow = (
-    <span className="mode-go" aria-hidden>
-      <svg viewBox="0 0 16 16" className="h-4 w-4">
-        <path d="M5 3l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </span>
-  );
-
   // staged at the line behind the hero: a Supra and a Skyline, the old rivals
   const staged = [getVehicle("supra_mk4")!, getVehicle("skyline_r34")!] as const;
 
@@ -43,8 +35,8 @@ export default function Home() {
       <section className="mt-14 sm:mt-20">
         <h1 className="display max-w-3xl text-5xl text-zinc-50 sm:text-7xl">Real engines, in your browser</h1>
         <p className="mt-5 max-w-xl text-lg text-zinc-400">
-          Start them, rev them, shift through the gears. Each car&apos;s sound is built from recordings of that car, from a Toyota Supra to a 2004
-          Ferrari Formula 1 car.
+          Every car here was recorded for real, from a Toyota Supra to Ferrari&apos;s 2004 F1 car. Start one up, rev it and run it through
+          the gears.
         </p>
         <p className="mt-6 text-sm text-zinc-500">
           {list.length} machines, {recorded} of them recorded from the real thing. {CLASSES.length} drag classes.
@@ -55,11 +47,9 @@ export default function Home() {
         <Link href="/playground" className="mode-card group">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="eyebrow">Free play</p>
-              <h2 className="display mt-2 text-4xl text-white">Playground</h2>
-              <p className="mt-2 max-w-sm text-sm text-zinc-400">Pick any car and drive it: throttle, gears, brakes and the rev limiter. No timer.</p>
+              <h2 className="display text-4xl text-white">Playground</h2>
+              <p className="mt-2 max-w-sm text-sm text-zinc-400">Pick any car and drive it up and down the strip. Rev it, shift it, hit the limiter.</p>
             </div>
-            {arrow}
           </div>
           <div className="mode-parade relative mt-6" aria-hidden>
             <Parade>
@@ -78,13 +68,11 @@ export default function Home() {
         <Link href="/drag" className="mode-card group">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="eyebrow">Head to head</p>
-              <h2 className="display mt-2 text-4xl text-white">Drag racing</h2>
+              <h2 className="display text-4xl text-white">Drag racing</h2>
               <p className="mt-2 max-w-sm text-sm text-zinc-400">
-                A quarter mile against a friend online or the CPU. Cars race in classes, so the launch and the shifts decide it.
+                Quarter mile against a friend or the CPU. Cars are matched by class, so it comes down to your launch and shifts.
               </p>
             </div>
-            {arrow}
           </div>
           <div className="mt-8 flex justify-center gap-2.5" aria-hidden>
             {["#facc15", "#facc15", "#facc15", "#22c55e"].map((c, i) => (
@@ -96,13 +84,11 @@ export default function Home() {
         <Link href="/cruise" className="mode-card group md:col-span-2 xl:col-span-1">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="eyebrow">Sit back</p>
-              <h2 className="display mt-2 text-4xl text-white">Cruise</h2>
+              <h2 className="display text-4xl text-white">Cruise</h2>
               <p className="mt-2 max-w-sm text-sm text-zinc-400">
-                An endless 3D road through hills, forest and mountains. Watch the day turn to night, bring in the rain, or let the autopilot drive.
+                A 3D road that keeps going through hills, forest and mountains. Day turns to night, weather comes and goes, and there&apos;s an autopilot if you just want to listen.
               </p>
             </div>
-            {arrow}
           </div>
           <div className="cruise-mini mt-6" aria-hidden>
             <span className="cruise-mini-sun" />

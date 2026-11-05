@@ -42,10 +42,10 @@ export function Logo({ size = "md", className = "" }: { size?: "sm" | "md" | "lg
   const text = size === "lg" ? "text-4xl sm:text-5xl" : size === "md" ? "text-xl" : "text-base";
   return (
     <span className={`logo inline-flex items-center gap-3 ${className}`}>
-      <LogoMark className={`${mark} shrink-0 drop-shadow-[0_6px_18px_rgba(249,115,22,0.25)]`} />
+      <LogoMark className={`${mark} shrink-0`} />
       <span className={`${text} font-black italic leading-none tracking-tight`}>
         <span className="text-zinc-50">REV</span>
-        <span className="bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text pr-1 text-transparent">HEADZ</span>
+        <span className="pr-1 text-orange-500">HEADZ</span>
       </span>
     </span>
   );

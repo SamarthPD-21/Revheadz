@@ -295,7 +295,7 @@ export default function Simulator({ vehicle, prev, next, maxKmh, garage }: Props
                   key={set}
                   type="button"
                   aria-pressed={soundSet === set}
-                  title={set === "recorded" ? "Real engine recording" : "Engine-model (generated) sound"}
+                  title={set === "recorded" ? "Real engine recording" : "Sound synthesised from the engine model"}
                   {...pressHandlers(() => {
                     if (soundSet === set) return;
                     setSound(set);

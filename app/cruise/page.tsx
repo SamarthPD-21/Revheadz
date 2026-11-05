@@ -24,11 +24,10 @@ export default function CruiseGarage() {
               ← Modes
             </Link>
           </nav>
-          <p className="mt-8 text-xs font-bold uppercase tracking-[0.24em] text-amber-300">Cruise</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-zinc-50 sm:text-4xl">No timer. Just the road.</h1>
+          <h1 className="display mt-8 text-4xl text-zinc-50 sm:text-5xl">Cruise</h1>
           <p className="mt-3 max-w-2xl text-zinc-400">
-            An endless road through hills, forest, desert and mountains that never runs the same way twice. Watch the day go by from sunrise to the
-            stars, bring in fog or rain, and switch on the <b className="text-zinc-200">autopilot</b> to just sit back and listen.
+            Pick a car and drive. The road runs on through hills, forest, desert and mountains, and it&apos;s different every time. You can
+            change the time of day and the weather, or turn on the <b className="text-zinc-200">autopilot</b> and just listen.
           </p>
         </header>
         <GarageGrid vehicles={list} base="/cruise" betaBikes />

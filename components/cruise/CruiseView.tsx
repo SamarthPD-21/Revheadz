@@ -432,7 +432,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       const warnEl = warnRef.current;
       if (warnEl && warnEl.dataset.kind !== (scene.warning ?? "")) {
         warnEl.dataset.kind = scene.warning ?? "";
-        warnEl.lastElementChild!.textContent = scene.warning === "closed" ? "The road behind is closed — turn around" : scene.warning === "wrong-way" ? "Wrong way — turn around" : "";
+        warnEl.lastElementChild!.textContent = scene.warning === "closed" ? "Road closed behind you. Turn around" : scene.warning === "wrong-way" ? "Wrong way. Turn around" : "";
       }
       // the map, fifteen times a second
       if (mapRef.current && now - lastMap > 66) {

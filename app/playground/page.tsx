@@ -29,11 +29,10 @@ export default function Playground() {
               ← Modes
             </Link>
           </nav>
-          <p className="mt-8 text-xs font-bold uppercase tracking-[0.24em] text-orange-400">Playground</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-zinc-50 sm:text-4xl">Pick a machine. Make some noise.</h1>
+          <h1 className="display mt-8 text-4xl text-zinc-50 sm:text-5xl">Playground</h1>
           <p className="mt-3 max-w-2xl text-zinc-400">
-            No timer, no rules: start any engine, rev it, shift it and bounce it off the limiter. Tap <b className="text-zinc-200">Hear it</b> on a
-            card for a quick rev first. Headphones recommended.
+            Start any engine and drive it with nothing timing you. Not sure which one? Hit <b className="text-zinc-200">Hear it</b> on a card
+            for a quick rev. Sounds best on headphones.
           </p>
           <ul className="mt-5 flex flex-wrap gap-2 text-xs text-zinc-300" aria-label="At a glance">
             <li className="stat-pill">
