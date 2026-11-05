@@ -3,7 +3,7 @@
   "name": "Harley-Davidson Big Twin",
   "type": "bike",
   "engineType": "45-degree air-cooled V-twin",
-  "description": "The unmistakable potato-potato lope of a Harley big twin. Real Harley-Davidson and custom chopper recordings.",
+  "description": "A Harley-Davidson big twin and its potato-potato idle. Recorded from Harleys and a custom chopper.",
   "engine": {
     "cylinders": 2,
     "idleRpm": 900,

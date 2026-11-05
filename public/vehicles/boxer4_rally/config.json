@@ -3,7 +3,7 @@
   "name": "Subaru Impreza WRC",
   "type": "car",
   "engineType": "Turbocharged flat-four, anti-lag",
-  "description": "Works World Rally Car with a 2.0 L EJ20 turbo boxer: off-beat flat-four burble at idle and anti-lag bangs and crackles every time the driver lifts.",
+  "description": "A works WRC Impreza with the 2.0 L EJ20 turbo boxer. Off-beat burble at idle, and the anti-lag bangs every time you lift.",
   "engine": {
     "cylinders": 4,
     "idleRpm": 2300,

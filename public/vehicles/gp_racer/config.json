@@ -3,7 +3,7 @@
   "name": "Williams FW29",
   "type": "car",
   "engineType": "Toyota RVX-07 2.4 L V8, 19,000 rpm",
-  "description": "Williams' 2007 Formula 1 car with Toyota's 2.4 L RVX-07 V8: idles at 4,400 rpm and shrieks to 19,000. Real onboard recording.",
+  "description": "Williams' 2007 F1 car, with Toyota's 2.4 L RVX-07 V8. It idles at 4,400 rpm and revs to 19,000. Recorded onboard.",
   "engine": {
     "cylinders": 8,
     "idleRpm": 4400,

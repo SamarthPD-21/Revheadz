@@ -3,7 +3,7 @@
   "name": "Plymouth Hemi 'Cuda",
   "type": "car",
   "engineType": "426 Hemi big-block V8",
-  "description": "The 1971 Hemi 'Cuda: a lumpy, big-cam 426 Hemi that turns into a big-block roar. Real onboard recording.",
+  "description": "The 1971 Hemi 'Cuda and its 426 big-block, on a big cam that makes it lope at idle. Recorded onboard.",
   "engine": {
     "cylinders": 8,
     "idleRpm": 600,

@@ -3,7 +3,7 @@
   "name": "Nissan GT-R R35",
   "type": "car",
   "engineType": "VR38DETT 3.8 L twin-turbo V6",
-  "description": "Godzilla: the hand-built VR38DETT twin-turbo V6, all-wheel drive and a dual-clutch that cracks off every upshift. Real onboard recording.",
+  "description": "The R35 GT-R's hand-built 3.8 L VR38DETT twin-turbo V6, with all-wheel drive and a dual-clutch gearbox. Recorded onboard.",
   "engine": {
     "cylinders": 6,
     "idleRpm": 950,

@@ -3,7 +3,7 @@
   "name": "BMW M4 (F82)",
   "type": "car",
   "engineType": "S55 3.0 L twin-turbo I6",
-  "description": "BMW's S55 twin-turbo straight-six with a 7,600 rpm limiter and a snappy M-DCT. Real exterior and onboard recordings.",
+  "description": "The F82 M4's S55 twin-turbo straight-six, with a 7,600 rpm limiter and the M-DCT gearbox. Recorded inside and out.",
   "engine": {
     "cylinders": 6,
     "idleRpm": 720,

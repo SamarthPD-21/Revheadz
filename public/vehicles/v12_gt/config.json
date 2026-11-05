@@ -3,7 +3,7 @@
   "name": "Aston Martin DB9",
   "type": "car",
   "engineType": "5.9 L NA V12",
-  "description": "Aston's hand-built 5.9 litre V12: smooth and layered at idle, an operatic wail at the top. Real onboard recording.",
+  "description": "Aston Martin's hand-built 5.9 L V12. Smooth at idle, loud at the top. Recorded onboard.",
   "engine": {
     "cylinders": 12,
     "idleRpm": 650,

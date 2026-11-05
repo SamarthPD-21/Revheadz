@@ -3,7 +3,7 @@
   "name": "Mazda 787B",
   "type": "car",
   "engineType": "Four-rotor Wankel",
-  "description": "The 1991 Le Mans winner: a 2.6 L R26B four-rotor rotary screaming to 9,000 rpm, still the only rotary ever to win the 24 Hours.",
+  "description": "Mazda's 1991 Le Mans winner, with a 2.6 L four-rotor R26B revving to 9,000 rpm. Still the only rotary to win the race.",
   "engine": {
     "cylinders": 8,
     "idleRpm": 1800,

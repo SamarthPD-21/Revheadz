@@ -3,7 +3,7 @@
   "name": "Porsche Carrera GT",
   "type": "car",
   "engineType": "Naturally aspirated V10",
-  "description": "A 5.7 L V10 born from a stillborn Le Mans programme, revving to 8,400 rpm through a six-speed manual and a ceramic clutch. One of the greatest engine sounds ever made.",
+  "description": "The Carrera GT's 5.7 L V10, first built for a Le Mans car that never raced. Revs to 8,400 rpm, with a six-speed manual.",
   "engine": {
     "cylinders": 10,
     "idleRpm": 1000,

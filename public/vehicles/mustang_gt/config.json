@@ -3,7 +3,7 @@
   "name": "Ford Mustang GT",
   "type": "car",
   "engineType": "5.0 Coyote V8",
-  "description": "The 5.0-litre Coyote V8 in its third-generation form: dual injection, a 7,500 rpm redline and a cross-plane burble that turns into a full-throated howl. Six-speed manual, rear-wheel drive.",
+  "description": "The third-generation 5.0 Coyote V8, with direct and port injection and a 7,500 rpm redline. Six-speed manual, rear-wheel drive.",
   "engine": {
     "cylinders": 8,
     "idleRpm": 740,

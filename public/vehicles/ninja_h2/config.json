@@ -3,7 +3,7 @@
   "name": "Kawasaki Ninja H2",
   "type": "bike",
   "engineType": "998 cc supercharged inline-four",
-  "description": "The only supercharged production superbike: a 998 cc inline-four with a centrifugal blower spinning near 130,000 rpm for 231 hp and that unmistakable whine. Real recordings.",
+  "description": "The only supercharged production superbike: a 998 cc four whose blower spins at about 130,000 rpm, for 231 hp.",
   "engine": {
     "cylinders": 4,
     "idleRpm": 1300,

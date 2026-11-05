@@ -3,7 +3,7 @@
   "name": "Chevrolet Corvette Z06",
   "type": "car",
   "engineType": "5.5 LT6 flat-plane V8",
-  "description": "The LT6: a 5.5-litre flat-plane-crank V8 with dual overhead cams that revs to 8,600 rpm, the most powerful naturally aspirated V8 ever put in a production car. Mid-engined, eight-speed dual-clutch.",
+  "description": "The LT6, a 5.5 L flat-plane V8 with four cams that revs to 8,600 rpm. Mid-engined, with an 8-speed dual-clutch.",
   "engine": {
     "cylinders": 8,
     "idleRpm": 925,

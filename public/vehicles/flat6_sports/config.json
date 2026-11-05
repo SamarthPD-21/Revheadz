@@ -3,7 +3,7 @@
   "name": "Porsche 911 SC",
   "type": "car",
   "engineType": "3.0 L air-cooled flat-six",
-  "description": "The 1981 911 SC: air-cooled 3.0 flat-six rasp and that unmistakable rear-engined howl. Real onboard recording.",
+  "description": "A 1981 911 SC with the air-cooled 3.0 L flat-six. Recorded onboard.",
   "engine": {
     "cylinders": 6,
     "idleRpm": 900,

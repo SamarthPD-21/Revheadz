@@ -3,7 +3,7 @@
   "name": "Subaru Impreza WRX STI",
   "type": "car",
   "engineType": "Turbocharged flat-four",
-  "description": "The EJ257: a 2.5-litre turbo boxer whose unequal-length headers give the famous off-beat rumble, backed by a big turbo rush and symmetrical all-wheel drive. From real STI recordings.",
+  "description": "The 2.5 L EJ257 turbo boxer. Unequal-length headers give it the off-beat rumble. All-wheel drive.",
   "engine": {
     "cylinders": 4,
     "idleRpm": 900,

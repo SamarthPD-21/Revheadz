@@ -3,7 +3,7 @@
   "name": "Toyota Chaser JZX100 Tourer V",
   "type": "car",
   "engineType": "Turbocharged straight-six",
-  "description": "The four-door drift legend: a 1JZ-GTE 2.5 L single-turbo straight-six with VVT-i, a silky six-pot howl and a blow-off hiss on every lift.",
+  "description": "The four-door Toyota the drifters love: a 2.5 L 1JZ-GTE single-turbo straight-six with VVT-i, and a blow-off on every lift.",
   "engine": {
     "cylinders": 6,
     "idleRpm": 850,

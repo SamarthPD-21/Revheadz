@@ -3,7 +3,7 @@
   "name": "Honda S2000 AP1",
   "type": "car",
   "engineType": "Naturally aspirated inline-four",
-  "description": "The F20C: a 2.0-litre VTEC four making 240 hp without a turbo, with a hard cam change at 6,000 rpm and a howl that runs all the way to 9,000. Built from real recordings of an AP1.",
+  "description": "The F20C, a 2.0 L VTEC four making 240 hp with no turbo. The cam changes over at 6,000 rpm and it revs to 9,000. Recorded from an AP1.",
   "engine": {
     "cylinders": 4,
     "idleRpm": 900,

@@ -3,7 +3,7 @@
   "name": "Toyota Supra MK4",
   "type": "car",
   "engineType": "Twin-turbo straight-six",
-  "description": "The A80 Turbo and its legendary 2JZ-GTE: a cast-iron 3.0 straight-six with sequential twin turbos and a silky, rising howl. Built from real recordings of a stock car on the dyno.",
+  "description": "The A80 Supra Turbo's 2JZ-GTE: a 3.0 L cast-iron straight-six with sequential twin turbos. Recorded from a stock car on a dyno.",
   "engine": {
     "cylinders": 6,
     "idleRpm": 900,

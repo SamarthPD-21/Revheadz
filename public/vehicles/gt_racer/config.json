@@ -3,7 +3,7 @@
   "name": "Ferrari 458 Italia Straight Pipes",
   "type": "car",
   "engineType": "4.5 L F136 flat-plane V8, straight pipes",
-  "description": "Ferrari's 9,000 rpm F136 flat-plane V8 with the mufflers gone. Pure straight-pipe scream from a real onboard recording.",
+  "description": "A 458 Italia with its 4.5 L flat-plane V8 and the mufflers taken off. Recorded onboard.",
   "engine": {
     "cylinders": 8,
     "idleRpm": 700,

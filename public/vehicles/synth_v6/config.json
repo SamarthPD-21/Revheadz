@@ -3,7 +3,7 @@
   "name": "Nissan 370Z",
   "type": "car",
   "engineType": "Naturally aspirated V6",
-  "description": "Nissan's VQ37VHR 3.7 L V6 with variable valve lift: a hard-edged, rasping howl all the way to 7,500 rpm.",
+  "description": "Nissan's VQ37VHR 3.7 L V6 with variable valve lift, revving to 7,500 rpm.",
   "voice": "twin_turbo_v6",
   "engine": {
     "cylinders": 6,

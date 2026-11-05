@@ -3,7 +3,7 @@
   "name": "BMW S1000RR",
   "type": "bike",
   "engineType": "999 cc inline-four",
-  "description": "BMW's S1000RR superbike: a screaming 999 cc four with an airbox howl and a quickshifter. Real onboard recordings (S1000RR and HP4).",
+  "description": "BMW's 999 cc S1000RR four with a quickshifter. Recorded onboard an S1000RR and an HP4.",
   "engine": {
     "cylinders": 4,
     "idleRpm": 1250,

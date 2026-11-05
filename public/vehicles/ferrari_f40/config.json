@@ -3,7 +3,7 @@
   "name": "Ferrari F40",
   "type": "car",
   "engineType": "Twin-turbo flat-plane V8",
-  "description": "Enzo's last Ferrari: a 2.9 L twin-turbo F120A V8 with savage lag, then 478 PS all at once, a gated 5-speed manual and wastegate chatter on every lift.",
+  "description": "The last Ferrari Enzo signed off: a 2.9 L twin-turbo V8 with a lot of lag, then 478 PS at once. Gated 5-speed manual.",
   "engine": {
     "cylinders": 8,
     "idleRpm": 1000,

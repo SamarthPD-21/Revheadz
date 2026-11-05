@@ -3,7 +3,7 @@
   "name": "Pagani Zonda F",
   "type": "car",
   "engineType": "Naturally aspirated V12",
-  "description": "Hand-built carbon hypercar around a Mercedes-AMG M120 7.3 L V12, with a titanium exhaust whose raw, operatic bark made the Zonda a legend.",
+  "description": "Carbon-fibre Pagani built around a 7.3 L Mercedes-AMG M120 V12, with a titanium exhaust.",
   "engine": {
     "cylinders": 12,
     "idleRpm": 1100,

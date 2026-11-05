@@ -3,7 +3,7 @@
   "name": "Ducati Panigale V4 R",
   "type": "bike",
   "engineType": "1,000 cc V4, twin-pulse, 16,000 rpm",
-  "description": "Ducati's homologation special: the 998 cc Desmosedici Stradale R V4 with its twin-pulse firing order, revving to 16,000 rpm. Real recordings.",
+  "description": "Ducati's 998 cc V4 from the Panigale V4 R, with a twin-pulse firing order and a 16,000 rpm redline.",
   "engine": {
     "cylinders": 4,
     "idleRpm": 1450,

@@ -3,7 +3,7 @@
   "name": "Dodge Challenger SRT Hellcat",
   "type": "car",
   "engineType": "Supercharged 6.2 HEMI V8",
-  "description": "A 2.4-litre supercharger bolted on top of the 6.2 HEMI: 707 hp, a blower whine over a thunderous cross-plane V8, and an eight-speed automatic that fires through the gears. Rear tyres not included.",
+  "description": "The 6.2 HEMI with a 2.4 L supercharger on top: 707 hp, blower whine and an 8-speed automatic.",
   "engine": {
     "cylinders": 8,
     "idleRpm": 740,

@@ -3,7 +3,7 @@
   "name": "Porsche 911 GT3 RS",
   "type": "car",
   "engineType": "4.0 L naturally aspirated flat-six, 9,000 rpm",
-  "description": "The 991.2 GT3 RS: a 520 PS, 4.0-litre MA1.76 flat-six that screams all the way to 9,000 rpm, fed through a lightning PDK. Real recordings.",
+  "description": "The 991.2 GT3 RS, with a 4.0 L flat-six making 520 PS and revving to 9,000 rpm, through a PDK.",
   "engine": {
     "cylinders": 6,
     "idleRpm": 1000,

@@ -3,7 +3,7 @@
   "name": "Nissan Skyline GT-R R34",
   "type": "car",
   "engineType": "Twin-turbo straight-six",
-  "description": "Godzilla's last Skyline: the hand-built RB26DETT twin-turbo straight-six, six individual throttles and a metallic wail all the way to 8,000 rpm, sent through ATTESA all-wheel drive.",
+  "description": "The last Skyline GT-R, with the hand-built RB26DETT twin-turbo straight-six, six throttle bodies and ATTESA all-wheel drive.",
   "engine": {
     "cylinders": 6,
     "idleRpm": 950,

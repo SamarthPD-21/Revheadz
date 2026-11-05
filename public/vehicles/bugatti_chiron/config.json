@@ -3,7 +3,7 @@
   "name": "Bugatti Chiron",
   "type": "car",
   "engineType": "8.0 L quad-turbo W16, 1,500 hp",
-  "description": "Sixteen cylinders, four turbochargers and 1,600 Nm: the Chiron's 8.0-litre W16 is a rolling power station that gets to 420 km/h.",
+  "description": "An 8.0 L W16 with four turbos, 1,500 hp and 1,600 Nm. Limited to 420 km/h.",
   "engine": {
     "cylinders": 16,
     "idleRpm": 850,

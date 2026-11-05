@@ -3,7 +3,7 @@
   "name": "BMW M3 E46",
   "type": "car",
   "engineType": "3.2 S54 inline-6",
-  "description": "The S54: a 3.2-litre naturally aspirated straight-six with individual throttle bodies and an 8,000 rpm redline, the rasping heart of the most beloved M3 of all.",
+  "description": "The S54, a 3.2 L straight-six with a throttle body per cylinder and an 8,000 rpm redline.",
   "engine": {
     "cylinders": 6,
     "idleRpm": 875,

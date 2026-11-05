@@ -3,7 +3,7 @@
   "name": "Ford Focus RS",
   "type": "car",
   "engineType": "2.3 L EcoBoost turbo I4",
-  "description": "The Mk3 Focus RS: 2.3 EcoBoost turbo four, all-wheel drive, pops and bangs on lift-off. Real onboard recording.",
+  "description": "The Mk3 Focus RS, with a 2.3 EcoBoost turbo four and all-wheel drive. Pops on lift-off. Recorded onboard.",
   "engine": {
     "cylinders": 4,
     "idleRpm": 850,

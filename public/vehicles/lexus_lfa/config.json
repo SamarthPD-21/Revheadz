@@ -3,7 +3,7 @@
   "name": "Lexus LFA",
   "type": "car",
   "engineType": "Naturally aspirated V10",
-  "description": "Yamaha-tuned 1LR-GUE 4.8 L V10 that spins from idle to 9,000 rpm in 0.6 s, so quick it needed a digital tach. Its F1-style shriek is legendary.",
+  "description": "A 4.8 L V10 tuned by Yamaha. It goes from idle to 9,000 rpm in 0.6 s, too quick for a needle tach, so the car got a digital one.",
   "engine": {
     "cylinders": 10,
     "idleRpm": 1000,

@@ -3,7 +3,7 @@
   "name": "Ferrari F2004",
   "type": "car",
   "engineType": "3.0 L V10, 19,000 rpm",
-  "description": "Schumacher's record-breaking 2004 Formula 1 car: a 3.0-litre Tipo 053 V10 shrieking past 18,000 rpm. Real recordings.",
+  "description": "Schumacher's 2004 Ferrari, with the 3.0 L Tipo 053 V10 revving past 18,000 rpm.",
   "engine": {
     "cylinders": 10,
     "idleRpm": 3600,

@@ -3,7 +3,7 @@
   "name": "Lamborghini Aventador SVJ",
   "type": "car",
   "engineType": "Naturally aspirated V12",
-  "description": "The L539 6.5 L V12 at its most savage: 770 PS, an 8,700 rpm howl and a brutal ISR single-clutch that kicks on every upshift.",
+  "description": "The SVJ's 6.5 L V12: 770 PS, 8,700 rpm, and a single-clutch ISR gearbox that kicks on every upshift.",
   "engine": {
     "cylinders": 12,
     "idleRpm": 900,

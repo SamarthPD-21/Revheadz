@@ -3,7 +3,7 @@
   "name": "Audi R8 V10 Plus",
   "type": "car",
   "engineType": "Naturally aspirated V10",
-  "description": "Audi's 5.2 FSI V10, shared with the Huracan, makes 610 PS and wails to 8,700 rpm through a 7-speed S tronic dual-clutch and quattro AWD.",
+  "description": "Audi's 5.2 L V10 (the same engine as the Huracan): 610 PS, 8,700 rpm, a 7-speed S tronic and quattro.",
   "engine": {
     "cylinders": 10,
     "idleRpm": 900,

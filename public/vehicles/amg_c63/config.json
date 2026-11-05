@@ -3,7 +3,7 @@
   "name": "Mercedes-AMG C63",
   "type": "car",
   "engineType": "6.2 M156 V8",
-  "description": "AMG shoehorned its hand-built 6.2-litre M156 V8 into the compact C-Class: 457 hp, no turbos, and one of the most savage naturally aspirated soundtracks of its era.",
+  "description": "AMG's hand-built 6.2 L M156 V8 in the small C-Class. 457 hp and no turbos.",
   "engine": {
     "cylinders": 8,
     "idleRpm": 600,

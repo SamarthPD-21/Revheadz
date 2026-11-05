@@ -3,7 +3,7 @@
   "name": "Mazda RX-7 FD3S",
   "type": "car",
   "engineType": "Twin-turbo two-rotor Wankel",
-  "description": "The 13B-REW: a 1.3-litre twin-rotor Wankel with sequential twin turbos, a lumpy brap at idle and a smooth, buzzing scream to 8,000 rpm. All from real FD3S recordings.",
+  "description": "The 13B-REW, a 1.3 L two-rotor Wankel with sequential twin turbos. Lumpy at idle, smooth all the way to 8,000 rpm.",
   "engine": {
     "cylinders": 4,
     "idleRpm": 1000,
