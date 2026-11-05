@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { Aids } from "../../lib/cruise/handling";
 import { PRESETS, presetOf, type Settings } from "./settings";
 
 interface Props {
@@ -10,10 +11,20 @@ interface Props {
   fps: { now: number; screen: number };
   renderScale: number;
   accent: string;
+  /** The car being driven, and the aids it left the factory with. */
+  car: { name: string; aids: Aids };
   onClose: () => void;
 }
 
-type Tab = "display" | "graphics" | "sound";
+type Tab = "car" | "display" | "graphics" | "sound";
+const TABS: Tab[] = ["car", "display", "graphics", "sound"];
+
+const aidNames = (a: Aids) => [a.abs && "ABS", a.tc && "TC", a.esc && "ESC"].filter(Boolean).join(" · ") || "none";
+const AIDS: { id: keyof Aids; label: string; title: string }[] = [
+  { id: "abs", label: "ABS", title: "Anti-lock brakes: the wheels keep turning under hard braking" },
+  { id: "tc", label: "Traction control", title: "Trims the power when the driven wheels start to spin" },
+  { id: "esc", label: "Stability control", title: "Brakes and cuts power to catch a slide" },
+];
 
 const FRAME_RATES: { id: Settings["fps"]; label: string }[] = [
   { id: "60", label: "60" },
@@ -45,9 +56,9 @@ const SHADOWS: { id: Settings["shadows"]; label: string }[] = [
   { id: "high", label: "High" },
 ];
 
-/** The cruise's settings: display, graphics and sound, each change applied as it's made. */
-export function SettingsPanel({ settings: s, update, fps, renderScale, accent, onClose }: Props) {
-  const [tab, setTab] = useState<Tab>("display");
+/** The cruise's settings: the car, display, graphics and sound, each change applied as it's made. */
+export function SettingsPanel({ settings: s, update, fps, renderScale, accent, car, onClose }: Props) {
+  const [tab, setTab] = useState<Tab>("car");
   const preset = presetOf(s);
   return (
     <section className="cruise-panel cruise-settings" aria-label="Settings">
@@ -58,12 +69,54 @@ export function SettingsPanel({ settings: s, update, fps, renderScale, accent, o
         </button>
       </div>
       <div className="cruise-tabs" role="tablist">
-        {(["display", "graphics", "sound"] as const).map((t) => (
+        {TABS.map((t) => (
           <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)}>
             {t[0].toUpperCase() + t.slice(1)}
           </button>
         ))}
       </div>
+
+      {tab === "car" && (
+        <>
+          <Row label="Gearbox" hint="G" />
+          <Segmented
+            label="Gearbox"
+            options={[
+              { id: "manual", label: "Manual", title: "You shift, with E and Q" },
+              { id: "auto", label: "Automatic", title: "The car shifts for you" },
+            ]}
+            value={s.gears}
+            onPick={(gears) => update({ gears })}
+          />
+          <Row label="Driver aids" hint={`${car.name}: ${aidNames(car.aids)}`} />
+          <Segmented
+            label="Driver aids"
+            options={[
+              { id: "built", label: "As built", title: `What the ${car.name} came with: ${aidNames(car.aids)}` },
+              { id: "custom", label: "Custom", title: "Pick each one yourself" },
+            ]}
+            value={s.aidsAsBuilt ? "built" : "custom"}
+            onPick={(v) => update({ aidsAsBuilt: v === "built" })}
+          />
+          {AIDS.map((a) => {
+            const on = s.aidsAsBuilt ? car.aids[a.id] : s.aids[a.id];
+            return (
+              <div key={a.id} className="cruise-row" title={a.title}>
+                <span className="cruise-label">{a.label}</span>
+                <button
+                  type="button"
+                  className="track-toggle"
+                  aria-pressed={on}
+                  disabled={s.aidsAsBuilt}
+                  onClick={() => update({ aids: { ...s.aids, [a.id]: !s.aids[a.id] } })}
+                >
+                  {on ? "On" : "Off"}
+                </button>
+              </div>
+            );
+          })}
+        </>
+      )}
 
       {tab === "display" && (
         <>

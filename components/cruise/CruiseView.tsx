@@ -7,7 +7,7 @@ import { useEngineState } from "../../hooks/useEngineState";
 import { trackEvent } from "../../lib/analytics";
 import { AudioEngine } from "../../lib/audio/AudioEngine";
 import { SpeedHold, autoShift, safeSpeedKmh } from "../../lib/cruise/autopilot";
-import { chassisOf, type Aids } from "../../lib/cruise/handling";
+import { chassisOf } from "../../lib/cruise/handling";
 import { roadModel } from "../../lib/cruise/specs";
 import { InputManager } from "../../lib/input/InputManager";
 import { Simulation } from "../../lib/sim/Simulation";
@@ -66,7 +66,6 @@ const MOMENTS = [
 const HOURS_PER_S = 1 / 60;
 const STEER_LEFT = ["KeyA", "ArrowLeft"];
 const clampUnit = (v: number) => Math.max(-1, Math.min(1, v));
-const aidNames = (a: Aids) => [a.abs && "ABS", a.tc && "TC", a.esc && "ESC"].filter(Boolean).join(" · ") || "none";
 const STEER_RIGHT = ["KeyD", "ArrowRight"];
 
 /** The world you were in: its road, where you'd got to, and your trip so far. */
@@ -618,7 +617,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
             }}
             aria-expanded={settingsOpen}
             aria-label="Settings (O)"
-            title="Settings: resolution, frame rate, render distance, graphics, sound (O)"
+            title="Settings: car, display, graphics, sound (O)"
           >
             <GearIcon />
             <span className="cruise-btn-label">Settings</span>
@@ -632,7 +631,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
         </div>
       </header>
 
-      {settingsOpen && <SettingsPanel settings={settings} update={update} fps={fps} renderScale={renderScale} accent={accent} onClose={() => setSettingsOpen(false)} />}
+      {settingsOpen && <SettingsPanel settings={settings} update={update} fps={fps} renderScale={renderScale} accent={accent} car={{ name: vehicle.name, aids: rig.carAids }} onClose={() => setSettingsOpen(false)} />}
       {settings.showFps && (
         <p className="cruise-fps" aria-hidden>
           {fps.now} fps
@@ -648,16 +647,6 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
               Let time pass
             </button>
           </div>
-          <input
-            type="range"
-            min={0}
-            max={24}
-            step={0.05}
-            value={hourShown}
-            aria-label="Time of day"
-            style={{ accentColor: accent }}
-            onChange={(e) => update({ hour: Number(e.target.value) })}
-          />
           <div className="cruise-chips">
             {MOMENTS.map((m) => (
               <button key={m.label} type="button" className="chip" onClick={() => update({ hour: m.hour })}>
@@ -686,42 +675,6 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
               </button>
             ))}
           </div>
-          <div className="cruise-row">
-            <span className="cruise-label">Gearbox</span>
-            <span className="cruise-hint">G</span>
-          </div>
-          <div className="segmented" role="group" aria-label="Gearbox">
-            {(["manual", "auto"] as const).map((g) => (
-              <button key={g} type="button" aria-pressed={settings.gears === g} onClick={() => update({ gears: g })} title={g === "manual" ? "You shift, with E and Q" : "The car shifts for you"}>
-                {g === "manual" ? "Manual" : "Automatic"}
-              </button>
-            ))}
-          </div>
-          <div className="cruise-row">
-            <span className="cruise-label">Driver aids</span>
-            <span className="cruise-hint" title="What this car came with">{vehicle.name}: {aidNames(rig.carAids)}</span>
-          </div>
-          <div className="cruise-row cruise-toggles">
-            <button type="button" className="track-toggle" aria-pressed={settings.aidsAsBuilt} onClick={() => update({ aidsAsBuilt: !settings.aidsAsBuilt })}>
-              As built ({aidNames(rig.carAids) || "none"})
-            </button>
-          </div>
-          {!settings.aidsAsBuilt && (
-            <>
-              <div className="cruise-row"><span className="cruise-label">ABS</span></div>
-              <button type="button" className="track-toggle" aria-pressed={settings.aids.abs} onClick={() => update({ aids: { ...settings.aids, abs: !settings.aids.abs } })}>
-                {settings.aids.abs ? "ABS on" : "ABS off"}
-              </button>
-              <div className="cruise-row"><span className="cruise-label">Traction control</span></div>
-              <button type="button" className="track-toggle" aria-pressed={settings.aids.tc} onClick={() => update({ aids: { ...settings.aids, tc: !settings.aids.tc } })}>
-                {settings.aids.tc ? "TC on" : "TC off"}
-              </button>
-              <div className="cruise-row"><span className="cruise-label">Stability control</span></div>
-              <button type="button" className="track-toggle" aria-pressed={settings.aids.esc} onClick={() => update({ aids: { ...settings.aids, esc: !settings.aids.esc } })}>
-                {settings.aids.esc ? "ESC on" : "ESC off"}
-              </button>
-            </>
-          )}
           <div className="cruise-row cruise-toggles">
             <button type="button" className="track-toggle" aria-pressed={settings.autopilot} onClick={() => update({ autopilot: !settings.autopilot })}>
               Autopilot (T)
