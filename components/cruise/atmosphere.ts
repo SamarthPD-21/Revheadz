@@ -41,8 +41,15 @@ export class Atmosphere {
   private readonly stars: THREE.Points<THREE.BufferGeometry, THREE.PointsMaterial>;
   private readonly moonDisc: THREE.Mesh<THREE.CircleGeometry, THREE.MeshBasicMaterial>;
   private readonly clouds: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
+  /** A band of haze along the horizon, the fog's colour, so distant land melts into the sky. */
+  private readonly haze: THREE.Mesh<THREE.SphereGeometry, THREE.ShaderMaterial>;
   private readonly pmrem: THREE.PMREMGenerator;
   private readonly envScene = new THREE.Scene();
+  /** The land under the reflected sky, so water and paint reflect ground below the horizon, not more sky. */
+  private readonly envGround = new THREE.Mesh(
+    new THREE.SphereGeometry(400, 32, 8, 0, Math.PI * 2, Math.PI / 2 + 0.01, Math.PI / 2),
+    new THREE.MeshBasicMaterial({ side: THREE.BackSide }),
+  );
   private envTarget: THREE.WebGLRenderTarget | null = null;
   private envKey = "";
   /** The sun's shadows: none, ordinary, or a finer map. */
@@ -72,6 +79,40 @@ export class Atmosphere {
     );
     this.night.renderOrder = -1;
     this.group.add(this.night);
+
+    this.haze = new THREE.Mesh(
+      new THREE.SphereGeometry(4200, 48, 24),
+      new THREE.ShaderMaterial({
+        side: THREE.BackSide,
+        transparent: true,
+        depthWrite: false,
+        fog: false,
+        uniforms: {
+          uColor: { value: new THREE.Color() },
+          uSunColor: { value: new THREE.Color() },
+          uSunDir: { value: new THREE.Vector3(0, 1, 0) },
+          uThick: { value: 0.5 },
+        },
+        vertexShader: "varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
+        fragmentShader: `
+          uniform vec3 uColor, uSunColor, uSunDir;
+          uniform float uThick;
+          varying vec3 vDir;
+          void main() {
+            vec3 d = normalize(vDir);
+            // thickest at the horizon, thinning upward; a warm glow in it around the sun
+            float band = 1.0 - smoothstep(-0.03, 0.06 + 0.22 * uThick, d.y);
+            float sun = pow(max(dot(d, uSunDir), 0.0), 6.0);
+            vec3 c = mix(uColor, uSunColor, sun * 0.45);
+            gl_FragColor = vec4(c, band * (0.35 + 0.55 * uThick));
+            #include <tonemapping_fragment>
+            #include <colorspace_fragment>
+          }`,
+      }),
+    );
+    // after the night dome, before the clouds
+    this.haze.renderOrder = 0;
+    this.group.add(this.haze);
 
     const rand = mulberry32(42);
     const n = 2600;
@@ -132,26 +173,39 @@ export class Atmosphere {
           }
           float fbm(vec2 p, int octaves) {
             float s = 0.0, a = 0.5;
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 5; i++) {
               if (i >= octaves) break;
-              s += a * noise(p); p = p * 2.03 + vec2(17.1, 9.3); a *= 0.5;
+              s += a * noise(p); p = mat2(1.6, 1.2, -1.2, 1.6) * p + vec2(17.1, 9.3); a *= 0.5;
             }
             return s;
           }
           void main() {
             vec2 p = vWorld.xz / 1500.0 + vec2(uTime * 0.0045, uTime * 0.0018);
-            float n = fbm(p, 4);
-            float density = smoothstep(1.0 - uCoverage, 1.0 - uCoverage + 0.16, n);
+            // warp the noise by itself, so the clouds billow instead of looking like smudges
+            vec2 warp = vec2(fbm(p * 0.6 + 3.1, 3), fbm(p * 0.6 - 5.7, 3)) - 0.5;
+            vec2 q = p + warp * 0.55;
+            float n = fbm(q, 5);
+            float density = smoothstep(1.0 - uCoverage, 1.0 - uCoverage + 0.14, n);
             // thicker cloud just towards the sun shades this bit: a cheap self-shadow
-            float toward = fbm(p + normalize(uSunDir.xz + 1e-4) * 0.05, 2); // its broad shape is enough for shading
-            toward += (n - fbm(p, 2)); // put the fine detail back, so only the broad shape differs
-            float shade = clamp(1.0 - (toward - n) * 5.0, 0.3, 1.15);
+            vec2 toSun = normalize(uSunDir.xz + 1e-4);
+            float toward = fbm(q + toSun * 0.04, 3) + (n - fbm(q, 3));
+            float shade = clamp(1.0 - (toward - n) * 6.0, 0.35, 1.2);
             // thick middles are darker underneath; thin edges glow with the light through them
-            float core = smoothstep(0.0, 0.25, n - (1.0 - uCoverage));
-            vec3 col = (uSunColor * shade * (1.0 - core * 0.35) + uSky * 0.45) * (1.0 - uDark * 0.55);
+            float core = smoothstep(0.0, 0.28, n - (1.0 - uCoverage));
+            vec3 view = normalize(vWorld - cameraPosition);
+            float sunward = pow(max(dot(view, uSunDir), 0.0), 5.0);
+            vec3 col = uSunColor * shade * (1.0 - core * 0.4) + uSky * (0.5 + core * 0.15);
+            col += uSunColor * sunward * (1.0 - core) * 0.9; // the silver lining
+            col *= 1.0 - uDark * 0.55;
+            // high cirrus: thin streaks drawn out along the wind, far above the heaps
+            vec2 c = vWorld.xz / 2600.0 + vec2(uTime * 0.007, 0.0);
+            float streak = fbm(vec2(c.x * 0.45 + c.y * 0.2, c.y * 3.2 - c.x * 0.6), 4);
+            float cirrus = smoothstep(0.52, 0.78, streak) * (1.0 - density) * (1.0 - uDark) * 0.38;
+            vec3 cirrusCol = uSunColor * 1.05 + uSky * 0.35;
             // per pixel: the layer is two huge triangles, so a distance worked out at its corners is useless
             float fade = 1.0 - smoothstep(4500.0, 8200.0, length(vWorld.xz - cameraPosition.xz));
-            gl_FragColor = vec4(col, density * fade * 0.94);
+            float a = density * 0.94 + cirrus;
+            gl_FragColor = vec4(mix(cirrusCol, col, density / max(a, 1e-4) * 0.94), a * fade);
             #include <tonemapping_fragment>
             #include <colorspace_fragment>
           }`,
@@ -177,6 +231,7 @@ export class Atmosphere {
 
     this.pmrem = new THREE.PMREMGenerator(renderer);
     this.envScene.add(new Sky());
+    this.envScene.add(this.envGround);
   }
 
   /** Sets the hour and weather; returns true when the scene's reflections were refreshed. */
@@ -194,7 +249,7 @@ export class Atmosphere {
     const u = this.sky.material.uniforms;
     u.sunPosition.value.copy(this.sunDir);
     u.turbidity.value = 2.5 + cloudy * 12;
-    u.rayleigh.value = 1.2 + cloudy * 1.5 + (1 - smoothstep(0, 18, elevation)) * 1.2;
+    u.rayleigh.value = 1.7 + cloudy * 1.0 + (1 - smoothstep(0, 18, elevation)) * 1.2;
     u.mieCoefficient.value = 0.004 + cloudy * 0.02;
 
     const day = smoothstep(-4, 8, elevation);
@@ -231,6 +286,12 @@ export class Atmosphere {
       scene.fog.density = density;
     } else scene.fog = new THREE.FogExp2(fog, density);
 
+    const hu = this.haze.material.uniforms;
+    (hu.uColor.value as THREE.Color).copy(fog);
+    (hu.uSunColor.value as THREE.Color).copy(this.sun.color).multiplyScalar(day * (1 - cloudy * 0.8)).lerp(fog, 0.35);
+    hu.uSunDir.value.copy(this.sunDir);
+    hu.uThick.value = Math.min(1, 0.25 + cloudy * 0.9 + golden * 0.3);
+
     const cu = this.clouds.material.uniforms;
     cu.uCoverage.value = { clear: 0.44, haze: 0.55, fog: 0.72, rain: 0.97 }[weather];
     cu.uSunDir.value.copy(this.sunDir);
@@ -261,6 +322,7 @@ export class Atmosphere {
         if (v instanceof THREE.Vector3) eu[k].value.copy(v);
         else eu[k].value = v;
       }
+      this.envGround.material.color.copy(lerpC(srgb(0.012, 0.016, 0.02), srgb(0.2, 0.24, 0.17), day)).lerp(fog, 0.25);
       this.envScene.background = night > 0.5 ? new THREE.Color(0.01, 0.015, 0.035) : null;
       const next = this.pmrem.fromScene(this.envScene, 0, 1, 2000);
       this.envTarget?.dispose();
@@ -339,6 +401,8 @@ export class Atmosphere {
     this.flareTextures.forEach((t) => t.dispose());
     this.envTarget?.dispose();
     this.pmrem.dispose();
+    this.envGround.geometry.dispose();
+    this.envGround.material.dispose();
     this.sky.geometry.dispose();
     this.sky.material.dispose();
     this.night.geometry.dispose();
@@ -346,6 +410,8 @@ export class Atmosphere {
     this.stars.geometry.dispose();
     this.stars.material.dispose();
     this.moonDisc.geometry.dispose();
+    this.haze.geometry.dispose();
+    this.haze.material.dispose();
     this.clouds.geometry.dispose();
     this.clouds.material.dispose();
     this.moonDisc.material.dispose();
