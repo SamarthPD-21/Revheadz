@@ -39,7 +39,7 @@ function open(): Promise<IDBDatabase | null> {
 }
 
 /** Bumped whenever the land is shaped differently, so maps saved from the old shape aren't used. */
-const LAND_VERSION = 2;
+const LAND_VERSION = 4;
 const rowKey = (seed: number, tile: string) => `${seed}:v${LAND_VERSION}:${tile}`;
 
 /** The saved tiles for a road among `tiles` ("ix,iz"), as a map; empty if none or no storage. */

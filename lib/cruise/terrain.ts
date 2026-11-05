@@ -6,10 +6,14 @@ export type RGB = [number, number, number];
 /** Past this distance from the road the ground is left wild (mountains at full height), m. */
 export const WILD_M = 240;
 
-const LUSH: RGB = [0.2, 0.38, 0.13];
-const MEADOW: RGB = [0.45, 0.5, 0.2];
+// greens closer to real grass than to paint: a little grey and yellow in them
+const LUSH: RGB = [0.23, 0.35, 0.15];
+const MEADOW: RGB = [0.46, 0.49, 0.25];
+/** Drier, sun-bleached patches through the meadows (cut hay, rough grazing). */
+const STRAW: RGB = [0.6, 0.55, 0.33];
 const DRY: RGB = [0.66, 0.56, 0.32];
 const SAND: RGB = [0.78, 0.7, 0.5];
+const WET_SAND: RGB = [0.5, 0.44, 0.32];
 const ROCK: RGB = [0.4, 0.38, 0.36];
 const SNOW: RGB = [0.93, 0.95, 1];
 const VERGE: RGB = [0.36, 0.33, 0.25];
@@ -81,7 +85,10 @@ export class Landscape {
     const dry = this.dryness(x, z);
     const tint = fbm(this.nTint, x / 90, z / 90, 2);
     let c: RGB = dry < 0.5 ? mix(LUSH, MEADOW, dry * 2) : mix(MEADOW, DRY, (dry - 0.5) * 2);
-    c = scale(c, 1 + tint * 0.18);
+    // big, soft-edged patches of drier grass across the green country, like fields seen from a road
+    const patch = smoothstep(0.18, 0.5, fbm(this.nTint, x / 420 + 31, z / 420 - 17, 2));
+    c = mix(c, STRAW, patch * 0.38 * (1 - dry));
+    c = scale(c, 1 + tint * 0.14);
     // steepness, from the land's slope at this point
     const e = 2;
     const sx = (this.heightRaw(x + e, z, wild) - this.heightRaw(x - e, z, wild)) / (2 * e);
@@ -90,7 +97,9 @@ export class Landscape {
     c = mix(c, ROCK, smoothstep(0.45, 0.95, slope));
     const snowLine = 150 + tint * 40;
     c = mix(c, SNOW, smoothstep(snowLine, snowLine + 25, y) * (1 - smoothstep(0.9, 1.4, slope)));
-    c = mix(c, SAND, 1 - smoothstep(WATER_Y + 0.5, WATER_Y + 3.5, y));
+    // a strip of beach at the water's edge, darker where the water's wet it
+    c = mix(c, SAND, 1 - smoothstep(WATER_Y + 0.6, WATER_Y + 1.9, y));
+    c = mix(c, WET_SAND, 1 - smoothstep(WATER_Y - 0.2, WATER_Y + 0.5, y));
     c = mix(VERGE, c, smoothstep(ROAD_HALF + 0.5, ROAD_HALF + 5, roadDist));
 
     const forest = smoothstep(-0.15, 0.35, fbm(this.nForest, x / 520, z / 520, 2));

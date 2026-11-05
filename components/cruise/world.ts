@@ -103,7 +103,8 @@ function readyPlants(plants: Tile["plants"]): NonNullable<Tile["ready"]> {
   return out;
 }
 
-function roadTexture(): THREE.CanvasTexture {
+/** The road's surface; `solid`: an unbroken centre line (no overtaking), as painted through bends. */
+function roadTexture(solid = false): THREE.CanvasTexture {
   const W = 512;
   const H = 1024;
   const c = document.createElement("canvas");
@@ -139,7 +140,8 @@ function roadTexture(): THREE.CanvasTexture {
   const edge = 0.1 + 0.8 * (0.42 / (2 * ROAD_HALF));
   x.fillRect(W * edge - 5, 0, 10, H);
   x.fillRect(W * (1 - edge) - 5, 0, 10, H);
-  x.fillRect(W * 0.5 - 5, 0, 10, H * (4.5 / DASH_PERIOD));
+  if (solid) x.fillRect(W * 0.5 - 5, 0, 10, H);
+  else x.fillRect(W * 0.5 - 5, 0, 10, H * (4.5 / DASH_PERIOD));
   // wear: a few cracks and tar patches
   x.strokeStyle = "rgba(8,8,10,0.6)";
   x.lineWidth = 1.5;
@@ -162,6 +164,35 @@ function roadTexture(): THREE.CanvasTexture {
   return t;
 }
 
+/** A yellow board with black chevrons pointing one way (1 right, -1 left), as on a bend's outside. */
+function chevronMaterial(dir: 1 | -1): THREE.MeshStandardMaterial {
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const g = c.getContext("2d")!;
+  g.fillStyle = "#f5c400";
+  g.fillRect(0, 0, 128, 128);
+  g.fillStyle = "#121212";
+  for (const x0 of [18, 62]) {
+    g.beginPath();
+    const tip = (x: number) => (dir > 0 ? x : 128 - x);
+    g.moveTo(tip(x0), 18);
+    g.lineTo(tip(x0 + 22), 18);
+    g.lineTo(tip(x0 + 52), 64);
+    g.lineTo(tip(x0 + 22), 110);
+    g.lineTo(tip(x0), 110);
+    g.lineTo(tip(x0 + 30), 64);
+    g.closePath();
+    g.fill();
+  }
+  g.strokeStyle = "#121212";
+  g.lineWidth = 6;
+  g.strokeRect(3, 3, 122, 122);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  // a little retroreflective: the headlights pick it out at night
+  return new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.14, roughness: 0.5, side: THREE.DoubleSide });
+}
+
 /**
  * A tiling ripple normal map for the water: a handful of sine swells whose wavelengths fit
  * the tile exactly, so it repeats without a seam.
@@ -169,7 +200,7 @@ function roadTexture(): THREE.CanvasTexture {
 function rippleNormals(): THREE.DataTexture {
   const N = 256;
   const rand = mulberry32(5);
-  const waves = Array.from({ length: 9 }, () => ({ kx: Math.round(1 + rand() * 7) * (rand() < 0.5 ? -1 : 1), kz: Math.round(1 + rand() * 7), a: 0.4 + rand(), ph: rand() * Math.PI * 2 }));
+  const waves = Array.from({ length: 18 }, () => ({ kx: Math.round(1 + rand() * 13) * (rand() < 0.5 ? -1 : 1), kz: Math.round(1 + rand() * 13) * (rand() < 0.3 ? -1 : 1), a: 0.3 + rand(), ph: rand() * Math.PI * 2 }));
   const h = (x: number, z: number) => waves.reduce((sum, w) => sum + w.a * Math.sin(((w.kx * x + w.kz * z) / N) * Math.PI * 2 + w.ph) / Math.hypot(w.kx, w.kz), 0);
   const data = new Uint8Array(N * N * 4);
   for (let z = 0; z < N; z++) {
@@ -182,6 +213,81 @@ function rippleNormals(): THREE.DataTexture {
       data[k + 1] = (((-dz * 6) / l) * 0.5 + 0.5) * 255;
       data[k + 2] = ((1 / l) * 0.5 + 0.5) * 255;
       data[k + 3] = 255;
+    }
+  }
+  const t = new THREE.DataTexture(data, N, N, THREE.RGBAFormat);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.generateMipmaps = true;
+  t.minFilter = THREE.LinearMipmapLinearFilter;
+  t.magFilter = THREE.LinearFilter;
+  t.needsUpdate = true;
+  return t;
+}
+
+/**
+ * Tiling detail for the ground, worked in world space by the terrain's shader so the land
+ * isn't flat colour up close: fine grain (red), clumps (green), broad patches (blue), and
+ * scattered wildflower specks (alpha). Periodic value noise, so it repeats without a seam.
+ */
+function groundDetail(): THREE.DataTexture {
+  const N = 256;
+  const rand = mulberry32(11);
+  const lattices = new Map<number, Float32Array>();
+  const lattice = (f: number) => {
+    let l = lattices.get(f);
+    if (!l) lattices.set(f, (l = Float32Array.from({ length: f * f }, () => rand())));
+    return l;
+  };
+  const value = (x: number, y: number, f: number) => {
+    const l = lattice(f);
+    const fx = (x / N) * f;
+    const fy = (y / N) * f;
+    const i = Math.floor(fx);
+    const j = Math.floor(fy);
+    const u = fx - i;
+    const v = fy - j;
+    const su = u * u * (3 - 2 * u);
+    const sv = v * v * (3 - 2 * v);
+    const at = (a: number, b: number) => l[((b % f) * f) + (a % f)];
+    const top = at(i, j) + (at(i + 1, j) - at(i, j)) * su;
+    const bottom = at(i, j + 1) + (at(i + 1, j + 1) - at(i, j + 1)) * su;
+    return top + (bottom - top) * sv;
+  };
+  const octaves = (x: number, y: number, fs: number[]) => {
+    let s = 0;
+    let a = 0.5;
+    let w = 0;
+    for (const f of fs) {
+      s += value(x, y, f) * a;
+      w += a;
+      a *= 0.55;
+    }
+    return s / w;
+  };
+  const data = new Uint8Array(N * N * 4);
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const k = (y * N + x) * 4;
+      data[k] = octaves(x, y, [32, 64, 128]) * 255;
+      data[k + 1] = octaves(x, y, [6, 12, 24]) * 255;
+      data[k + 2] = octaves(x, y, [2, 4, 8]) * 255;
+    }
+  }
+  // wildflowers: small soft dots, their shade (in the dot's value) picking the colour
+  for (let n = 0; n < 900; n++) {
+    const cx = rand() * N;
+    const cy = rand() * N;
+    const r = 1.6 + rand() * 1.6;
+    const shade = 0.25 + rand() * 0.75;
+    for (let dy = -4; dy <= 4; dy++) {
+      for (let dx = -4; dx <= 4; dx++) {
+        const d = Math.hypot(dx, dy) / r;
+        if (d > 1) continue;
+        const px = (Math.floor(cx + dx) + N) % N;
+        const py = (Math.floor(cy + dy) + N) % N;
+        const k = (py * N + px) * 4 + 3;
+        data[k] = Math.max(data[k], shade * 255 * (1 - d * d));
+      }
     }
   }
   const t = new THREE.DataTexture(data, N, N, THREE.RGBAFormat);
@@ -265,6 +371,17 @@ export class World {
   private readonly farDist: RoadDistance;
   private readonly terrainMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.96, metalness: 0, envMapIntensity: 0.35 });
   private readonly roadMat: THREE.MeshStandardMaterial;
+  /** The same road with a solid centre line, for the bends. */
+  private readonly roadMatSolid: THREE.MeshStandardMaterial;
+  /** Yellow chevron boards pointing right and left. */
+  private readonly chevronMats: [THREE.MeshStandardMaterial, THREE.MeshStandardMaterial];
+  private readonly signGeo = new THREE.PlaneGeometry(1.0, 1.1).translate(0, 1.6, 0);
+  private readonly signPostGeo = new THREE.CylinderGeometry(0.045, 0.045, 2.15, 6).translate(0, 1.07, 0);
+  private readonly signPostMat = new THREE.MeshStandardMaterial({ color: 0x8a8d92, metalness: 0.6, roughness: 0.5 });
+  /** Telegraph poles: a weathered timber pole with a cross-arm, and the sagging wires between them. */
+  private readonly poleGeo = mergeGeometries([new THREE.CylinderGeometry(0.11, 0.14, 9, 7).translate(0, 4.5, 0), new THREE.BoxGeometry(0.12, 0.12, 1.7).translate(0, 8.4, 0)]);
+  private readonly poleMat = new THREE.MeshStandardMaterial({ color: 0x5b4632, roughness: 0.95 });
+  private readonly wireMat = new THREE.LineBasicMaterial({ color: 0x1b1b1f, transparent: true, opacity: 0.8 });
   private readonly postMat = new THREE.MeshStandardMaterial({ color: 0xe8e8e2, roughness: 0.6 });
   private readonly reflectorMat = new THREE.MeshStandardMaterial({ color: 0x6a3a08, emissive: 0xff8a1a, emissiveIntensity: 0.2, roughness: 0.3 });
   private readonly postGeo = new THREE.BoxGeometry(0.1, 1.05, 0.1).translate(0, 0.52, 0);
@@ -288,6 +405,10 @@ export class World {
   /** Wind for every swaying plant: time, and how hard it's blowing. */
   private readonly wind = { uTime: { value: 0 }, uWind: { value: 1 } };
   private readonly ripples: THREE.DataTexture;
+  private readonly detail = groundDetail();
+  private readonly waterTime = { value: 0 };
+  /** How much the land round the water dims what it reflects just above the horizon, per channel. */
+  private readonly waterHills = { value: new THREE.Color(0.22, 0.28, 0.2) };
   private far: THREE.Mesh;
   private range: Range = RANGES.medium;
   /**
@@ -307,6 +428,10 @@ export class World {
     this.barriers = new Barriers(land);
     this.farDist = new RoadDistance(land.road);
     const tex = roadTexture();
+    const solidTex = roadTexture(true);
+    solidTex.anisotropy = maxAnisotropy;
+    this.roadMatSolid = new THREE.MeshStandardMaterial({ map: solidTex, roughness: 0.88, metalness: 0, envMapIntensity: 0.5 });
+    this.chevronMats = [chevronMaterial(1), chevronMaterial(-1)];
     tex.anisotropy = maxAnisotropy;
     this.roadMat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.88, metalness: 0, envMapIntensity: 0.5 });
 
@@ -331,16 +456,91 @@ export class World {
       this.group.add(m);
     }
 
+    this.detailGround(maxAnisotropy);
     this.far = this.makeFar();
 
     this.ripples = rippleNormals();
     this.ripples.repeat.set(400, 400); // one tile every 35 m
-    this.water = new THREE.Mesh(
-      new THREE.PlaneGeometry(14000, 14000).rotateX(-Math.PI / 2),
-      new THREE.MeshStandardMaterial({ color: 0x0d2a36, roughness: 0.07, metalness: 0.1, transparent: true, opacity: 0.9, normalMap: this.ripples, normalScale: new THREE.Vector2(0.35, 0.35) }),
-    );
+    const waterMat = new THREE.MeshStandardMaterial({ color: 0x0e3a44, roughness: 0.06, metalness: 0, transparent: true, opacity: 0.9, envMapIntensity: 0.9, normalMap: this.ripples, normalScale: new THREE.Vector2(0.25, 0.25) });
+    // two sets of ripples crossing at different sizes and speeds, so the pattern never repeats
+    // visibly; clear looking down into it, a mirror of the sky towards the horizon
+    waterMat.onBeforeCompile = (shader) => {
+      shader.uniforms.uTime = this.waterTime;
+      shader.uniforms.uHills = this.waterHills;
+      const ripples = THREE.ShaderChunk.normal_fragment_maps.replace(
+        "vec3 mapN = texture2D( normalMap, vNormalMapUv ).xyz * 2.0 - 1.0;",
+        `vec3 mapN = texture2D( normalMap, vNormalMapUv ).xyz * 2.0 - 1.0;
+        vec3 mapN2 = texture2D( normalMap, vNormalMapUv * 0.31 + vec2( -uTime * 0.0021, uTime * 0.0013 ) ).xyz * 2.0 - 1.0;
+        mapN = normalize( vec3( mapN.xy + mapN2.xy * 1.4, mapN.z * mapN2.z ) );
+        // calm it with distance: far off, ripples finer than a pixel would only alias into stripes
+        mapN.xy *= mix( 1.0, 0.08, smoothstep( 8.0, 160.0, length( vViewPosition ) ) );`,
+      );
+      shader.fragmentShader = shader.fragmentShader
+        .replace("#include <common>", "#include <common>\nuniform float uTime;\nuniform vec3 uHills;")
+        .replace(
+          "#include <normal_fragment_maps>",
+          `${ripples}
+          float facing = clamp( dot( normal, normalize( vViewPosition ) ), 0.0, 1.0 );
+          float fres = pow( 1.0 - facing, 4.0 );
+          diffuseColor.a = mix( 0.58, 0.97, fres );
+          diffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * vec3( 0.5, 0.7, 0.75 ), fres );`,
+        )
+        .replace(
+          "#include <lights_fragment_maps>",
+          `#include <lights_fragment_maps>
+          {
+            // what's reflected just above the horizon is the hills and trees round the water, not
+            // the pale sky behind them: darken those reflections towards the land's colour
+            vec3 up = inverseTransformDirection( reflect( - geometryViewDir, geometryNormal ), viewMatrix );
+            radiance *= mix( uHills, vec3( 1.0 ), smoothstep( 0.03, 0.42, up.y ) );
+          }`,
+        );
+    };
+    this.water = new THREE.Mesh(new THREE.PlaneGeometry(14000, 14000).rotateX(-Math.PI / 2), waterMat);
     this.water.position.y = WATER_Y;
     this.group.add(this.water);
+  }
+
+  /**
+   * Gives the ground texture up close: the detail map's grain and clumps over the baked colours,
+   * fading out with distance (where it would only shimmer), broad patches that drift the colour
+   * a little, and wildflowers dotted through the grass near the car.
+   */
+  private detailGround(maxAnisotropy: number) {
+    this.detail.anisotropy = maxAnisotropy;
+    const mat = this.terrainMat;
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.uDetail = { value: this.detail };
+      shader.vertexShader = shader.vertexShader
+        .replace("#include <common>", "#include <common>\nvarying vec3 vGround;")
+        .replace("#include <worldpos_vertex>", "#include <worldpos_vertex>\nvGround = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;");
+      shader.fragmentShader = shader.fragmentShader
+        .replace("#include <common>", "#include <common>\nuniform sampler2D uDetail;\nvarying vec3 vGround;")
+        .replace(
+          "#include <color_fragment>",
+          `#include <color_fragment>
+          {
+            float dist = length( vGround - cameraPosition );
+            float fine = texture2D( uDetail, vGround.xz / 7.0 ).r;
+            float clump = texture2D( uDetail, vGround.xz / 41.0 ).g;
+            float broad = texture2D( uDetail, vGround.xz / 260.0 ).b;
+            float near = 1.0 - smoothstep( 40.0, 260.0, dist );
+            vec3 c = diffuseColor.rgb;
+            float green = clamp( ( c.g - c.r ) * 12.0, 0.0, 1.0 ) * clamp( ( c.g - c.b ) * 8.0, 0.0, 1.0 );
+            c *= mix( 1.0, 0.6 + 0.8 * fine, near );
+            c *= 0.74 + 0.52 * clump;
+            // broad patches: greener and darker in some, sunnier in others
+            c = mix( c, c * vec3( 1.12, 1.06, 0.82 ), smoothstep( 0.45, 0.75, broad ) * green * 0.8 );
+            c = mix( c, c * vec3( 0.82, 0.95, 0.85 ), ( 1.0 - smoothstep( 0.25, 0.55, broad ) ) * green * 0.7 );
+            // wildflowers in the grass near the car: white, yellow, and the odd purple
+            float f = texture2D( uDetail, vGround.xz / 5.0 + vec2( 0.37, 0.61 ) ).a;
+            float bloom = smoothstep( 0.18, 0.4, f ) * green * ( 1.0 - smoothstep( 25.0, 90.0, dist ) ) * smoothstep( 0.4, 0.6, clump );
+            vec3 petal = f > 0.75 ? vec3( 0.9, 0.88, 0.8 ) : f > 0.45 ? vec3( 0.85, 0.68, 0.12 ) : vec3( 0.42, 0.25, 0.55 );
+            c = mix( c, petal, bloom * 0.85 );
+            diffuseColor.rgb = c;
+          }`,
+        );
+    };
   }
 
   /** The far ground's mesh at the current reach: positions and colours filled in when it's centred. */
@@ -406,12 +606,15 @@ export class World {
     this.wind.uTime.value = time;
     this.wind.uWind.value = 1 + windy * 1.6;
     this.ripples.offset.set(time * 0.006, time * 0.0035);
+    this.waterTime.value = time;
   }
 
   /** A wet road shines; dry asphalt doesn't. The reflectors light up after dark. */
   setLight(wet: number, night: number): void {
-    this.roadMat.roughness = 0.88 - 0.55 * wet;
-    this.roadMat.color.setScalar(1 - 0.35 * wet);
+    for (const m of [this.roadMat, this.roadMatSolid]) {
+      m.roughness = 0.88 - 0.55 * wet;
+      m.color.setScalar(1 - 0.35 * wet);
+    }
     this.reflectorMat.emissiveIntensity = 0.15 + 2.2 * night;
   }
 
@@ -473,6 +676,20 @@ export class World {
       this.buildFar(tx, tz);
     }
     if (this.plantsDirty) this.fillPlants();
+  }
+
+  /**
+   * Is a tile wholly in the closed part of the world behind the car? All of it well behind the
+   * closed line, and no open road through it or near enough to shape it.
+   */
+  private tileClosed(ix: number, iz: number): boolean {
+    const p = this.progress;
+    if (!p) return false;
+    const x0 = ix * TILE;
+    const z0 = iz * TILE;
+    for (const [x, z] of [[x0, z0], [x0 + TILE, z0], [x0, z0 + TILE], [x0 + TILE, z0 + TILE]]) if (!p.isBehind(x, z, NaN, 60)) return false;
+    const near = this.land.road.samplesNear(x0 - REACH, z0 - REACH, x0 + TILE + REACH, z0 + TILE + REACH, 4);
+    return !near.some((i) => i * STEP >= p.boundary - 60);
   }
 
   /**
@@ -673,20 +890,6 @@ export class World {
   }
 
   /**
-   * Is a tile wholly in the closed part of the world behind the car? All of it well behind the
-   * closed line, and no open road through it or near enough to shape it.
-   */
-  private tileClosed(ix: number, iz: number): boolean {
-    const p = this.progress;
-    if (!p) return false;
-    const x0 = ix * TILE;
-    const z0 = iz * TILE;
-    for (const [x, z] of [[x0, z0], [x0 + TILE, z0], [x0, z0 + TILE], [x0 + TILE, z0 + TILE]]) if (!p.isBehind(x, z, NaN, 60)) return false;
-    const near = this.land.road.samplesNear(x0 - REACH, z0 - REACH, x0 + TILE + REACH, z0 + TILE + REACH, 4);
-    return !near.some((i) => i * STEP >= p.boundary - 60);
-  }
-
-  /**
    * Refills the instanced plants from the tiles near the camera. Each tile's matrices were worked
    * out when it was built, so this is block copies (the outer ring takes every other plant).
    */
@@ -799,7 +1002,7 @@ export class World {
         // the posts share one geometry between every piece of road: free only this piece's own
         g.traverse((o) => {
           if (o instanceof THREE.InstancedMesh) o.dispose();
-          else if (o instanceof THREE.Mesh) o.geometry.dispose();
+          else if (o instanceof THREE.Mesh || o instanceof THREE.LineSegments) o.geometry.dispose();
         });
         this.chunks.delete(c);
       }
@@ -841,7 +1044,10 @@ export class World {
     geo.computeVertexNormals();
     const group = new THREE.Group();
     group.position.set(ox, oy, oz);
-    const mesh = new THREE.Mesh(geo, this.roadMat);
+    // a solid centre line through the bends, dashed on the straights
+    let kMax = 0;
+    for (let i = 0; i <= CHUNK; i += 5) kMax = Math.max(kMax, Math.abs(road.curvatureAt((i0 + i) * STEP)));
+    const mesh = new THREE.Mesh(geo, kMax > 1 / 350 ? this.roadMatSolid : this.roadMat);
     mesh.receiveShadow = true;
     group.add(mesh);
 
@@ -908,6 +1114,84 @@ export class World {
     railRefl.count = nr;
     group.add(railPosts, railRefl);
 
+    // chevron boards on the outside of the tight bends, every 16 m, facing the traffic coming
+    const boards: [THREE.InstancedMesh, THREE.InstancedMesh] = [
+      new THREE.InstancedMesh(this.signGeo, this.chevronMats[0], CHUNK / 8 + 2),
+      new THREE.InstancedMesh(this.signGeo, this.chevronMats[1], CHUNK / 8 + 2),
+    ];
+    const signPosts = new THREE.InstancedMesh(this.signPostGeo, this.signPostMat, CHUNK / 8 + 2);
+    const nb = [0, 0];
+    let ns = 0;
+    const m4s = new THREE.Matrix4();
+    for (let i = 0; i < CHUNK; i += 8) {
+      const sAt = (i0 + i) * STEP;
+      const p = road.at(sAt, this.pt);
+      if (Math.abs(p.curvature) < 1 / 125) continue;
+      const outside = p.curvature > 0 ? -1 : 1; // a right-hand bend's outside is on the left
+      const [rx, rz] = rightOf(p.heading);
+      const d = outside * (BARRIER_D + 0.7);
+      const base = p.y - bankOf(p.curvature) * d + sectionDrop(d) - oy;
+      // facing back down the road (towards the car coming), turned a little towards the lane
+      m4s.makeRotationY(-p.heading - Math.PI / 2 + outside * 0.25);
+      m4s.setPosition(p.x + rx * d - ox, base, p.z + rz * d - oz);
+      const which = p.curvature > 0 ? 0 : 1; // the arrows point the way the road turns
+      boards[which].setMatrixAt(nb[which]++, m4s);
+      signPosts.setMatrixAt(ns++, m4s);
+    }
+    boards[0].count = nb[0];
+    boards[1].count = nb[1];
+    signPosts.count = ns;
+    group.add(boards[0], boards[1], signPosts);
+
+    // telegraph poles every 50 m along one side (it changes side now and then), wires slung between
+    const poleSide = (s0: number) => (hash2(Math.floor(s0 / 2400), 7, this.land.seed) & 1 ? 1 : -1);
+    const poleAt = (sAt: number) => {
+      const p = road.at(sAt, this.pt);
+      const side = poleSide(sAt);
+      const [rx, rz] = rightOf(p.heading);
+      const d = side * (ROAD_HALF + 9);
+      const x = p.x + rx * d;
+      const z = p.z + rz * d;
+      const y = this.land.ground(x, z, Math.abs(d), p.y).y;
+      // not in water, and not hanging off a cliff
+      if (y < WATER_Y + 0.5 || Math.abs(y - p.y) > 7) return null;
+      return { x, y, z, heading: p.heading, side };
+    };
+    const poles = new THREE.InstancedMesh(this.poleGeo, this.poleMat, 4);
+    const wires: number[] = [];
+    let np2 = 0;
+    for (let i = 0; i < CHUNK; i += 25) {
+      const sAt = (i0 + i) * STEP;
+      const a = poleAt(sAt);
+      if (!a) continue;
+      m4s.makeRotationY(-a.heading);
+      m4s.setPosition(a.x - ox, a.y - oy, a.z - oz);
+      poles.setMatrixAt(np2++, m4s);
+      // three wires to the next pole, sagging about half a metre
+      const b = poleAt(sAt + 50);
+      if (!b || b.side !== a.side) continue;
+      for (const off of [-0.7, 0, 0.7]) {
+        const ca = rightOf(a.heading);
+        const cb = rightOf(b.heading);
+        const pa = [a.x + ca[0] * off - ox, a.y + 8.45 - oy, a.z + ca[1] * off - oz];
+        const pb = [b.x + cb[0] * off - ox, b.y + 8.45 - oy, b.z + cb[1] * off - oz];
+        const steps = 8;
+        for (let k = 0; k < steps; k++) {
+          for (const t of [k / steps, (k + 1) / steps]) {
+            const sag = 0.55 * 4 * t * (1 - t);
+            wires.push(pa[0] + (pb[0] - pa[0]) * t, pa[1] + (pb[1] - pa[1]) * t - sag, pa[2] + (pb[2] - pa[2]) * t);
+          }
+        }
+      }
+    }
+    poles.count = np2;
+    group.add(poles);
+    if (wires.length) {
+      const wg = new THREE.BufferGeometry();
+      wg.setAttribute("position", new THREE.Float32BufferAttribute(wires, 3));
+      group.add(new THREE.LineSegments(wg, this.wireMat));
+    }
+
     // a post on each side every 50 m, with a reflector facing the traffic (none where there's a rail)
     const posts = new THREE.InstancedMesh(this.postGeo, this.postMat, 4);
     const refl = new THREE.InstancedMesh(this.reflectorGeo, this.reflectorMat, 4);
@@ -940,10 +1224,15 @@ export class World {
     this.postGeo.dispose();
     this.reflectorGeo.dispose();
     this.railPostGeo.dispose();
-    for (const m of [this.terrainMat, this.roadMat, this.postMat, this.reflectorMat, this.railMat, this.railBackMat]) m.dispose();
+    for (const g of [this.signGeo, this.signPostGeo, this.poleGeo]) g.dispose();
+    for (const m of [this.terrainMat, this.roadMat, this.roadMatSolid, this.postMat, this.reflectorMat, this.railMat, this.railBackMat, ...this.chevronMats, this.signPostMat, this.poleMat, this.wireMat]) {
+      if ("map" in m && m.map) m.map.dispose();
+      m.dispose();
+    }
     this.roadMat.map?.dispose();
     for (const kind of KINDS) (this.plants[kind].material as THREE.Material).dispose();
     (this.water.material as THREE.Material).dispose();
     this.ripples.dispose();
+    this.detail.dispose();
   }
 }
