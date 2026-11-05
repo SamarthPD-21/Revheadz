@@ -113,7 +113,7 @@ An endless road you never drive the same way twice. Pick a machine at `/cruise`,
   a shower of sparks, and it costs you speed
 - **Free roam** (`R`): the whole map is yours. Drive across meadows, up hillsides and through the shallows. Hills pull
   you back and push you on, grass and dirt drag at the wheels, steep slopes slide you sideways and deep water stops you
-- **Day and weather**: let the day go by (an hour a minute) or pick a time from sunrise to the stars; clear, hazy,
+- **Day and weather**: let the day go by (an hour a minute) or jump to sunrise, day, golden hour, dusk or night; clear, hazy,
   foggy or rainy. Headlights and glowing reflectors after dark, a sun that flares in the lens, clouds that drift and
   glow at sunset, trees and grass that sway, lakes that ripple
 - **Your world is remembered**: come back and you're on the same road where you left it, with the map loaded from the
@@ -129,7 +129,7 @@ An endless road you never drive the same way twice. Pick a machine at `/cruise`,
   the wet. Set up like road cars, they run wide at the limit rather than snap round, and a slide caught at speed
   settles instead of throwing you the other way. Let go of the wheel in a slide and it self-centres along it
 - **Driver aids as built**: ABS, traction and stability control as the car left the factory (an F40 or a '71 'Cuda has
-  none, so it spins its wheels, locks them under hard braking and can spin), or all on, or all off. Dash lights show
+  none, so it spins its wheels, locks them under hard braking and can spin), or each one set yourself in Settings. Dash lights show
   each one working
 - **Gears**: automatic, or manual on `E` / `Q`, where a car with a clutch pedal stalls like a real one (brake to a stop
   in gear and it dies: `N`, then `I`)
@@ -162,6 +162,8 @@ An endless road you never drive the same way twice. Pick a machine at `/cruise`,
 
 The **Settings** button (`O`) has it all, applied as you change it and remembered:
 
+- **Car**: manual or automatic gears, and the driver aids: as the car was built, or ABS, traction control and
+  stability control each on or off
 - **Display**: resolution (Auto adapts to hold the frame rate, or fix it from 50% to 150%), frame rate (60, 90 by
   default, 120 or Max, paced exactly on faster screens), field of view and a frame counter
 - **Graphics**: presets from Low to Ultra, render distance (Near to Extreme: the horizon from 2 to 5.5 km), how thickly
