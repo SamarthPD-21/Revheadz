@@ -206,6 +206,8 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
   const touchSteer = useRef(0);
   const gripRef = useRef<HTMLParagraphElement>(null);
   const mapRef = useRef<HTMLCanvasElement>(null);
+  /** The "turn around" banner (set straight from the frame loop, not through React). */
+  const warnRef = useRef<HTMLDivElement>(null);
   /** This car's odometer, km (counted every frame, shown a few times a second). */
   const odoRef = useRef(0);
   const [odo, setOdo] = useState(0);
@@ -426,6 +428,12 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       const keys = steerKeys.current;
       const steer = clampUnit((STEER_RIGHT.some((k) => keys.has(k)) ? 1 : 0) - (STEER_LEFT.some((k) => keys.has(k)) ? 1 : 0) + touchSteer.current);
       scene.frame(dt, { speedKmh: sim.state.speedKmh, reverse: sim.state.gear === -1, throttle: sim.input.throttle, brake: sim.input.brake, wheelspin: sim.state.wheelspin ?? 0, locked: Boolean(sim.state.locked), steer, ignition: running }, { hour: hourRef.current, weather: s.weather, camera: s.camera });
+      // heading back down the road, or up to where it's closed: tell them to turn round
+      const warnEl = warnRef.current;
+      if (warnEl && warnEl.dataset.kind !== (scene.warning ?? "")) {
+        warnEl.dataset.kind = scene.warning ?? "";
+        warnEl.lastElementChild!.textContent = scene.warning === "closed" ? "The road behind is closed — turn around" : scene.warning === "wrong-way" ? "Wrong way — turn around" : "";
+      }
       // the map, fifteen times a second
       if (mapRef.current && now - lastMap > 66) {
         lastMap = now;
@@ -769,6 +777,12 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       )}
 
       <canvas ref={mapRef} className="cruise-map cruise-fade" aria-label="Map of the road ahead" />
+      <div ref={warnRef} className="cruise-turn" data-kind="" role="status" aria-live="polite">
+        <svg viewBox="0 0 24 24" aria-hidden>
+          <path d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 010 11H11" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span />
+      </div>
 
       <div className="track-cluster cruise-cluster">
         <div className="track-lights">

@@ -858,6 +858,13 @@ button.menu-option:hover { background: #17171d; }
 /* a feature still being tuned */
 .beta-tag { display: inline-block; padding: 0.05rem 0.4rem; border-radius: 999px; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #1c1917; background: #fbbf24; vertical-align: middle; }
 .cruise-beta { position: absolute; top: 4.4rem; left: 50%; transform: translateX(-50%); z-index: 5; display: flex; align-items: center; gap: 0.45rem; padding: 0.3rem 0.7rem; border-radius: 999px; font-size: 0.72rem; color: #e4e4e7; background: rgba(10, 11, 16, 0.7); border: 1px solid rgba(251, 191, 36, 0.35); pointer-events: none; white-space: nowrap; }
+/* turn around: a banner across the top while heading back down the road or into the mist */
+.cruise-turn { position: absolute; top: 5.2rem; left: 50%; z-index: 6; display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 1.1rem; border-radius: 999px; font-weight: 800; font-size: 0.95rem; letter-spacing: 0.04em; text-transform: uppercase; color: #1c1917; background: #fbbf24; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45); pointer-events: none; opacity: 0; transform: translate(-50%, -8px) scale(0.96); transition: opacity 180ms ease, transform 180ms ease; white-space: nowrap; }
+.cruise-turn svg { width: 1.3rem; height: 1.3rem; }
+.cruise-turn[data-kind="wrong-way"], .cruise-turn[data-kind="closed"] { opacity: 1; transform: translate(-50%, 0) scale(1); animation: cruise-turn-pulse 1s ease-in-out infinite; }
+.cruise-turn[data-kind="closed"] { background: #ef4444; color: #fff; }
+@keyframes cruise-turn-pulse { 50% { filter: brightness(1.15); transform: translate(-50%, 0) scale(1.04); } }
+@media (prefers-reduced-motion: reduce) { .cruise-turn[data-kind] { animation: none; } }
 /* the map of the road ahead, bottom left above the key hints */
 .cruise-map { position: absolute; left: var(--edge); bottom: 4.2rem; width: 10.5rem; height: 10.5rem; z-index: 4; pointer-events: none; border-radius: 999px; filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45)); }
 @media (max-width: 640px) { .cruise-map { width: 7.5rem; height: 7.5rem; bottom: auto; top: 6.5rem; } }

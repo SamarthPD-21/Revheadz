@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { hash2, mulberry32 } from "../../lib/cruise/noise";
 import { BARRIER_D, Barriers } from "../../lib/cruise/barriers";
+import type { Progress } from "../../lib/cruise/progress";
 import { ROAD_HALF, ROAD_SECTION, STEP, WATER_Y, bankOf, rightOf, sectionDrop, type RoadPoint } from "../../lib/cruise/road";
 import { GRID_M } from "../../lib/cruise/ground";
 import { Landscape, RoadDistance, WILD_M } from "../../lib/cruise/terrain";
@@ -272,6 +273,11 @@ export class World {
   /** Galvanised steel for the guardrails. */
   private readonly railMat = new THREE.MeshStandardMaterial({ color: 0xb8bdc4, metalness: 0.7, roughness: 0.42, envMapIntensity: 0.8 });
   private readonly railPostGeo = new THREE.BoxGeometry(0.1, 1, 0.14).translate(0, 0.2, 0);
+  /**
+   * How far along the road has been reached: the world more than a little way behind it is
+   * closed (not built, and taken away), since the road only goes forward.
+   */
+  progress: Progress | null = null;
   /** Where the guardrails go (the scene asks it too, for crashing into them). */
   readonly barriers: Barriers;
   private readonly reflectorGeo = new THREE.BoxGeometry(0.11, 0.16, 0.06).translate(0, 0.86, 0);
@@ -437,7 +443,7 @@ export class World {
     // drop tiles that have fallen behind
     for (const [key, tile] of this.tiles) {
       const [ix, iz] = key.split(",").map(Number);
-      if (Math.hypot(ix - tx, iz - tz) > this.range.ring + 1.2) {
+      if (Math.hypot(ix - tx, iz - tz) > this.range.ring + 1.2 || this.tileClosed(ix, iz)) {
         this.group.remove(tile.mesh);
         tile.mesh.geometry.dispose();
         this.tiles.delete(key);
@@ -451,7 +457,7 @@ export class World {
       for (let dx = -RING; dx <= RING; dx++) {
         const d = Math.hypot(dx, dz);
         if (d > RING + 0.5) continue;
-        if (!this.tiles.has(`${tx + dx},${tz + dz}`)) want.push([tx + dx, tz + dz, d]);
+        if (!this.tiles.has(`${tx + dx},${tz + dz}`) && !this.tileClosed(tx + dx, tz + dz)) want.push([tx + dx, tz + dz, d]);
       }
     }
     want.sort((a, b) => a[2] - b[2]);
@@ -667,6 +673,20 @@ export class World {
   }
 
   /**
+   * Is a tile wholly in the closed part of the world behind the car? All of it well behind the
+   * closed line, and no open road through it or near enough to shape it.
+   */
+  private tileClosed(ix: number, iz: number): boolean {
+    const p = this.progress;
+    if (!p) return false;
+    const x0 = ix * TILE;
+    const z0 = iz * TILE;
+    for (const [x, z] of [[x0, z0], [x0 + TILE, z0], [x0, z0 + TILE], [x0 + TILE, z0 + TILE]]) if (!p.isBehind(x, z, NaN, 60)) return false;
+    const near = this.land.road.samplesNear(x0 - REACH, z0 - REACH, x0 + TILE + REACH, z0 + TILE + REACH, 4);
+    return !near.some((i) => i * STEP >= p.boundary - 60);
+  }
+
+  /**
    * Refills the instanced plants from the tiles near the camera. Each tile's matrices were worked
    * out when it was built, so this is block copies (the outer ring takes every other plant).
    */
@@ -770,7 +790,8 @@ export class World {
   }
 
   private updateRoad(carS: number) {
-    const first = Math.max(0, Math.floor((carS - 300) / (CHUNK * STEP)));
+    // (never behind the closed line: the road there is gone)
+    const first = Math.max(0, Math.floor((carS - 300) / (CHUNK * STEP)), Math.floor((this.progress?.boundary ?? 0) / (CHUNK * STEP)));
     const last = Math.floor((carS + 1500) / (CHUNK * STEP));
     for (const [c, g] of this.chunks) {
       if (c < first || c > last) {

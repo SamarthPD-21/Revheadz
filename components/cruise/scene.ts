@@ -16,6 +16,7 @@ import { CarReflections, loadCarEnvironment } from "./carEnvironment";
 import { Puffs } from "./particles";
 import { World, type Range } from "./world";
 import { ExhaustFlames, SkidMarks } from "./effects";
+import { KEEP_BEHIND, Progress, WrongWay } from "../../lib/cruise/progress";
 
 export type CameraMode = "chase" | "far" | "hood" | "drone" | "cinematic";
 export const CAMERA_MODES: CameraMode[] = ["chase", "far", "hood", "drone", "cinematic"];
@@ -57,7 +58,12 @@ export interface Place {
   yaw: number;
   s: number;
   lane: number;
+  /** The furthest along the road reached (the world behind it is closed). */
+  reached?: number;
 }
+
+/** What to warn the driver about: heading back down the road, or nearing where it's closed. */
+export type RoadWarning = "wrong-way" | "closed" | null;
 
 export interface Look {
   hour: number;
@@ -117,6 +123,11 @@ export class CruiseScene {
   /** The car's offset across the road last step (to tell which way it crossed a rail line). */
   private lastD = NaN;
   private impact: { share: number; strength: number } | null = null;
+  /** How far along the road the car has got: the world behind that is closed. */
+  private progress!: Progress;
+  private readonly wrongWay = new WrongWay();
+  /** What the driver should be told about which way they're going. */
+  warning: RoadWarning = null;
   /** A knock's jolt through the camera, 0-1, dying away. */
   private jolt = 0;
   private readonly rubberFwd = new THREE.Vector3();
@@ -201,6 +212,8 @@ export class CruiseScene {
     });
     this.scene.add(this.skids.mesh);
     this.putOnRoad(this.s, LANE_OFFSET);
+    this.progress = new Progress(this.land.road, this.s);
+    this.world.progress = this.progress;
     this.scene.add(this.carRoot);
     this.beam.castShadow = false;
     this.scene.add(this.beam, this.beam.target);
@@ -234,7 +247,7 @@ export class CruiseScene {
 
   /** Where the car is now (to save, and come back to with `restore`). */
   get placeNow(): Place {
-    return { x: this.fx, z: this.fz, yaw: this.yaw, s: this.s, lane: this.lane };
+    return { x: this.fx, z: this.fz, yaw: this.yaw, s: this.s, lane: this.lane, reached: this.progress.reached };
   }
 
   /** Puts the car back where it was (before `warmUp`). */
@@ -246,6 +259,9 @@ export class CruiseScene {
     this.s = p.s;
     this.lane = p.lane;
     this.land.road.ensure(p.s + 2000);
+    // the world stays closed as far as it had been (never ahead of where the car is)
+    this.progress = new Progress(this.land.road, Math.max(p.s, Math.min(p.reached ?? p.s, p.s + KEEP_BEHIND)));
+    this.world.progress = this.progress;
     Object.assign(this.motion, { vy: 0, r: 0, delta: 0 });
   }
 
@@ -282,7 +298,8 @@ export class CruiseScene {
   resetToRoad(): void {
     this.lastD = NaN;
     const f = this.probe.at(this.fx, this.fz);
-    this.putOnRoad(Number.isFinite(f.s) ? f.s : this.s, LANE_OFFSET);
+    // (never into the closed part of the road behind)
+    this.putOnRoad(Math.max(this.progress.boundary + 60, Number.isFinite(f.s) ? f.s : this.s), LANE_OFFSET);
     this.cine = null;
     this.place(0);
     this.placeCamera(0, this.camMode, 0, true);
@@ -462,6 +479,7 @@ export class CruiseScene {
     this.kickUp(dt, v);
     this.flames.update(dt, this.time);
     this.layRubber(v, drive);
+    this.followProgress(dt, v, drive.reverse ? -1 : 1);
     this.puffs.update(dt, 0.3 + 0.7 * (1 - this.atmo.light.night), this.size.h * this.renderer.getPixelRatio(), this.camera.fov);
     this.atmo.follow(this.camera.position, this.carRoot.position, this.time);
     if (this.bloomOn) this.composer.render(dt);
@@ -537,6 +555,20 @@ export class CruiseScene {
     // the guardrails: run into one and it stops you there
     const kept = this.railCheck(nx, nz, c * v * direction - sn * vy * direction, sn * v * direction + c * vy * direction, Math.abs(v));
     if (kept) [nx, nz] = kept;
+    // the closed road behind: you're held short of it (by road still ahead, you never are)
+    const p = this.progress;
+    const was = p.ahead(this.fx, this.fz);
+    const next = p.ahead(nx, nz);
+    if (next < 25 && next < was) {
+      const near = this.probe.at(nx, nz);
+      if (!(Number.isFinite(near.s) && Math.abs(near.d) < 200 && near.s >= p.boundary + 25)) {
+        // slowed hard and held there (no wall to hit, so no bang)
+        nx = this.fx;
+        nz = this.fz;
+        this.motion.vy *= 0.5;
+        this.impact = { share: Math.min(this.impact?.share ?? 1, 0.6), strength: 0 };
+      }
+    }
     // deep water stops you at the edge; shallows you can splash through
     const ahead = this.probe.at(nx + c * this.car.length * 0.5, nz + sn * this.car.length * 0.5);
     this.blocked = ahead.depth > 1.1;
@@ -624,7 +656,8 @@ export class CruiseScene {
    */
   route(behind = 200, ahead = 1600): { x: number; z: number; yaw: number; pts: Float32Array; from: number; s: number } {
     const road = this.land.road;
-    const from = Math.max(0, this.s - behind);
+    // (none of the closed road behind)
+    const from = Math.max(0, this.s - behind, this.progress.boundary);
     const n = Math.floor((ahead + (this.s - from)) / 10) + 1;
     const pts = new Float32Array(n * 4);
     for (let i = 0; i < n; i++) {
@@ -738,6 +771,36 @@ export class CruiseScene {
     this.car.body.position.y += pivot.y - turned.y;
     this.car.body.position.z = pivot.z - turned.z;
     for (const w of this.car.wheels) w.node.rotation.set(0, w.front ? -this.motion.delta : 0, -this.distance / w.r, "YZX");
+  }
+
+  /**
+   * Carries the closed line forward as the car gets further than ever along the road, works out
+   * whether to warn the driver (heading back down the road, or nearing the closed road).
+   */
+  private followProgress(dt: number, v: number, direction: number) {
+    const f = this.footing;
+    const p = this.progress;
+    if (f && Number.isFinite(f.s) && Math.abs(f.d) < 60) p.advance(f.s);
+    // which way the car is actually travelling, against the road's own direction here
+    const c = Math.cos(this.yaw);
+    const sn = Math.sin(this.yaw);
+    const tx = (c * v - sn * this.motion.vy) * direction;
+    const tz = (sn * v + c * this.motion.vy) * direction;
+    const speed = Math.hypot(tx, tz);
+    let wrong = false;
+    let closing: boolean;
+    if (f && Number.isFinite(f.s) && Math.abs(f.d) < 40) {
+      const [rx, rz] = p.directionAt(f.s);
+      wrong = this.wrongWay.update(dt, tx, tz, speed, rx, rz);
+      // nearing the closed road, heading back along it (measured along the road: a
+      // winding road can bring the straight closed line close beside you going forward)
+      closing = f.s - p.boundary < 160 && tx * rx + tz * rz < -1;
+    } else {
+      this.wrongWay.update(dt, 0, 0, 0, 1, 0);
+      // off across country: by the line itself
+      closing = p.ahead(this.fx, this.fz) < 160 && tx * p.line.ax + tz * p.line.az < -1;
+    }
+    this.warning = closing ? "closed" : wrong ? "wrong-way" : null;
   }
 
   /**
