@@ -8,8 +8,8 @@ export const BARRIER_D = ROAD_HALF + 0.55;
 export const CELL = 10;
 
 /** Bends tighter than this get a rail on their outside; tighter still, on both sides. */
-const OUTSIDE_K = 1 / 450;
-const BOTH_K = 1 / 220;
+const OUTSIDE_K = 1 / 300;
+const BOTH_K = 1 / 140;
 /** A drop beside the road this deep (an embankment, a ravine, water) gets a rail too, m. */
 const DROP_M = 4;
 

@@ -13,7 +13,7 @@ const MAX_GRADE = 0.08;
 /** The road's height is the ground's averaged over this many samples either side. */
 const Y_WINDOW = 70;
 /** The tightest bend, m of radius. */
-const MIN_RADIUS = 110;
+export const MIN_RADIUS = 70;
 /** Road is laid this far past what has been asked for, so its height window is always full. */
 const LEAD = (Y_WINDOW + 2) * STEP;
 
@@ -62,6 +62,96 @@ export const surfaceY = (p: RoadPoint, d: number): number => p.y - bankOf(p.curv
 /** The right-hand side of the road at this heading (y up, so right is (-sin, cos)). */
 export const rightOf = (heading: number): [number, number] => [-Math.sin(heading), Math.cos(heading)];
 
+/**
+ * The road's corners, planned one after another the way a road over hill country runs: mostly
+ * bend into bend (S-bends, sweepers, the odd hairpin-tight one), with a short straight between
+ * some of them and only rarely a long one, so there's seldom room to hold the car flat out.
+ * Each corner eases in and out over a transition, so the curvature never jumps. The road keeps
+ * to a general direction that drifts slowly, turning back towards it whenever it has wandered,
+ * so it never doubles back over itself. Planned in order from the seed, extended as asked, so
+ * it is the same road however it is asked about.
+ */
+class Plan {
+  /** Per piece: where it starts (m), its length, its full curvature (0 on a straight), its transition. */
+  private readonly start: number[] = [];
+  private readonly len: number[] = [];
+  private readonly k: number[] = [];
+  private readonly ease: number[] = [];
+  private end = 0;
+  private heading = 0;
+  private aim = 0;
+  private lastSign = 1;
+  private hint = 0;
+
+  constructor(private readonly rand: () => number) {
+    // somewhere straight to start on
+    this.push(160, 0, 0);
+  }
+
+  private push(length: number, k: number, ease: number) {
+    this.start.push(this.end);
+    this.len.push(length);
+    this.k.push(k);
+    this.ease.push(ease);
+    this.end += length;
+    // a corner turns the road by k over its flat middle plus half of each transition
+    this.heading += k * (length - ease);
+  }
+
+  private next() {
+    const r = this.rand;
+    // the general direction wanders a little with every corner
+    this.aim += (r() - 0.5) * 0.35;
+    const pick = r();
+    const radius = pick < 0.2 ? MIN_RADIUS + r() * 45 : pick < 0.68 ? 115 + r() * 100 : 215 + r() * 170;
+    let angle = radius < 115 ? 0.7 + r() * 1.9 : radius < 225 ? 0.45 + r() * 1.3 : 0.25 + r() * 0.8;
+    // which way: back towards the general direction if the road has strayed, else mostly the
+    // other way from the last corner (an S), sometimes the same way again
+    const dev = this.heading - this.aim;
+    let sign = Math.abs(dev) > 0.6 && r() < 0.85 ? -Math.sign(dev) : r() < 0.68 ? -this.lastSign : this.lastSign;
+    // never more than 100 degrees off the general direction
+    const room = 1.75 - sign * dev;
+    if (room < 0.3) sign = -sign;
+    angle = Math.min(angle, 1.75 - sign * dev);
+    // eased in and out over a transition, never a sudden one: a corner too short for its full
+    // radius after that is taken gentler instead
+    const ease = 20 + radius * 0.12;
+    if (angle * radius >= ease) this.push(angle * radius + ease, sign / radius, ease);
+    else this.push(2 * ease, (sign * angle) / ease, ease);
+    this.lastSign = sign;
+    // then straight on into the next corner, or a short straight, or (seldom) a long one
+    const gap = r();
+    if (gap < 0.3) this.push(20 + r() * 70, 0, 0);
+    else if (gap < 0.34) this.push(150 + r() * 220, 0, 0);
+  }
+
+  /** The planned curvature at arc length s. */
+  at(s: number): number {
+    if (s < 0) s = 0;
+    while (this.end <= s) this.next();
+    // the piece holding s: usually the one asked about last, or the next
+    let i = this.hint;
+    if (this.start[i] > s || this.start[i] + this.len[i] <= s) {
+      let lo = 0;
+      let hi = this.start.length - 1;
+      while (lo < hi) {
+        const mid = (lo + hi + 1) >> 1;
+        if (this.start[mid] <= s) lo = mid;
+        else hi = mid - 1;
+      }
+      i = lo;
+      this.hint = i;
+    }
+    const k = this.k[i];
+    if (k === 0) return 0;
+    const u = s - this.start[i];
+    const e = this.ease[i];
+    const L = this.len[i];
+    const w = u < e ? smoothstep(0, e, u) : u > L - e ? smoothstep(0, e, L - u) : 1;
+    return k * w;
+  }
+}
+
 class Growable {
   data = new Float64Array(4096);
   length = 0;
@@ -88,9 +178,8 @@ export class Road {
   private readonly ys = new Growable();
   /** Spatial hash of sample indices, 32 m cells, for "how far is the road from here". */
   private readonly cells = new Map<number, number[]>();
-  private readonly waves: { amp: number; k: number; phase: number }[];
-  private readonly straight: { k: number; phase: number };
-  private readonly twist: { k: number; phase: number };
+  private readonly plan: Plan;
+  private readonly wobble: { amp: number; k: number; phase: number }[];
 
   constructor(
     seed: number,
@@ -99,9 +188,9 @@ export class Road {
   ) {
     const rand = mulberry32(seed ^ 0x5eed);
     const wave = (len: number, amp: number) => ({ amp, k: (2 * Math.PI) / len, phase: rand() * Math.PI * 2 });
-    this.waves = [wave(1300, 1 / 320), wave(530, 1 / 300), wave(240, 1 / 520)];
-    this.straight = { k: (2 * Math.PI) / 3100, phase: rand() * Math.PI * 2 };
-    this.twist = { k: (2 * Math.PI) / 5200, phase: rand() * Math.PI * 2 };
+    // a faint drift on top of everything, so even a straight isn't ruled
+    this.wobble = [wave(900, 1 / 4000), wave(370, 1 / 6000)];
+    this.plan = new Plan(mulberry32(seed ^ 0xc0e2));
     this.xs.push(0);
     this.zs.push(0);
     this.hs.push(0);
@@ -109,13 +198,10 @@ export class Road {
     this.index(0);
   }
 
-  /** Curvature at arc length s: bends, now and then a long straight, now and then a twisty stretch. */
+  /** Curvature at arc length s: one corner after another, now and then a short straight between. */
   curvatureAt(s: number): number {
-    let k = 0;
-    for (const w of this.waves) k += w.amp * Math.sin(w.k * s + w.phase);
-    const straight = smoothstep(-0.25, 0.35, Math.sin(this.straight.k * s + this.straight.phase));
-    const twist = 0.65 + 0.7 * smoothstep(-0.2, 0.6, Math.sin(this.twist.k * s + this.twist.phase));
-    k *= straight * twist;
+    let k = this.plan.at(s);
+    for (const w of this.wobble) k += w.amp * Math.sin(w.k * s + w.phase);
     return Math.max(-1 / MIN_RADIUS, Math.min(1 / MIN_RADIUS, k));
   }
 

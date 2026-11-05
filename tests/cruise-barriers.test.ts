@@ -15,7 +15,8 @@ describe("guardrails", () => {
     if (k > 1 / 300) {
       bends++;
       if (v & outside) bendsRailed++;
-    } else if (k < 1 / 1500) {
+    } else if (k < 1 / 1500 && [-60, -30, 30, 60].every((a) => Math.abs(land.road.curvatureAt(c * CELL + CELL / 2 + a)) < 1 / 1500)) {
+      // a straight, well clear of the bends either end
       straights++;
       if (v) straightsRailed++;
     }
