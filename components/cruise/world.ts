@@ -629,10 +629,13 @@ export class World {
     const before = road.samples;
     // lay the road out a kilometre at a time, well ahead (not a sample every frame)
     if (road.length < carS + 6500) road.ensure(carS + 7500);
-    // driving freely, the car can head anywhere: keep the end of the road well out of reach
-    for (let k = 0; k < 4; k++) {
+    // and keep its end out past everything built, far ground included: ground worked out before
+    // the road came near it would have mountains where the road then runs. (A winding road
+    // covers less ground than its length, and driving freely the car can head anywhere.)
+    const clear = Math.SQRT2 * this.range.far * FAR_STEP + WILD_M + 300;
+    for (let k = 0; k < (budgetMs === Infinity ? 40 : 4); k++) {
       const [ex, , ez] = road.sample(road.samples - 1);
-      if (Math.hypot(ex - camX, ez - camZ) > 4200) break;
+      if (Math.hypot(ex - camX, ez - camZ) > clear) break;
       road.ensure(road.length + 1000);
     }
     if (road.samples !== before) this.roadGrew(before);
@@ -699,26 +702,29 @@ export class World {
    */
   private roadGrew(from: number) {
     const road = this.land.road;
-    let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
-    for (let i = from; i < road.samples; i++) {
-      const [x, , z] = road.sample(i);
-      x0 = Math.min(x0, x);
-      z0 = Math.min(z0, z);
-      x1 = Math.max(x1, x);
-      z1 = Math.max(z1, z);
-    }
     let stale = false;
     for (const [key, tile] of this.tiles) {
       const [ix, iz] = key.split(",").map(Number);
-      // only where the new road actually reshapes the ground (its verge and banks); the
-      // mountains it calms further off are too far to see change
-      if ((ix + 1) * TILE < x0 - REACH || ix * TILE > x1 + REACH || (iz + 1) * TILE < z0 - REACH || iz * TILE > z1 + REACH) continue;
+      // the new road reshapes the ground as far out as it calms the mountains, not just its banks
+      if (!this.roadNear(ix, iz, from)) continue;
       this.group.remove(tile.mesh);
       tile.mesh.geometry.dispose();
       this.tiles.delete(key);
       this.saved.delete(key);
       stale = true;
     }
+    // the far ground near it too: forget those lattice points, and lay the far ground again
+    const r = Math.ceil(WILD_M / FAR_STEP);
+    let farStale = false;
+    for (let i = from; i < road.samples; i += 10) {
+      const [x, , z] = road.sample(i);
+      const gx0 = Math.round(x / FAR_STEP);
+      const gz0 = Math.round(z / FAR_STEP);
+      for (let gx = gx0 - r; gx <= gx0 + r; gx++) {
+        for (let gz = gz0 - r; gz <= gz0 + r; gz++) farStale = this.farSlot.delete((gx + 100000) * 200003 + (gz + 100000)) || farStale;
+      }
+    }
+    if (farStale) this.farCentre = "";
     if (stale) {
       this.plantsDirty = true;
       this.onRoadGrew?.();
@@ -756,7 +762,7 @@ export class World {
     const road = this.land.road;
     for (let i = from; i < road.samples; i += 4) {
       const [x, , z] = road.sample(i);
-      if (x > ix * TILE - REACH && x < (ix + 1) * TILE + REACH && z > iz * TILE - REACH && z < (iz + 1) * TILE + REACH) return true;
+      if (x > ix * TILE - WILD_M && x < (ix + 1) * TILE + WILD_M && z > iz * TILE - WILD_M && z < (iz + 1) * TILE + WILD_M) return true;
     }
     return false;
   }
