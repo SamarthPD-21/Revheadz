@@ -115,7 +115,7 @@ function roadTexture(solid = false): THREE.CanvasTexture {
   // gravel shoulders, then asphalt with a fine grain and a darker, polished band in each wheel track
   x.fillStyle = "#5b5447";
   x.fillRect(0, 0, W, H);
-  x.fillStyle = "#26272b";
+  x.fillStyle = "#38393d";
   x.fillRect(W * 0.1, 0, W * 0.8, H);
   for (const lane of [0.3, 0.7]) {
     for (const off of [-0.07, 0.07]) {
@@ -131,7 +131,7 @@ function roadTexture(solid = false): THREE.CanvasTexture {
     const u = rand();
     const v = rand() * H;
     const onRoad = u > 0.1 && u < 0.9;
-    const l = onRoad ? 20 + rand() * 40 : 70 + rand() * 40;
+    const l = onRoad ? 32 + rand() * 44 : 70 + rand() * 40;
     x.fillStyle = `rgba(${l + 6},${l + 4},${l},${onRoad ? 0.5 : 0.7})`;
     x.fillRect(u * W, v, onRoad ? 1.5 : 2.5, onRoad ? 1.5 : 2.5);
   }
@@ -430,10 +430,10 @@ export class World {
     const tex = roadTexture();
     const solidTex = roadTexture(true);
     solidTex.anisotropy = maxAnisotropy;
-    this.roadMatSolid = new THREE.MeshStandardMaterial({ map: solidTex, roughness: 0.88, metalness: 0, envMapIntensity: 0.5 });
+    this.roadMatSolid = new THREE.MeshStandardMaterial({ map: solidTex, roughness: 0.88, metalness: 0, envMapIntensity: 0.25 });
     this.chevronMats = [chevronMaterial(1), chevronMaterial(-1)];
     tex.anisotropy = maxAnisotropy;
-    this.roadMat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.88, metalness: 0, envMapIntensity: 0.5 });
+    this.roadMat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.88, metalness: 0, envMapIntensity: 0.25 });
 
     const idx: number[] = [];
     const N = RES + 1;

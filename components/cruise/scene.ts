@@ -189,7 +189,7 @@ export class CruiseScene {
 
   constructor(canvas: HTMLCanvasElement, cfg: VehicleConfig, seed: number) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
-    this.renderer.toneMapping = THREE.AgXToneMapping; // truer colours than ACES, gentler highlights
+    this.renderer.toneMapping = THREE.NeutralToneMapping; // keeps the colours (AgX greyed the whole day out)
     this.renderer.toneMappingExposure = 1.1;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.shadowMap.enabled = true;

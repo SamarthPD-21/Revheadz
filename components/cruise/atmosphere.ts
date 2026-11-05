@@ -259,7 +259,7 @@ export class Atmosphere {
     // sunlight: warm and low at the ends of the day, white and strong at noon, dimmed by cloud
     this.sun.position.copy(this.sunDir).multiplyScalar(60);
     this.sun.color.setRGB(1, 0.6 + 0.38 * smoothstep(2, 25, elevation), 0.38 + 0.56 * smoothstep(2, 30, elevation), THREE.SRGBColorSpace);
-    this.sun.intensity = 2.9 * day * (1 - cloudy * 0.7);
+    this.sun.intensity = 3.4 * day * (1 - cloudy * 0.7);
     this.sun.castShadow = this.shadows !== "off" && day > 0.05 && cloudy < 0.9;
     // the sun's flare, when it's up and the sky's clear enough to see it
     this.flare ??= this.makeFlare();
@@ -273,7 +273,9 @@ export class Atmosphere {
     const skyNight = srgb(0.1, 0.14, 0.3);
     this.hemi.color.copy(lerpC(skyNight, skyDay, day)).lerp(srgb(1, 0.7, 0.5), golden * 0.4);
     this.hemi.groundColor.setRGB(0.22 * day + 0.03, 0.18 * day + 0.03, 0.12 * day + 0.04, THREE.SRGBColorSpace);
-    this.hemi.intensity = (0.22 + 0.75 * day) * (1 + cloudy * 0.3);
+    // the sky stays bright a while after sunset (and before sunrise) and lights the land from above
+    const twilight = smoothstep(-7, 0, elevation) * (1 - smoothstep(0, 8, elevation));
+    this.hemi.intensity = (0.22 + 0.5 * day + golden * 0.6 + twilight * 0.5) * (1 + cloudy * 0.6);
 
     // fog follows the horizon: blue by day, amber at sunset, near black at night, grey in bad weather
     let fog = lerpC(DUSK_FOG, DAY_FOG, smoothstep(2, 22, elevation));
@@ -295,8 +297,9 @@ export class Atmosphere {
     const cu = this.clouds.material.uniforms;
     cu.uCoverage.value = { clear: 0.44, haze: 0.55, fog: 0.72, rain: 0.97 }[weather];
     cu.uSunDir.value.copy(this.sunDir);
-    // lit gold and pink from underneath at the ends of the day, grey-white at noon, a dim blue at night
-    (cu.uSunColor.value as THREE.Color).copy(this.sun.color).multiplyScalar(0.25 + 0.9 * day).lerp(srgb(0.05, 0.06, 0.1), night);
+    // lit gold and pink from underneath at the ends of the day (fading as the sun sinks well below),
+    // grey-white at noon, a dim blue at night
+    (cu.uSunColor.value as THREE.Color).copy(this.sun.color).multiplyScalar((0.25 + 0.9 * day) * smoothstep(-6, -1, elevation)).lerp(srgb(0.05, 0.06, 0.1), night);
     (cu.uSky.value as THREE.Color).copy(this.hemi.color).multiplyScalar(0.25 + 0.5 * day);
     cu.uDark.value = weather === "rain" ? 1 : weather === "fog" ? 0.4 : 0;
 
@@ -307,7 +310,11 @@ export class Atmosphere {
     this.moonDisc.position.copy(this.moon.position).normalize().multiplyScalar(3900);
     this.moonDisc.lookAt(0, 0, 0);
 
-    this.renderer.toneMappingExposure = 0.55 + night * 0.35 + cloudy * 0.15;
+    // the eye adjusts: as the light on the ground falls (low sun, twilight, cloud) the exposure opens
+    // up to keep the road readable, until it's properly night, which is left dark
+    const lit = this.sun.intensity * Math.max(0, this.sunDir.y) + this.hemi.intensity;
+    const adapted = Math.min(1.35, 0.62 * Math.sqrt(3.5 / Math.max(lit, 0.1)));
+    this.renderer.toneMappingExposure = THREE.MathUtils.lerp(Math.max(0.62, adapted), 0.97, night);
     Object.assign(this.light, { elevation, night, fog, wet: weather === "rain" ? 1 : 0 });
 
     // reflections: re-filter the sky when the light has moved on enough to notice
@@ -328,7 +335,7 @@ export class Atmosphere {
       this.envTarget?.dispose();
       this.envTarget = next;
       scene.environment = next.texture;
-      scene.environmentIntensity = 0.2 + 0.45 * day;
+      scene.environmentIntensity = 0.15 + 0.3 * day;
     }
   }
 
