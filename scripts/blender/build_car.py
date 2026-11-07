@@ -33,7 +33,50 @@ argv = sys.argv[sys.argv.index("--") + 1 :]
 CAR_ID, OUT = argv[0], argv[1]
 PREVIEW = argv[2] if len(argv) > 2 else None
 CAR = next(c for c in json.load(open(os.path.join(HERE, "cars.json"))) if c["id"] == CAR_ID)
-F = CAR["features"]
+
+# Per-car character. Each entry overrides/extensions the shared features and adds signature
+# details (the "sig" list). Base features still come from cars.json, so a missing entry is fine.
+PER_CAR = {
+    "supra_mk4":     {"wing": "hoop", "tail": "quad_round", "lamps": "slim", "sig": ["supra_wing"]},
+    "skyline_r34":   {"wing": "tall", "tail": "quad_round", "grille": "big", "grille_w": 1.35, "sig": ["big_intake"]},
+    "twin_turbo_v6": {"wing": "lip", "tail": "quad_round", "exhaust": "quad", "sig": ["r35_hood"]},
+    "rx7_fd":        {"wing": "lip", "lamps": "popup", "tail": "single_round", "sig": ["bubble_roof"]},
+    "honda_s2000":   {"wing": "none", "tail": "single_round", "lamps": "slim"},
+    "subaru_sti":    {"wing": "tall", "tail": "bar", "doors": 4, "sig": ["hood_scoop_big"]},
+    "jdm_i6_turbo":  {"wing": "lip", "tail": "bar", "doors": 4, "exhaust": "twin"},
+    "synth_v6":      {"wing": "lip", "tail": "single_round", "exhaust": "twin"},
+    "ferrari_f40":   {"wing": "full_width", "tail": "quad_round", "lamps": "popup",
+                      "sig": ["louvres", "naca"]},
+    "lexus_lfa":     {"wing": "lip", "exhaust": "tri", "sig": ["tri_exhaust"]},
+    "porsche_gt3rs": {"wing": "swan", "tail": "bar", "lamps": "round", "sig": ["wing_vents"]},
+    "v10_supercar":  {"wing": "duck", "tail": "bar", "exhaust": "centre", "sig": ["deck_grille"]},
+    "aventador_svj": {"wing": "gt", "tail": "y_shape", "lamps": "y_shape", "sig": ["hex"]},
+    "pagani_zonda":  {"wing": "duck", "tail": "quad_round", "exhaust": "quad_centre", "lamps": "round"},
+    "bugatti_chiron":{"wing": "duck", "tail": "bar", "grille": "none", "exhaust": "quad",
+                      "noFrontPlate": True, "sig": ["c_line", "horseshoe"]},
+    "gt_racer":      {"wing": "lip", "tail": "single_round", "exhaust": "tri", "sig": ["race_livery"]},
+    "audi_r8_v10":   {"wing": "lip", "tail": "bar", "exhaust": "quad", "intakes": False,
+                      "sig": ["side_blade"]},
+    "corvette_z06":  {"wing": "duck", "tail": "quad_round", "exhaust": "quad_centre", "sig": ["hood_vent"]},
+    "mustang_gt":    {"wing": "lip", "tail": "tri_bar", "grille": "mesh", "grille_w": 1.5, "sig": ["wide_grille"]},
+    "hellcat":       {"wing": "lip", "tail": "tri_bar", "grille": "mesh", "grille_w": 1.55,
+                      "bonnet": "scoop", "sig": ["wide_grille"]},
+    "muscle_v8":     {"wing": "duck", "tail": "bar", "lamps": "round", "bonnet": "scoop",
+                      "sig": ["shaker_scoop"]},
+    "twin_turbo_i6": {"wing": "lip", "tail": "bar", "grille": "kidney", "sig": ["power_dome"]},
+    "bmw_m3_e46":    {"wing": "lip", "tail": "bar", "grille": "kidney", "sig": ["power_dome", "side_gills"]},
+    "amg_c63":       {"wing": "lip", "tail": "bar", "doors": 4, "grille": "big", "grille_w": 1.4},
+    "flat6_sports":  {"wing": "duck", "tail": "bar", "lamps": "round", "sig": ["whale_tail"]},
+    "v12_gt":        {"wing": "lip", "tail": "bar", "grille": "slat"},
+    "hot_hatch":     {"wing": "tall", "tail": "bar", "doors": 4, "exhaust": "centre"},
+    "rotary_twin":   {"wing": "gt", "tail": "bar", "exhaust": "centre", "sig": ["race_livery"]},
+    "boxer4_rally":  {"wing": "tall", "tail": "bar", "doors": 4, "sig": ["hood_scoop_big"]},
+}
+
+F = dict(CAR["features"])
+F.update(PER_CAR.get(CAR_ID, {}))
+DOORS = int(F.get("doors", 2))
+SIG = set(F.get("sig", ()))
 
 # body styles (as the game's procedural builder has them)
 STYLE = {
@@ -414,6 +457,26 @@ def tube(name, points, r, mat, closed=False):
     return ob
 
 
+def mirror_wedge(name, center, mat, fwd=0.085, half_out=0.052, half_up=0.043, taper=0.62, bevel=0.016):
+    """A rounded wedge in world space: a wide rear face (the mirror) tapering forward."""
+    bm = bmesh.new()
+    rings = []
+    for xi, sc in ((-1, 1.0), (1, taper)):
+        cz = center.z - (0.0 if xi < 0 else 0.006)
+        vs = [bm.verts.new(Vector((center.x + xi * fwd, center.y + yo * half_out * sc, cz + zo * half_up * sc)))
+              for (yo, zo) in ((-1, -1), (-1, 1), (1, 1), (1, -1))]
+        rings.append(vs)
+    a, b = rings
+    for k in range(4):
+        bm.faces.new((a[k], a[(k + 1) % 4], b[(k + 1) % 4], b[k]))
+    bm.faces.new(tuple(reversed(a)))
+    bm.faces.new(tuple(b))
+    if bevel:
+        bmesh.ops.bevel(bm, geom=bm.edges[:], offset=bevel, segments=3, affect="EDGES", profile=0.5)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    return new_object(name, bm, [mat])
+
+
 def empty(name, at):
     e = bpy.data.objects.new(name, None)
     e.location = at
@@ -526,14 +589,24 @@ def build_screens():
             if f.normal.z < 0:
                 f.normal_flip()
         new_object("glass_screen_%d" % idx, bm, ["glass"])
-        # wipers on the windscreen
+        # wipers on the windscreen: parked flat along its bottom (cowl) edge
         if idx == 0 and F.get("wipers"):
-            # parked along the foot of the windscreen (its nose end), angled up the glass
-            for z in (-0.42, 0.08):
-                a = on_top(sb - 0.05, z, 0.01)
-                b = on_top(sb - 0.14, z + 0.4, 0.01)
-                if a and b:
-                    tube("wiper", [a[0], b[0]], 0.005, "trim")
+            for z0, z1 in ((-0.46, -0.04), (0.04, 0.46)):
+                for name, out, rad in (("wiper_arm", 0.006, 0.005), ("wiper_blade", 0.013, 0.0035)):
+                    pts = []
+                    for k in range(9):
+                        t = k / 8
+                        z = z0 + (z1 - z0) * t
+                        x = sa + 0.045 + 0.06 * t  # a slight rise up the glass
+                        s = on_top(x, z, out)
+                        if s:
+                            pts.append(s[0])
+                    if len(pts) > 3:
+                        tube(name, pts, rad, "trim" if name == "wiper_arm" else "rubber")
+            for z in (-0.05, 0.05):
+                s = on_top(sa + 0.045, z, 0.012)
+                if s:
+                    sphere("wiper_pivot", 0.012, s[0], "trim", segs=10)
 
 
 build_side_glass()
@@ -567,18 +640,38 @@ def seam_across(x, side_up):
 
 if windows:
     wx = [p[0] for p in windows]
-    door_front, door_back = max(wx) - 0.08, min(wx) + (max(wx) - min(wx)) * 0.35
+    wx0, wx1 = min(wx), max(wx)
+    door_front, door_back = wx1 - 0.08, wx0 + (wx1 - wx0) * 0.35
+    door_rear = wx0 + (wx1 - wx0) * 0.08 if DOORS >= 4 else None
     for side in (1, -1):
         seam_side(door_front, CLEARANCE + 0.16, BELT - 0.02, side)
         seam_side(door_back, CLEARANCE + 0.16, BELT - 0.02, side)
+        if door_rear is not None:
+            # the rear door's trailing line, on 4-door cars
+            seam_side(door_rear, CLEARANCE + 0.16, BELT - 0.02, side)
         if F.get("doorHandles"):
-            s = on_side(door_back + 0.18, BELT - 0.09, side, 0.004)
-            if s:
-                h = box("door_handle", (0.075, 0.012, 0.007), s[0], "chrome" if CAR["silhouette"] in ("muscle", "gt") else "trim", bevel=0.005)
-                oriented(h, s[0], s[1])
+            for hx in ((door_back + 0.18,) if door_rear is None else (door_back + 0.18, door_rear + 0.16)):
+                s = on_side(hx, BELT - 0.09, side, 0.004)
+                if s:
+                    h = box("door_handle", (0.075, 0.012, 0.007), s[0], "chrome" if CAR["silhouette"] in ("muscle", "gt") else "trim", bevel=0.005)
+                    oriented(h, s[0], s[1])
     if SCREENS:
         # the bonnet's shut line ahead of the windscreen, and the boot's behind the rear screen
-        seam_across(SCREENS[0][1] + 0.12, True)
+        cowl = SCREENS[0][0]
+        seam_across(max(X0 + 0.2, cowl - 0.12), True)
+        # the two longitudinal bonnet edge seams, running from the cowl to the nose
+        for side in (1, -1):
+            pts = []
+            xs = max(cowl + 0.04, X0 + 0.3)
+            xe = X1 - 0.1
+            for k in range(16):
+                t = k / 15
+                x = xs + (xe - xs) * t
+                s = on_top(x, side * half_width(x) * (0.68 - 0.14 * t), 0.0015)
+                if s:
+                    pts.append(s[0])
+            if len(pts) > 3:
+                tube("seam", pts, 0.0035, "trim")
         if SCREENS[1][1] - SCREENS[1][0] > 0.15:
             seam_across(max(X0 + 0.25, SCREENS[1][0] - 0.12), True)
 
@@ -593,31 +686,54 @@ for side in (1, -1):
         continue
     at, n = s
     if F["lamps"] == "popup":
-        # folded flat into the bonnet: a lid with a seam round it, the lamp showing at its edge
+        # a raised popup pod with a dark seam, its lamp slit on the front face
         t = on_top(at.x - 0.16, z, 0.003)
         if t:
-            lid = box("popup_lid", (0.15, 0.17, 0.006), t[0], "paint", bevel=0.004)
-            oriented(lid, t[0], t[1])
-            seam = box("popup_seam", (0.155, 0.175, 0.003), t[0] - t[1] * 0.001, "trim", bevel=0.003)
-            oriented(seam, t[0] - t[1] * 0.001, t[1])
-        lamp = box("head_slit", (0.11, 0.008, 0.006), at + n * 0.004, "head")
-        oriented(lamp, at + n * 0.004, n)
+            seam = box("popup_seam", (0.155, 0.17, 0.003), t[0] + t[1] * 0.001, "trim", bevel=0.006, segments=3)
+            oriented(seam, t[0] + t[1] * 0.001, t[1])
+            pod = box("popup_lid", (0.14, 0.155, 0.008), t[0] + t[1] * 0.006, "paint", bevel=0.012, segments=4)
+            oriented(pod, t[0] + t[1] * 0.006, t[1])
+            slit = t[0] + t[1] * 0.014 + Vector((0.138, 0, 0))
+            housing = box("head_housing", (0.1, 0.012, 0.014), slit - n * 0.004, "trim", bevel=0.006)
+            oriented(housing, slit - n * 0.004, Vector((1, 0, 0)))
+            lamp = box("head_slit", (0.09, 0.006, 0.005), slit + n * 0.004, "head", bevel=0.003)
+            oriented(lamp, slit + n * 0.004, Vector((1, 0, 0)))
     elif F["lamps"] == "round":
-        cup = cylinder("head_cup", 0.085, 0.05, at - n * 0.01, "chrome", segs=28)
-        oriented(cup, at - n * 0.01, n)
-        bulb = sphere("head_lamp", 0.07, at - n * 0.005, "head", scale=(1, 1, 0.45))
-        oriented(bulb, at - n * 0.005, n)
-        lens = sphere("head_lens", 0.085, at - n * 0.012, "lens", scale=(1, 1, 0.22), segs=28)
-        oriented(lens, at + n * 0.002, n)
+        # dark recessed bowl, chrome reflector, projector, clear domed lens
+        housing = cylinder("head_housing", 0.1, 0.035, at - n * 0.012, "trim", segs=28)
+        oriented(housing, at - n * 0.012, n)
+        bowl = cylinder("head_reflector", 0.082, 0.025, at - n * 0.002, "chrome", segs=28, r2=0.055)
+        oriented(bowl, at - n * 0.002, n)
+        bulb = sphere("head_lamp", 0.045, at + n * 0.002, "head", scale=(1, 1, 0.5))
+        oriented(bulb, at + n * 0.002, n)
+        lens = sphere("head_lens", 0.086, at + n * 0.008, "lens", scale=(1, 1, 0.2), segs=28)
+        oriented(lens, at + n * 0.008, n)
+    elif F["lamps"] == "y_shape":
+        # dark recessed panel with a Y-shaped daytime light
+        housing = box("head_housing", (0.15, 0.06, 0.014), at - n * 0.008, "trim", bevel=0.02, segments=3)
+        oriented(housing, at - n * 0.008, n)
+        stem = box("head_drl", (0.008, 0.012, 0.055), at + n * 0.004 + Vector((0, 0, -0.035)), "head", bevel=0.003)
+        for sgn in (1, -1):
+            arm = box("head_drl", (0.008, 0.07, 0.01), at + n * 0.004 + Vector((0, sgn * 0.032, 0.032)), "head", bevel=0.003)
+            arm.rotation_euler = (sgn * 0.7, 0, 0)
+        proj = sphere("head_lamp", 0.028, at + n * 0.002 + Vector((0, 0, -0.046)), "head", scale=(1, 1, 0.5))
+        oriented(proj, at + n * 0.002 + Vector((0, 0, -0.046)), n)
     else:
-        housing = sphere("head_housing", 0.1, at - n * 0.02, "trim", scale=(1.6, 0.55, 0.3), segs=28)
-        oriented(housing, at - n * 0.012, n, up=(0, 0, 1))
-        projector = sphere("head_lamp", 0.042, at - n * 0.004 + V(0, 0, -side * 0.06) - V(0, 0, 0), "head", scale=(1, 1, 0.6))
-        oriented(projector, at - n * 0.004 + Vector((0, side * 0.06, 0)), n)
-        drl = box("head_drl", (0.07, 0.005, 0.003), at - n * 0.004 + Vector((0, 0, 0.03)), "head", bevel=0.002)
-        oriented(drl, at + n * 0.002 + Vector((0, 0, 0.035)), n)
-        lens = sphere("head_lens", 0.1, at - n * 0.014, "lens", scale=(1.6, 0.55, 0.14), segs=28)
-        oriented(lens, at + n * 0.004, n)
+        # wide slim unit: dark recessed surround, two chrome reflectors + projectors, clear flush lens
+        housing = box("head_housing", (0.17, 0.058, 0.016), at - n * 0.008, "trim", bevel=0.024, segments=4)
+        oriented(housing, at - n * 0.008, n)
+        inner = box("head_recess", (0.15, 0.048, 0.008), at - n * 0.014, "rubber", bevel=0.02, segments=3)
+        oriented(inner, at - n * 0.014, n)
+        for dy in (-0.055, 0.055):
+            p = at + Vector((0, dy, 0))
+            ref = cylinder("head_reflector", 0.048, 0.02, p - n * 0.002, "chrome", segs=24, r2=0.032)
+            oriented(ref, p - n * 0.002, n)
+            proj = sphere("head_lamp", 0.031, p + n * 0.004, "head", scale=(1.25, 1, 0.55))
+            oriented(proj, p + n * 0.004, n)
+        drl = box("head_drl", (0.125, 0.004, 0.003), at + n * 0.012 + Vector((0, 0, -0.042)), "head", bevel=0.002)
+        oriented(drl, at + n * 0.012 + Vector((0, 0, -0.042)), n)
+        lens = box("head_lens", (0.155, 0.05, 0.009), at + n * 0.007, "lens", bevel=0.02, segments=3)
+        oriented(lens, at + n * 0.007, n)
     heads.append(empty("headlight_" + ("R" if side > 0 else "L"), at + n * 0.05))
 
 # the grille and the splitter under the nose
@@ -628,7 +744,7 @@ if g:
     hw = half_width(at.x) * 0.55
     kind = F.get("grille", "slat")
     if kind in ("slat", "big", "mesh", "eggcrate", "intake", "horse"):
-        wdt = {"big": 1.25, "intake": 1.35, "eggcrate": 1.15}.get(kind, 1.0) * hw
+        wdt = {"big": 1.25, "intake": 1.35, "eggcrate": 1.15}.get(kind, 1.0) * hw * F.get("grille_w", 1.0)
         hgt = {"big": 0.2, "intake": 0.17, "eggcrate": 0.16}.get(kind, 0.12)
         back = box("grille_back", (wdt, hgt / 2, 0.02), at - n * 0.012, "rubber", bevel=0.012)
         oriented(back, at - n * 0.01, n)
@@ -676,29 +792,75 @@ if F.get("canards"):
 # tail lamps
 tail_y = min(top_at(X0 + 0.25) - 0.09, 0.8)
 thw = half_width(X0 + 0.1)
-if F.get("tail") == "quad":
+tail_kind = F.get("tail", "bar")
+
+
+def round_tail(name, at, n, r=0.075):
+    """A real lamp unit: dark recessed housing, chrome reflector, domed red lens."""
+    housing = cylinder(name + "_housing", r * 1.22, 0.022, at - n * 0.008, "trim", segs=28)
+    oriented(housing, at - n * 0.008, n)
+    ring = cylinder(name + "_ring", r * 1.12, 0.012, at - n * 0.002, "chrome", segs=28, cap=False)
+    oriented(ring, at - n * 0.002, n)
+    refl = cylinder(name + "_reflector", r * 0.92, 0.008, at - n * 0.001, "chrome", segs=28)
+    oriented(refl, at - n * 0.001, n)
+    lens = sphere(name, r, at + n * 0.004, "tail", scale=(1, 1, 0.3), segs=28)
+    oriented(lens, at + n * 0.004, n)
+
+
+if tail_kind in ("quad", "quad_round"):
     for side in (1, -1):
         for off in (0.2, 0.46):
             t = on_tail(tail_y, side * (thw - off), 0.0)
             if t:
-                lamp = cylinder("tail_round", 0.075, 0.03, t[0] - t[1] * 0.005, "tail", segs=28)
-                oriented(lamp, t[0] - t[1] * 0.005, t[1])
-                ring = cylinder("tail_ring", 0.086, 0.02, t[0] - t[1] * 0.012, "chrome", segs=28)
-                oriented(ring, t[0] - t[1] * 0.012, t[1])
+                round_tail("tail_round", t[0], t[1])
+elif tail_kind == "single_round":
+    for side in (1, -1):
+        t = on_tail(tail_y, side * (thw - 0.32), 0.0)
+        if t:
+            round_tail("tail_round", t[0], t[1], 0.082)
+elif tail_kind == "tri_bar":
+    for side in (1, -1):
+        base = on_tail(tail_y, side * (thw - 0.33), 0.0)
+        if not base:
+            continue
+        at, n = base
+        panel = box("tail_housing", (0.115, 0.075, 0.012), at - n * 0.008, "trim", bevel=0.014, segments=3)
+        oriented(panel, at - n * 0.008, n)
+        for dx in (-0.062, 0.0, 0.062):
+            b = box("tail_bar", (0.016, 0.055, 0.008), at + Vector((0, dx, 0)) + n * 0.004, "tail", bevel=0.004)
+            oriented(b, at + Vector((0, dx, 0)) + n * 0.004, n)
+elif tail_kind == "y_shape":
+    for side in (1, -1):
+        base = on_tail(tail_y, side * (thw - 0.34), 0.0)
+        if not base:
+            continue
+        at, n = base
+        box("tail_housing", (0.01, 0.09, 0.075), at - n * 0.008, "trim", bevel=0.014, segments=3)
+        box("tail_bar", (0.008, 0.012, 0.06), at + n * 0.004 + Vector((0, 0, -0.025)), "tail", bevel=0.003)
+        for sgn in (1, -1):
+            arm = box("tail_bar", (0.008, 0.075, 0.012), at + n * 0.004 + Vector((0, sgn * 0.036, 0.035)), "tail", bevel=0.003)
+            arm.rotation_euler = (sgn * 0.75, 0, 0)
 else:
-    pts = []
+    # full-width light bar: dark housing behind a red lens, plus end clusters
+    pts, behind = [], []
     for k in range(31):
         z = -thw * 0.92 + 2 * thw * 0.92 * k / 30
         t = on_tail(tail_y, z, 0.006)
+        b = on_tail(tail_y, z, 0.0)
         if t:
             pts.append(t[0])
+        if b:
+            behind.append(b[0])
     if len(pts) > 5:
-        tube("tail_bar", pts, 0.018, "tail")
+        tube("tail_housing", behind, 0.026, "trim")
+        tube("tail_bar", pts, 0.017, "tail")
     for side in (1, -1):
         t = on_tail(tail_y - 0.02, side * (thw - 0.28), 0.0)
         if t:
-            c = box("tail_cluster", (0.1, 0.03, 0.01), t[0] - t[1] * 0.004, "tail", bevel=0.01, segments=3)
-            oriented(c, t[0], t[1])
+            h = box("tail_housing", (0.1, 0.038, 0.012), t[0] - t[1] * 0.004, "trim", bevel=0.01, segments=3)
+            oriented(h, t[0] - t[1] * 0.004, t[1])
+            c = box("tail_cluster", (0.085, 0.028, 0.008), t[0] + t[1] * 0.002, "tail", bevel=0.01, segments=3)
+            oriented(c, t[0] + t[1] * 0.002, t[1])
 # the diffuser, and the exhausts through it
 dy = CLEARANCE + 0.1
 diff = box("diffuser", (0.08, thw * 0.75, 0.03), V(X0 + 0.1, dy, 0), aero_mat(), bevel=0.008)
@@ -706,12 +868,23 @@ if F.get("diffuser") == "fins":
     for i in range(6):
         z = -thw * 0.6 + thw * 1.2 * i / 5
         box("diffuser_fin", (0.09, 0.003, 0.03), V(X0 + 0.08, dy - 0.02, -z), aero_mat())
-ey = CLEARANCE + (0.2 if F["exhaust"] == "centre" else 0.1)
-pipes = {"centre": (-0.09, 0.09), "quad": (-0.55, -0.4, 0.4, 0.55)}.get(F["exhaust"], (-0.42, 0.42))
-for k, z in enumerate(pipes):
-    tip = cylinder("pipe_tip", 0.052, 0.16, V(X0 + 0.03, ey, z), "chrome", axis="X", segs=24, cap=False)
-    inner = cylinder("pipe_inner", 0.044, 0.12, V(X0 + 0.04, ey, z), "rubber", axis="X", segs=24)
-    empty("exhaust_%d" % k, V(X0 - 0.06, ey, z))
+ey = CLEARANCE + (0.2 if F["exhaust"] in ("centre", "tri", "quad_centre") else 0.1)
+hex_tip = "hex" in SIG
+if F["exhaust"] == "tri":
+    # LFA-style triangular triple exit
+    spots = [(-0.09, 0.03), (0.09, 0.03), (0.0, -0.065)]
+elif F["exhaust"] == "quad_centre":
+    spots = [(-0.12, 0.0), (-0.04, 0.0), (0.04, 0.0), (0.12, 0.0)]
+else:
+    zs = {"centre": (-0.09, 0.09), "quad": (-0.55, -0.4, 0.4, 0.55)}.get(F["exhaust"], (-0.42, 0.42))
+    spots = [(z, 0.0) for z in zs]
+for k, (zr, zu) in enumerate(spots):
+    at = V(X0 + 0.03, ey + zu, zr)
+    tip = cylinder("pipe_tip", 0.052, 0.16, at, "chrome", axis="X", segs=6 if hex_tip else 24,
+                   cap=False, r2=0.058 if hex_tip else None)
+    inner = cylinder("pipe_inner", 0.044, 0.12, at + Vector((0.01, 0, 0)), "rubber", axis="X",
+                     segs=6 if hex_tip else 24)
+    empty("exhaust_%d" % k, V(X0 - 0.06, ey + zu, zr))
 
 # side markers, fuel cap, strakes, intakes
 for side in (1, -1):
@@ -731,8 +904,10 @@ for side in (1, -1):
     if F.get("intakes"):
         s = on_side(rear["x"] + rear["r"] + 0.4, BELT - 0.12, side, -0.01)
         if s:
-            scoop = sphere("side_intake", 0.1, s[0], "rubber", scale=(3.3, 1.2, 0.5), segs=24)
-            oriented(scoop, s[0], s[1])
+            at, n = s
+            sc = at - n * 0.028
+            scoop = sphere("side_intake", 0.1, sc, "rubber", scale=(3.1, 1.05, 0.45), segs=24)
+            oriented(scoop, sc, n)
     if F.get("sideStrakes"):
         for k in range(3):
             s = on_side(rear["x"] + rear["r"] + 0.25 + k * 0.08, BELT - 0.2, side, 0.003)
@@ -740,30 +915,42 @@ for side in (1, -1):
                 st = box("strake", (0.006, 0.035, 0.005), s[0], "trim", bevel=0.002)
                 oriented(st, s[0], s[1])
 
-# door mirrors at the foot of the windscreen
+# door mirrors: a short stalk from the front corner of the side window, a rounded wedge
+# housing, and a dark mirror face pointing backwards
 if windows:
-    mx = max(p[0] for p in windows) - 0.1
-    my = min(BELT + 0.06, top_at(mx) - 0.06)
+    wxs = [p[0] for p in windows]
+    wys = [p[1] for p in windows]
+    mx = max(wxs) - 0.12
+    my = BELT - 0.02
     for side in (1, -1):
-        s = on_side(mx, my, side, 0.0)
-        if s:
-            at, n = s
-            out = Vector((0, -side, 0))
-            # a teardrop housing, flat glass facing back, on a short arm
-            head = sphere("mirror", 0.075, at + out * 0.12 + Vector((0, 0, 0.03)), "paint", scale=(1.15, 0.72, 0.68))
-            cut = box("mirror_back", (0.004, 0.06, 0.045), at + out * 0.12 + Vector((-0.07, 0, 0.03)), "trim", bevel=0.01)
-            stalk = box("mirror_stalk", (0.03, 0.06, 0.008), at + out * 0.06 + Vector((0, 0, 0.01)), "trim", bevel=0.006)
-            face = cylinder("mirror_glass", 0.055, 0.004, at + out * 0.12 + Vector((-0.085, 0, 0.03)), "chrome", axis="X", segs=20)
+        s = None
+        for up in (my, BELT - 0.06, BELT + 0.01, BELT - 0.1):
+            s = on_side(mx, up, side, 0.0)
+            if s:
+                break
+        if not s:
+            continue
+        at, n = s
+        out = Vector((0, -side, 0))
+        tube("mirror_stalk", [at + out * 0.005, at + out * 0.05 + Vector((0, 0, 0.04)),
+                              at + out * 0.095 + Vector((0, 0, 0.075))], 0.013, "trim")
+        center = at + out * 0.115 + Vector((0, 0, 0.085))
+        mirror_wedge("mirror", center, "paint", fwd=0.085, half_out=0.05, half_up=0.043)
+        box("mirror_lip", (0.006, 0.05, 0.045), center + Vector((-0.079, 0, 0.0)), "paint", bevel=0.012, segments=3)
+        box("mirror_face", (0.004, 0.038, 0.033), center + Vector((-0.084, 0, 0.0)), "trim", bevel=0.008, segments=3)
 
 # ---------------------------------------------------------------------------- the bonnet, the wing, the roof
 
 
 if F.get("bonnet") == "scoop":
     bx = X1 - min(0.95, LEN * 0.2)
+    big = "hood_scoop_big" in SIG
     s = on_top(bx, 0, 0.0)
     if s:
-        sc = box("bonnet_scoop", (0.24, 0.22, 0.035), s[0] + Vector((0, 0, 0.015)), "paint", bevel=0.03, segments=3)
-        mouth = box("bonnet_scoop_mouth", (0.008, 0.18, 0.02), s[0] + Vector((0.24, 0, 0.025)), "rubber", bevel=0.006)
+        sc = box("bonnet_scoop", (0.28 if big else 0.24, 0.26 if big else 0.22, 0.05 if big else 0.035),
+                 s[0] + Vector((0, 0, 0.018 if big else 0.015)), "paint", bevel=0.03, segments=3)
+        mouth = box("bonnet_scoop_mouth", (0.008, 0.22 if big else 0.18, 0.025 if big else 0.02),
+                    s[0] + Vector((0.28 if big else 0.24, 0, 0.03 if big else 0.025)), "rubber", bevel=0.006)
 elif F.get("bonnet") == "vents":
     bx = X1 - min(0.95, LEN * 0.2)
     for side in (1, -1):
@@ -821,12 +1008,190 @@ elif wing in ("gt", "tall"):
     for side in (1, -1):
         box("wing_upright", (0.05, 0.008, lift / 2), V(wx + 0.02, top_y - lift / 2, side * span * 0.28), aero_mat(), bevel=0.005)
         box("wing_endplate", (0.13 if tall else 0.18, 0.004, 0.065), V(wx, top_y + 0.02, side * span / 2 * (0.97 if tall else 0.92)), aero_mat(), bevel=0.003)
+elif wing == "hoop":
+    # a big Supra-style hoop wing on tall uprights
+    wx = X0 + 0.3
+    top_y = top_at(wx) + 0.34
+    half = span / 2 * 0.98
+    plane = box("wing", (0.17, half, 0.017), V(wx, top_y, 0), aero_mat(), bevel=0.012, segments=3)
+    plane.rotation_euler = (0, 0.14, 0)
+    for side in (1, -1):
+        z = side * half * 0.86
+        box("wing_upright", (0.045, 0.012, 0.17), V(wx + 0.02, top_y - 0.17, z), aero_mat(), bevel=0.006)
+        brace = box("wing_upright", (0.09, 0.008, 0.02), V(wx + 0.1, top_y - 0.05, z), aero_mat(), bevel=0.004)
+        brace.rotation_euler = (0, -0.55, 0)
+        box("wing_endplate", (0.16, 0.006, 0.085), V(wx, top_y + 0.03, side * half * 0.99), aero_mat(), bevel=0.004)
+elif wing == "swan":
+    # swan-neck uprights that reach over the top of the plane
+    wx = X0 + 0.28
+    top_y = top_at(wx) + 0.34
+    half = span / 2 * 0.93
+    plane = box("wing", (0.17, half, 0.016), V(wx, top_y, 0), aero_mat(), bevel=0.012, segments=3)
+    plane.rotation_euler = (0, 0.1, 0)
+    for side in (1, -1):
+        z = side * half * 0.62
+        box("wing_upright", (0.03, 0.01, 0.17), V(wx + 0.03, top_y - 0.17, z), aero_mat(), bevel=0.004)
+        hook = box("wing_upright", (0.1, 0.008, 0.012), V(wx - 0.02, top_y + 0.018, z), aero_mat(), bevel=0.004)
+        hook.rotation_euler = (0, 0.12, 0)
+        box("wing_endplate", (0.17, 0.005, 0.055), V(wx, top_y + 0.025, side * half), aero_mat(), bevel=0.003)
+elif wing == "full_width":
+    # F40-style full-width rear wing with deep endplates
+    wx = X0 + 0.22
+    top_y = top_at(wx) + 0.28
+    half = half_width(wx) * 0.98
+    plane = box("wing", (0.16, half, 0.018), V(wx, top_y, 0), aero_mat(), bevel=0.012, segments=3)
+    plane.rotation_euler = (0, 0.14, 0)
+    for side in (1, -1):
+        box("wing_upright", (0.05, 0.01, 0.14), V(wx + 0.02, top_y - 0.14, side * half * 0.42), aero_mat(), bevel=0.005)
+        box("wing_endplate", (0.18, 0.005, 0.09), V(wx, top_y + 0.045, side * half), aero_mat(), bevel=0.004)
+
+# ---------------------------------------------------------------------------- per-car signature details
+
+if ("louvres" in SIG or "deck_grille" in SIG) and SCREENS:
+    # louvred engine cover / rear deck
+    x0 = X0 + 0.34
+    x1 = max(x0 + 0.2, SCREENS[1][0] - 0.1)
+    count = 9 if "louvres" in SIG else 6
+    for k in range(count):
+        x = x0 + (x1 - x0) * k / (count - 1)
+        s = on_top(x, 0, 0.002)
+        if s:
+            sl = box("louvre", (0.012, half_width(x) * 0.44, 0.006), s[0], "trim", bevel=0.003)
+            oriented(sl, s[0], s[1])
+
+if "naca" in SIG:
+    # NACA ducts pressed into the doors
+    for side in (1, -1):
+        for k in range(2):
+            s = on_side(X0 + 0.82 + k * 0.24, BELT - 0.2, side, -0.004)
+            if s:
+                d = sphere("naca_duct", 0.065, s[0], "rubber", scale=(1.5, 0.65, 0.12), segs=18)
+                oriented(d, s[0], s[1])
+
+if "c_line" in SIG:
+    # the Chiron's big C-shaped side line
+    for side in (1, -1):
+        cx, cz = X0 + LEN * 0.55, BELT + 0.02
+        pts = []
+        for k in range(19):
+            a = math.radians(-140 + 280 * k / 18)
+            s = on_side(cx + 0.52 * math.cos(a), cz + 0.3 * math.sin(a), side, 0.004)
+            if s:
+                pts.append(s[0])
+        if len(pts) > 4:
+            tube("c_line", pts, 0.006, "trim")
+
+if "horseshoe" in SIG:
+    # the Bugatti horseshoe grille surround
+    gy = max(CLEARANCE + 0.18, nose_y - 0.24)
+    g = on_nose(gy, 0, 0.0)
+    if g:
+        at, n = g
+        back = box("horseshoe_back", (0.22, 0.16, 0.014), at - n * 0.008, "rubber", bevel=0.03, segments=4)
+        oriented(back, at - n * 0.008, n)
+    path = []
+    for k in range(6):
+        path.append((gy + 0.13 - 0.24 * k / 5, -0.13))
+    for k in range(1, 7):
+        path.append((gy - 0.11, -0.13 + 0.26 * k / 6))
+    for k in range(1, 6):
+        path.append((gy - 0.11 + 0.24 * k / 5, 0.13))
+    pts = []
+    for up, right in path:
+        s = on_nose(up, right, 0.004)
+        if s:
+            pts.append(s[0])
+    if len(pts) > 4:
+        tube("horseshoe", pts, 0.012, "chrome")
+
+if "hex" in SIG:
+    # hexagonal vents on the flanks and engine cover
+    for side in (1, -1):
+        for k in range(3):
+            s = on_side(X0 + LEN * 0.62 + k * 0.13, BELT - 0.1 - k * 0.03, side, -0.002)
+            if s:
+                h = cylinder("hex_vent", 0.055, 0.012, s[0], "rubber", segs=6)
+                oriented(h, s[0], s[1])
+        for k in range(2):
+            s = on_top(X0 + 0.55 + k * 0.16, side * 0.25, 0.001)
+            if s:
+                h = cylinder("hex_vent", 0.05, 0.01, s[0], "rubber", segs=6)
+                oriented(h, s[0], s[1])
+
+if "wing_vents" in SIG:
+    # louvres over the front wheels
+    fx = max(w["x"] for w in WHEELS)
+    for side in (1, -1):
+        for k in range(4):
+            x = fx - 0.2 + k * 0.12
+            s = on_top(x, side * half_width(x) * 0.62, 0.002)
+            if s:
+                v = box("fender_vent", (0.008, 0.075, 0.005), s[0], "trim", bevel=0.002)
+                oriented(v, s[0], s[1])
+
+if "power_dome" in SIG:
+    # halfway along the bonnet (between the nose and the windscreen's foot), sunk into it
+    base = SCREENS[0][1] if SCREENS else X1 - LEN * 0.3
+    s = on_top((base + X1 - 0.3) / 2, 0, 0.0)
+    if s:
+        dome = sphere("power_dome", 0.5, s[0] - s[1] * 0.014, "paint", scale=(0.36, 0.62, 0.05), segs=24)  # (local y runs along the car once oriented)
+        oriented(dome, s[0] - s[1] * 0.014, s[1])
+
+if "side_blade" in SIG:
+    rear = min(WHEELS, key=lambda w: w["x"])
+    bx = rear["x"] + rear["r"] + 0.17
+    for side in (1, -1):
+        s = on_side(bx, BELT - 0.04, side, 0.003)
+        if s:
+            b = box("side_blade", (0.16, 0.085, 0.012), s[0], "carbon", bevel=0.008, segments=3)
+            oriented(b, s[0], s[1])
+
+if "side_gills" in SIG:
+    for side in (1, -1):
+        for k in range(3):
+            s = on_side(X1 - 0.95 + k * 0.06, BELT - 0.22, side, -0.003)
+            if s:
+                g = box("side_gill", (0.012, 0.05, 0.006), s[0], "trim", bevel=0.003)
+                oriented(g, s[0], s[1])
+
+if "hood_vent" in SIG:
+    bx = X1 - min(0.9, LEN * 0.2)
+    for k in range(4):
+        s = on_top(bx + 0.05 * k, 0, 0.002)
+        if s:
+            v = box("hood_vent", (0.008, 0.16, 0.005), s[0], "trim", bevel=0.002)
+            oriented(v, s[0], s[1])
+
+if "r35_hood" in SIG:
+    for side in (1, -1):
+        s = on_top(X1 - min(0.9, LEN * 0.2), side * 0.28, 0.002)
+        if s:
+            for k in range(3):
+                v = box("bonnet_vent", (0.006, 0.075, 0.004), s[0], "trim", bevel=0.002)
+                oriented(v, s[0] + Vector((0, (k - 1) * 0.03, 0)), s[1])
+
+if "big_intake" in SIG:
+    # wide front bumper opening
+    gy = CLEARANCE + 0.16
+    g = on_nose(gy, 0, 0.0)
+    if g:
+        at, n = g
+        w = half_width(at.x) * 0.92
+        back = box("bumper_intake", (w, 0.07, 0.014), at - n * 0.006, "rubber", bevel=0.03, segments=4)
+        oriented(back, at - n * 0.006, n)
+        for k in range(5):
+            yy = -w + 2 * w * k / 4
+            bar = box("bumper_intake_mesh", (0.004, 0.07, 0.006), at + Vector((0, -yy, 0)) + n * 0.004, "trim")
+            oriented(bar, at + Vector((0, -yy, 0)) + n * 0.004, n)
 
 if F.get("roofVent") and SCREENS:
     rx = (SCREENS[0][0] + SCREENS[1][1]) / 2
     s = on_top(rx, 0, 0.0)
     if s:
-        box("roof_scoop", (0.16, 0.1, 0.03), s[0] + Vector((0, 0, 0.012)), aero_mat(), bevel=0.025, segments=3)
+        at, n = s
+        sc = at - n * 0.012
+        sb = box("roof_scoop", (0.13, 0.07, 0.02), sc, aero_mat(), bevel=0.018, segments=3)
+        oriented(sb, sc, n)
 if F.get("aerial") and SCREENS:
     s = on_top(SCREENS[1][1] + 0.15, -0.25, 0.0)
     if s:
@@ -852,10 +1217,12 @@ if windows:
     # the cabin, seen through the glass: two seats, the dashboard and a wheel (driver on the left)
     for z in (-0.36, 0.36):
         sx = wx0 + (wx1 - wx0) * 0.38
+        # keep the seat inside the cabin even on low-roofed supercars
+        vscale = clamp((top_at(sx) - floor_y - 0.18) / 0.9, 0.5, 1.0)
         box("seat", (0.24, 0.24, 0.05), V(sx, floor_y + 0.12, z), "interior", bevel=0.04, segments=3)
-        back = box("seat_back", (0.06, 0.24, 0.3), V(sx - 0.24, floor_y + 0.42, z), "interior", bevel=0.05, segments=3)
+        back = box("seat_back", (0.06, 0.24, 0.3 * vscale), V(sx - 0.24, floor_y + 0.42 * vscale, z), "interior", bevel=0.05, segments=3)
         back.rotation_euler = (0, -0.28, 0)
-        box("headrest", (0.05, 0.12, 0.08), V(sx - 0.34, floor_y + 0.78, z), "interior", bevel=0.03, segments=2)
+        box("headrest", (0.05, 0.12, 0.08), V(sx - 0.34, floor_y + 0.78 * vscale, z), "interior", bevel=0.03, segments=2)
     dash_x = wx1 - 0.12
     box("dashboard", (0.18, half_width(dash_x) * 0.82, 0.08), V(dash_x, BELT - 0.04, 0), "interior", bevel=0.05, segments=3)
     # the wheel goes where the cabin has headroom for it (under a raked windscreen that's well back)
@@ -883,12 +1250,13 @@ if windows:
             tube("belt_trim", pts, 0.007, "chrome" if YEAR < 1995 else "trim")
 
 # number plates, front and back
-pf = on_nose(CLEARANCE + 0.2, 0.0, 0.0)
-if pf:
-    pl = box("plate_front", (0.24, 0.055, 0.004), pf[0] + pf[1] * 0.006, "plate", bevel=0.004)
-    oriented(pl, pf[0] + pf[1] * 0.006, pf[1])
-    fr = box("plate_frame", (0.25, 0.064, 0.003), pf[0] + pf[1] * 0.003, "trim", bevel=0.004)
-    oriented(fr, pf[0] + pf[1] * 0.003, pf[1])
+if not F.get("noFrontPlate"):
+    pf = on_nose(CLEARANCE + 0.2, 0.0, 0.0)
+    if pf:
+        pl = box("plate_front", (0.24, 0.055, 0.004), pf[0] + pf[1] * 0.006, "plate", bevel=0.004)
+        oriented(pl, pf[0] + pf[1] * 0.006, pf[1])
+        fr = box("plate_frame", (0.25, 0.064, 0.003), pf[0] + pf[1] * 0.003, "trim", bevel=0.004)
+        oriented(fr, pf[0] + pf[1] * 0.003, pf[1])
 pr_ = on_tail(tail_y - 0.21, 0.0, 0.0)
 if pr_:
     pl = box("plate_rear", (0.24, 0.055, 0.004), pr_[0] + pr_[1] * 0.006, "plate", bevel=0.004)
