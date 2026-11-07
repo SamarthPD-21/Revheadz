@@ -916,10 +916,11 @@ export class CruiseScene {
     const tall = this.car.width < 1 ? 1.1 : 0.9;
 
     if (mode === "hood") {
-      const eye = this.car.root.localToWorld(new THREE.Vector3(this.car.length * (this.car.width < 1 ? 0.45 : 0.62), this.car.width < 1 ? 1.45 : 1.18, 0));
+      // high and forward enough that the bonnet is a strip at the bottom, not half the picture
+      const eye = this.car.root.localToWorld(new THREE.Vector3(this.car.length * (this.car.width < 1 ? 0.45 : 0.66), this.car.width < 1 ? 1.45 : 1.3, 0));
       cam.position.copy(eye);
       cam.up.set(0, 1, 0);
-      const ahead = this.car.root.localToWorld(new THREE.Vector3(this.car.length + 25, 0.6, 0));
+      const ahead = this.car.root.localToWorld(new THREE.Vector3(this.car.length + 30, 0.95, 0));
       this.camLook.copy(ahead);
       cam.lookAt(this.camLook);
       cam.fov = damp(cam.fov, this.fovBase + 10 + v * 0.06, 3, dt || 1);
@@ -931,10 +932,11 @@ export class CruiseScene {
       // a camera by the road ahead; the car drives up to it and past, then the next one is set up
       const passed = this.cine && (this.free ? fwd.dot(carPos.clone().sub(this.cine.pos)) > 28 || carPos.distanceTo(this.cine.pos) > 320 : this.s > this.cine.s + 28);
       if (!this.cine || passed) {
-        const ahead = 110 + this.rand() * 90;
+        const ahead = 70 + this.rand() * 60;
         const side = this.rand() < 0.5 ? -1 : 1;
         const high = this.rand() < 0.25;
-        const lift = high ? 9 + this.rand() * 10 : 1.2 + this.rand() * 3;
+        // low shots stand clear of the grass; high ones look down on a bend
+        const lift = high ? 8 + this.rand() * 7 : 1.6 + this.rand() * 2;
         let pos: THREE.Vector3;
         if (this.free) {
           // ahead of wherever the car is pointing, off to one side, standing on the ground
@@ -945,12 +947,13 @@ export class CruiseScene {
         } else {
           const p = this.land.road.at(this.s + ahead);
           const [rx, rz] = rightOf(p.heading);
-          const off = side * (ROAD_HALF + 4 + this.rand() * 14);
+          const off = side * (ROAD_HALF + 3 + this.rand() * 8);
           const x = p.x + rx * off;
           const z = p.z + rz * off;
           pos = new THREE.Vector3(x, Math.max(p.y, this.probe.at(x, z).y) + lift, z);
         }
-        this.cine = { pos, s: this.s + ahead, fov: high ? 50 : 26 + this.rand() * 18 };
+        // how many metres of the scene the frame spans round the car: tight, or with some road
+        this.cine = { pos, s: this.s + ahead, fov: high ? 18 : 5.5 + this.rand() * 4.5 };
         snap = true;
       }
       cam.position.copy(this.cine.pos);
@@ -958,9 +961,9 @@ export class CruiseScene {
       if (snap) this.camLook.copy(target);
       else this.camLook.lerp(target, 1 - Math.exp(-dt * 8));
       cam.lookAt(this.camLook);
-      // zoom in as the car comes close, so it stays a good size in the frame
+      // zoom so the car keeps the same size in the frame from far off to close by
       const dist = cam.position.distanceTo(carPos);
-      cam.fov = THREE.MathUtils.clamp((this.cine.fov * 60) / Math.max(25, dist), 12, this.cine.fov);
+      cam.fov = THREE.MathUtils.clamp(THREE.MathUtils.radToDeg(2 * Math.atan(this.cine.fov / (2 * dist))), 5, 60);
       cam.updateProjectionMatrix();
       return;
     }
@@ -981,7 +984,7 @@ export class CruiseScene {
     // a tall, narrow screen crops the sides: stand further back and higher so the car still fits
     const narrow = Math.pow(THREE.MathUtils.clamp(1.25 / cam.aspect, 1, 2.6), 0.85);
     const size = (this.car.length - 4.5) * 0.6;
-    const [baseBack, baseUp] = mode === "far" ? [10.5, 3.4] : mode === "drone" ? [16, 17] : [5.0, 1.5];
+    const [baseBack, baseUp] = mode === "far" ? [8.6, 3.1] : mode === "drone" ? [16, 17] : [5.6, 2.05];
     // a little further back while it pulls hard, closer as it brakes: you feel the speed
     const surge = mode === "drone" ? 0 : THREE.MathUtils.clamp(this.accelSm * 0.12, -0.5, 0.9);
     const back = (baseBack + Math.min(v, 70) * (mode === "far" ? 0.02 : 0.012) + size + surge) * narrow;
@@ -1003,8 +1006,9 @@ export class CruiseScene {
       // height eases, so bumps and crests don't shake the picture
       cam.position.y = damp(cam.position.y, want.y, 6, dt);
     }
-    const ahead = mode === "drone" ? 6 : 4 + Math.min(v, 50) * 0.06;
-    const look = carPos.clone().add(new THREE.Vector3(Math.cos(this.camYaw) * ahead, mode === "drone" ? 0 : tall * 0.95, Math.sin(this.camYaw) * ahead));
+    // aim past the car, so it sits in the lower third with the road opening up over it
+    const ahead = mode === "drone" ? 6 : (mode === "far" ? 9 : 7) + Math.min(v, 50) * 0.08;
+    const look = carPos.clone().add(new THREE.Vector3(Math.cos(this.camYaw) * ahead, mode === "drone" ? 0 : tall * 1.05, Math.sin(this.camYaw) * ahead));
     if (snap) this.camLook.copy(look);
     else this.camLook.lerp(look, 1 - Math.exp(-dt * 14));
     this.lastCarPos.copy(carPos);
