@@ -84,12 +84,12 @@ describe("cruise handling", () => {
     expect(Math.abs(m.r)).toBeGreaterThan(Math.abs(steady.r) * 1.05);
   });
 
-  it("stability control catches what would otherwise be a spin, and it costs speed doing it", () => {
+  it("stability control catches a power slide that would otherwise spin it, and it costs speed doing it", () => {
     const run = (aids: typeof ON) => {
       const m: Motion = { vy: 0, r: 0, delta: 0 };
       let scrub = 0;
       for (let t = 0; t < 2.5; t += 1 / 60) {
-        stepHandling(m, supra, { vx: 25, steer: 0.8, accel: t > 1 ? -8 : 4, mu: 0.75, aids }, 1 / 60);
+        stepHandling(m, supra, { vx: 25, steer: 0.8, accel: 4, wheelspin: t > 1 ? 0.6 : 0, mu: 0.75, aids }, 1 / 60);
         scrub = Math.max(scrub, m.scrub ?? 0);
       }
       return { slip: Math.abs(Math.atan2(m.vy, 25)), scrub };
@@ -155,6 +155,13 @@ describe("cruise handling", () => {
         expect(Math.abs(m.r)).toBeLessThan(0.01);
       }
     }
+  });
+
+  it("braking hard mid-bend with no aids doesn't swap ends: it holds its line or runs wide", () => {
+    const m: Motion = { vy: 0, r: 0, delta: 0 };
+    for (let t = 0; t < 2.5; t += 1 / 60) stepHandling(m, supra, { vx: 25, steer: 0.8, accel: t > 1 ? -9 : 2, locked: t > 1.2, mu: 1, aids: OFF }, 1 / 60);
+    expect(Math.abs(Math.atan2(m.vy, 25))).toBeLessThan(0.12);
+    expect(Math.abs(m.r)).toBeLessThan(0.3);
   });
 
   it("with the wheels locked it hardly turns", () => {

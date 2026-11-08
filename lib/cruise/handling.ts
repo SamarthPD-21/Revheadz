@@ -289,7 +289,8 @@ export function stepHandling(m: Motion, c: Chassis, u: Controls, dt: number): nu
 
   // weight on each axle: shifted by braking and power, pressed down by any wings
   const aero = c.downforce * vx * vx;
-  const shift = (mass * Math.max(-1.5 * G, Math.min(1.2 * G, u.accel)) * c.cgHeight) / L;
+  // (forward weight on the brakes is capped short of a real car's: a stop shouldn't throw the tail out)
+  const shift = (mass * Math.max(-1.0 * G, Math.min(1.2 * G, u.accel)) * c.cgHeight) / L;
   const fzF = Math.max(0.15 * mass * G * c.front, (mass * G * b) / L - shift + aero * c.front);
   const fzR = Math.max(0.15 * mass * G * (1 - c.front), (mass * G * a) / L + shift + aero * (1 - c.front));
   // two-wheelers lean on a wider contact and a rider's balance
@@ -300,14 +301,19 @@ export function stepHandling(m: Motion, c: Chassis, u: Controls, dt: number): nu
   const brake = Math.max(0, -u.accel) * mass;
   const spin = u.wheelspin ?? 0;
   const pushCap = aids.tc ? 0.8 : 0.93;
-  // the brakes share out by the weight on each axle (a touch more at the front, for stability)
-  const brakeF = Math.min(1, fzF / (fzF + fzR) + 0.05);
+  // the brakes share out by the weight on each axle, biased to the front so the rears keep
+  // their grip and the car stops straight
+  const brakeF = Math.min(1, fzF / (fzF + fzR) + 0.15);
   const pushR0 = Math.min(pushCap, (drive * c.rearDrive + brake * (1 - brakeF)) / Math.max(1, grip * fzR) + spin * (c.rearDrive === 1 ? 0.6 : 0.4));
   const pushF = Math.min(pushCap, (drive * (1 - c.rearDrive) + brake * brakeF) / Math.max(1, grip * fzF) + spin * (1 - c.rearDrive) * 0.6);
   // a locked wheel slides, and a sliding tyre hardly steers; road cars are set up to run wide
   // at the limit rather than spin, so the front gives up a little first
   const lockLoss = u.locked ? 0.3 : 1;
   const maxF0 = grip * 0.97 * fzF * Math.sqrt(1 - pushF * pushF) * lockLoss;
+  // locked rears still drag the tail in behind the car, the way a skid stays straight
+  const lockLossR = u.locked ? 0.6 : 1;
+  // how hard it's braking, 0-1: the steadier hand below scales with it
+  const braking = Math.min(1, brake / (mass * G * 0.6));
   const balanceR = c.bike ? 1.1 : 1.06;
   const bankPull = G * Math.sin(Math.max(-0.6, Math.min(0.6, u.bank ?? 0)));
 
@@ -327,7 +333,7 @@ export function stepHandling(m: Motion, c: Chassis, u: Controls, dt: number): nu
     // traction control: as the driven rear starts to slide, the drive is eased off it
     const tcEase = aids.tc ? 1 - Math.min(1, Math.max(0, (Math.abs(aR) - 0.05) / 0.08)) : 1;
     const pr = pushR0 * tcEase;
-    const maxR = grip * balanceR * fzR * Math.sqrt(1 - pr * pr) * lockLoss * lateralLoss(c, ay, fzR, 1 - c.rollFront);
+    const maxR = grip * balanceR * fzR * Math.sqrt(1 - pr * pr) * lockLossR * lateralLoss(c, ay, fzR, 1 - c.rollFront);
     const fF = tyreForce(aF, fzF, maxF, FRONT);
     const fR = tyreForce(aR, fzR, maxR, REAR);
     const cosD = Math.cos(m.delta);
@@ -349,6 +355,13 @@ export function stepHandling(m: Motion, c: Chassis, u: Controls, dt: number): nu
         lost += k * mass * G * 0.25;
         if (!c.bike && k > 0.15) m.esc = true;
       }
+    }
+    // on the brakes (no aids needed) the car holds the line it's steered on rather than swapping
+    // ends: a locked car skids straight on, and a hard stop mid-bend just runs a little wide
+    if (braking > 0 && vx > 4) {
+      const asked = u.locked ? 0 : Math.max(-grip * G / v, Math.min(grip * G / v, (vx * Math.tan(m.delta)) / L));
+      m.r += (asked - m.r) * Math.min(1, braking * (u.locked ? 6 : 3) * h);
+      m.vy *= 1 - Math.min(1, braking * 1.5 * h);
     }
     // the engine sets the speed along the car, so keep the slide within ~45 degrees and the yaw
     // within what grip could ever turn (a real spin stays a huge slide here, never a blow-up)
