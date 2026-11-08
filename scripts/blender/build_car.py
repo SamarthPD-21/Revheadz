@@ -53,7 +53,7 @@ PER_CAR = {
     "aventador_svj": {"wing": "gt", "tail": "y_shape", "lamps": "y_shape", "sig": ["hex"]},
     "pagani_zonda":  {"wing": "duck", "tail": "quad_round", "exhaust": "quad_centre", "lamps": "round"},
     "bugatti_chiron":{"wing": "duck", "tail": "bar", "grille": "none", "exhaust": "quad",
-                      "noFrontPlate": True, "sig": ["c_line", "horseshoe"]},
+                      "noFrontPlate": True, "lamps": "quad", "sig": ["c_line", "horseshoe"]},
     "gt_racer":      {"wing": "lip", "tail": "single_round", "exhaust": "tri", "sig": ["race_livery"]},
     "audi_r8_v10":   {"wing": "lip", "tail": "bar", "exhaust": "quad", "intakes": False,
                       "sig": ["side_blade"]},
@@ -522,19 +522,42 @@ def build_side_glass():
         # each point of the flat outline onto the glasshouse
         for v in bm.verts:
             x, y = v.co.x, v.co.y
-            hs = on_side(x, min(y, top_at(x) - 0.03), side, 0.006)
-            v.co = hs[0] if hs else V(x, y, side * half_width(x) * 0.8)
+            # (a point that misses the flank tries a little lower, never falls back inside the
+            # body: that's what left dark shards in the glass)
+            hs = None
+            for dy in (0.03, 0.06, 0.1, 0.15, 0.22):
+                hs = on_side(x, min(y, top_at(x) - dy), side, 0.006)
+                if hs:
+                    break
+            v.co = hs[0] if hs else V(x, min(y, top_at(x) - 0.05), side * half_width(x) * 0.97)
         bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
         new_object("glass_side_" + ("R" if side > 0 else "L"), bm, ["glass"])
         # a black rubber seal round the outline
-        seal = []
-        for k in range(len(windows) + 1):
-            x, y = windows[k % len(windows)]
-            hs = on_side(x, min(y, top_at(x) - 0.03), side, 0.004)
-            if hs:
-                seal.append(hs[0])
-        if len(seal) > 3:
-            tube("seal_" + ("R" if side > 0 else "L"), seal, 0.009, "rubber", closed=True)
+        # (sampled finely along the outline and broken wherever it jumps, so it never strings a
+        # line across the body between two far-apart points)
+        runs, run = [], []
+        n = len(windows)
+        for k in range(n * 6 + 1):
+            t = (k / 6) % n
+            i = int(t)
+            f = t - i
+            (xa, ya), (xb, yb) = windows[i], windows[(i + 1) % n]
+            x, y = xa + (xb - xa) * f, ya + (yb - ya) * f
+            hs = None
+            for dy in (0.03, 0.06, 0.1, 0.15, 0.22):
+                hs = on_side(x, min(y, top_at(x) - dy), side, 0.004)
+                if hs:
+                    break
+            if hs and (not run or (hs[0] - run[-1]).length < 0.15):
+                run.append(hs[0])
+            else:
+                if len(run) > 3:
+                    runs.append(run)
+                run = [hs[0]] if hs else []
+        if len(run) > 3:
+            runs.append(run)
+        for r in runs:
+            tube("seal_" + ("R" if side > 0 else "L"), r, 0.008, "rubber")
 
 
 def screens():
@@ -591,22 +614,23 @@ def build_screens():
         new_object("glass_screen_%d" % idx, bm, ["glass"])
         # wipers on the windscreen: parked flat along its bottom (cowl) edge
         if idx == 0 and F.get("wipers"):
-            for z0, z1 in ((-0.46, -0.04), (0.04, 0.46)):
-                for name, out, rad in (("wiper_arm", 0.006, 0.005), ("wiper_blade", 0.013, 0.0035)):
-                    pts = []
-                    for k in range(9):
-                        t = k / 8
-                        z = z0 + (z1 - z0) * t
-                        x = sa + 0.045 + 0.06 * t  # a slight rise up the glass
-                        s = on_top(x, z, out)
-                        if s:
-                            pts.append(s[0])
-                    if len(pts) > 3:
-                        tube(name, pts, rad, "trim" if name == "wiper_arm" else "rubber")
-            for z in (-0.05, 0.05):
-                s = on_top(sa + 0.045, z, 0.012)
-                if s:
-                    sphere("wiper_pivot", 0.012, s[0], "trim", segs=10)
+            # two short wipers parked just above the glass's bottom edge, both lying to the left
+            # from pivots under it, kept well inside the glass (never out over the wings)
+            xb = sb - 0.07
+            hw = max(0.25, half_width(xb) * ROOF_W - 0.16)
+            length = min(0.55, hw * 0.92)
+            for pz in (hw * 0.62, -hw * 0.18):
+                pts = []
+                for k in range(7):
+                    t = k / 6
+                    s = on_top(xb - 0.05 * t, pz - length * t, 0.008)  # (the glass rises towards the back)
+                    if not s:
+                        break
+                    pts.append(s[0])
+                if len(pts) == 7:
+                    tube("wiper_blade", pts, 0.0045, "rubber")
+                    tube("wiper_arm", [p + Vector((0, 0, 0.006)) for p in pts[:5]], 0.003, "trim")
+                    sphere("wiper_pivot", 0.011, pts[0], "trim", segs=10)
 
 
 build_side_glass()
@@ -708,6 +732,18 @@ for side in (1, -1):
         oriented(bulb, at + n * 0.002, n)
         lens = sphere("head_lens", 0.086, at + n * 0.008, "lens", scale=(1, 1, 0.2), segs=28)
         oriented(lens, at + n * 0.008, n)
+    elif F["lamps"] == "quad":
+        # four small LED projectors in a row on a slim dark strip (the Chiron's)
+        housing = box("head_housing", (0.2, 0.05, 0.014), at - n * 0.008, "trim", bevel=0.02, segments=3)
+        oriented(housing, at - n * 0.008, n)
+        for k in range(4):
+            p = at + Vector((0, side * (-0.075 + 0.05 * k), 0))
+            ring = cylinder("head_reflector", 0.021, 0.014, p - n * 0.002, "chrome", segs=18)
+            oriented(ring, p - n * 0.002, n)
+            proj = sphere("head_lamp", 0.016, p + n * 0.003, "head", scale=(1, 1, 0.6))
+            oriented(proj, p + n * 0.003, n)
+        lens = box("head_lens", (0.19, 0.042, 0.008), at + n * 0.006, "lens", bevel=0.018, segments=3)
+        oriented(lens, at + n * 0.006, n)
     elif F["lamps"] == "y_shape":
         # dark recessed panel with a Y-shaped daytime light
         housing = box("head_housing", (0.15, 0.06, 0.014), at - n * 0.008, "trim", bevel=0.02, segments=3)
@@ -1069,17 +1105,31 @@ if "naca" in SIG:
                 oriented(d, s[0], s[1])
 
 if "c_line" in SIG:
-    # the Chiron's big C-shaped side line
+    # the Chiron's C-line: a broad polished band that sweeps back from the top of the door,
+    # round behind it and forward again along the sill, opening towards the nose, with the
+    # side intake set in its curve
     for side in (1, -1):
-        cx, cz = X0 + LEN * 0.55, BELT + 0.02
+        cx, cz = X0 + LEN * 0.5, (CLEARANCE + BELT) / 2 + 0.06
+        rx, rz = 0.62, (BELT - CLEARANCE) / 2 + 0.02
         pts = []
-        for k in range(19):
-            a = math.radians(-140 + 280 * k / 18)
-            s = on_side(cx + 0.52 * math.cos(a), cz + 0.3 * math.sin(a), side, 0.004)
+        for k in range(25):
+            a = math.radians(80 + 200 * k / 24)
+            s = on_side(cx + rx * math.cos(a), cz + rz * math.sin(a), side, 0.006)
             if s:
                 pts.append(s[0])
-        if len(pts) > 4:
-            tube("c_line", pts, 0.006, "trim")
+        if len(pts) > 8:
+            tube("c_line", pts, 0.02, "chrome")
+
+if "spine" in SIG:
+    # a fin down the middle of the roof and on along the engine cover (the Chiron's)
+    pts = []
+    for k in range(30):
+        x = X1 - LEN * 0.42 - LEN * 0.5 * k / 29
+        s = on_top(x, 0, 0.012)
+        if s:
+            pts.append(s[0])
+    if len(pts) > 8:
+        tube("roof_spine", pts, 0.016, "paint")
 
 if "horseshoe" in SIG:
     # the Bugatti horseshoe grille surround
@@ -1087,15 +1137,14 @@ if "horseshoe" in SIG:
     g = on_nose(gy, 0, 0.0)
     if g:
         at, n = g
-        back = box("horseshoe_back", (0.22, 0.16, 0.014), at - n * 0.008, "rubber", bevel=0.03, segments=4)
+        back = box("horseshoe_back", (0.34, 0.28, 0.014), at - n * 0.008, "rubber", bevel=0.06, segments=5)
         oriented(back, at - n * 0.008, n)
+    # a tall horseshoe, rounded at the bottom
     path = []
-    for k in range(6):
-        path.append((gy + 0.13 - 0.24 * k / 5, -0.13))
-    for k in range(1, 7):
-        path.append((gy - 0.11, -0.13 + 0.26 * k / 6))
-    for k in range(1, 6):
-        path.append((gy - 0.11 + 0.24 * k / 5, 0.13))
+    for k in range(13):
+        a = math.radians(180 + 180 * k / 12)
+        path.append((gy - 0.04 + 0.13 * math.sin(a), 0.15 * math.cos(a)))
+    path = [(gy + 0.15, -0.15)] + path + [(gy + 0.15, 0.15)]
     pts = []
     for up, right in path:
         s = on_nose(up, right, 0.004)
