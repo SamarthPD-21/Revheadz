@@ -11,8 +11,6 @@ export interface Settings {
   autopilot: boolean;
   /** Who changes gear: you (E / Q), or the car. */
   gears: "manual" | "auto";
-  /** Off the road and anywhere on the map. */
-  free: boolean;
   /** Frames a second to aim for ("max": as fast as the screen refreshes). */
   fps: "60" | "90" | "120" | "max";
   /** Driver aids: "as built" uses the car's own factory ABS / TC / ESC; otherwise the three are set separately below. */
@@ -47,7 +45,6 @@ export const DEFAULTS: Settings = {
   camera: "chase",
   autopilot: false,
   gears: "auto",
-  free: false,
   fps: "90",
   aidsAsBuilt: true,
   aids: { abs: true, tc: true, esc: true },

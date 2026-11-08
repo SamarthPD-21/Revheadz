@@ -201,7 +201,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
   const [rig] = useState(() => createRig(vehicle, setPending));
   const sceneRef = useRef<CruiseScene | null>(null);
   const steerKeys = useRef(new Set<string>());
-  /** Touch steering in free roam: -1, 0 or 1 from the on-screen arrows. */
+  /** Touch steering: -1, 0 or 1 from the on-screen arrows. */
   const touchSteer = useRef(0);
   const gripRef = useRef<HTMLParagraphElement>(null);
   const mapRef = useRef<HTMLCanvasElement>(null);
@@ -247,7 +247,6 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       else if (e.code === "KeyT") update({ autopilot: !s.autopilot });
       else if (e.code === "KeyG") update({ gears: s.gears === "auto" ? "manual" : "auto" });
       else if (e.code === "KeyB") sceneRef.current?.resetToRoad();
-      else if (e.code === "KeyR") update({ free: !s.free });
       else if (e.code === "KeyH") setHidden((h) => !h);
       else if (e.code === "KeyO") {
         setSettingsOpen((o) => !o);
@@ -394,8 +393,8 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
         sim.input.brake = c.brake;
       }
       if (s.autopilot || s.gears === "auto") lastShift = autoShift(sim, vehicle, sim.input.throttle, now / 1000, lastShift);
-      // free roam: grass and dirt drag at the wheels, water much more, and deep water stops you dead
-      if (scene.freeRoam !== s.free) scene.setFreeRoam(s.free);
+      // the autopilot steers along its lane; otherwise the wheel is all yours
+      scene.setAutoSteer(s.autopilot && running);
       const under = scene.surface;
       const aids = s.aidsAsBuilt ? scene.carAids : s.aids;
       scene.aids = aids;
@@ -679,9 +678,6 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
             <button type="button" className="track-toggle" aria-pressed={settings.autopilot} onClick={() => update({ autopilot: !settings.autopilot })}>
               Autopilot (T)
             </button>
-            <button type="button" className="track-toggle" aria-pressed={settings.free} onClick={() => update({ free: !settings.free })}>
-              Free roam (R)
-            </button>
           </div>
           <div className="cruise-row">
             <span className="cruise-label">Road #{seed}</span>
@@ -715,12 +711,6 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
         <p className="cruise-beta cruise-fade" title="Riding, lean and the bike models are still being tuned">
           <span className="beta-tag">Beta</span> Bikes in Cruise are still being tuned
         </p>
-      )}
-
-      {settings.free && (
-        <button type="button" className="cruise-free cruise-fade" onClick={() => update({ free: false })} title="Lane assist back on (R)">
-          Free roam <span>R · lane assist · B · back to road</span>
-        </button>
       )}
 
       {settings.autopilot && ignition === "running" && (
@@ -771,7 +761,6 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
         {[
           ["W / S", "Gas / brake"],
           ["A / D", "Steer"],
-          ["R", "Free roam"],
           ["B", "Back to road"],
           ["E / Q", "Shift · Q from N = reverse"],
           ["C", "Camera"],
@@ -792,28 +781,26 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
             <BrakePad input={input} />
           </div>
         </div>
-        {settings.free && (
-          <div className="cruise-steer" role="group" aria-label="Steer">
-            {([-1, 1] as const).map((dir) => (
-              <button
-                key={dir}
-                type="button"
-                className="ctl"
-                aria-label={dir < 0 ? "Steer left" : "Steer right"}
-                onPointerDown={(e) => {
-                  e.currentTarget.setPointerCapture(e.pointerId);
-                  touchSteer.current = dir;
-                }}
-                onPointerUp={() => (touchSteer.current = 0)}
-                onPointerCancel={() => (touchSteer.current = 0)}
-              >
-                <svg viewBox="0 0 16 16" className="h-5 w-5" aria-hidden>
-                  <path d={dir < 0 ? "M10 3L5 8l5 5" : "M6 3l5 5-5 5"} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="cruise-steer" role="group" aria-label="Steer">
+          {([-1, 1] as const).map((dir) => (
+            <button
+              key={dir}
+              type="button"
+              className="ctl"
+              aria-label={dir < 0 ? "Steer left" : "Steer right"}
+              onPointerDown={(e) => {
+                e.currentTarget.setPointerCapture(e.pointerId);
+                touchSteer.current = dir;
+              }}
+              onPointerUp={() => (touchSteer.current = 0)}
+              onPointerCancel={() => (touchSteer.current = 0)}
+            >
+              <svg viewBox="0 0 16 16" className="h-5 w-5" aria-hidden>
+                <path d={dir < 0 ? "M10 3L5 8l5 5" : "M6 3l5 5-5 5"} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          ))}
+        </div>
         <div className="drive-touch-gas">
           <ThrottleControl input={input} accent={accent} />
         </div>

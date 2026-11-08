@@ -108,8 +108,13 @@ export class CruiseScene {
 
   /** Distance along the road of the nearest road point (where the world is laid out from), m. */
   s: number;
-  /** Free roam: no lane assist, so the car goes wherever it's steered, over the ground. */
-  private free = false;
+  /** The autopilot is steering (along its lane); otherwise the driver steers, wherever they like. */
+  private autoSteer = false;
+  /** Up-and-down: the car's vertical speed (m/s) and whether its wheels have left the ground. */
+  private carVy = 0;
+  private airborne = false;
+  /** After glancing off a rail: the heading the car is easing round to, and for how long more. */
+  private glance: { yaw: number; t: number } | null = null;
   private readonly probe: GroundProbe;
   /** The car: where it is, which way it points, and how it's moving in its own frame. */
   private fx = 0;
@@ -389,19 +394,20 @@ export class CruiseScene {
     return this.distance;
   }
 
-  get freeRoam(): boolean {
-    return this.free;
+  /** Off across country, well clear of the road. */
+  private get offRoad(): boolean {
+    const f = this.footing;
+    return !f || !Number.isFinite(f.d) || Math.abs(f.d) > ROAD_HALF + 8;
   }
 
   /**
-   * Free roam on: the lane assist lets go, and the car goes where it's steered. Off: the assist
-   * takes it back. If it has wandered far from the road, it's put back on it.
+   * The autopilot takes the wheel (on) or hands it back. Taking it, it carries on in the lane the
+   * car is in; if the car is out in the fields it's put back on the road first.
    */
-  setFreeRoam(on: boolean): void {
-    if (on === this.free) return;
-    this.free = on;
-    this.cine = null;
-    if (!on) {
+  setAutoSteer(on: boolean): void {
+    if (on === this.autoSteer) return;
+    this.autoSteer = on;
+    if (on) {
       const f = this.probe.at(this.fx, this.fz);
       if (!Number.isFinite(f.d) || Math.abs(f.d) > ROAD_HALF + 8) this.resetToRoad();
       else this.lane = Math.max(-ROAD_HALF + 1, Math.min(ROAD_HALF - 1, f.d));
@@ -410,7 +416,7 @@ export class CruiseScene {
 
   /** The slope along the car (rise per metre), for gravity in the simulation. */
   get grade(): number {
-    return Math.tan(this.tiltP);
+    return this.airborne ? 0 : Math.tan(this.tiltP);
   }
 
   /** Underfoot in free roam: what slows the car (grass, dirt, water) and whether it's run into deep water. */
@@ -422,7 +428,7 @@ export class CruiseScene {
   /** The road ahead, for a driver (or the autopilot) choosing a speed: tightest bend within `ahead` m. */
   bendAhead(ahead: number): { curvature: number; at: number }[] {
     const out: { curvature: number; at: number }[] = [];
-    if (this.free) return out; // off the road there are no bends to read: just the set speed
+    if (this.offRoad) return out; // off the road there are no bends to read: just the set speed
     for (let x = 0; x <= ahead; x += 10) out.push({ curvature: Math.abs(this.land.road.curvatureAt(this.s + x)), at: x });
     return out;
   }
@@ -499,6 +505,7 @@ export class CruiseScene {
 
   /** Grip under this car's tyres: the surface's, times what its tyres make of it. */
   private grip(): number {
+    if (this.airborne) return 0.02; // nothing to grip in the air: the wheels spin free
     const g = this.ground();
     return g.mu * this.chassis.tyre * (g.loose ? this.chassis.offRoad : 1);
   }
@@ -540,13 +547,20 @@ export class CruiseScene {
 
   /**
    * Moves the car: the tyre model turns steering into yaw and sideways slip, and the car goes
-   * the way it's actually travelling. On the road the lane assist does the steering.
+   * the way it's actually travelling. On autopilot it steers itself along its lane.
    */
   private drive(drive: Drive, v: number, dt: number) {
     const direction = drive.reverse ? -1 : 1;
-    const steer = this.free || drive.reverse ? drive.steer : this.laneAssist(drive.steer, v, dt);
-    this.slide = stepHandling(this.motion, this.chassis, { vx: Math.abs(v), steer, accel: this.accelSm, mu: this.grip(), aids: this.aids ?? undefined, locked: drive.locked, wheelspin: drive.wheelspin, assisted: !this.free && !drive.reverse, bank: this.tiltR * direction }, dt);
+    const assisted = this.autoSteer && !drive.reverse;
+    const steer = assisted ? this.laneAssist(drive.steer, v, dt) : drive.steer;
+    this.slide = stepHandling(this.motion, this.chassis, { vx: Math.abs(v), steer, accel: this.accelSm, mu: this.grip(), aids: this.aids ?? undefined, locked: drive.locked, wheelspin: drive.wheelspin, assisted, bank: this.tiltR * direction }, dt);
     this.yaw += this.motion.r * direction * dt;
+    // off a rail, the nose eases round to run along it rather than snapping
+    if (this.glance) {
+      this.yaw += wrapAngle(this.glance.yaw - this.yaw) * (1 - Math.exp(-9 * dt));
+      this.glance.t -= dt;
+      if (this.glance.t <= 0) this.glance = null;
+    }
     const c = Math.cos(this.yaw);
     const sn = Math.sin(this.yaw);
     const vy = this.motion.vy;
@@ -599,6 +613,8 @@ export class CruiseScene {
     if (!Number.isFinite(f.d) || !Number.isFinite(was)) return null;
     const side = (Math.abs(was) > 0.01 ? Math.sign(was) : Math.sign(f.d)) as 1 | -1;
     if (!this.world.barriers.has(f.s, side)) return null;
+    // high enough off the ground, it sails over the rail
+    if (this.airborne && this.carY - f.y > 1.1) return null;
     const half = this.chassis.bike ? 0.4 : this.car.width / 2 + 0.08;
     const inner = BARRIER_D - half;
     const outer = BARRIER_D + half;
@@ -624,21 +640,25 @@ export class CruiseScene {
     const cz = nz + rz * push;
     this.lastD = Number.isFinite(f.d) ? f.d + push : f.d;
     if (into > 0) {
-      // the speed into the rail is gone (a tenth bounces back), the scrape costs some along it
-      const keep = Math.abs(along) * (0.9 - Math.min(0.4, into * 0.02));
-      const back = -into * 0.12 * (target === inner ? 1 : -1);
+      // the speed into the rail is gone (a little bounces back); a glancing scrape costs hardly
+      // anything along it, a hard hit more
+      const keep = Math.abs(along) * (0.97 - Math.min(0.3, into * 0.015));
+      const back = -into * 0.08 * (target === inner ? 1 : -1);
       const vx2 = tx * along * (keep / Math.max(0.1, Math.abs(along))) + ox * back;
       const vz2 = tz * along * (keep / Math.max(0.1, Math.abs(along))) + oz * back;
-      const heading = Math.atan2(vz2, vx2);
-      // glance off: the nose swings round towards where it's now going
-      if (Math.hypot(vx2, vz2) > 1) this.yaw += wrapAngle(heading - this.yaw) * 0.55;
-      this.motion.vy *= 0.2;
-      this.motion.r *= 0.2;
+      // glance off: the nose eases round towards where it's now going (see drive), a little
+      // way back from the rail so it doesn't grind along it
+      const off = target === inner ? -1 : 1;
+      if (Math.hypot(vx2, vz2) > 1) this.glance = { yaw: Math.atan2(vz2 + oz * off * 0.6, vx2 + ox * off * 0.6), t: 0.35 };
+      this.motion.vy *= 0.4;
+      this.motion.r *= 0.4;
       const share = Math.min(1, Math.hypot(vx2, vz2) / speed);
-      this.impact = { share: Math.min(this.impact?.share ?? 1, share), strength: Math.max(this.impact?.strength ?? 0, into) };
-      this.jolt = Math.max(this.jolt, Math.min(1, into / 8));
+      // a scrape at a shallow angle is just that: no knock through the car
+      const knock = into < 1.5 ? 0 : into;
+      this.impact = { share: Math.min(this.impact?.share ?? 1, share), strength: Math.max(this.impact?.strength ?? 0, knock) };
+      this.jolt = Math.max(this.jolt, Math.min(1, knock / 8));
       // sparks off the steel where it touched
-      const sparks = Math.min(40, 4 + into * 3 + v * 0.2);
+      const sparks = Math.min(40, 2 + into * 3 + v * 0.1);
       const at = new THREE.Vector3(cx + ox * half * (target === inner ? 1 : -1), 0, cz + oz * half * (target === inner ? 1 : -1));
       at.y = this.probe.at(at.x, at.z).y + 0.5;
       for (let i = 0; i < sparks; i++) {
@@ -738,6 +758,10 @@ export class CruiseScene {
     if (!dt) {
       this.tiltP = pitch;
       this.tiltR = roll;
+    } else if (this.airborne) {
+      // in the air the car keeps its attitude, the nose dropping slowly as it falls
+      this.tiltP = damp(this.tiltP, Math.atan2(this.carVy, Math.max(5, this.prevV)) * 0.7, 1.6, dt);
+      this.tiltR = damp(this.tiltR, 0, 1, dt);
     } else {
       this.tiltP = damp(this.tiltP, pitch, 18, dt);
       this.tiltR = damp(this.tiltR, roll, 18, dt);
@@ -749,8 +773,34 @@ export class CruiseScene {
     let y = spots.length ? Math.max(...spots.map((p) => p.h - (p.x * sP - p.z * sR))) : f.y;
     // in the shallows the wheels stay on the bed
     if (f.depth > 0) y = Math.max(y, WATER_Y - 0.5);
-    // settling down is eased; rising never lags (that's what put cars into hillsides)
-    this.carY = !dt ? y : Math.max(y, damp(this.carY, y, 20, dt));
+    if (!dt) {
+      this.carY = y;
+      this.carVy = 0;
+      this.airborne = false;
+    } else {
+      // where the car would be on its own momentum: if the ground falls away faster than that
+      // (over a crest at speed, off a ledge), the wheels leave it and the car flies
+      const free = this.carY + this.carVy * dt - 0.5 * G * dt * dt;
+      if (y < free - (this.airborne ? 0 : 0.06)) {
+        this.airborne = true;
+        this.carY = free;
+        this.carVy -= G * dt;
+      } else {
+        if (this.airborne) {
+          // touchdown: the springs take it, the picture thumps with how hard it came down
+          const hit = -this.carVy;
+          this.jolt = Math.max(this.jolt, Math.min(1, hit / 9));
+          this.pitchVel -= Math.min(0.6, hit * 0.04);
+          if (hit > 6) this.impact = { share: Math.min(this.impact?.share ?? 1, Math.max(0.75, 1 - (hit - 6) * 0.03)), strength: Math.max(this.impact?.strength ?? 0, hit - 4) };
+          this.airborne = false;
+        }
+        // on the ground it rides the ground, and carries the ground's rise as its vertical speed
+        // (rising never lags: that's what put cars into hillsides)
+        const vy = (y - this.carY) / dt;
+        this.carVy = THREE.MathUtils.clamp(damp(this.carVy, vy, 25, dt), -40, 40);
+        this.carY = y;
+      }
+    }
     const v = this.prevV;
     const latAccel = v * this.motion.r;
     // cars roll out of a bend on their springs; bikes lean into it
@@ -808,6 +858,7 @@ export class CruiseScene {
    * drift, all four when the brakes lock. Black rubber on the road, dark ruts off it.
    */
   private layRubber(v: number, drive: Drive) {
+    if (this.airborne) return;
     const f = this.footing;
     const onRoad = !f || f.road;
     const ground = onRoad ? RUBBER : RUT;
@@ -827,6 +878,7 @@ export class CruiseScene {
 
   /** What the rear wheels throw up: dust off the road, spray in water, a mist on wet tarmac. */
   private kickUp(dt: number, v: number) {
+    if (this.airborne) return;
     const f = this.footing;
     let kind: "dust" | "spray" | "mist" | "smoke" | null = null;
     const spin = this.spin;
@@ -930,7 +982,7 @@ export class CruiseScene {
 
     if (mode === "cinematic") {
       // a camera by the road ahead; the car drives up to it and past, then the next one is set up
-      const passed = this.cine && (this.free ? fwd.dot(carPos.clone().sub(this.cine.pos)) > 28 || carPos.distanceTo(this.cine.pos) > 320 : this.s > this.cine.s + 28);
+      const passed = this.cine && (this.offRoad ? fwd.dot(carPos.clone().sub(this.cine.pos)) > 28 || carPos.distanceTo(this.cine.pos) > 320 : this.s > this.cine.s + 28);
       if (!this.cine || passed) {
         const ahead = 70 + this.rand() * 60;
         const side = this.rand() < 0.5 ? -1 : 1;
@@ -938,7 +990,7 @@ export class CruiseScene {
         // low shots stand clear of the grass; high ones look down on a bend
         const lift = high ? 8 + this.rand() * 7 : 1.6 + this.rand() * 2;
         let pos: THREE.Vector3;
-        if (this.free) {
+        if (this.offRoad) {
           // ahead of wherever the car is pointing, off to one side, standing on the ground
           const off = side * (8 + this.rand() * 18);
           const x = carPos.x + fwd.x * ahead - fwd.z * off;
