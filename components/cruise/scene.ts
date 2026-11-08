@@ -928,13 +928,14 @@ export class CruiseScene {
     this.car.head.emissiveIntensity = drive.ignition ? 0.6 + dim * 4 : 0.05;
     // the headlights' beam on the road ahead
     const on = drive.ignition ? dim : 0;
-    this.beam.intensity = on * 900;
+    // (dipped beams: enough to read the road well ahead without whiting out the tarmac at the bumper)
+    this.beam.intensity = on * 380;
     this.beam.visible = on > 0.02;
     if (this.beam.visible) {
       const lamp = this.car.headlights[0] ?? new THREE.Vector3(this.car.length, 0.6, 0);
       this.carRoot.updateMatrixWorld();
       this.beam.position.copy(this.car.root.localToWorld(tmpV.set(lamp.x, lamp.y + 0.1, 0)));
-      this.beam.target.position.copy(this.car.root.localToWorld(tmpV.set(lamp.x + 30, -1.5, 0)));
+      this.beam.target.position.copy(this.car.root.localToWorld(tmpV.set(lamp.x + 45, -1.1, 0)));
       this.beam.target.updateMatrixWorld();
     }
   }
@@ -946,7 +947,7 @@ export class CruiseScene {
     this.atmo.set(look.hour, look.weather, this.scene);
     const L = this.atmo.light;
     this.world.setLight(L.wet, L.night);
-    this.bloom.strength = 0.3 + L.night * 0.5;
+    this.bloom.strength = 0.2 + L.night * 0.22;
     this.bloomOn = this.bloomAllowed && (L.night > 0.15 || L.wet > 0);
   }
 
