@@ -22,6 +22,23 @@ size = max(hi.x - lo.x, hi.y - lo.y)
 
 scene = bpy.context.scene
 scene.render.engine = "CYCLES"
+# on the graphics card if there is one (OptiX on an RTX card, else CUDA), the processor otherwise
+cprefs = bpy.context.preferences.addons["cycles"].preferences
+for backend in ("OPTIX", "CUDA", "HIP", "METAL", "ONEAPI"):
+    try:
+        cprefs.compute_device_type = backend
+    except TypeError:
+        continue
+    cprefs.get_devices()
+    gpus = [d for d in cprefs.devices if d.type == backend]
+    if gpus:
+        for d in cprefs.devices:
+            d.use = d.type == backend
+        scene.cycles.device = "GPU"
+        if backend == "OPTIX":
+            scene.cycles.denoiser = "OPTIX"  # (denoise on the card too, not the processor)
+        print("CYCLES on", backend, ", ".join(d.name for d in gpus))
+        break
 scene.cycles.samples = 48
 scene.cycles.use_denoising = True
 scene.render.resolution_x, scene.render.resolution_y = 960, 480
