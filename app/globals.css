@@ -174,27 +174,15 @@ body {
   background: linear-gradient(100deg, rgba(11, 11, 15, 0.92) 0%, rgba(11, 11, 15, 0.7) 38%, rgba(11, 11, 15, 0.1) 70%), linear-gradient(to bottom, rgba(11, 11, 15, 0.5), transparent 20%);
 }
 
-/* Playground and drag lobby: a pit garage, with strip lights in the ceiling and panelled walls */
+/* Playground and drag lobby: a dark garage wall, faintly panelled */
 .garage-backdrop {
   display: block;
   background:
-    radial-gradient(ellipse 60% 70% at 22% -12%, rgba(255, 236, 210, 0.13), transparent 70%),
-    radial-gradient(ellipse 60% 70% at 78% -12%, rgba(255, 236, 210, 0.13), transparent 70%),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 140px),
     linear-gradient(to bottom, #17171d, #0b0b0f 85%);
   -webkit-mask-image: linear-gradient(to bottom, #000 50%, transparent);
   mask-image: linear-gradient(to bottom, #000 50%, transparent);
 }
-.garage-backdrop::before, .garage-backdrop::after {
-  /* the two strip lights, with a soft bloom */
-  content: ""; position: absolute; top: 18px; height: 5px; width: 26%; border-radius: 9999px;
-  background: #fff5e6; box-shadow: 0 0 22px 6px rgba(255, 236, 210, 0.35), 0 0 70px 20px rgba(255, 220, 180, 0.12);
-}
-.garage-backdrop::before { left: 9%; }
-.garage-backdrop::after { right: 9%; }
-.stat-pill { display: inline-flex; align-items: baseline; gap: 0.35rem; color: #a1a1aa; }
-.stat-pill b { font-family: var(--font-mono); color: #fafafa; font-weight: 500; }
-.stat-pill + .stat-pill::before { content: "/"; margin-right: 0.35rem; color: #3f3f46; }
 
 .chip {
   display: inline-flex; align-items: center; gap: 0.45rem;
@@ -224,10 +212,15 @@ body {
 .vehicle-card:hover, .vehicle-card:has(.card-link:focus-visible) { border-color: #3f3f46; background: #15151b; }
 .vehicle-silhouette { transition: transform 300ms ease-out; }
 .vehicle-card:hover .vehicle-silhouette { transform: translateX(4px); }
+/* the car itself: a studio render of its model, sitting on its shadow */
+.vehicle-art { display: grid; place-items: center; height: 8.5rem; margin-inline: -0.4rem; }
+.vehicle-render { width: 100%; height: 100%; object-fit: contain; transition: transform 300ms ease-out; }
+.vehicle-card:hover .vehicle-render { transform: scale(1.03); }
+/* engine, power and redline, read like a spec sheet */
+.spec-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 1.1rem; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #222228; }
+.spec-row dt { font-size: 0.68rem; color: #71717a; }
+.spec-row dd { margin-top: 0.1rem; font-size: 0.8rem; color: #e4e4e7; font-variant-numeric: tabular-nums; }
 
-/* Redline meter: the car's redline against the 19,000 rpm scale. */
-.rev-meter { position: relative; flex: 1; height: 3px; border-radius: 2px; overflow: hidden; background: #26262d; }
-.rev-meter > span { position: absolute; inset: 0; transform-origin: left; transform: scaleX(var(--rev)); background: var(--accent); }
 
 .card-go { opacity: 0; transition: opacity 150ms; }
 .vehicle-card:hover .card-go, .vehicle-card:has(.card-link:focus-visible) .card-go { opacity: 1; }
@@ -344,7 +337,6 @@ body {
 @keyframes idle-shake { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(0.6px, -0.6px); } 75% { transform: translate(-0.6px, 0.4px); } }
 .vehicle-card[data-playing="1"] .vehicle-silhouette { animation: idle-shake 90ms linear infinite; }
 @keyframes rev-sweep { 0%, 20% { transform: scaleX(calc(var(--rev) * 0.12)); } 50%, 62% { transform: scaleX(var(--rev)); } 100% { transform: scaleX(calc(var(--rev) * 0.12)); } }
-.vehicle-card[data-playing="1"] .rev-meter > span { animation: rev-sweep 2.1s cubic-bezier(.4,0,.3,1) both; }
 
 .eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
 .eq > span { width: 2.5px; height: 100%; border-radius: 1px; background: currentColor; transform-origin: bottom; animation: eq 600ms ease-in-out infinite alternate; }
@@ -353,7 +345,7 @@ body {
 @keyframes eq { from { transform: scaleY(0.25); } to { transform: scaleY(1); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .vehicle-card[data-playing="1"] .vehicle-silhouette, .vehicle-card[data-playing="1"] .rev-meter > span, .eq > span { animation: none; }
+  .vehicle-card[data-playing="1"] .vehicle-silhouette, .eq > span { animation: none; }
   .preview-btn { transition: none; }
 }
 

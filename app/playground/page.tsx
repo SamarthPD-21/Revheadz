@@ -13,8 +13,6 @@ export const metadata: Metadata = {
 export default function Playground() {
   assertVehicleFilesExist(); // fails the build if a config references a missing sound file
   const list = garageList();
-  const recorded = list.filter((v) => v.recorded).length;
-  const makes = new Set(list.map((v) => v.make).filter(Boolean)).size;
 
   return (
     <div className="relative min-h-dvh overflow-hidden">
@@ -34,18 +32,6 @@ export default function Playground() {
             Start any engine and drive it with nothing timing you. Not sure which one? Hit <b className="text-zinc-200">Hear it</b> on a card
             for a quick rev. Sounds best on headphones.
           </p>
-          <ul className="mt-5 flex flex-wrap gap-2 text-xs text-zinc-300" aria-label="At a glance">
-            <li className="stat-pill">
-              <b>{list.length}</b> machines
-            </li>
-            <li className="stat-pill">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
-              <b>{recorded}</b> real recordings
-            </li>
-            <li className="stat-pill">
-              <b>{makes}</b> makes
-            </li>
-          </ul>
         </header>
 
         <GarageGrid vehicles={list} />

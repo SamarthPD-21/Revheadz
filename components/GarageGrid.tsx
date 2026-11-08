@@ -26,6 +26,8 @@ export interface GarageVehicle {
   recorded: boolean;
   make?: string;
   year?: string;
+  /** A rendered picture of the car, if it has a 3D model. */
+  card: string | null;
   /** Folder the vehicle's sounds are served from. */
   base: string;
   preview: PreviewSounds | null;
@@ -50,8 +52,6 @@ const SORTS = {
 } as const;
 type Sort = keyof typeof SORTS;
 
-/** The rev meter on each card spans 0 to this many rpm. */
-const METER_MAX_RPM = 19000;
 
 const haystack = (v: GarageVehicle) =>
   [v.name, v.make, v.year, v.engineType, v.category, v.layout, v.displacement, v.type === "bike" ? "bike motorcycle" : "car"]
@@ -223,24 +223,16 @@ export function GarageGrid({ vehicles, base = "/drive", betaBikes = false }: { v
             return (
               <li key={v.id} className="card-enter" style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
                 <article
-                  style={{ "--accent": v.accent, "--rev": Math.min(1, v.redlineRpm / METER_MAX_RPM) } as React.CSSProperties}
+                  style={{ "--accent": v.accent } as React.CSSProperties}
                   className="vehicle-card group"
                   data-playing={isPlaying ? "1" : undefined}
                 >
-                  <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-[var(--accent)] opacity-[0.08] blur-3xl transition duration-500 group-hover:opacity-25" />
                   <div className="relative flex items-center gap-2">
-                    <span className="truncate text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
+                    <span className="truncate text-xs text-zinc-500">
                       {v.make ?? v.category}
-                      {v.year && <span className="ml-1.5 text-zinc-500">{v.year}</span>}
+                      {v.year && <> · {v.year}</>}
                     </span>
                     <span className="ml-auto flex shrink-0 items-center gap-1.5">
-                      {v.turbo && <span className="tag">Boost</span>}
-                      {v.recorded && (
-                        <span className="tag border-emerald-400/30 text-emerald-300" title="Real engine recording">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
-                          Real
-                        </span>
-                      )}
                       <button
                         type="button"
                         className="card-btn"
@@ -256,9 +248,13 @@ export function GarageGrid({ vehicles, base = "/drive", betaBikes = false }: { v
                       </button>
                     </span>
                   </div>
-                  <div className="relative my-1">
-                    <div className="pointer-events-none absolute inset-x-8 bottom-1 h-6 rounded-full bg-[var(--accent)] opacity-0 blur-xl transition duration-500 group-hover:opacity-30" />
-                    <Silhouette kind={v.silhouette} accent={v.accent} className="vehicle-silhouette relative h-24 w-full" />
+                  <div className="vehicle-art relative my-1">
+                    {v.card ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={v.card} alt="" loading="lazy" decoding="async" className="vehicle-render" />
+                    ) : (
+                      <Silhouette kind={v.silhouette} accent="#a1a1aa" className="vehicle-silhouette relative h-24 w-full" />
+                    )}
                     {v.preview && (
                       <button
                         type="button"
@@ -288,32 +284,30 @@ export function GarageGrid({ vehicles, base = "/drive", betaBikes = false }: { v
                           Beta
                         </span>
                       )}
-                      <svg viewBox="0 0 16 16" className="card-go h-4 w-4 text-[var(--accent)]" aria-hidden>
+                      <svg viewBox="0 0 16 16" className="card-go h-4 w-4 text-zinc-500" aria-hidden>
                         <path d="M5 3l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </Link>
                   </h2>
                   <p className="mt-1 line-clamp-2 text-sm text-zinc-400">{v.description}</p>
 
-                  <div className="mt-auto pt-4">
-                    <div className="flex items-baseline justify-between gap-3 text-xs text-zinc-400">
-                      <span className="truncate font-medium text-zinc-200">
+                  <dl className="spec-row mt-auto">
+                    <div className="min-w-0">
+                      <dt>Engine</dt>
+                      <dd className="truncate">
                         {v.layout}
-                        {!v.layout.includes(v.displacement) && <span className="text-zinc-500"> · {v.displacement}</span>}
-                      </span>
-                      <span className="shrink-0">
-                        <b className="font-semibold text-zinc-100">{v.powerHp.toLocaleString("en-US")}</b> hp
-                      </span>
+                        {!v.layout.includes(v.displacement) && <> · {v.displacement}</>}
+                      </dd>
                     </div>
-                    <div className="mt-2.5 flex items-center gap-3">
-                      <div className="rev-meter" aria-hidden>
-                        <span />
-                      </div>
-                      <span className="shrink-0 font-mono text-[11px] text-zinc-400">
-                        {(v.redlineRpm / 1000).toFixed(1)}k <span className="text-zinc-600">rpm</span>
-                      </span>
+                    <div>
+                      <dt>Power</dt>
+                      <dd>{v.powerHp.toLocaleString("en-US")} hp</dd>
                     </div>
-                  </div>
+                    <div>
+                      <dt>Redline</dt>
+                      <dd>{v.redlineRpm.toLocaleString("en-US")}</dd>
+                    </div>
+                  </dl>
                 </article>
               </li>
             );

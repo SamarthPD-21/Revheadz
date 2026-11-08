@@ -31,6 +31,8 @@ export function garageList(): GarageVehicle[] {
     make: v.ui.make,
     year: v.ui.year,
     base: vehicleBaseUrl(v.id),
+    // a studio render of its 3D model (cars that have one: not the bikes or the F1 cars)
+    card: v.type === "car" && v.ui.silhouette !== "formula" ? `/vehicles/${v.id}/card.webp` : null,
     preview: previewSounds(v),
   }));
 }

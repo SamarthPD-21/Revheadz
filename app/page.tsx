@@ -56,7 +56,12 @@ export default function Home() {
               {[...showcase, ...showcase].map((v, i) => (
                 <div key={`${v.id}-${i}`} className="shrink-0 pr-6">
                   <div className="w-36 sm:w-44">
-                    <Silhouette kind={v.silhouette} accent={v.accent} className="h-14 w-full" />
+                    {v.card ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={v.card} alt="" loading="lazy" className="h-16 w-full object-contain" />
+                    ) : (
+                      <Silhouette kind={v.silhouette} accent="#a1a1aa" className="h-14 w-full" />
+                    )}
                     <p className="mt-1 truncate text-center text-[11px] text-zinc-500">{v.name}</p>
                   </div>
                 </div>

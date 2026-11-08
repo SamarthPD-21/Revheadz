@@ -7,7 +7,7 @@ import { rateLaunch, rateShift, type Tone } from "../../lib/drag/rating";
 import { decide, DragRun, QUARTER_MILE_M, STAGE_MS, TREE_MS, type DriveKey, type DriveLog, type RunResult } from "../../lib/drag/race";
 import type { SimListener, SimState } from "../../lib/sim/types";
 import type { VehicleConfig } from "../../lib/vehicles/types";
-import { Silhouette } from "../Silhouette";
+import { CarArt } from "../CarArt";
 import { Tachometer } from "../Tachometer";
 import type { SceneCar } from "./scene";
 import { FrameBudget } from "./frameBudget";
@@ -530,13 +530,13 @@ export function RaceView({ me, opp, startAt, opponent, audio, oppAudio, sfx, onI
       {intro && (
         <div className="drag-intro" aria-live="polite">
           <div className="drag-intro-side drag-intro-opp" style={{ "--c": opp.cfg.ui.accent } as React.CSSProperties}>
-            <Silhouette kind={opp.cfg.ui.silhouette} accent={opp.cfg.ui.accent} className="h-20 w-56 -scale-x-100" />
+            <CarArt v={opp.cfg} className="h-20 w-56" flip />
             <b>{opp.name}</b>
             <span>{opp.cfg.name}</span>
           </div>
           <div className="drag-intro-vs">VS</div>
           <div className="drag-intro-side drag-intro-me" style={{ "--c": me.cfg.ui.accent } as React.CSSProperties}>
-            <Silhouette kind={me.cfg.ui.silhouette} accent={me.cfg.ui.accent} className="h-20 w-56 -scale-x-100" />
+            <CarArt v={me.cfg} className="h-20 w-56" flip />
             <b>You</b>
             <span>{me.cfg.name}</span>
           </div>

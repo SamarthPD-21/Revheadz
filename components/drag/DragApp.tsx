@@ -14,6 +14,7 @@ import { Simulation } from "../../lib/sim/Simulation";
 import { getVehicle } from "../../lib/vehicles";
 import type { VehicleConfig } from "../../lib/vehicles/types";
 import { Logo } from "../Logo";
+import { CarArt } from "../CarArt";
 import { Silhouette } from "../Silhouette";
 import { RaceView, type Opponent, type RaceOutcome } from "./RaceView";
 import { Sfx } from "./sfx";
@@ -749,7 +750,7 @@ function CarBay({
           </button>
         )}
         {/* both cars point at the middle */}
-        <Silhouette kind={cfg.ui.silhouette} accent={cfg.ui.accent} className={`bay-art ${side === "left" ? "-scale-x-100" : ""}`} />
+        <CarArt v={cfg} className="bay-art" flip={side === "left"} />
         {onChange && cars.length > 1 && (
           <button type="button" className="bay-arrow" onClick={() => step(1)} aria-label="Next car">
             <svg viewBox="0 0 16 16" aria-hidden>
@@ -784,7 +785,7 @@ function CarBay({
             return (
               <li key={id}>
                 <button type="button" aria-pressed={id === cfg.id} onClick={() => onChange(id)} title={v.name} style={{ "--accent": v.ui.accent } as React.CSSProperties}>
-                  <Silhouette kind={v.ui.silhouette} accent={v.ui.accent} className={`h-6 w-14 ${side === "left" ? "-scale-x-100" : ""}`} />
+                  <Silhouette kind={v.ui.silhouette} accent="#a1a1aa" className={`h-6 w-14 ${side === "left" ? "-scale-x-100" : ""}`} />
                   <span>{v.name}</span>
                 </button>
               </li>
