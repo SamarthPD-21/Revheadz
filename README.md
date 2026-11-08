@@ -109,10 +109,10 @@ An endless road you never drive the same way twice. Pick a machine at `/cruise`,
   ranges whose slopes rise close beside the road, so it threads the valleys between them
 - **Guardrails where a road would have them**: round the outside of the bends (both sides of the tight ones) and
   along drops and embankments, on steel posts with reflectors. The straights are left open, with the odd field gate,
-  so there's plenty of room to run off into the country. Hit a rail and it stops you there: you glance off along it in
-  a shower of sparks, and it costs you speed
-- **Free roam** (`R`): the whole map is yours. Drive across meadows, up hillsides and through the shallows. Hills pull
-  you back and push you on, grass and dirt drag at the wheels, steep slopes slide you sideways and deep water stops you
+  so there's plenty of room to run off into the country. Brush a rail and you slide along it in a shower of sparks;
+  hit one square on and it costs you speed
+- **Anywhere you like**: you steer, and the whole map is yours. Drive across meadows, up hillsides and through the
+  shallows. Go over a crest or off a ledge fast enough and the car leaves the ground. Hills pull you back and push you on, grass and dirt drag at the wheels, steep slopes slide you sideways and deep water stops you
 - **Day and weather**: let the day go by (an hour a minute) or jump to sunrise, day, golden hour, dusk or night; clear, hazy,
   foggy or rainy. Headlights and glowing reflectors after dark, a sun that flares in the lens, clouds that drift and
   glow at sunset, trees and grass that sway, lakes that ripple
@@ -135,8 +135,8 @@ An endless road you never drive the same way twice. Pick a machine at `/cruise`,
   in gear and it dies: `N`, then `I`)
 - **Grip and traction**: every car has its own tyres and copes with dirt in its own way (the rally car best, slicks
   hopeless), the driven wheels can only put down so much, and the HUD shows the surface and your grip on it
-- **Autopilot** (`T`): it drives for you, holding the speed you set and slowing for the bends it can see coming. Off
-  free roam, a lane assist keeps you in your lane while `A` / `D` move you across the road
+- **Autopilot** (`T`): it drives for you, holding the speed you set, slowing for the bends it can see coming and
+  steering along its lane (`A` / `D` move it across the road)
 
 ### The cars
 
@@ -205,12 +205,9 @@ npm run dev          # http://localhost:3000
 | `V` | Vehicle name in the header | Switch vehicle (searchable list) |
 | `/` | | Search the Playground |
 
-In Cruise, `A` / `D` (or `←` / `→`) move across the road (it eases back into your lane when you let go), `R`
-switches free roam on and off (then `A` / `D` steer anywhere, and `R` again hands back to the lane assist), `B` puts
-you back on the nearest road, `C` changes camera, `T` toggles the autopilot (then `W` / `S` set its speed), `G` switches
+In Cruise, `A` / `D` (or `←` / `→`) steer, `B` puts you back on the nearest road, `C` changes camera, `T` toggles the autopilot (then `W` / `S` set its speed), `G` switches
 manual and automatic gears, `O` opens the settings (`Esc` closes them) and `H` hides the HUD. Drag the mouse to look
-round the car. On a touch screen the car keeps its lane by itself, and free roam adds steering
-arrows.
+round the car. On a touch screen there are steering arrows.
 
 In a drag race, Simple controls put everything on one button (`Space`, or tap): launch on the green, then shift on
 every shift light. Pro controls stage with `S`+`W`, launch by letting go of `S`, and shift with `E`/`Q`.
@@ -301,7 +298,7 @@ flowchart LR
   grip-limited brakes (`tests/cruise-realism.test.ts` holds every car to its 0-100 and top speed). It steers with a
   dynamic bicycle model (`lib/cruise/handling.ts`): slip angles at each axle into a "magic formula" tyre curve with a
   peak and a fall-off, axle loads that shift with braking and power, and a friction circle, so accelerating or
-  braking leaves less grip for cornering; the cornering forces' drag goes back to the simulation as lost speed. On the road the lane assist steers it by pure pursuit. It stands on the ground
+  braking leaves less grip for cornering; the cornering forces' drag goes back to the simulation as lost speed. The autopilot steers it by pure pursuit; in the air it flies on its own momentum. It stands on the ground
   through a probe (`lib/cruise/ground.ts`) that rebuilds the very triangles the ground is drawn with. Built map
   tiles are kept in IndexedDB (`lib/cruise/tileCache.ts`) and loaded back on the next visit. The simulation takes
   optional extras for the cruise, all off on the strip so drag races and replays are untouched: the road model, a
