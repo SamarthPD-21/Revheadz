@@ -385,5 +385,6 @@ export function stepHandling(m: Motion, c: Chassis, u: Controls, dt: number): nu
     scrub *= w;
   }
   m.scrub = Math.max(-0.3 * mass * G, Math.min(1.5 * mass * G, scrub));
-  return Math.min(1, Math.max(0, (sliding - 0.8) / 1.2));
+  // (at walking pace and below nothing slides: a wheel turned on a parked car is just turned)
+  return Math.min(1, Math.max(0, (sliding - 0.8) / 1.2)) * w;
 }
