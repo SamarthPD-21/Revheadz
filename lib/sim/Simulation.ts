@@ -468,7 +468,7 @@ export class Simulation {
       // the parking brake: hauls hard on the rear wheels, locking them regardless of ABS
       if (this.input.handbrake) {
         braking += mass * (model ? model.brakeDecel : this.cfg.dynamics.brakeDecel) * 0.85;
-        s.locked = true;
+        s.locked = v > 1; // (a crawl isn't a skid)
         s.abs = false;
       }
       force -= braking;
@@ -523,7 +523,9 @@ export class Simulation {
     s.load += (loadTarget - s.load) * (1 - pexp(-dt / LOAD_TAU));
 
     this.engine.rpm = rpm;
-    s.rpm = rpm;
+    // with the ignition off the rev counter has no power: it reads nothing even if the car
+    // rolls in gear and turns the engine over
+    s.rpm = s.ignition === "off" ? 0 : rpm;
     s.speedKmh = this.speedKmh();
 
     // 4. events
