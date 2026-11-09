@@ -176,6 +176,13 @@ describe("cruise handling", () => {
     expect(hold(25, 0.6, 1, 2).m.scrub ?? 0).toBeGreaterThan(200);
   });
 
+  it("parked with the wheel on full lock, nothing slides (no smoke, no shake)", () => {
+    const m: Motion = { vy: 0, r: 0, delta: 0 };
+    let slide = 1;
+    for (let t = 0; t < 1; t += 1 / 60) slide = stepHandling(m, supra, { vx: 0, steer: 1, accel: 0, mu: 1 }, 1 / 60);
+    expect(slide).toBe(0);
+  });
+
   it("parks like a car: at walking pace it just follows the wheels", () => {
     const { m } = hold(1, 1, 1, 2);
     expect(m.vy).toBe(0);
