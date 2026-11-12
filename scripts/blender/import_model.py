@@ -11,7 +11,7 @@ Turns a downloaded car model (any glTF/GLB, any scale or orientation) into the g
 - names the lamp materials head* / tail* so they light up, cuts it to about 90k triangles and
   shrinks its textures, then writes a compressed .glb
 """
-import math, re, sys
+import math, os, re, sys
 import bpy
 from mathutils import Vector, Matrix
 
@@ -19,8 +19,9 @@ args = sys.argv[sys.argv.index("--") + 1:]
 SRC, OUT, LENGTH = args[0], args[1], float(args[2])
 FLIP = len(args) > 3 and args[3] == "1"
 PREVIEW = args[4] if len(args) > 4 else None
-MAX_TRIS = 90000
-MAX_TEX = 1024
+# heavy models can go lower to stay under the game's 1 MB per car: MAX_TRIS=60000 MAX_TEX=512
+MAX_TRIS = int(os.environ.get("MAX_TRIS", 90000))
+MAX_TEX = int(os.environ.get("MAX_TEX", 1024))
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=SRC)
