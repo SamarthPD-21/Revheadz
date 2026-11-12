@@ -267,10 +267,11 @@ export class Atmosphere {
     this.flare.position.copy(this.sunDir).multiplyScalar(4000);
     this.flare.visible = elevation > 1 && cloudy < 0.5;
     this.moon.position.copy(this.sunDir).multiplyScalar(-60).setY(Math.abs(this.sunDir.y) * 60 + 20);
-    this.moon.intensity = 0.32 * night;
+    // (a moonlit night: enough cool light to read the hills and the road edge by)
+    this.moon.intensity = 0.5 * night;
 
     const skyDay = srgb(0.62, 0.76, 1);
-    const skyNight = srgb(0.1, 0.14, 0.3);
+    const skyNight = srgb(0.13, 0.18, 0.36);
     this.hemi.color.copy(lerpC(skyNight, skyDay, day)).lerp(srgb(1, 0.7, 0.5), golden * 0.4);
     this.hemi.groundColor.setRGB(0.22 * day + 0.03, 0.18 * day + 0.03, 0.12 * day + 0.04, THREE.SRGBColorSpace);
     // the sky stays bright a while after sunset (and before sunrise) and lights the land from above

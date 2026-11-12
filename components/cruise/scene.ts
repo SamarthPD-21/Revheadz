@@ -101,7 +101,8 @@ export class CruiseScene {
   private readonly reflections = new CarReflections();
   private carEnv: THREE.Texture | null = null;
   private readonly carRoot = new THREE.Group();
-  private readonly beam = new THREE.SpotLight(0xfff1dc, 0, 140, 0.5, 0.55, 1.3);
+  // (a dipped beam: a narrow cone with a soft edge, so the road a few metres ahead isn't floodlit)
+  private readonly beam = new THREE.SpotLight(0xfff1dc, 0, 140, 0.34, 0.75, 1.3);
   private readonly rain: THREE.LineSegments<THREE.BufferGeometry, THREE.LineBasicMaterial>;
   private readonly rainSeeds: Float32Array;
   private readonly pt: RoadPoint = { x: 0, y: 0, z: 0, heading: 0, curvature: 0, grade: 0 };
@@ -384,7 +385,8 @@ export class CruiseScene {
 
   /** Turns the chase camera round the car (a mouse or finger drag, in pixels). */
   nudgeOrbit(dx: number, dy: number): void {
-    this.orbit.yaw += dx * 0.006;
+    // (kept within a turn either way, so letting go swings it back the short way round)
+    this.orbit.yaw = wrapAngle(this.orbit.yaw + dx * 0.006);
     this.orbit.pitch = THREE.MathUtils.clamp(this.orbit.pitch + dy * 0.004, -0.25, 0.9);
     this.orbit.at = this.time;
   }
@@ -1060,7 +1062,9 @@ export class CruiseScene {
       cam.position.y = damp(cam.position.y, want.y, 6, dt);
     }
     // aim past the car, so it sits in the lower third with the road opening up over it
-    const ahead = mode === "drone" ? 6 : (mode === "far" ? 9 : 7) + Math.min(v, 50) * 0.08;
+    // swung round the car, it looks at the car itself, not down the road behind or beside it
+    const orbiting = Math.min(1, Math.abs(this.orbit.yaw) / 0.5 + Math.abs(this.orbit.pitch) / 0.5);
+    const ahead = (mode === "drone" ? 6 : (mode === "far" ? 9 : 7) + Math.min(v, 50) * 0.08) * (1 - orbiting);
     const look = carPos.clone().add(new THREE.Vector3(Math.cos(this.camYaw) * ahead, mode === "drone" ? 0 : tall * 1.05, Math.sin(this.camYaw) * ahead));
     if (snap) this.camLook.copy(look);
     else this.camLook.lerp(look, 1 - Math.exp(-dt * 14));
