@@ -910,9 +910,35 @@ button.menu-option:hover { background: #17171d; }
 @media (prefers-reduced-motion: reduce) { .cruise-mini-road { animation: none; } }
 /* steering arrows on touch screens */
 .cruise-steer { display: none; }
+/* phones: big steering pads under the left thumb; gears, brake and gas under the right; a small
+   speedo and tach between them, and the map tucked up under the header */
 @media (pointer: coarse) {
-  .cruise-steer { display: flex; gap: 0.5rem; align-self: flex-end; margin-bottom: 0.2rem; }
-  .cruise-steer .ctl { width: 4.2rem; height: 4.2rem; display: grid; place-items: center; background: rgba(24, 24, 30, 0.55); border-radius: 14px; touch-action: none; }
+  .cruise-steer { display: flex; gap: 0.6rem; }
+  .cruise-steer .ctl {
+    width: 5.5rem; height: 5.5rem; display: grid; place-items: center; touch-action: none; border-radius: 1rem;
+    background: rgba(24, 24, 30, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); color: #e4e4e7;
+  }
+  .cruise-pedals { display: flex; flex-direction: column; gap: 0.45rem; width: 10.5rem; }
+  .cruise-pedals .ctl { padding-top: 0.45rem; padding-bottom: 0.45rem; font-size: 0.95rem; background: rgba(24, 24, 30, 0.55); }
+  .cruise-pedal-row { display: flex; align-items: flex-end; gap: 0.5rem; }
+  .cruise-touch .drive-touch-brake { flex: 1; height: 6rem; }
+  .cruise-touch .drive-touch-gas { flex: 1; width: auto; height: 8.5rem; }
+  .cruise-touch .brake-pad { letter-spacing: 0.12em; }
+  .cruise .track-cluster { --gauge: 5.4rem; right: 50%; bottom: max(0.6rem, env(safe-area-inset-bottom)); transform: translateX(50%); }
+  .cruise .track-cluster::before { inset: -1.5rem; background: radial-gradient(ellipse at 50% 70%, rgba(5, 6, 10, 0.55), rgba(5, 6, 10, 0) 70%); }
+  .cruise .track-boost, .cruise .cruise-odo, .cruise .cruise-trip, .cruise-grip > span:first-child { display: none; }
+  .cruise-grip { align-self: center; margin: 0; }
+  .cruise-map { width: 6.5rem; height: 6.5rem; top: calc(var(--hud-top, 3.6rem) + 0.75rem); bottom: auto; }
+}
+@media (pointer: coarse) and (orientation: portrait) {
+  .cruise .track-cluster { bottom: calc(max(0.75rem, env(safe-area-inset-bottom)) + 11rem); }
+  .cruise-steer .ctl { width: 4.6rem; height: 4.6rem; }
+  .cruise-pedals { width: 9.5rem; }
+}
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) {
+  .cruise-steer .ctl { width: 5rem; height: 5rem; }
+  .cruise-touch .drive-touch-brake { height: 5rem; }
+  .cruise-touch .drive-touch-gas { height: 7.25rem; }
 }
 /* cruise: what's under the tyres and how grippy it is, with a warning when they let go */
 .cruise-grip { align-self: flex-end; margin-right: 0.4rem; display: flex; gap: 0.5rem; align-items: center; font-family: var(--font-mono); font-size: 0.66rem; color: #a1a1aa; text-shadow: 0 1px 4px #000; }

@@ -774,13 +774,8 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
         ))}
       </dl>
 
-      <div className="drive-touch">
-        <div className="drive-touch-left">
-          <ShiftButtons onUp={rig.shiftUp} onDown={rig.shiftDown} onNeutral={rig.neutral} onReverse={() => rig.sim.reverse()} subscribe={subscribe} gear={rig.gear} />
-          <div className="drive-touch-brake">
-            <BrakePad input={input} />
-          </div>
-        </div>
+      {/* phones: left thumb steers, right thumb has the pedals with the gears above them */}
+      <div className="drive-touch cruise-touch">
         <div className="cruise-steer" role="group" aria-label="Steer">
           {([-1, 1] as const).map((dir) => (
             <button
@@ -795,14 +790,22 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
               onPointerUp={() => (touchSteer.current = 0)}
               onPointerCancel={() => (touchSteer.current = 0)}
             >
-              <svg viewBox="0 0 16 16" className="h-5 w-5" aria-hidden>
+              <svg viewBox="0 0 16 16" className="h-7 w-7" aria-hidden>
                 <path d={dir < 0 ? "M10 3L5 8l5 5" : "M6 3l5 5-5 5"} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           ))}
         </div>
-        <div className="drive-touch-gas">
-          <ThrottleControl input={input} accent={accent} />
+        <div className="cruise-pedals">
+          <ShiftButtons onUp={rig.shiftUp} onDown={rig.shiftDown} onNeutral={rig.neutral} onReverse={() => rig.sim.reverse()} subscribe={subscribe} gear={rig.gear} />
+          <div className="cruise-pedal-row">
+            <div className="drive-touch-brake">
+              <BrakePad input={input} />
+            </div>
+            <div className="drive-touch-gas">
+              <ThrottleControl input={input} accent={accent} />
+            </div>
+          </div>
         </div>
       </div>
     </main>
