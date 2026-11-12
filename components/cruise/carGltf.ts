@@ -64,6 +64,14 @@ function topmost(root: THREE.Object3D, re: RegExp): THREE.Object3D[] {
   return out;
 }
 
+function isEmpty(o: THREE.Object3D): boolean {
+  let mesh = false;
+  o.traverse((c) => {
+    if ((c as THREE.Mesh).isMesh) mesh = true;
+  });
+  return !mesh;
+}
+
 function disposeMaterial(m: THREE.Material) {
   for (const v of Object.values(m)) if (v instanceof THREE.Texture) v.dispose();
   m.dispose();
@@ -108,8 +116,9 @@ function fromScene(scene: THREE.Group, cfg: VehicleConfig, entry: ModelEntry): C
     console.warn(`[cruise] ${cfg.id}: no wheel_FL / wheel_RL... nodes found; using the built-in body`);
     return null;
   }
-  const headNodes = topmost(scene, /^headlight/i);
-  const exhaustNodes = topmost(scene, /^exhaust/i);
+  // markers are empties; a mesh that happens to be called "Headlights_Glass" is part of the car
+  const headNodes = topmost(scene, /^headlight/i).filter(isEmpty);
+  const exhaustNodes = topmost(scene, /^exhaust/i).filter(isEmpty);
 
   // 3. rebuild as the scene expects: a root holding the body (which pitches and rolls) and
   //    one pivot per wheel at its hub, at rest with no rotation (the scene sets spin and steer)
