@@ -38,6 +38,7 @@ export function BoostGauge({ state, redlineRpm, turbo, accent }: { state: SimSta
     const v = shown.current;
 
     const r = Math.min(w, h) / 2 - Math.max(3, Math.min(w, h) * 0.04);
+    if (r <= 0) return; // hidden (Cruise drops it on phones)
     const cx = w / 2;
     const cy = h / 2;
     const boosting = v > 0.02;

@@ -37,6 +37,7 @@ export interface DialOptions {
 
 /** Face, lit progress arc, ticks, labels and red zone. The needle is drawn separately. */
 export function drawDial(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, o: DialOptions): void {
+  if (r <= 0) return; // a hidden gauge (display: none) has no room to draw in
   ctx.save();
   const face = ctx.createRadialGradient(cx, cy - r * 0.3, r * 0.1, cx, cy, r);
   face.addColorStop(0, COLORS.faceInner);
