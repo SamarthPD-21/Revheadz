@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Aids } from "../../lib/cruise/handling";
 import { PRESETS, presetOf, type Settings } from "./settings";
+import { askTiltPermission } from "./tiltSteer";
 
 interface Props {
   settings: Settings;
@@ -59,6 +60,7 @@ const SHADOWS: { id: Settings["shadows"]; label: string }[] = [
 /** The cruise's settings: the car, display, graphics and sound, each change applied as it's made. */
 export function SettingsPanel({ settings: s, update, fps, renderScale, accent, car, onClose }: Props) {
   const [tab, setTab] = useState<Tab>("car");
+  const [tiltRefused, setTiltRefused] = useState(false);
   const preset = presetOf(s);
   return (
     <section className="cruise-panel cruise-settings" aria-label="Settings">
@@ -88,6 +90,22 @@ export function SettingsPanel({ settings: s, update, fps, renderScale, accent, c
             value={s.gears}
             onPick={(gears) => update({ gears })}
           />
+          <div className="cruise-touch-only">
+            <Row label="Steering" hint={tiltRefused ? "Motion access was refused" : ""} />
+            <Segmented
+              label="Steering"
+              options={[
+                { id: "buttons", label: "Buttons", title: "The left and right pads" },
+                { id: "tilt", label: "Tilt", title: "Turn the phone like a steering wheel" },
+              ]}
+              value={s.steering}
+              onPick={async (steering) => {
+                if (steering === "tilt" && !(await askTiltPermission())) return setTiltRefused(true);
+                setTiltRefused(false);
+                update({ steering });
+              }}
+            />
+          </div>
           <Row label="Driver aids" hint={`${car.name}: ${aidNames(car.aids)}`} />
           <Segmented
             label="Driver aids"

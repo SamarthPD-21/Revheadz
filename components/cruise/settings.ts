@@ -16,6 +16,8 @@ export interface Settings {
   /** Driver aids: "as built" uses the car's own factory ABS / TC / ESC; otherwise the three are set separately below. */
   aidsAsBuilt: boolean;
   aids: { abs: boolean; tc: boolean; esc: boolean };
+  /** Phones: steer with the on-screen pads, or by turning the phone like a wheel. */
+  steering: "buttons" | "tilt";
 
   // display and graphics
   /** Resolution: adapt to hold the frame rate, or a fixed share of the screen's (in %). */
@@ -48,6 +50,7 @@ export const DEFAULTS: Settings = {
   fps: "90",
   aidsAsBuilt: true,
   aids: { abs: true, tc: true, esc: true },
+  steering: "buttons",
   scale: "auto",
   distance: "medium",
   vegetation: "high",
