@@ -55,6 +55,7 @@ export function Tachometer({ state, redlineRpm, limiterRpm, accent, subscribe }:
     const needleRpm = Math.max(0, atLimiter ? Math.min(limiterRpm + 40, Math.max(limiterRpm - MAX_DIP, raw)) : raw);
     // leave room for the bezel stroke and the redline glow, so nothing is clipped at the canvas edge
     const r = Math.min(w, h) / 2 - Math.max(4, Math.min(w, h) * 0.045);
+    if (r <= 0) return; // hidden (Cruise shows a digital readout on phones)
     const cx = w / 2;
     const cy = h / 2;
     const pulse = state.limiterActive ? 1 : state.rpm > redlineRpm ? 0.5 + 0.5 * Math.sin(clock.current * 30) : 0;

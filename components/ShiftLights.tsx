@@ -22,6 +22,7 @@ export function ShiftLights({ state, redlineRpm, shiftRpm }: { state: SimState; 
     const flash = fill >= 1 && Math.sin(clock.current * 30) > 0;
     const gap = Math.max(2, w * 0.008);
     const size = Math.min(h, (w - gap * (COUNT - 1)) / COUNT);
+    if (size <= 0) return; // hidden (Cruise on phones)
     const total = size * COUNT + gap * (COUNT - 1);
     let x = (w - total) / 2;
     for (let i = 0; i < COUNT; i++) {

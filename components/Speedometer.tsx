@@ -12,6 +12,7 @@ export function Speedometer({ state, accent, maxKmh }: { state: SimState; accent
   const ref = useCanvasLoop((ctx, w, h, dt) => {
     shown.current = smooth(shown.current, state.speedKmh, dt, 20);
     const r = Math.min(w, h) / 2 - 2;
+    if (r <= 0) return; // hidden (Cruise shows a digital readout on phones)
     const cx = w / 2;
     const cy = h / 2;
     drawDial(ctx, cx, cy, r, { max: maxKmh, value: shown.current, majorStep, labelDivisor: 1, minorPerMajor: 4, accent });
