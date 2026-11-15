@@ -910,35 +910,67 @@ button.menu-option:hover { background: #17171d; }
 @media (prefers-reduced-motion: reduce) { .cruise-mini-road { animation: none; } }
 /* steering arrows on touch screens */
 .cruise-steer { display: none; }
-/* phones: big steering pads under the left thumb; gears, brake and gas under the right; a small
-   speedo and tach between them, and the map tucked up under the header */
+/* phones (landscape only): big steering pads under the left thumb, or tilt; gears, brake and gas
+   pedals under the right; speed, gear and a rev bar between them; the map tucked under the header */
+.phone-dash, .cruise-rotate, .cruise-touch-only { display: none; }
 @media (pointer: coarse) {
+  .cruise-touch-only { display: block; }
   .cruise-steer { display: flex; gap: 0.6rem; }
   .cruise-steer .ctl {
-    width: 5.5rem; height: 5.5rem; display: grid; place-items: center; touch-action: none; border-radius: 1rem;
+    width: 5rem; height: 5rem; display: grid; place-items: center; touch-action: none; border-radius: 1rem;
     background: rgba(24, 24, 30, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); color: #e4e4e7;
   }
-  .cruise-pedals { display: flex; flex-direction: column; gap: 0.45rem; width: 10.5rem; }
-  .cruise-pedals .ctl { padding-top: 0.45rem; padding-bottom: 0.45rem; font-size: 0.95rem; background: rgba(24, 24, 30, 0.55); }
+  .cruise-touch[data-tilt="1"] .cruise-steer { visibility: hidden; }
+  .cruise-pedals { display: flex; flex-direction: column; gap: 0.45rem; width: 10rem; }
+  .cruise-pedals .ctl { padding-top: 0.4rem; padding-bottom: 0.4rem; font-size: 0.9rem; background: rgba(24, 24, 30, 0.55); }
   .cruise-pedal-row { display: flex; align-items: flex-end; gap: 0.5rem; }
-  .cruise-touch .drive-touch-brake { flex: 1; height: 6rem; }
-  .cruise-touch .drive-touch-gas { flex: 1; width: auto; height: 8.5rem; }
+  .cruise-touch .drive-touch-brake { flex: 1; width: auto; height: 5rem; }
+  .cruise-touch .drive-touch-gas { flex: 1; width: auto; height: 7.25rem; }
   .cruise-touch .brake-pad { letter-spacing: 0.12em; }
-  .cruise .track-cluster { --gauge: 5.4rem; right: 50%; bottom: max(0.6rem, env(safe-area-inset-bottom)); transform: translateX(50%); }
-  .cruise .track-cluster::before { inset: -1.5rem; background: radial-gradient(ellipse at 50% 70%, rgba(5, 6, 10, 0.55), rgba(5, 6, 10, 0) 70%); }
-  .cruise .track-boost, .cruise .cruise-odo, .cruise .cruise-trip, .cruise-grip > span:first-child { display: none; }
-  .cruise-grip { align-self: center; margin: 0; }
-  .cruise-map { width: 6.5rem; height: 6.5rem; top: calc(var(--hud-top, 3.6rem) + 0.75rem); bottom: auto; }
+  .cruise .track-cluster, .cruise .cruise-keys { display: none; }
+  .cruise-map { width: 6rem; height: 6rem; top: calc(var(--hud-top, 3.6rem) + 0.6rem); bottom: auto; }
+
+  .phone-dash {
+    position: absolute; left: 50%; bottom: max(0.7rem, env(safe-area-inset-bottom)); z-index: 5; transform: translateX(-50%);
+    display: grid; grid-template-columns: auto auto; align-items: end; column-gap: 0.7rem; pointer-events: none;
+    padding: 0.35rem 0.85rem 0.45rem; border-radius: 0.9rem; background: rgba(8, 9, 13, 0.55); border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .phone-dash-gear { font-size: 1.6rem; line-height: 1; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .phone-dash-speed { display: flex; align-items: baseline; gap: 0.25rem; }
+  .phone-dash-speed b { min-width: 2.2ch; text-align: right; font-size: 1.9rem; line-height: 1; font-weight: 700; color: #fafafa; font-variant-numeric: tabular-nums; }
+  .phone-dash-speed small { font-size: 0.62rem; color: #a1a1aa; }
+  .phone-dash-revs { grid-column: 1 / -1; height: 3px; margin-top: 0.35rem; border-radius: 2px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+  .phone-dash-revs span { display: block; height: 100%; background: var(--accent); transform-origin: left; transform: scaleX(0); }
+  .phone-dash-revs span[data-red="1"] { background: #ef4444; }
+
+  .gas-pedal {
+    position: relative; display: block; width: 100%; height: 100%; border-radius: 0.9rem 0.9rem 1.1rem 1.1rem;
+    background: linear-gradient(to bottom, #3f3f46, #27272a); border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 4px 0 #111114; transition: transform 80ms ease-out, box-shadow 80ms ease-out;
+  }
+  .gas-pedal-ribs {
+    position: absolute; inset: 0.7rem 0.75rem 1.9rem; border-radius: 0.4rem;
+    background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.45) 0 4px, rgba(255, 255, 255, 0.07) 4px 9px);
+  }
+  .gas-pedal-label { position: absolute; inset: auto 0 0.55rem; text-align: center; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #d4d4d8; }
+  .gas-pedal[data-on="1"] { transform: translateY(3px) scaleY(0.97); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 1px 0 #111114, 0 0 0 1px var(--accent); }
+  .gas-pedal[data-on="1"] .gas-pedal-label { color: var(--accent); }
 }
+/* Cruise on a phone is landscape only: upright, it asks to be turned and covers the controls */
 @media (pointer: coarse) and (orientation: portrait) {
-  .cruise .track-cluster { bottom: calc(max(0.75rem, env(safe-area-inset-bottom)) + 11rem); }
-  .cruise-steer .ctl { width: 4.6rem; height: 4.6rem; }
-  .cruise-pedals { width: 9.5rem; }
+  .cruise-rotate {
+    position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;
+    background: #05060a; color: #e4e4e7; text-align: center; padding: 2rem;
+  }
+  .cruise-rotate svg { width: 4rem; height: 4rem; color: var(--accent); animation: cruise-turn 2.4s ease-in-out infinite; }
+  .cruise-rotate p { font-size: 0.95rem; font-weight: 600; }
 }
-@media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) {
-  .cruise-steer .ctl { width: 5rem; height: 5rem; }
-  .cruise-touch .drive-touch-brake { height: 5rem; }
-  .cruise-touch .drive-touch-gas { height: 7.25rem; }
+@keyframes cruise-turn { 0%, 25% { transform: rotate(0); } 55%, 85% { transform: rotate(-90deg); } 100% { transform: rotate(0); } }
+@media (prefers-reduced-motion: reduce) { .cruise-rotate svg { animation: none; transform: rotate(-90deg); } }
+@media (pointer: coarse) and (orientation: landscape) and (min-height: 521px) {
+  .cruise-steer .ctl { width: 5.75rem; height: 5.75rem; }
+  .cruise-touch .drive-touch-brake { height: 6rem; }
+  .cruise-touch .drive-touch-gas { height: 8.75rem; }
 }
 /* cruise: what's under the tyres and how grippy it is, with a warning when they let go */
 .cruise-grip { align-self: flex-end; margin-right: 0.4rem; display: flex; gap: 0.5rem; align-items: center; font-family: var(--font-mono); font-size: 0.66rem; color: #a1a1aa; text-shadow: 0 1px 4px #000; }

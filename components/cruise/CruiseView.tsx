@@ -15,13 +15,15 @@ import type { SimListener } from "../../lib/sim/types";
 import type { VehicleConfig } from "../../lib/vehicles/types";
 import { BoostGauge } from "../BoostGauge";
 import { BrakePad } from "../BrakePad";
+import { GasPedal } from "./GasPedal";
+import { PhoneDash } from "./PhoneDash";
+import { useTiltSteer } from "./tiltSteer";
 import { IgnitionButton } from "../IgnitionButton";
 import { LogoMark } from "../Logo";
 import { ShiftButtons } from "../ShiftButtons";
 import { ShiftLights } from "../ShiftLights";
 import { Speedometer } from "../Speedometer";
 import { Tachometer } from "../Tachometer";
-import { ThrottleControl } from "../ThrottleControl";
 import { VehiclePicker, type PickerVehicle } from "../VehiclePicker";
 import { Ambience } from "./ambience";
 import { FrameGate } from "../../lib/cruise/frameGate";
@@ -203,6 +205,9 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
   const steerKeys = useRef(new Set<string>());
   /** Touch steering: -1, 0 or 1 from the on-screen arrows. */
   const touchSteer = useRef(0);
+  /** Phones with tilt steering on: the phone turned like a wheel, -1 to 1. */
+  const tiltSteerRef = useRef(0);
+  useTiltSteer(settings.steering === "tilt", tiltSteerRef);
   const gripRef = useRef<HTMLParagraphElement>(null);
   const mapRef = useRef<HTMLCanvasElement>(null);
   /** The "turn around" banner (set straight from the frame loop, not through React). */
@@ -235,7 +240,12 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
   }, [settings]);
   const toggleFullscreen = () => {
     if (document.fullscreenElement) void document.exitFullscreen?.();
-    else void document.documentElement.requestFullscreen?.().catch(() => undefined);
+    else
+      void document.documentElement
+        .requestFullscreen?.()
+        // phones: hold it sideways while fullscreen (Android allows the lock; elsewhere it just fails)
+        .then(() => (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> }).lock?.("landscape"))
+        .catch(() => undefined);
   };
 
   // App keys (driving keys live in InputManager): steering, camera, autopilot, gears, HUD, sound, car.
@@ -424,7 +434,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
         ambience.update(sim.state.speedKmh, s.weather === "rain", { slide: Math.max(u.slide, Math.max(0, (sim.state.wheelspin ?? 0) - 0.2), sim.state.locked ? 0.8 : 0), surface });
       }
       const keys = steerKeys.current;
-      const steer = clampUnit((STEER_RIGHT.some((k) => keys.has(k)) ? 1 : 0) - (STEER_LEFT.some((k) => keys.has(k)) ? 1 : 0) + touchSteer.current);
+      const steer = clampUnit((STEER_RIGHT.some((k) => keys.has(k)) ? 1 : 0) - (STEER_LEFT.some((k) => keys.has(k)) ? 1 : 0) + touchSteer.current + tiltSteerRef.current);
       scene.frame(dt, { speedKmh: sim.state.speedKmh, reverse: sim.state.gear === -1, throttle: sim.input.throttle, brake: sim.input.brake, wheelspin: sim.state.wheelspin ?? 0, locked: Boolean(sim.state.locked), steer, ignition: running }, { hour: hourRef.current, weather: s.weather, camera: s.camera });
       // heading back down the road, or up to where it's closed: tell them to turn round
       const warnEl = warnRef.current;
@@ -727,6 +737,14 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
         <span />
       </div>
 
+      <PhoneDash state={sim.state} redlineRpm={vehicle.engine.redlineRpm} accent={accent} />
+      <div className="cruise-rotate" role="alert">
+        <svg viewBox="0 0 48 48" aria-hidden>
+          <rect x="15" y="6" width="18" height="32" rx="3" fill="none" stroke="currentColor" strokeWidth="2.5" />
+          <path d="M38 30a14 14 0 01-12 12m0 0l4-1m-4 1l1-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <p>Turn your phone sideways to drive</p>
+      </div>
       <div className="track-cluster cruise-cluster">
         <div className="track-lights">
           <ShiftLights state={sim.state} redlineRpm={vehicle.engine.redlineRpm} />
@@ -775,7 +793,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       </dl>
 
       {/* phones: left thumb steers, right thumb has the pedals with the gears above them */}
-      <div className="drive-touch cruise-touch">
+      <div className="drive-touch cruise-touch" data-tilt={settings.steering === "tilt" ? "1" : undefined}>
         <div className="cruise-steer" role="group" aria-label="Steer">
           {([-1, 1] as const).map((dir) => (
             <button
@@ -803,7 +821,7 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
               <BrakePad input={input} />
             </div>
             <div className="drive-touch-gas">
-              <ThrottleControl input={input} accent={accent} />
+              <GasPedal input={input} accent={accent} />
             </div>
           </div>
         </div>
