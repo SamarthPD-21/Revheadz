@@ -1,0 +1,7 @@
+{
+  "flat6_sports": { "head_bright": 0.5, "tail_red": 1.8 },
+  "mustang_gt": { "tail": ["Material.003", "Material.007"] },
+  "rx7_fd": { "tail": ["Material.016"] },
+  "skyline_r34": { "tail": ["rear_lights"] },
+  "v12_gt": { "head": ["55eec4a6_dds"], "tail_in_zone": ["f4020b14_dds"] }
+}
