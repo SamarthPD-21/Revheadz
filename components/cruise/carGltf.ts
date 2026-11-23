@@ -5,6 +5,7 @@ import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.j
 import { MODELS, type ModelEntry } from "../../lib/cruise/models";
 import { specOf } from "../../lib/cruise/specs";
 import type { VehicleConfig } from "../../lib/vehicles/types";
+import { finishBody } from "./carFinish";
 import type { CarModel } from "./carModel";
 
 /**
@@ -173,6 +174,13 @@ function fromScene(scene: THREE.Group, cfg: VehicleConfig, entry: ModelEntry): C
     o.receiveShadow = true;
   });
   for (const m of replaced) if (!own.has(m)) disposeMaterial(m);
+  // lacquered paint and glass that reflects, so it doesn't look flat (the coats share the old textures)
+  const finish = finishBody(body, new Set([head, tail, paint]));
+  for (const m of finish.replaced) {
+    own.delete(m);
+    m.dispose();
+  }
+  finish.added.forEach((m) => own.add(m));
 
   // 5. a soft patch of shadow under it
   const blobMat = contactShadowMaterial();
