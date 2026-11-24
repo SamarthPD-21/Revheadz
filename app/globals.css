@@ -157,22 +157,49 @@ body {
 /* ---- Shared surfaces ----------------------------------------------------------- */
 /* Flat panels with hairline rules, small radii, one accent. No glows. */
 .display { font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.01em; line-height: 0.95; }
-/* Home: the strip, live and dimmed, behind the hero; it fades into the page and leaves the text side dark */
-.home-backdrop { position: absolute; inset: 0 0 auto 0; height: min(82vh, 760px); pointer-events: none; }
-.home-strip { width: 100%; height: 100%; display: block; opacity: 0.85; -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent); mask-image: linear-gradient(to bottom, #000 55%, transparent); }
-/* wide screens: slide the scene right so the staged cars sit beside the headline, not under it */
-@media (min-width: 1024px) {
-  .home-backdrop { overflow: hidden; }
-  .home-strip { width: 120%; margin-left: 24%; transform: translateY(-9%); }
+/* Home: one car under a studio light, a rev counter under it, and a strip of others to swap in */
+.hero { display: grid; gap: 2.5rem; align-items: center; }
+@media (min-width: 1024px) { .hero { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 1.5rem; } }
+.hero-rev { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "stage stage" "dash meta" "rail rail"; column-gap: 1.25rem; align-items: center; }
+.hero-stage { grid-area: stage; position: relative; aspect-ratio: 12 / 5; display: grid; place-items: center; }
+.hero-stage::before {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -6%; height: 70%;
+  background: radial-gradient(closest-side, rgba(255, 240, 220, 0.11), transparent);
+  pointer-events: none;
 }
-/* phones: the scene sits behind the text, so it stays further back */
-@media (max-width: 1023px) {
-  .home-strip { opacity: 0.5; }
+.hero-car { position: relative; width: 100%; height: auto; animation: hero-in 420ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+@keyframes hero-in { from { opacity: 0; transform: translateX(4%); } }
+.hero-dash { grid-area: dash; width: 11rem; text-align: center; }
+.hero-tach { width: 100%; display: block; overflow: visible; }
+.hero-tach-track { fill: none; stroke: #2e2e36; stroke-width: 3; }
+.hero-tach-red { fill: none; stroke: #ef4444; stroke-width: 3; }
+.hero-tach-num { fill: #a1a1aa; font-size: 14px; font-weight: 600; text-anchor: middle; font-family: var(--font-display); }
+.hero-tach-needle { stroke: #fb923c; stroke-width: 2.5; stroke-linecap: round; }
+.hero-tach-hub { fill: #e4e4e7; }
+.hero-rpm { margin-top: -1.4rem; font-size: 0.8rem; color: #8b8b96; }
+.hero-rpm span { font-family: var(--font-display); font-size: 1.6rem; font-weight: 600; color: #fafafa; font-variant-numeric: tabular-nums; margin-right: 0.15rem; }
+.hero-meta { grid-area: meta; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; min-width: 0; }
+.hero-name { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; line-height: 1; color: #fafafa; }
+.hero-spec { margin-top: 0.4rem; font-size: 0.875rem; color: #a1a1aa; }
+.hero-actions { display: flex; gap: 0.5rem; }
+.hero-rev-btn, .hero-drive { display: inline-flex; align-items: center; height: 2.75rem; padding: 0 1.25rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; transition: background-color 120ms, border-color 120ms, transform 80ms; }
+.hero-rev-btn { background: #f97316; color: #140a02; min-width: 6.5rem; justify-content: center; }
+.hero-rev-btn:hover { background: #fb8a3c; }
+.hero-rev-btn:active { transform: translateY(1px); }
+.hero-rev-btn[aria-pressed="true"] { background: #fafafa; }
+.hero-drive { border: 1px solid #3f3f46; color: #f4f4f5; }
+.hero-drive:hover { border-color: #71717a; }
+.hero-rail { grid-area: rail; display: flex; gap: 0.25rem; margin-top: 1.5rem; overflow-x: auto; padding-bottom: 2px; }
+.hero-rail button { display: block; width: 6.5rem; padding: 0.35rem 0.4rem; border-radius: 8px; border: 1px solid transparent; opacity: 0.55; transition: opacity 120ms, border-color 120ms; }
+.hero-rail button:hover { opacity: 0.9; }
+.hero-rail button[aria-pressed="true"] { opacity: 1; border-color: #3f3f46; background: #16161b; }
+.hero-rail img { width: 100%; height: 3rem; object-fit: contain; }
+@media (max-width: 639px) {
+  .hero-rev { grid-template-columns: 1fr; grid-template-areas: "stage" "dash" "meta" "rail"; }
+  .hero-dash { margin: -0.5rem auto 0.75rem; }
+  .hero-rail { margin-inline: -1rem; padding-inline: 1rem; }
 }
-.home-backdrop::after {
-  content: ""; position: absolute; inset: 0;
-  background: linear-gradient(100deg, rgba(11, 11, 15, 0.92) 0%, rgba(11, 11, 15, 0.7) 38%, rgba(11, 11, 15, 0.1) 70%), linear-gradient(to bottom, rgba(11, 11, 15, 0.5), transparent 20%);
-}
+@media (prefers-reduced-motion: reduce) { .hero-car { animation: none; } }
 
 /* Playground and drag lobby: a dark garage wall, faintly panelled */
 .garage-backdrop {
@@ -377,6 +404,15 @@ body {
 }
 @media (min-width: 640px) { .mode-card { padding: 1.75rem; } }
 a.mode-card:hover, a.mode-card:focus-visible { border-color: #52525b; }
+.modes { display: grid; gap: 1rem; }
+@media (min-width: 768px) { .modes { grid-template-columns: 1fr 1fr; } .mode-cruise { grid-column: 1 / -1; } }
+/* Cruise: a real frame from the game, the words over the road */
+.mode-cruise { padding: 0; min-height: 20rem; justify-content: flex-end; }
+.mode-cruise-shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 60%; transition: transform 600ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+a.mode-cruise:hover .mode-cruise-shot { transform: scale(1.03); }
+.mode-cruise-text { position: relative; padding: 1.5rem; background: linear-gradient(to top, rgba(8, 8, 12, 0.92) 30%, rgba(8, 8, 12, 0)); padding-top: 5rem; }
+@media (min-width: 768px) { .mode-cruise { min-height: 26rem; } .mode-cruise-text { padding: 2rem; padding-top: 6rem; } }
+@media (prefers-reduced-motion: reduce) { .mode-cruise-shot { transition: none; } }
 
 /* silhouettes drifting across the Playground card; the track holds the list twice so it loops */
 .mode-parade { mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); opacity: 0.8; }
@@ -895,19 +931,7 @@ button.menu-option:hover { background: #17171d; }
   mask-image: linear-gradient(to bottom, #000 70%, transparent);
 }
 /* the Cruise card on the home page: a road running away into a sunset */
-.cruise-mini { position: relative; height: 5.5rem; overflow: hidden; border-radius: 10px; background: linear-gradient(to bottom, #1b1838 0%, #5b3550 55%, #c56a45 100%); }
-.cruise-mini-sun { position: absolute; left: 50%; bottom: 34%; width: 3.2rem; height: 3.2rem; margin-left: -1.6rem; border-radius: 9999px; background: radial-gradient(circle, #ffd59a 0%, #ff9d5c 45%, rgba(255, 140, 80, 0) 70%); }
-.cruise-mini-hills { position: absolute; inset: auto 0 0 0; height: 46%; background: #1c2a24; clip-path: polygon(0 40%, 14% 18%, 30% 44%, 46% 12%, 62% 40%, 78% 16%, 100% 38%, 100% 100%, 0 100%); }
-.cruise-mini-road {
-  position: absolute; left: 50%; bottom: 0; width: 62%; height: 50%; transform: translateX(-50%);
-  clip-path: polygon(47% 0, 53% 0, 100% 100%, 0 100%);
-  background:
-    repeating-linear-gradient(to bottom, rgba(240, 236, 220, 0.9) 0 7px, transparent 7px 18px) center / 3px 100% no-repeat,
-    linear-gradient(to bottom, #2a2a30, #18181c);
-  animation: cruise-dash 0.9s linear infinite;
-}
 @keyframes cruise-dash { to { background-position: center 18px, 0 0; } }
-@media (prefers-reduced-motion: reduce) { .cruise-mini-road { animation: none; } }
 /* steering arrows on touch screens */
 .cruise-steer { display: none; }
 /* phones (landscape only): big steering pads under the left thumb, or tilt; gears, brake and gas
