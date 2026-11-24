@@ -9,6 +9,18 @@ export interface PreviewSounds {
   revRpm: number;
 }
 
+/** The blip's timeline, in seconds from when it starts sounding: rev up, hold at the top, fall back. */
+export const BLIP = { rise: 0.45, top: 0.9, fall: 1.25, end: 2.05 } as const;
+
+/** Roughly where a rev counter would read `t` seconds into the blip (for a needle drawn alongside it). */
+export function blipRpm(t: number, s: Pick<PreviewSounds, "idleRpm" | "revRpm">): number {
+  const sweep = (from: number, to: number, f: number) => from * (to / from) ** Math.min(1, Math.max(0, f));
+  if (t <= BLIP.rise || t >= BLIP.end) return s.idleRpm;
+  if (t < BLIP.top) return sweep(s.idleRpm, s.revRpm, (t - BLIP.rise) / (BLIP.top - BLIP.rise));
+  if (t <= BLIP.fall) return s.revRpm;
+  return sweep(s.revRpm, s.idleRpm, (t - BLIP.fall) / (BLIP.end - BLIP.fall));
+}
+
 let ctx: AudioContext | null = null;
 let stopCurrent: (() => void) | null = null;
 
@@ -16,9 +28,10 @@ let stopCurrent: (() => void) | null = null;
  * Plays a short "blip": idle, a rev up toward the high loop, a moment held, then back down.
  * One preview at a time; starting another (or calling stopPreview) fades the last one out.
  * Must be called from a tap or key handler (it creates/resumes the AudioContext).
+ * `onStart` is told the moment it starts sounding (performance.now() time), once its sounds have loaded.
  * Resolves when the blip has finished or been stopped.
  */
-export async function playPreview(base: string, s: PreviewSounds, onEnd?: () => void): Promise<void> {
+export async function playPreview(base: string, s: PreviewSounds, onEnd?: () => void, onStart?: (at: number) => void): Promise<void> {
   stopPreview();
   ctx ??= new AudioContext();
   void ctx.resume();
@@ -57,13 +70,11 @@ export async function playPreview(base: string, s: PreviewSounds, onEnd?: () => 
 
   // the rev loop starts pitched down near idle, sweeps up to its own rpm, holds, and falls back
   const low = Math.min(1, Math.max(0.3, (s.idleRpm * 1.4) / s.revRpm));
-  const up = 0.45;
-  const hold = 0.35;
-  const down = 0.8;
-  const tUp = t0 + 0.45;
-  const tTop = tUp + up;
-  const tFall = tTop + hold;
-  const tEnd = tFall + down;
+  const tUp = t0 + BLIP.rise;
+  const tTop = t0 + BLIP.top;
+  const tFall = t0 + BLIP.fall;
+  const tEnd = t0 + BLIP.end;
+  const down = BLIP.end - BLIP.fall;
 
   idleGain.gain.setValueAtTime(0, t0);
   idleGain.gain.linearRampToValueAtTime(0.8, t0 + 0.06);
@@ -87,6 +98,7 @@ export async function playPreview(base: string, s: PreviewSounds, onEnd?: () => 
 
   idle.start(t0);
   rev.start(t0);
+  onStart?.(performance.now() + (t0 - ac.currentTime) * 1000);
   const stopAt = tEnd + 0.55;
   idle.stop(stopAt);
   rev.stop(stopAt);
