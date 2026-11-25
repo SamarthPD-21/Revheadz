@@ -24,6 +24,7 @@ args = sys.argv[sys.argv.index("--") + 1:]
 SRC, OUT = args[0], args[1]
 CAR = args[2] if len(args) > 2 else ""
 PREVIEW = args[3] if len(args) > 3 else None
+BIKE = os.environ.get("BIKE") == "1"
 HINTS = json.load(open(os.path.join(os.path.dirname(__file__), "lamp_hints.json"))).get(CAR, {})
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -143,6 +144,9 @@ for e in wheels:
         ring = [v for v in vs if math.hypot(v.x - cx, v.z - cz) > 0.93 * far]
         cx, cz, r = circle([(v.x, v.z) for v in ring])
     y0, y1 = min(v.y for v in ring) - 0.03, max(v.y for v in ring) + 0.03
+    if BIKE and (r < 0.1 or y1 - y0 < 0.1):
+        print(f"WARN {e.name}: retaining imported bike wheel hub because its tire bounds are incomplete")
+        continue
     if y1 - y0 < 0.16:  # just a rim face (the tyre is on the body): nothing to trim by width
         y0, y1 = -1e9, 1e9
 

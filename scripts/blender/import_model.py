@@ -19,6 +19,7 @@ args = sys.argv[sys.argv.index("--") + 1:]
 SRC, OUT, LENGTH = args[0], args[1], float(args[2])
 FLIP = len(args) > 3 and args[3] == "1"
 PREVIEW = args[4] if len(args) > 4 else None
+BIKE = os.environ.get("BIKE") == "1"
 # heavy models can go lower to stay under the game's 1 MB per car: MAX_TRIS=60000 MAX_TEX=512
 MAX_TRIS = int(os.environ.get("MAX_TRIS", 90000))
 MAX_TEX = int(os.environ.get("MAX_TEX", 1024))
@@ -62,6 +63,8 @@ lo, hi = bounds([car])
 size = hi - lo
 axes = sorted(range(3), key=lambda i: size[i])  # [height, width, length]
 basis = [Vector((1, 0, 0)), Vector((0, 1, 0)), Vector((0, 0, 1))]
+if BIKE:
+    axes = [axes[1], axes[0], axes[2]]  # bikes are taller than they are wide
 rot = Matrix((basis[axes[2]], basis[axes[1]], basis[axes[0]]))  # rows: new x, y, z
 if rot.determinant() < 0:
     rot[1] = -rot[1]
@@ -104,11 +107,16 @@ cands = []
 for p in parts:
     a, b, c, s = box(p)
     round_xz = s.z > 0.25 * H and abs(s.x - s.z) < 0.25 * max(s.x, s.z)
-    if round_xz and a.z < 0.08 * H and abs(c.y) > 0.22 * W and s.z < 0.75 * H and s.y < 0.3 * W:
+    near_ground = a.z < (0.16 if BIKE else 0.08) * H
+    lateral = abs(c.y) < 0.32 * W if BIKE else abs(c.y) > 0.22 * W
+    if round_xz and near_ground and lateral and s.z < 0.75 * H and s.y < 0.3 * W:
         cands.append((s.z * s.x, p, c, s))
 hubs = {}
 for _, p, c, s in sorted(cands, key=lambda t: -t[0]):
-    key = ("F" if c.x > 0 else "R") + ("L" if c.y > 0 else "R")
+    if BIKE:
+        key = "FL" if c.x > 0 else "RL"
+    else:
+        key = ("F" if c.x > 0 else "R") + ("L" if c.y > 0 else "R")
     if key not in hubs:
         hubs[key] = (Vector((c.x, c.y, c.z)), max(s.x, s.z) / 2)
 print("HUBS", {k: (round(v[0].x, 2), round(v[0].y, 2), round(v[0].z, 2), round(v[1], 2)) for k, v in hubs.items()})
@@ -202,9 +210,9 @@ for p in rest:
     # a badge set in the bonnet, or trim along the sides don't)
     fx = sum(f.normal.x * f.area for f in p.data.polygons) / max(1e-6, sum(f.area for f in p.data.polygons))
     # (no higher than the rear deck: a wing's red trim isn't a tail lamp)
-    if c.x < lo.x + 0.2 * L and 0.55 * H < c.z < 0.72 * H and small and fx < -0.25 and abs(c.y) > 0.15 * W and (red or re.search(r"tail|brake|stop|rear.?light", names)):
+    if c.x < lo.x + 0.2 * L and 0.55 * H < c.z < 0.72 * H and small and fx < -0.25 and (BIKE or abs(c.y) > 0.15 * W) and (red or re.search(r"tail|brake|stop|rear.?light", names)):
         tails.append((p, c.z, list(p.data.materials)))
-    elif c.x > hi.x - 0.2 * L and 0.42 * H < c.z < 0.8 * H and small and abs(c.y) > 0.22 * W and fx > 0.2 and (re.search(r"head|drl|front.?light|white.?light|lamp", names) or (white and LAMP.search(names))):
+    elif c.x > hi.x - 0.2 * L and 0.42 * H < c.z < 0.8 * H and small and (BIKE or abs(c.y) > 0.22 * W) and fx > 0.2 and (re.search(r"head|drl|front.?light|white.?light|lamp", names) or (white and LAMP.search(names))):
         p.data.materials.clear()
         p.data.materials.append(head_m)
         heads.append(c)
