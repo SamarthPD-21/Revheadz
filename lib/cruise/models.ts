@@ -13,9 +13,9 @@ export interface ModelEntry {
 }
 
 /**
- * Every car (not the single-seaters or the bikes) has a model built in Blender from its real
- * dimensions and details by scripts/blender/build-cars.sh. They're made in its own colour, so
- * they aren't repainted.
+ * Every vehicle with a 3D model: cars built in Blender from their real dimensions
+ * (scripts/blender/build-cars.sh), and downloaded models for the rest, single-seaters and bikes
+ * included (scripts/blender/import_model.py). They come in their own colours, so they aren't repainted.
  */
 export const MODELS: Record<string, ModelEntry> = {
   supra_mk4: { file: "model.glb" },
