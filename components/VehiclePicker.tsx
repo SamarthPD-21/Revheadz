@@ -98,10 +98,10 @@ export function VehiclePicker({
         className="picker-trigger group flex min-w-0 max-w-full items-center gap-2 rounded-xl px-2 py-1 text-left transition hover:bg-white/5 active:scale-[0.98]"
       >
         <span className="min-w-0">
-          <span className="block truncate text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: current.accent }}>
+          <span className="block truncate text-[10px] font-bold uppercase tracking-[0.2em] max-sm:hidden" style={{ color: current.accent }}>
             {eyebrow}
           </span>
-          <span className="block truncate text-sm font-bold text-zinc-100 sm:text-base">{current.name}</span>
+          <span className="line-clamp-2 text-sm leading-tight font-bold text-zinc-100 sm:truncate sm:text-base">{current.name}</span>
         </span>
         <svg viewBox="0 0 16 16" className={`h-3.5 w-3.5 shrink-0 text-zinc-500 transition group-hover:text-zinc-200 ${open ? "rotate-180" : ""}`} aria-hidden>
           <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
