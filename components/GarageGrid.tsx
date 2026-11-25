@@ -67,6 +67,8 @@ export function GarageGrid({ vehicles, base = "/drive", betaBikes = false }: { v
   const [sort, setSort] = useState<Sort>("featured");
   const [query, setQuery] = useState("");
   const [playing, setPlaying] = useState<string | null>(null);
+  // the preview that has loaded and is sounding (its rev meter runs from then)
+  const [sounding, setSounding] = useState<string | null>(null);
   const favourites = useStoredList("favourites");
   const recentIds = useStoredList("recent");
   // a favourites filter with nothing left in it falls back to everything
@@ -115,7 +117,15 @@ export function GarageGrid({ vehicles, base = "/drive", betaBikes = false }: { v
     }
     setPlaying(v.id);
     trackEvent("sound_preview", { vehicle: v.id });
-    void playPreview(v.base, v.preview, () => setPlaying((p) => (p === v.id ? null : p)));
+    void playPreview(
+      v.base,
+      v.preview,
+      () => {
+        setPlaying((p) => (p === v.id ? null : p));
+        setSounding((p) => (p === v.id ? null : p));
+      },
+      () => setSounding(v.id),
+    );
   };
 
   const chips: { id: Filter; label: string; n: number }[] = [
@@ -127,7 +137,7 @@ export function GarageGrid({ vehicles, base = "/drive", betaBikes = false }: { v
     <>
       {recent.length > 0 && (
         <section className="mb-8" aria-label="Recently driven">
-          <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">Jump back in</h2>
+          <h2 className="mb-3 text-sm font-semibold text-zinc-400">Jump back in</h2>
           <ul className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
             {recent.map((v) => (
               <li key={v.id} className="shrink-0">
@@ -228,10 +238,7 @@ export function GarageGrid({ vehicles, base = "/drive", betaBikes = false }: { v
                   data-playing={isPlaying ? "1" : undefined}
                 >
                   <div className="relative flex items-center gap-2">
-                    <span className="truncate text-xs text-zinc-500">
-                      {v.make ?? v.category}
-                      {v.year && <> · {v.year}</>}
-                    </span>
+                    <span className="truncate text-xs text-zinc-500">{[v.year, v.make ?? v.category].filter(Boolean).join(" ")}</span>
                     <span className="ml-auto flex shrink-0 items-center gap-1.5">
                       <button
                         type="button"
@@ -254,6 +261,9 @@ export function GarageGrid({ vehicles, base = "/drive", betaBikes = false }: { v
                       <img src={v.card} alt="" loading="lazy" decoding="async" className="vehicle-render" />
                     ) : (
                       <Silhouette kind={v.silhouette} accent="#a1a1aa" className="vehicle-silhouette relative h-24 w-full" />
+                    )}
+                    {sounding === v.id && v.preview && (
+                      <span className="card-revs" style={{ "--idle": v.preview.idleRpm / v.preview.revRpm } as React.CSSProperties} aria-hidden />
                     )}
                     {v.preview && (
                       <button

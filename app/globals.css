@@ -241,6 +241,18 @@ body {
 .vehicle-card:hover .vehicle-silhouette { transform: translateX(4px); }
 /* the car itself: a studio render of its model, sitting on its shadow */
 .vehicle-art { display: grid; place-items: center; height: 8.5rem; margin-inline: -0.4rem; }
+/* "Hear it": a rev meter along the floor under the car, on the same timeline as the sound (lib/audio/preview.ts BLIP) */
+.card-revs { position: absolute; left: 8%; right: 8%; bottom: 0.25rem; height: 3px; border-radius: 2px; background: #26262d; overflow: hidden; }
+.card-revs::after {
+  content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, var(--accent) 80%, #ef4444); transform-origin: left;
+  transform: scaleX(var(--idle)); animation: card-revs 2.05s linear forwards;
+}
+@keyframes card-revs {
+  0%, 22% { transform: scaleX(var(--idle)); animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.6); }
+  44%, 61% { transform: scaleX(1); animation-timing-function: cubic-bezier(0.1, 0.5, 0.5, 1); }
+  100% { transform: scaleX(var(--idle)); }
+}
+@media (prefers-reduced-motion: reduce) { .card-revs::after { animation: none; transform: scaleX(1); } }
 .vehicle-render { width: 100%; height: 100%; object-fit: contain; transition: transform 300ms ease-out; }
 .vehicle-card:hover .vehicle-render { transform: scale(1.03); }
 /* engine, power and redline, read like a spec sheet */
