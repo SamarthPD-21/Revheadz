@@ -436,7 +436,7 @@ export class CruiseScene {
   }
 
   frame(dt: number, drive: Drive, look: Look): void {
-    dt = Math.min(dt, 0.1);
+    dt = Math.min(Math.max(dt, 0), 0.1);
     this.time += dt;
     // adaptive resolution, held to the target frame rate: frames are capped (at the screen's rate
     // or the chosen frame rate), so "room to spare" can't be

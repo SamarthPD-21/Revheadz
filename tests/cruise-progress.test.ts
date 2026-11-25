@@ -63,4 +63,11 @@ describe("cruise: wrong way", () => {
     for (let t = 0; t < 3; t += 0.1) w.update(0.1, 0, 1, 15, 1, 0);
     expect(w.active).toBe(false);
   });
+
+  it("a parked car isn't the wrong way, even if the first frames' clock runs slightly backwards", () => {
+    // a frame's timestamp can come out a little before the moment the loop started counting
+    const w = new WrongWay();
+    for (let t = 0; t < 20; t++) w.update(-0.1, 0, 0, 0, 1, 0);
+    expect(w.active).toBe(false);
+  });
 });

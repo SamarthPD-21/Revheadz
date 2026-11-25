@@ -37,7 +37,8 @@ export function useCanvasLoop(draw: DrawFn) {
     let raf = 0;
     let last = performance.now();
     const frame = (now: number) => {
-      const dt = Math.min(0.1, (now - last) / 1000);
+      // clamped at 0: a frame's timestamp can be a little before the performance.now() it started from
+      const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
       last = now;
       ctx.clearRect(0, 0, w, h);
       drawRef.current(ctx, w, h, dt);

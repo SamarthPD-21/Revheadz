@@ -386,7 +386,8 @@ export default function CruiseView({ vehicle, prev, next, maxKmh, garage }: Prop
       const cap = s.fps === "max" ? 0 : Number(s.fps);
       if (!gate.tick(now, cap)) return;
       scene.targetMs = gate.targetMs(cap);
-      const dt = Math.min(0.1, (now - last) / 1000);
+      // clamped at 0: a frame's timestamp can be a little before the performance.now() it started from
+      const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
       last = now;
       frames++;
       input.apply(sim.input, now);

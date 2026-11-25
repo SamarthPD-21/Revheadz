@@ -79,6 +79,7 @@ export class WrongWay {
   active = false;
 
   update(dt: number, travelX: number, travelZ: number, speed: number, roadX: number, roadZ: number): boolean {
+    dt = Math.max(0, dt);
     const along = speed > 0.1 ? (travelX * roadX + travelZ * roadZ) / Math.max(1e-6, Math.hypot(travelX, travelZ)) : 0;
     const back = speed > 3 && along < -0.45;
     this.timer = back ? Math.min(3, this.timer + dt) : Math.max(0, this.timer - dt * 2);
