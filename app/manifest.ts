@@ -4,9 +4,9 @@ export const dynamic = "force-static";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Revheadz: engine sound simulator",
+    name: "Revheadz: real engines you can drive",
     short_name: "Revheadz",
-    description: "Pick an engine, start it, rev it and shift gears, free in your browser.",
+    description: "Rev, drive and race real engine recordings in your browser. Free, no install.",
     start_url: "/",
     display: "standalone",
     orientation: "any",

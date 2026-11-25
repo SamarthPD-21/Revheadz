@@ -32,9 +32,10 @@ export default function Home() {
 
       <section className="hero mt-10 sm:mt-14">
         <div className="hero-copy">
-          <h1 className="display text-5xl text-zinc-50 sm:text-7xl">Real engines, in your browser</h1>
+          <h1 className="display text-5xl text-zinc-50 sm:text-7xl">Hear the real thing</h1>
           <p className="mt-5 max-w-md text-lg text-zinc-400">
-            Every car here was recorded for real, from a Toyota Supra to Ferrari&apos;s 2004 F1 car. Turn your sound up and rev one.
+            Every engine here is a recording of the real car, from a Toyota Supra to Ferrari&apos;s 2004 F1 car. Turn your sound up, rev one,
+            then drive it, race it or take it on a long road.
           </p>
           <p className="mt-6 text-sm text-zinc-500">
             {list.length} machines, {recorded} of them recorded from the real thing. {CLASSES.length} drag classes.

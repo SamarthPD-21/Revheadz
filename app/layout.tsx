@@ -8,7 +8,7 @@ const sans = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "
 const display = Barlow_Condensed({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-barlow" });
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-plex-mono" });
 
-const description = "Pick an engine, start it, rev it and shift gears, free in your browser. Original sounds, no install.";
+const description = "Rev, drive and race real engine recordings in your browser, from a Toyota Supra to a Ferrari F1 car. Free, no install.";
 
 // Absolute URLs for share images. Set NEXT_PUBLIC_SITE_URL for a custom domain.
 const siteUrl =
@@ -17,13 +17,13 @@ const siteUrl =
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: { default: "Revheadz: engine sound simulator", template: "%s | Revheadz" },
+  title: { default: "Revheadz: real engines you can drive", template: "%s | Revheadz" },
   description,
   openGraph: {
-    title: "Revheadz: engine sound simulator",
+    title: "Revheadz: real engines you can drive",
     description,
     type: "website",
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Revheadz: free engine sound simulator" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Revheadz: real engines you can drive" }],
   },
   twitter: { card: "summary_large_image", images: ["/og.png"] },
 };

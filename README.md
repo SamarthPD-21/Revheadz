@@ -4,7 +4,7 @@
 
 # Revheadz
 
-**Start it. Rev it. Shift it.** A free engine sound simulator that runs entirely in your browser.
+**Hear the real thing.** Rev, drive and race real engine recordings in your browser, from a Toyota Supra to a Ferrari F1 car. Free, no install.
 
 Pick one of 35 real machines, from the Toyota Supra and Ferrari F40 to a Formula 1 V10 and a Ducati Panigale, press
 the start button, and drive it down an endless drag strip with your keyboard or thumbs. The sound follows every
