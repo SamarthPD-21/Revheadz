@@ -51,5 +51,6 @@ export const MODELS: Record<string, ModelEntry> = {
   gp_racer: { file: "model.glb" },
   ninja_h2: { file: "model.glb" },
   panigale_v4: { file: "model.glb" },
+  superbike_i4: { file: "model.glb" },
   vtwin_cruiser: { file: "model.glb" },
 };
