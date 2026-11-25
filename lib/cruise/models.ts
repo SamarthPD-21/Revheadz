@@ -47,4 +47,5 @@ export const MODELS: Record<string, ModelEntry> = {
   hot_hatch: { file: "model.glb" },
   rotary_twin: { file: "model.glb" },
   boxer4_rally: { file: "model.glb" },
+  ferrari_f2004: { file: "model.glb" },
 };
