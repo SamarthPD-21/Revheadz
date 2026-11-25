@@ -15,6 +15,7 @@ import { getVehicle } from "../../lib/vehicles";
 import type { VehicleConfig } from "../../lib/vehicles/types";
 import { Logo } from "../Logo";
 import { CarArt } from "../CarArt";
+import { ClassBoard } from "./ClassBoard";
 import { Silhouette } from "../Silhouette";
 import { RaceView, type Opponent, type RaceOutcome } from "./RaceView";
 import { Sfx } from "./sfx";
@@ -429,7 +430,7 @@ export function DragApp() {
   return (
     <div className="relative min-h-dvh overflow-hidden">
       <div className="garage-backdrop pointer-events-none absolute inset-x-0 top-0 h-[420px]" />
-      <div className="relative mx-auto max-w-4xl px-4 py-6 sm:py-10">
+      <div className={`relative mx-auto px-4 py-6 sm:py-10 ${phase === "menu" ? "max-w-6xl" : "max-w-4xl"}`}>
         <nav className="flex items-center justify-between gap-4" aria-label="Site">
           <Link href="/" aria-label="Revheadz home" className="transition active:scale-95">
             <Logo size="md" />
@@ -460,6 +461,7 @@ export function DragApp() {
         )}
 
         {phase === "menu" && (
+          <div className="drag-lobby">
           <section className="menu">
             <label className="field">
               <span>Your name</span>
@@ -499,6 +501,8 @@ export function DragApp() {
               </div>
             </div>
           </section>
+          <ClassBoard />
+          </div>
         )}
 
         {(phase === "hosting" || phase === "joining") && (

@@ -482,9 +482,27 @@ a.mode-cruise:hover .mode-cruise-shot { transform: scale(1.03); }
 .drag-cta-share:hover { background: #3b82f6; }
 
 /* drag menu: name, then three ways to race */
+/* the lobby: what to do on the left, the class board on the right */
+.drag-lobby { display: grid; gap: 3rem; align-items: start; }
+@media (min-width: 1024px) { .drag-lobby { grid-template-columns: minmax(0, 34rem) minmax(0, 1fr); gap: 4rem; } }
+.class-board { margin-top: 2rem; }
+.class-board-title { font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; color: #fafafa; line-height: 1; }
+.class-board-note { margin-top: 0.4rem; font-size: 0.875rem; color: #a1a1aa; }
+.class-board ol { margin-top: 1rem; border-top: 1px solid #222228; }
+.class-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name time" "cars cars"; column-gap: 1rem; row-gap: 0.5rem; padding: 0.9rem 0; border-bottom: 1px solid #222228; }
+@media (min-width: 640px) { .class-row { grid-template-columns: minmax(0, 1fr) 11rem 5rem; grid-template-areas: "name cars time"; align-items: center; } }
+.class-row > div:first-child { grid-area: name; }
+.class-row h3 { font-weight: 600; color: #f4f4f5; }
+.class-row > div p { font-size: 0.8rem; color: #8b8b96; }
+.class-time { grid-area: time; text-align: right; font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; color: #fafafa; font-variant-numeric: tabular-nums; line-height: 1; }
+.class-time span { font-size: 0.9rem; color: #8b8b96; }
+.class-cars { grid-area: cars; display: flex; align-items: center; gap: 0.25rem; }
+.class-cars img { width: 3.2rem; height: 1.6rem; object-fit: contain; }
+.class-cars-sil { width: 3.2rem; height: 1.4rem; }
+.class-more { font-size: 0.75rem; color: #8b8b96; margin-left: 0.25rem; }
 .menu { margin-top: 2rem; display: grid; gap: 1.25rem; max-width: 34rem; }
 .field { display: grid; gap: 0.4rem; }
-.field > span { font-family: var(--font-display); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #a1a1aa; }
+.field > span { font-size: 0.875rem; font-weight: 500; color: #a1a1aa; }
 .menu-actions { display: grid; border: 1px solid #222228; border-radius: 10px; overflow: hidden; }
 .menu-option { display: grid; gap: 0.15rem; padding: 1rem 1.25rem; text-align: left; background: #121217; transition: background-color 120ms; }
 .menu-option + .menu-option { border-top: 1px solid #222228; }

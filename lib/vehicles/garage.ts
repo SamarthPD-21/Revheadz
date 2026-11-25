@@ -2,6 +2,9 @@ import type { GarageVehicle } from "../../components/GarageGrid";
 import { vehicleBaseUrl, vehicles } from "./index";
 import type { VehicleConfig } from "./types";
 
+/** A studio render of the vehicle's 3D model, for cars that have one (not the bikes or the F1 cars). */
+export const cardOf = (v: VehicleConfig): string | null => (v.type === "car" && v.ui.silhouette !== "formula" ? `/vehicles/${v.id}/card.webp` : null);
+
 /** Idle loop plus the on-load loop nearest 75% of redline: enough for a quick rev on the card. */
 function previewSounds(v: VehicleConfig): GarageVehicle["preview"] {
   const a = v.audio;
@@ -31,8 +34,7 @@ export function garageList(): GarageVehicle[] {
     make: v.ui.make,
     year: v.ui.year,
     base: vehicleBaseUrl(v.id),
-    // a studio render of its 3D model (cars that have one: not the bikes or the F1 cars)
-    card: v.type === "car" && v.ui.silhouette !== "formula" ? `/vehicles/${v.id}/card.webp` : null,
+    card: cardOf(v),
     preview: previewSounds(v),
   }));
 }
