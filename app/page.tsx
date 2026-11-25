@@ -11,8 +11,8 @@ const FEEDBACK_URL = process.env.NEXT_PUBLIC_FEEDBACK_URL;
 /** Cars shown drifting across the Playground card (first that exist, in this order). */
 const SHOWCASE = ["supra_mk4", "ferrari_f40", "skyline_r34", "lexus_lfa", "porsche_gt3rs", "mustang_gt", "rx7_fd", "gp_racer"];
 
-/** The cars you can rev at the top of the page, in this order. */
-const HERO = ["supra_mk4", "skyline_r34", "ferrari_f40", "lexus_lfa", "rx7_fd", "porsche_gt3rs", "aventador_svj", "honda_s2000", "mustang_gt", "bugatti_chiron"];
+/** The cars you can rev at the top of the page, in this order (ones with a downloaded, detailed model). */
+const HERO = ["supra_mk4", "skyline_r34", "rx7_fd", "aventador_svj", "honda_s2000", "bugatti_chiron", "mustang_gt", "audi_r8_v10", "flat6_sports", "v12_gt"];
 
 export default function Home() {
   const list = garageList();
